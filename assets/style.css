@@ -1,0 +1,931 @@
+/* ============================================================
+   VANT THEME SYSTEM - V2.0 (HIGH CONVERSION)
+   ============================================================ */
+
+/* Importação de Fontes */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@700&family=Roboto:wght@900&family=Lato:wght@900&display=swap');
+
+/* Container das Marcas Typográficas */
+
+/* Variáveis Globais */
+:root {
+    --primary-blue: #38BDF8;
+    --primary-green: #10B981;
+    --primary-orange: #F59E0B;
+    --primary-red: #EF4444;
+    --bg-dark: #0f172a;           
+    --bg-darker: #020617;         
+    --text-main: #F8FAFC;         
+    --text-muted: #CBD5E1;        
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+}
+
+/* ============================================================
+   6. SOCIAL PROOF (TYPOGRAPHIC BRANDS)
+   ============================================================ */
+
+/* Container que organiza os nomes das marcas */
+.brand-typography-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin: 20px 0 40px 0;
+}
+
+/* Estilo Base para as Marcas (Sobriedade e Integração) */
+.brand-item {
+    font-size: 1.25rem;
+    color: var(--text-muted); /* Usa sua variável CBD5E1 */
+    opacity: 0.5;
+    transition: all 0.3s ease;
+    cursor: default;
+    user-select: none;
+}
+
+.brand-item:hover {
+    opacity: 1;
+    color: var(--primary-blue); /* Usa sua variável 38BDF8 */
+    transform: translateY(-2px);
+}
+
+/* Mimetizando as identidades com as fontes que você já importou */
+.brand-google { 
+    font-family: 'Open Sans', sans-serif; 
+    font-weight: 700; 
+    letter-spacing: -1px; 
+}
+
+.brand-amazon { 
+    font-family: 'Roboto', sans-serif; 
+    font-weight: 900; 
+    font-style: italic; 
+    text-transform: lowercase; 
+}
+
+.brand-microsoft { 
+    font-family: 'Lato', sans-serif; 
+    font-weight: 900; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+.brand-nubank { 
+    font-family: 'Inter', sans-serif; 
+    font-weight: 600; 
+    letter-spacing: -0.5px;
+}
+
+.brand-apple { 
+    font-family: 'Outfit', sans-serif; 
+    font-weight: 700; 
+}
+
+/* ============================================================
+   1. BASE E LAYOUT
+   ============================================================ */
+html, body, .stApp {
+    font-family: 'Outfit', sans-serif;
+    background: radial-gradient(circle at top, #1e293b, var(--bg-darker)) !important;
+    color: var(--text-main);
+    background-attachment: fixed;
+}
+
+/* ============================================================
+   2. HERO SECTION & MARKETING ELEMENTS (NOVO)
+   ============================================================ */
+.hero-container {
+    max-width: 900px;
+    margin: 0 auto 40px auto;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* Badge de Prova Social */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary-green);
+    margin-bottom: 20px;
+    animation: pulse-green 3s infinite;
+}
+@keyframes pulse-green { 0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } }
+
+/* Logo Animado */
+.logo-text {
+    font-weight: 900; font-size: 5rem; letter-spacing: -3px; margin-bottom: 10px;
+    background: linear-gradient(135deg, var(--primary-blue), #818CF8, #C084FC);
+    background-size: 200% 200%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: gradient-move 4s ease infinite;
+    line-height: 1.1;
+}
+@keyframes gradient-move { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+/* Headline Poderosa */
+.headline {
+    font-size: 2.5rem; font-weight: 700; line-height: 1.2; margin-bottom: 20px; color: var(--text-main);
+}
+.headline .highlight {
+    color: var(--primary-orange); position: relative; display: inline-block;
+}
+.headline .highlight::after {
+    content: ''; position: absolute; bottom: 2px; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--primary-orange), transparent);
+    opacity: 0.8;
+}
+
+.subheadline {
+    font-size: 1.2rem; color: var(--text-muted); font-weight: 300; max-width: 700px; margin: 0 auto 40px; line-height: 1.6;
+}
+
+/* Grid de Estatísticas */
+.stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 40px 0;
+}
+.stat-card {
+    background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border);
+    border-radius: 16px; padding: 20px; backdrop-filter: blur(10px);
+    transition: transform 0.3s ease;
+}
+.stat-card:hover {
+    transform: translateY(-5px); border-color: rgba(56, 189, 248, 0.3);
+    box-shadow: 0 10px 30px rgba(56, 189, 248, 0.1);
+}
+.stat-number {
+    font-size: 2rem; font-weight: 900; margin-bottom: 5px;
+    background: linear-gradient(135deg, var(--primary-blue), #818CF8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; line-height: 1.3; }
+
+/* Problem Box (Dor) */
+.problem-box {
+    background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 16px; padding: 25px; margin: 30px 0; text-align: left;
+}
+.problem-title {
+    display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 700;
+    color: var(--primary-red); margin-bottom: 15px;
+}
+.problem-list li {
+    list-style: none; padding: 8px 0; padding-left: 25px; position: relative;
+    color: var(--text-muted); font-size: 0.95rem;
+}
+.problem-list li::before { content: '❌'; position: absolute; left: 0; font-size: 0.9rem; }
+
+/* Solution Box (Vantagem) */
+.solution-box {
+    background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 16px; padding: 25px; margin: 30px 0;
+}
+.solution-title {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 1.3rem; font-weight: 700; color: var(--primary-green); margin-bottom: 20px;
+}
+.features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; text-align: left; }
+.feature-item {
+    display: flex; gap: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;
+}
+.feature-text strong { color: var(--text-main); display: block; margin-bottom: 2px; }
+.feature-text { font-size: 0.9rem; color: #94A3B8; line-height: 1.3; }
+
+/* Trust Badge */
+.trust-badge {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 30px;
+    color: #64748B; font-size: 0.85rem; padding: 8px 16px; background: rgba(0,0,0,0.2); border-radius: 20px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .logo-text { font-size: 3.5rem; }
+    .headline { font-size: 1.8rem; }
+    .stats-grid, .features-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   3. COMPONENTES NATIVOS (INPUTS/UPLOAD/EXPANDERS)
+   ============================================================ */
+.stApp .stTextArea textarea, .stApp .stTextInput input {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--text-main) !important;
+    border-radius: 8px;
+}
+[data-testid='stFileUploader'] section {
+    background-color: rgba(15, 23, 42, 0.5) !important;
+    border: 2px dashed rgba(56, 189, 248, 0.3) !important;
+    transition: all 0.3s ease;
+}
+[data-testid='stFileUploader'] section:hover {
+    border-color: var(--primary-blue) !important;
+    background-color: rgba(56, 189, 248, 0.05) !important;
+}
+
+/* Buttons */
+.stButton > button {
+    background: linear-gradient(90deg, var(--primary-orange), #D97706);
+    height: 60px; border-radius: 50px; font-weight: 800 !important;
+    text-transform: uppercase; letter-spacing: 1px; border: none;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+    transition: all 0.2s;
+}
+.stButton > button:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(245, 158, 11, 0.5); }
+
+/* Documento Copiável & Cards de Livros (Mantidos do original) */
+.unified-doc-container {
+    border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; margin-bottom: 20px;
+}
+.doc-header {
+    background-color: rgba(56, 189, 248, 0.1); padding: 10px 20px; 
+    border-bottom: 1px solid rgba(56, 189, 248, 0.3); display: flex; justify-content: space-between; align-items: center;
+}
+.doc-title { color: var(--primary-blue); font-weight: 700; text-transform: uppercase; }
+/* Atualize/Substitua a classe .doc-body no style.css */
+.doc-body {
+    background-color: rgba(15, 23, 42, 0.9); 
+    padding: 35px; /* Aumentado de 25px para 35px (Respiro) */
+    color: #E2E8F0;
+    white-space: pre-wrap; 
+    font-family: 'Inter', sans-serif;
+    line-height: 1.7; /* Aumentado de padrão para 1.7 (Leitura fluida) */
+    font-size: 1rem;
+    border-radius: 0 0 8px 8px;
+}
+
+/* Adicione esta classe nova para o Box do X-Ray */
+.dimmed-feature {
+    opacity: 0.6;
+    transition: all 0.3s ease;
+    filter: grayscale(80%);
+}
+.dimmed-feature:hover {
+    opacity: 1;
+    filter: grayscale(0%);
+}
+.header-copy-btn {
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    color: #475569;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.header-copy-btn:hover {
+    border-color: #38BDF8;
+    color: #38BDF8;
+}
+
+/* Cards & Oportunidades */
+.opportunity-box {
+    background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 12px; padding: 20px; margin-bottom: 20px;
+}
+.opportunity-title { color: #F59E0B; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+.evidence-box {
+    background: rgba(0,0,0,0.4); padding: 12px; border-radius: 6px; 
+    color: var(--text-muted); font-style: italic; border-left: 2px solid #64748B; margin-bottom: 10px; margin-top: 10px;
+}
+.solution-box-card { /* Diferente do Solution Box da Hero */
+    background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 12px; border-radius: 6px; color: #34d399; font-weight: 600;
+}
+.book-card {
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
+    text-decoration: none !important; transition: all 0.3s;
+}
+.book-card:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(5px); border-color: var(--primary-orange); }
+.book-rank { font-size: 2.5rem; font-weight: 800; color: rgba(255, 255, 255, 0.1); margin-right: 15px; }
+.book-info h4 { margin: 0; color: var(--text-main); font-size: 1rem; }
+.book-info p { margin: 2px 0 0 0; color: #94A3B8; font-size: 0.85rem; }
+.book-reason { color: var(--primary-blue); font-size: 0.85rem; margin-top: 5px; font-style: italic; }
+
+.price-container {
+    background: rgba(0,0,0,0.3); padding: 20px; border-radius: 16px; 
+    border: 1px dashed rgba(255,255,255,0.15); text-align: center; margin-bottom: 15px;
+}
+.new-price { color: var(--text-main); font-size: 2.2rem; font-weight: 800; text-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+.old-price { color: #64748B; text-decoration: line-through; margin-right: 10px; font-size: 1.1rem; }
+
+/* ============================================================
+   [VANT DEV] HACK V2.0: TRADUÇÃO TOTAL (LABEL + BOTÃO)
+   ============================================================ */
+
+/* A. ÁREA DE TEXTO (Drag & Drop) */
+/* 1. Esconde textos originais */
+[data-testid="stFileUploader"] section > div > div > span,
+[data-testid="stFileUploader"] section > div > small {
+    display: none;
+}
+
+/* 2. Injeta novos textos */
+[data-testid="stFileUploader"] section > div > div::before {
+    content: "Arraste e solte seu PDF aqui";
+    font-weight: 700;
+    color: var(--text-main);
+    display: block;
+}
+
+[data-testid="stFileUploader"] section > div::after {
+    content: "Limite: 10MB • Apenas PDF";
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    display: block;
+    margin-top: 5px;
+}
+
+/* B. O BOTÃO "BROWSE FILES" (O Vilão) */
+/* 1. Torna o texto original transparente (mas mantem o clique) */
+[data-testid="stFileUploader"] section button {
+    color: transparent !important;
+    position: relative;
+    border-color: var(--primary-blue) !important;
+    transition: all 0.3s ease;
+    min-width: 160px; /* Garante espaço para o novo texto */
+}
+
+/* 2. Sobrepõe o novo texto em Português */
+[data-testid="stFileUploader"] section button::after {
+    content: "Selecionar Arquivo";
+    color: var(--primary-blue);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); /* Centraliza perfeitamente */
+    font-weight: 700;
+    font-size: 0.9rem;
+    width: 100%;
+    pointer-events: none; /* Garante que o clique passe para o botão real */
+}
+
+/* 3. Efeito Hover para manter consistência */
+[data-testid="stFileUploader"] section button:hover {
+    border-color: #F8FAFC !important;
+    background-color: rgba(56, 189, 248, 0.1) !important;
+}
+[data-testid="stFileUploader"] section button:hover::after {
+    color: #F8FAFC !important;
+}
+
+/* ============================================================
+   LOADING SCREEN & TERMINAL FX
+   ============================================================ */
+@keyframes pulse-glow {
+    0% { opacity: 0.4; text-shadow: 0 0 10px rgba(56, 189, 248, 0); }
+    50% { opacity: 1; text-shadow: 0 0 20px rgba(56, 189, 248, 0.5); }
+    100% { opacity: 0.4; text-shadow: 0 0 10px rgba(56, 189, 248, 0); }
+}
+
+.loading-logo {
+    font-size: 3rem; 
+    font-weight: 900; 
+    text-align: center; 
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #38BDF8, #818CF8);
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    animation: pulse-glow 2s infinite ease-in-out;
+}
+
+.terminal-log {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    color: #94A3B8;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.cv-content-flow {
+    text-align: left;
+    white-space: normal; /* Mudança importante: Deixa o HTML fluir naturalmente */
+    line-height: 1.6; /* Aumenta a legibilidade */
+}
+
+/* Melhora o espaçamento entre parágrafos e listas no currículo */
+.cv-content-flow br {
+    display: block;
+    content: "";
+    margin-top: 8px;
+}
+
+.paper-header {
+    background: #F8FAFC;
+    padding: 12px 25px;
+    border-bottom: 1px solid #E2E8F0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 4px 4px 0 0;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+/* ============================================================
+   PAPER VIEW - WOW EFFECT (Visual Documento Premium)
+   ============================================================ */
+.paper-view {
+    background-color: #FFFFFF !important;
+    color: #334155 !important;
+    padding: 60px 50px; /* Mais margem vertical para elegância */
+    border-radius: 4px; /* Cantos levemente arredondados */
+    /* Sombra difusa e elegante para efeito 3D real */
+    box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+        0 2px 4px -1px rgba(0, 0, 0, 0.06),
+        0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    font-family: 'Inter', 'Segoe UI', Helvetica, sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.65; /* Leitura confortável */
+    margin-bottom: 20px;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased; /* Renderização de fonte nítida */
+}
+
+/* Títulos das Seções dentro do Papel */
+.paper-view h3 {
+    color: #0f172a !important;
+    font-size: 1.0rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    border-bottom: 2px solid #0f172a; /* Linha sólida preta profissional */
+    padding-bottom: 8px;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+/* Garante que bullet points fiquem alinhados */
+.paper-view ul, .paper-view li {
+    margin-bottom: 5px;
+}
+
+/* Garante que os títulos de seção (geralmente em bold) tenham destaque */
+.paper-view strong {
+    color: #0f172a !important; /* Cor sólida e profissional */
+    font-weight: 700 !important;
+    background: none !important; /* Remove qualquer highlight anterior */
+}
+
+.paper-footer-hint {
+    text-align: center; 
+    color: #94a3b8; 
+    font-size: 0.8rem; 
+    margin-top: 15px;
+    font-style: italic;
+}
+
+/* Ajuste fino no container para simular a folha real */
+.cv-preview-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ============================================================
+   TECH LEAD FIX: SISTEMA DE DESTAQUES INTELIGENTE
+   ============================================================ */
+
+/* 1. Comportamento Padrão (Dark Mode / Diagnóstico / App) */
+/* Todo negrito gerado pela IA será Ciano Neon */
+.vant-highlight {
+    color: #38BDF8; 
+    font-weight: 700;
+}
+
+/* 2. Comportamento Exceção (Paper View / CV Impresso) */
+/* Quando o destaque estiver dentro do papel branco, vira Preto */
+.paper-view .vant-highlight {
+    color: #0f172a !important;
+    background: transparent !important;
+}
+
+/* Fallback: Garante que strongs genéricos também sigam a regra se escaparem */
+.paper-view strong {
+    color: #0f172a !important;
+}
+
+/* ============================================================
+   4. SIMULADOR DE ENTREVISTA (NOVO - REFATORADO)
+   ============================================================ */
+
+/* Card da Pergunta */
+.interview-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.interview-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+}
+
+.interview-question-box {
+    display: flex; gap: 15px; align-items: flex-start;
+}
+.interview-bar {
+    min-width: 4px; height: 50px; background: var(--primary-blue); border-radius: 2px;
+}
+.interview-text {
+    font-size: 1.25rem; font-weight: 600; color: #F8FAFC; line-height: 1.5;
+}
+
+.interview-footer {
+    margin-top: 20px; padding-top: 15px; border-top: 1px solid #334155;
+}
+
+/* Box de Transcrição */
+.transcript-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.transcript-text {
+    color: #CBD5E1; font-size: 1rem; line-height: 1.6; font-family: 'Inter', sans-serif;
+}
+
+/* Card de Feedback */
+.feedback-card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 25px;
+    /* Borda dinâmica será aplicada inline via style */
+}
+
+.score-badge {
+    padding: 10px 20px; border-radius: 12px; font-weight: 800; font-size: 1.8rem;
+    /* Cores dinâmicas aplicadas inline */
+}
+
+/* Barra de Progresso Customizada */
+.progress-container {
+    margin-bottom: 15px;
+}
+.progress-label {
+    display: flex; justify-content: space-between; margin-bottom: 5px;
+}
+.progress-track {
+    width: 100%; background: #334155; height: 6px; border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+    height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Plano de Ação */
+.action-plan-box {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    padding: 20px;
+}
+.action-list {
+    margin: 0; padding-left: 20px; color: #E2E8F0; font-size: 0.95rem; line-height: 1.6;
+}
+.action-list li { margin-bottom: 8px; }
+
+/* Exemplo Ideal */
+.ideal-answer-box {
+    background: rgba(6, 78, 59, 0.3);
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-green);
+    color: #E2E8F0;
+    line-height: 1.7;
+}
+
+/* Adicione dentro da seção 4. SIMULADOR DE ENTREVISTA */
+
+/* Layouts Internos do Card */
+.card-header-flex {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 25px;
+}
+
+.card-stats-grid {
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 20px; 
+    margin-bottom: 30px;
+}
+
+/* Tipografia Interna */
+.card-title-text {
+    margin: 0; 
+    color: #F8FAFC; 
+    font-size: 1.3rem;
+}
+
+.card-subtitle-text {
+    margin: 5px 0 0 0; 
+    color: #94A3B8; 
+    font-size: 0.95rem;
+}
+
+/* ============================================================
+   HIERARQUIA DE BOTÕES (FIX UX)
+   ============================================================ */
+
+/* Força o botão SECUNDÁRIO a ser Outline/Ghost (Fundo transparente) */
+[data-testid="stButton"] button[kind="secondary"] {
+    background: transparent !important;
+    border: 2px solid var(--primary-orange) !important;
+    color: var(--primary-orange) !important;
+    box-shadow: none !important;
+    transition: all 0.3s ease !important;
+}
+
+[data-testid="stButton"] button[kind="secondary"]:hover {
+    background: rgba(245, 158, 11, 0.1) !important; /* Laranja bem suave no hover */
+    border-color: #D97706 !important;
+    color: #F8FAFC !important;
+    transform: translateY(-2px);
+}
+
+/* Garante que o PRIMÁRIO mantenha o destaque (Gradient) */
+[data-testid="stButton"] button[kind="primary"] {
+    border: none !important; /* Remove borda redundante do primário */
+}
+
+/* ============================================================
+   [VANT DEV] POLIMENTO FINAL: ALINHAMENTO & ACABAMENTO
+   ============================================================ */
+
+/* 1. CORREÇÃO DO "DENTE" (Equal Height) 
+   Força o Uploader a ter a mesma altura visual do Text Area (aprox 180px com label)
+   e centraliza o conteúdo verticalmente para ficar elegante.
+*/
+[data-testid="stFileUploader"] section {
+    min-height: 178px; /* Altura mágica calculada para parear com st.text_area(height=150) */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: rgba(15, 23, 42, 0.3) !important; /* Fundo sutil para marcar a área */
+}
+
+/* 2. ACCORDION TÁTIL (Melhora a Affordance) 
+   Transforma o texto solto em um "Cartão Clicável".
+*/
+[data-testid="stExpander"] {
+    border: 1px solid rgba(56, 189, 248, 0.1);
+    border-radius: 8px;
+    background-color: rgba(15, 23, 42, 0.4);
+    transition: all 0.2s ease;
+}
+
+[data-testid="stExpander"]:hover {
+    border-color: rgba(56, 189, 248, 0.3);
+    background-color: rgba(15, 23, 42, 0.6);
+}
+
+/* Estiliza o cabeçalho (setinha + texto) */
+[data-testid="stExpander"] summary {
+    padding: 15px !important; /* Mais área de clique */
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+[data-testid="stExpander"] summary:hover {
+    color: var(--primary-blue);
+}
+
+/* Remove a borda padrão feia do Streamlit quando focado */
+[data-testid="stExpander"] summary:focus {
+    outline: none;
+    color: var(--primary-blue);
+}
+
+/* ============================================================
+   5. UI POLISH & ACCESSIBILITY (INPUTS & TOOLTIPS)
+   ============================================================ */
+
+/* --- MELHORIA DE INPUTS (Affordance) --- */
+
+/* Text Area (Vaga) & Inputs de Texto */
+.stTextArea textarea, .stTextInput input {
+    background-color: rgba(255, 255, 255, 0.03) !important; /* Superfície leve */
+    border: 1px solid #334155 !important; /* Borda sutil (Slate 700) */
+    border-radius: 8px !important;
+    color: #F8FAFC !important;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Estado de Foco (A hora da verdade) */
+.stTextArea textarea:focus, .stTextInput input:focus {
+    border-color: #F59E0B !important; /* Laranja da Marca */
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2) !important; /* Ring sutil */
+    background-color: rgba(255, 255, 255, 0.05) !important; /* Levemente mais claro */
+}
+
+/* Placeholder (Legibilidade WCAG AA) */
+.stTextArea textarea::placeholder, .stTextInput input::placeholder {
+    color: #94A3B8 !important; /* Slate 400 - Contraste seguro */
+    opacity: 1; /* Garante renderização correta em todos browsers */
+}
+
+/* File Uploader (Dropzone) */
+[data-testid='stFileUploader'] section {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    border: 1px dashed #475569 !important; /* Dashed indica dropzone */
+    transition: all 0.3s ease;
+}
+
+[data-testid='stFileUploader'] section:hover {
+    border-color: #F59E0B !important;
+    background-color: rgba(245, 158, 11, 0.05) !important;
+}
+
+/* --- COMPONENTE TOOLTIP (Pure CSS) --- */
+.vant-tooltip {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dotted #94A3B8; /* Affordance visual de "info aqui" */
+    display: inline-block;
+}
+
+/* O Balão do Tooltip */
+.vant-tooltip::after {
+    content: attr(data-tooltip); /* Pega o texto do atributo HTML */
+    position: absolute;
+    bottom: 125%; /* Posiciona acima do texto */
+    left: 50%;
+    transform: translateX(-50%);
+    
+    /* Estilo do Balão */
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #E2E8F0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: normal;
+    width: max-content;
+    max-width: 250px; /* Evita que fique muito largo no mobile */
+    line-height: 1.4;
+    z-index: 1000;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    
+    /* Animação */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    pointer-events: none; /* Evita bloquear cliques acidentais */
+}
+
+/* A Setinha do Balão */
+.vant-tooltip::before {
+    content: "";
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #334155 transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s;
+}
+
+/* Trigger do Hover/Focus */
+.vant-tooltip:hover::after, .vant-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Ajuste Mobile: Se estiver muito na esquerda, ajusta (simples) */
+@media (max-width: 480px) {
+    .vant-tooltip::after {
+        width: 200px; /* Mais estreito no mobile */
+        left: -50%; /* Desloca para não cortar na direita */
+    }
+}
+
+/* ============================================================
+   [VANT DEV] PROVA SOCIAL (LOGOS) - VERSÃO DEFINITIVA
+   ============================================================ */
+.social-proof-container {
+    margin: 40px 0;
+    text-align: center;
+    width: 100%;
+}
+.social-proof-title {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: #94A3B8;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 25px;
+}
+.logos-grid {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.company-svg {
+    width: 90px !important; /* Força a largura */
+    height: 35px !important; /* Força a altura */
+    fill: #94A3B8 !important; /* Slate-400 */
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.company-svg:hover {
+    fill: #38BDF8 !important; /* Primary Blue no hover */
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.logos-grid img {
+    max-height: 30px;
+    width: auto;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+    .logos-grid { gap: 20px; }
+    .company-svg { width: 70px !important; height: 25px !important; }
+}
+
+/* ============================================================
+   [VANT DEV] REFINAMENTO DE FLUXO (V2.1)
+   ============================================================ */
+
+/* 1. Ilha de Ação (Separa inputs da proposta de valor) */
+.action-island-container {
+    background: rgba(15, 23, 42, 0.4); /* Fundo sutil */
+    border: 1px solid rgba(56, 189, 248, 0.1); /* Borda Glass */
+    border-radius: 24px;
+    padding: 40px;
+    margin-top: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3); /* Profundidade */
+}
+
+/* 2. Micro-CTA "Como Funciona" (Link discreto) */
+.micro-cta-link {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+    opacity: 0.7;
+    margin-bottom: 20px;
+}
+.micro-cta-link:hover {
+    color: var(--primary-blue);
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+/* 3. Linha de Confiança (Abaixo do Botão) */
+.cta-trust-line {
+    font-size: 0.8rem;
+    color: #94A3B8;
+    margin-top: 15px;
+    text-align: center;
+    line-height: 1.4;
+}
+.cta-trust-line strong {
+    color: var(--primary-green); /* Destaque "Grátis" em Verde */
+}

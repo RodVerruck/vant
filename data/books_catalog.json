@@ -1,0 +1,181 @@
+{
+  "area": "Analista de Suporte / TI",
+  "livros": [
+    {
+      "titulo": "Redes de Computadores",
+      "autor": "Andrew S. Tanenbaum, Nick Feamster e David J. Wetherall",
+      "idioma": "PT-BR",
+      "isbn": "9788535211856",
+      "amazon_url": "https://www.amazon.com.br/Redes-Computadores-Andrew-Stuart-Tanenbaum/dp/8535211853",
+      "nivel": "Fundamentos"
+    },
+    {
+      "titulo": "Service Desk Analyst Bootcamp: Maintaining, Configuring And Supporting Users",
+      "autor": "Pastor Publishing Ltd",
+      "idioma": "EN",
+      "isbn": "B0CZK75JFM",
+      "amazon_url": "https://www.amazon.com.br/Service-Desk-Analyst-Bootcamp-Maintaining-ebook/dp/B0CZK75JFM",
+      "nivel": "Fundamentos"
+    },
+    {
+      "titulo": "Complete CompTIA A+ Study Guide: All-in-One Manual for 220-1101 & 220-1102 Exams",
+      "autor": "Pearson IT Certification",
+      "idioma": "EN",
+      "isbn": "B0FN85JNFR",
+      "amazon_url": "https://www.amazon.com.br/Complete-CompTIA-Study-Guide-All/dp/B0FN85JNFR",
+      "nivel": "Fundamentos"
+    },
+    {
+      "titulo": "A+ Certification All-in-One Exam Guide",
+      "autor": "Mike Meyers",
+      "idioma": "EN",
+      "isbn": "0072122668",
+      "amazon_url": "https://www.amazon.com.br/All-One-Certification-Exam-Guide/dp/0072122668",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "CompTIA A+ Certification All-in-One Exam Guide (outras edições)",
+      "autor": "Michael Meyers",
+      "idioma": "EN",
+      "isbn": "1260454037",
+      "amazon_url": "https://www.amazon.com/CompTIA-Certification-Guide-220-1001-220-1002/dp/1260454037",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "ITIL Foundation Exam Study Guide (várias edições)",
+      "autor": "EXIN / AXELOS / PeopleCert (diversos autores)",
+      "idioma": "EN",
+      "isbn": "variável conforme edição",
+      "amazon_url": "https://www.amazon.com.br/s?k=ITIL+Foundation+Exam+Guide",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "Computer Networks (Tanenbaum)",
+      "autor": "Andrew S. Tanenbaum & David J. Wetherall",
+      "idioma": "EN",
+      "isbn": "0131651838",
+      "amazon_url": "https://www.amazon.com/Computer-networks-Andrew-S-Tanenbaum/dp/0131651838",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "The Phoenix Project: A Novel About IT, DevOps, and Helping Your Business Win",
+      "autor": "Gene Kim, Kevin Behr e George Spafford",
+      "idioma": "EN",
+      "isbn": "9781942788294",
+      "amazon_url": "https://www.amazon.com.br/s?k=The+Phoenix+Project",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "The DevOps Handbook: How to Create World-Class Agility, Reliability, & Security in Technology Organizations",
+      "autor": "Gene Kim, Jez Humble, Patrick Debois e John Willis",
+      "idioma": "EN",
+      "isbn": "9781942788003",
+      "amazon_url": "https://www.amazon.com.br/s?k=The+DevOps+Handbook",
+      "nivel": "Avançado"
+    },
+    {
+      "titulo": "Site Reliability Engineering: How Google Runs Production Systems",
+      "autor": "Betsy Beyer, Chris Jones, Jennifer Petoff & Niall Richard Murphy",
+      "idioma": "EN",
+      "isbn": "9781491929124",
+      "amazon_url": "https://www.amazon.com.br/s?k=Site+Reliability+Engineering",
+      "nivel": "Avançado"
+    },
+    {
+      "titulo": "ITIL 4 Leader: Digital and IT Strategy",
+      "autor": "AXELOS",
+      "idioma": "EN",
+      "isbn": "9780113316076",
+      "amazon_url": "https://www.amazon.com.br/s?k=ITIL+4+Leader+Digital+and+IT+Strategy",
+      "nivel": "Avançado"
+    },
+    {
+      "titulo": "Cloud Computing: Concepts, Technology & Architecture",
+      "autor": "Thomas Erl, Ricardo Puttini e Zaigham Mahmood",
+      "idioma": "EN",
+      "isbn": "9780137577278",
+      "amazon_url": "https://www.amazon.com.br/s?k=Cloud+Computing+Concepts+Technology+%26+Architecture",
+      "nivel": "Avançado"
+    },
+    {
+      "titulo": "Princípios de Redes de Computadores",
+      "autor": "Behrouz A. Forouzan",
+      "idioma": "EN",
+      "isbn": "9783319340195",
+      "amazon_url": "https://www.amazon.com.br/s?k=Principles+of+Computer+Networks+Forouzan",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "Sistemas Operacionais Modernos (Modern Operating Systems)",
+      "autor": "Andrew S. Tanenbaum",
+      "idioma": "EN",
+      "isbn": "9780133591620",
+      "amazon_url": "https://www.amazon.com.br/s?k=Modern+Operating+Systems+Tanenbaum",
+      "nivel": "Avançado"
+    },
+    {
+      "titulo": "Clean Code: A Handbook of Agile Software Craftsmanship",
+      "autor": "Robert C. Martin",
+      "idioma": "EN",
+      "isbn": "9780132350884",
+      "amazon_url": "https://www.amazon.com.br/s?k=Clean+Code+Robert+C+Martin",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "The Practice of System and Network Administration",
+      "autor": "Thomas A. Limoncelli, Christina J. Hogan e Strata R. Chalup",
+      "idioma": "EN",
+      "isbn": "9780321919168",
+      "amazon_url": "https://www.amazon.com.br/s?k=The+Practice+of+System+and+Network+Administration",
+      "nivel": "Avançado"
+    },
+    {
+      "titulo": "The Customer Support Handbook: How to Create the Ultimate Client Experience",
+      "autor": "Sarah Hatter",
+      "idioma": "EN",
+      "isbn": "9781732988304",
+      "amazon_url": "https://www.amazon.com.br/s?k=The+Customer+Support+Handbook",
+      "nivel": "Fundamentos"
+    },
+    {
+      "titulo": "Network Warrior",
+      "autor": "Gary A. Donahue",
+      "idioma": "EN",
+      "isbn": "9781449387867",
+      "amazon_url": "https://www.amazon.com.br/s?k=Network+Warrior",
+      "nivel": "Avançado"
+    },
+    {
+      "titulo": "Troubleshooting with the Windows Sysinternals Tools",
+      "autor": "Mark E. Russinovich, Aaron Margosis",
+      "idioma": "EN",
+      "isbn": "9780735684188",
+      "amazon_url": "https://www.amazon.com.br/s?k=Troubleshooting+with+the+Windows+Sysinternals+Tools",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "Mastering Windows Server 2019",
+      "autor": "Jordan Krause",
+      "idioma": "EN",
+      "isbn": "9781789809778",
+      "amazon_url": "https://www.amazon.com.br/s?k=Mastering+Windows+Server+2019",
+      "nivel": "Intermediário"
+    },
+    {
+      "titulo": "Windows Internals, Part 1",
+      "autor": "Petrík, Russinovich, Solomon, Ionescu",
+      "idioma": "EN",
+      "isbn": "9780735684188",
+      "amazon_url": "https://www.amazon.com.br/s?k=Windows+Internals+Part+1",
+      "nivel": "Avançado"
+    },
+    {
+      "titulo": "The Linux Command Line, 2nd Edition",
+      "autor": "William E. Shotts, Jr.",
+      "idioma": "EN",
+      "isbn": "9781593279523",
+      "amazon_url": "https://www.amazon.com.br/s?k=The+Linux+Command+Line+Shotts",
+      "nivel": "Fundamentos"
+    }
+  ]
+}

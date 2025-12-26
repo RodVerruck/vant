@@ -1,0 +1,20 @@
+# Byte-compiled / Optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables (CRÍTICO - NÃO REMOVER)
+.env
+.env.*
+
+# Streamlit Secrets (CRÍTICO - NÃO REMOVER)
+.streamlit/secrets.toml
+
+# Virtual Environments (se houver no futuro)
+venv/
+.venv/
+env/
+
+# OS Specific
+.DS_Store
+Thumbs.db
