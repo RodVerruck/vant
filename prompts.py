@@ -87,7 +87,6 @@ OUTPUT JSON (SIGA ESTRITAMENTE):
   "linkedin_headline": "Headline honesto (sem mentir cargo)..."
 }}
 """
-
 # ============================================================
 # AGENTE 2: GHOSTWRITER (V12 - ANTI-ALUCINAÇÃO + COERÊNCIA)
 # ============================================================
