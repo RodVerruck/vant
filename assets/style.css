@@ -873,6 +873,11 @@ html, body, .stApp {
     transform: scale(1.1);
 }
 
+img {
+    loading: lazy;
+    content-visibility: auto;
+}
+
 .logos-grid img {
     max-height: 30px;
     width: auto;
@@ -928,4 +933,163 @@ html, body, .stApp {
 }
 .cta-trust-line strong {
     color: var(--primary-green); /* Destaque "Grátis" em Verde */
+}
+
+/* Refinamento da Barra de Stats Flutuante (aquela dos 191 CVs) */
+/* Assumindo que você envolveu ela em um container ou st.info/metric */
+[data-testid="stMetric"] {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 10px;
+    justify-content: center;
+}
+
+/* Ajuste fino para os Títulos dos Inputs ficarem alinhados */
+h5 {
+    color: #94A3B8 !important; /* Slate 400 */
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 10px !important;
+    text-transform: uppercase;
+}
+
+/* TRUST FOOTER - A Barra de Estatísticas no Lugar Certo */
+.trust-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    padding: 1.5rem 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.8) 100%);
+    margin-top: 4rem; /* Empurra para baixo se não for fixed */
+    width: 100%;
+}
+
+.footer-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #64748B; /* Slate 500 - Discreto */
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+}
+
+.footer-stat:hover {
+    color: #94A3B8; /* Slate 400 no hover */
+}
+
+/* Ícones e Detalhes */
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #10B981; /* Green 500 */
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    animation: pulse-green-footer 2s infinite;
+}
+
+.footer-icon {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+@keyframes pulse-green-footer {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Mobile: Empilha os itens */
+@media (max-width: 768px) {
+    .trust-footer {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+
+/* Melhoria: Skeleton Loading */
+.skeleton-pulse {
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* Aplique em elementos de loading */
+.loading-logo {
+    animation: skeleton-loading 2s ease-in-out infinite, pulse-glow 2s infinite ease-in-out;
+}
+
+/* ============================================================
+   6. RESPONSIVIDADE AVANÇADA & ANIMAÇÕES SUAVES
+   ============================================================ */
+
+@media (max-width: 640px) {
+    .hero-container { padding: 10px; }
+    .logo-text { font-size: 3rem; }
+    .headline { font-size: 1.6rem; }
+    
+    /* Ajusta colunas para mobile */
+    .stats-grid, .features-grid, .card-stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Botões menores */
+    .stButton > button {
+        height: 50px !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Fade-in suave para os cards */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.opportunity-box, .interview-card, .book-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Stagger delay (um após o outro) */
+.opportunity-box:nth-child(1) { animation-delay: 0.1s; }
+.opportunity-box:nth-child(2) { animation-delay: 0.2s; }
+.opportunity-box:nth-child(3) { animation-delay: 0.3s; }
+
+/* ============================================================
+   [FIX VANT] DESTAQUES NEON (DIAGNÓSTICO)
+   ============================================================ */
+
+/* Força a cor Azul Bonito (Cyan-400) em qualquer negrito dentro dos cards */
+.opportunity-box strong, 
+.opportunity-box b,
+.solution-box strong, 
+.solution-box b,
+.evidence-box strong, 
+.evidence-box b {
+    color: #38BDF8 !important; 
+    font-weight: 800 !important;
+}
+
+/* Garante que o itálico da evidência fique cinza claro e legível */
+.evidence-box em, 
+.evidence-box i {
+    color: #CBD5E1 !important;
+    font-style: italic;
 }

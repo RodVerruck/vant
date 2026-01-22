@@ -1,0 +1,4 @@
+pango
+zlib1g
+libglib2.0-0
+libffi-dev

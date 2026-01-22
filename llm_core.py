@@ -1,38 +1,52 @@
 import json
 import logging
 import streamlit as st
+import re
+import concurrent.futures
 from google import genai
 from google.genai import types
-import re
-import concurrent.futures # <--- MÓDULO DE PARALELISMO
 from groq import Groq
-from prompts import SYSTEM_AGENT_INTERVIEW_EVALUATOR
 
 # ============================================================
 # LOGGING & CONFIG
 # ============================================================
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("VANT_GEMINI_2.0")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("VANT_CORE")
 
 GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY")
-
-if not GOOGLE_API_KEY:
-    logger.error("❌ GOOGLE_API_KEY não encontrada! Configure no secrets.toml")
-    client = None
-else:
-    try:
-        client = genai.Client(api_key=GOOGLE_API_KEY)
-    except Exception as e:
-        logger.error(f"Erro ao iniciar cliente Google: {e}")
-        client = None
-        
-# Configuração Groq
 GROQ_API_KEY = st.secrets.get("GROQ_API_KEY")
-if GROQ_API_KEY:
-    groq_client = Groq(api_key=GROQ_API_KEY)
+
+if GOOGLE_API_KEY:
+    genai_client = genai.Client(api_key=GOOGLE_API_KEY)
 else:
-    groq_client = None
-    logger.warning("⚠️ GROQ_API_KEY não encontrada!")
+    genai_client = None
+    logger.error("❌ GOOGLE_API_KEY não configurada")
+
+groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+
+# ============================================================
+# AGENT → MODEL REGISTRY
+# ============================================================
+AGENT_MODEL_REGISTRY = {
+    "diagnosis": "gemini-2.0-flash",
+
+    # Escrita de CV - Mantendo o 2.5 mas com fallback de código
+    "cv_writer_semantic": "gemini-2.5-flash", 
+    "cv_formatter": "gemini-2.0-flash",
+
+    # Estratégia
+    "tactical": "gemini-2.0-flash",
+    "library": "gemini-2.0-flash",
+
+    # Inteligência
+    "competitor_analysis": "gemini-2.0-flash",
+    "interview_evaluator": "gemini-2.0-flash",
+}
+
+DEFAULT_MODEL = "gemini-2.0-flash"
 
 # ============================================================
 # IMPORT PROMPTS
@@ -40,238 +54,241 @@ else:
 try:
     from prompts import (
         SYSTEM_AGENT_DIAGNOSIS,
+        SYSTEM_AGENT_CV_WRITER_SEMANTIC,
+        SYSTEM_AGENT_CV_FORMATTER,
         SYSTEM_AGENT_COMBO_TACTICAL,
         SYSTEM_AGENT_LIBRARY_CURATOR,
-        SYSTEM_AGENT_CV_WRITER,
-        SYSTEM_AGENT_COMPETITOR_ANALYSIS 
+        SYSTEM_AGENT_COMPETITOR_ANALYSIS,
+        SYSTEM_AGENT_INTERVIEW_EVALUATOR,
     )
-except ImportError:
-    # Fallback seguro
-    SYSTEM_AGENT_DIAGNOSIS = "Erro"
-    SYSTEM_AGENT_CV_WRITER = "Erro"
-    SYSTEM_AGENT_COMBO_TACTICAL = "Erro"
-    SYSTEM_AGENT_LIBRARY_CURATOR = "Erro"
-    SYSTEM_AGENT_COMPETITOR_ANALYSIS = "Erro"
+except ImportError as e:
+    logger.critical(f"❌ Erro ao importar prompts: {e}")
+    raise e
 
 # ============================================================
-# HELPER: JSON CLEANER
+# JSON CLEANER (REFORÇADO)
 # ============================================================
 def clean_json_string(text: str) -> str:
-    try:
-        if "```" in text:
-            pattern = r"```(?:json)?\s*(.*?)\s*```"
-            match = re.search(pattern, text, re.DOTALL)
-            if match: text = match.group(1)
-        
-        start = text.find("{")
-        end = text.rfind("}")
-        
-        if start != -1 and end != -1:
-            text = text[start : end + 1]
-        else:
-            return "{}"
-
-        text = text.strip()
-        text = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', text)
-        return text
-    except Exception as e:
-        logger.error(f"Erro crítico limpando JSON: {e}")
+    """Limpa a string de retorno da LLM para garantir JSON válido."""
+    if not text:
         return "{}"
 
-# ============================================================
-# CORE: CHAMADA GOOGLE (COM CACHE PERSISTENTE STREAMLIT)
-# ============================================================
-
-# [TECH LEAD MAGIC] - Cache nativo do Streamlit (TTL 24h)
-# Substitui toda a lógica antiga de _make_cache_key e _LLM_CACHE
-@st.cache_data(ttl=3600*24, show_spinner=False)
-def _call_google_cached(system_prompt, user_content, agent_name):
-    """
-    Função interna pura para cachear a resposta. 
-    Recria o cliente aqui dentro para evitar erros de thread/pickle do Streamlit.
-    """
-    if not GOOGLE_API_KEY: return None
+    # Remove blocos de código Markdown ```json ... ```
+    text = re.sub(r"```(?:json)?", "", text)
+    text = re.sub(r"```", "", text)
     
-    # Instância local segura para cache
-    local_client = genai.Client(api_key=GOOGLE_API_KEY)
+    # Encontra o primeiro { e o último }
+    start = text.find("{")
+    end = text.rfind("}")
+    
+    if start == -1 or end == -1:
+        # Se não achar JSON, retorna a string original limpa para o Fallback tentar salvar
+        return text.strip()
+
+    text = text[start:end + 1]
+    # Remove caracteres de controle invisíveis que quebram json.loads
+    text = re.sub(r"[\x00-\x1f\x7f-\x9f]", "", text)
+    return text.strip()
+
+# ============================================================
+# CORE LLM CALL (COM FALLBACK DE RESILIÊNCIA)
+# ============================================================
+@st.cache_data(ttl=86400, show_spinner=False)
+def _call_google_cached(
+    system_prompt: str,
+    user_content: str,
+    agent_name: str,
+    model_name: str,
+):
+    if not genai_client:
+        logger.error("❌ genai_client indisponível")
+        return None
 
     try:
-        combined_prompt = f"""
-        INSTRUÇÃO DO SISTEMA:
-        {system_prompt}
+        # Prompt unificado forçando JSON
+        prompt = f"""
+INSTRUÇÃO DO SISTEMA:
+{system_prompt}
 
-        DADOS DO USUÁRIO:
-        {user_content}
+DADOS DO USUÁRIO:
+{user_content}
 
-        SAÍDA OBRIGATÓRIA:
-        Responda APENAS com um JSON válido.
-        """
+SAÍDA OBRIGATÓRIA:
+Apenas JSON válido.
+"""
 
-        model_id = 'gemini-2.0-flash' 
-
-        response = local_client.models.generate_content(
-            model=model_id,
-            contents=combined_prompt,
+        response = genai_client.models.generate_content(
+            model=model_name,
+            contents=prompt,
             config=types.GenerateContentConfig(
-                response_mime_type='application/json',
-                temperature=0.2, 
+                response_mime_type="application/json",
+                temperature=0.2,
                 max_output_tokens=8192,
-            )
+            ),
         )
-        
-        # Limpa e converte para JSON antes de salvar no cache
-        return json.loads(clean_json_string(response.text))
+
+        cleaned_text = clean_json_string(response.text)
+
+        # TENTATIVA 1: Parse normal
+        try:
+            return json.loads(cleaned_text)
+        except json.JSONDecodeError:
+            # TENTATIVA 2 (FALLBACK): O texto existe, mas o JSON quebrou.
+            # Em vez de retornar None, retornamos o texto bruto empacotado.
+            logger.warning(f"⚠️ JSON quebrado em [{agent_name}]. Usando Fallback de Texto Bruto.")
+            
+            # Criamos um dicionário "coringa" que serve para qualquer agente
+            return {
+                "texto_reescrito": response.text,      # Para Agente 2A
+                "cv_otimizado_texto": response.text,   # Para Agente 2B
+                "veredito": "Análise Realizada (Texto Bruto)", # Para Diagnosis
+                "gaps_fatais": [],
+                "biblioteca_tecnica": [],
+                "perguntas_entrevista": []
+            }
 
     except Exception as e:
-        # Retorna None para não cachear erros
+        logger.error(f"❌ Erro Fatal LLM [{agent_name} | {model_name}]: {e}")
         return None
 
-# -----------------------------------------------------------
-# NOVA FUNÇÃO 1: TRANSCRIÇÃO (AUDIO -> TEXTO via GROQ)
-# -----------------------------------------------------------
-def transcribe_audio_groq(audio_bytes):
-    """
-    Envia bytes de áudio para a Groq (Whisper-large-v3).
-    Retorna: String (Texto transcrito)
-    """
-    if not groq_client:
-        return "Erro: API Groq não configurada."
-    
-    try:
-        # A Groq espera um arquivo tupla ('nome.ext', bytes)
-        # O Streamlit envia bytes, damos um nome fake para o Whisper saber o formato.
-        transcription = groq_client.audio.transcriptions.create(
-            file=("input_audio.m4a", audio_bytes), 
-            model="whisper-large-v3",
-            response_format="text",
-            language="pt" # Força português para evitar alucinação em silêncio
-        )
-        return transcription
-    except Exception as e:
-        logger.error(f"Erro na Groq: {e}")
-        return f"Erro na transcrição: {str(e)}"
 
-# -----------------------------------------------------------
-# NOVA FUNÇÃO 2: ANÁLISE DE ENTREVISTA (TEXTO -> JSON via GEMINI)
-# -----------------------------------------------------------
-def analyze_interview_gemini(question, answer_text, job_description=""):
-    """
-    Analisa a resposta usando o Gemini, considerando o contexto da vaga se disponível.
-    """
-    if not answer_text or len(answer_text) < 5:
-        return None
-
-    # Monta o conteúdo do usuário com contexto extra
-    user_content = f"""
-    CONTEXTO DA VAGA:
-    {job_description[:2000]} (Resumo)
-
-    PERGUNTA DA ENTREVISTA:
-    {question}
-
-    RESPOSTA TRANSCRITA DO CANDIDATO:
-    {answer_text}
-    """
-    
-    # Chama o Gemini com o novo System Prompt dedicado
-    return call_google_flash(SYSTEM_AGENT_INTERVIEW_EVALUATOR, user_content, "interview_evaluator")
-
-def call_google_flash(system_prompt, user_content, agent_name="generic"):
-    """
-    Wrapper para gerenciar logs e chamar a função cacheada.
-    """
-    # Chama a função decorada com cache
-    result = _call_google_cached(system_prompt, user_content, agent_name)
-    
-    if result:
-        # Se retornou, é sucesso (seja do cache ou da API nova)
-        # logger.info(f"✅ Sucesso (ou Cache Hit): {agent_name}") 
-        return result
-    else:
-        logger.error(f"❌ Falha no LLM ou Miss Crítico: {agent_name}")
-        return None
+def call_llm(system_prompt: str, payload: str, agent_name: str):
+    model = AGENT_MODEL_REGISTRY.get(agent_name, DEFAULT_MODEL)
+    return _call_google_cached(system_prompt, payload, agent_name, model)
 
 # ============================================================
-# AGENTES (FUNÇÕES WRAPPERS)
+# PIPELINE CV (CORE PRODUCT)
 # ============================================================
+def run_cv_pipeline(cv_text: str, strategy_payload: dict):
+    logger.info("🧠 Pipeline CV iniciado")
 
+    # 1. Agente Escritor (Semântico)
+    semantic_cv = call_llm(
+        SYSTEM_AGENT_CV_WRITER_SEMANTIC,
+        json.dumps(strategy_payload, ensure_ascii=False),
+        "cv_writer_semantic",
+    )
+
+    # Se falhou totalmente (erro de API), aborta
+    if not semantic_cv:
+        return {"cv_otimizado_completo": "Erro na conexão com a IA (Escrita). Tente novamente."}
+
+    # Se veio do fallback, semantic_cv['texto_reescrito'] conterá o texto bruto (markdown)
+    # Isso permite que o processo continue!
+
+    # 2. Agente Formatador (Visual)
+    formatted_cv = call_llm(
+        SYSTEM_AGENT_CV_FORMATTER,
+        json.dumps(semantic_cv, ensure_ascii=False),
+        "cv_formatter",
+    )
+
+    if not formatted_cv:
+        # Se o formatador falhar, tentamos entregar o texto semântico cru como backup
+        logger.warning("⚠️ Formatador falhou. Entregando texto semântico bruto.")
+        raw_text = semantic_cv.get("texto_reescrito", "")
+        if raw_text:
+            return {"cv_otimizado_completo": raw_text}
+        return {"cv_otimizado_completo": "Erro na formatação final do CV."}
+
+    # Busca a chave correta (seja do JSON limpo ou do fallback)
+    final_text = formatted_cv.get("cv_otimizado_texto") or formatted_cv.get("texto_reescrito")
+    
+    if not final_text:
+        return {"cv_otimizado_completo": "Erro: Conteúdo vazio gerado pela IA."}
+
+    return {"cv_otimizado_completo": final_text}
+
+# ============================================================
+# AGENTES AUXILIARES (COM PROTEÇÃO CONTRA NONE)
+# ============================================================
 def agent_diagnosis(cv, job):
-    res = call_google_flash(SYSTEM_AGENT_DIAGNOSIS, f"VAGA: {job}\nCV: {cv}", "diagnosis")
-    return res if res else {"veredito": "Erro", "gaps_fatais": []}
+    res = call_llm(
+        SYSTEM_AGENT_DIAGNOSIS,
+        f"VAGA: {job}\nCV: {cv}",
+        "diagnosis",
+    )
+    return res if res else {"veredito": "Indisponível", "gaps_fatais": []}
 
-def agent_cv_writer(cv, job):
-    res = call_google_flash(SYSTEM_AGENT_CV_WRITER, f"VAGA: {job}\nCV ORIGINAL: {cv}", "writer")
-    return {"cv_otimizado_completo": res.get("cv_otimizado_texto", "")} if res else {"cv_otimizado_completo": "Erro na reescrita."}
 
 def agent_tactical(job, gaps):
-    gaps_text = json.dumps([g.get("erro") for g in gaps])
-    res = call_google_flash(SYSTEM_AGENT_COMBO_TACTICAL, f"VAGA: {job}\nGAPS: {gaps_text}", "tactical")
-    return res if res else {"perguntas_entrevista": [], "roadmap_semanal": [], "kit_hacker": {}}
+    res = call_llm(
+        SYSTEM_AGENT_COMBO_TACTICAL,
+        json.dumps({"vaga": job, "gaps": gaps}, ensure_ascii=False),
+        "tactical",
+    )
+    return res if res else {"perguntas_entrevista": [], "kit_hacker": {}}
 
-def agent_lib(job, gaps, catalog):
-    gaps_text = json.dumps([g.get("erro") for g in gaps])
-    res = call_google_flash(SYSTEM_AGENT_LIBRARY_CURATOR, f"VAGA: {job}\nGAPS: {gaps_text}\nCATALOGO: {json.dumps(catalog)}", "library")
+
+def agent_library(job, gaps, catalog):
+    res = call_llm(
+        SYSTEM_AGENT_LIBRARY_CURATOR,
+        json.dumps({"vaga": job, "gaps": gaps, "catalogo": catalog}, ensure_ascii=False),
+        "library",
+    )
     return res if res else {"biblioteca_tecnica": []}
 
-def agent_competitor_analysis(user_cv, job, competitors_text):
-    if not competitors_text:
-        return {"analise_comparativa": None}
-    
-    res = call_google_flash(
-        SYSTEM_AGENT_COMPETITOR_ANALYSIS, 
-        f"VAGA: {job}\n\nMEU CV (CANDIDATO): {user_cv}\n\nCVs CONCORRENTES/BENCHMARKS:\n{competitors_text}", 
-        "competitor_analysis"
+
+def agent_competitor_analysis(cv, job, competitors):
+    if not competitors:
+        return {}
+    res = call_llm(
+        SYSTEM_AGENT_COMPETITOR_ANALYSIS,
+        f"VAGA: {job}\nCV: {cv}\nCONCORRENTES:\n{competitors}",
+        "competitor_analysis",
     )
-    return res if res else {"analise_comparativa": None}
+    return res if res else {}
 
 # ============================================================
-# ORQUESTRADOR PARALELO (TURBO MODE - SEQUENCIAL/HÍBRIDO)
+# ORQUESTRADOR FINAL
 # ============================================================
+def run_llm_orchestrator(
+    cv_text,
+    job_description,
+    books_catalog,
+    area,
+    competitors_text=None,
+):
+    logger.info(f"🚀 Iniciando VANT | Área: {area}")
 
-def run_llm_orchestrator(cv_text, job_description, books_catalog, area, competitors_text=None):
-    logger.info(f"🚀 Iniciando VANT (Gemini 2.0 Flash) | Area: {area} | MODO: PARALELO")
-    
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        # ------------------------------------------------------------------
-        # ONDA 1: INDEPENDENTES (Rodam todos juntos agora)
-        # ------------------------------------------------------------------
-        logger.info("⚡ Disparando Onda 1: Diagnóstico, CV Writer e Concorrência...")
-        
-        # Inicia tasks
         future_diag = executor.submit(agent_diagnosis, cv_text, job_description)
-        future_cv = executor.submit(agent_cv_writer, cv_text, job_description)
-        
-        future_comp = None
-        if competitors_text:
-            future_comp = executor.submit(agent_competitor_analysis, cv_text, job_description, competitors_text)
-        
-        # ------------------------------------------------------------------
-        # CHECKPOINT (Esperamos o Diagnóstico pois os outros dependem dele)
-        # ------------------------------------------------------------------
-        data_diag = future_diag.result() # Bloqueia aqui até Diagnóstico terminar
-        gaps = data_diag.get("gaps_fatais", [])
-        logger.info("✅ Diagnóstico concluído. Gaps identificados.")
 
-        # ------------------------------------------------------------------
-        # ONDA 2: DEPENDENTES (Rodam juntos assim que temos os Gaps)
-        # ------------------------------------------------------------------
-        logger.info("⚡ Disparando Onda 2: Tático e Biblioteca...")
-        
+        future_comp = (
+            executor.submit(
+                agent_competitor_analysis,
+                cv_text,
+                job_description,
+                competitors_text,
+            )
+            if competitors_text
+            else None
+        )
+
+        diag_result = future_diag.result()
+        gaps = diag_result.get("gaps_fatais", [])
+
+        strategy_payload = {
+            "cv_original": cv_text,
+            "diagnostico": diag_result,
+            "vaga": job_description,
+        }
+
+        # Executa o pipeline de CV
+        cv_result = run_cv_pipeline(cv_text, strategy_payload)
+
         future_tactical = executor.submit(agent_tactical, job_description, gaps)
-        future_lib = executor.submit(agent_lib, job_description, gaps, books_catalog)
-        
-        # ------------------------------------------------------------------
-        # COLETA FINAL (Esperamos todos terminarem)
-        # ------------------------------------------------------------------
-        data_cv = future_cv.result()
-        data_tactical = future_tactical.result()
-        data_lib = future_lib.result()
-        
-        data_competitor = {}
+        future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
+
+        result = {
+            **diag_result,
+            **cv_result,
+            **future_tactical.result(),
+            **future_library.result(),
+        }
+
         if future_comp:
-            data_competitor = future_comp.result()
+            result.update(future_comp.result())
 
-    logger.info("🏁 Orquestração Paralela Finalizada com Sucesso.")
-
-    # Fusão dos resultados
-    return {**data_diag, **data_cv, **data_tactical, **data_lib, **data_competitor}
+    logger.info("🏁 Orquestração concluída")
+    return result

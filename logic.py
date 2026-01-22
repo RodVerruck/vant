@@ -3,9 +3,108 @@ import json
 import os
 import urllib.parse
 from pypdf import PdfReader
-from fpdf import FPDF
-import logging
+import unicodedata
 import re
+from io import BytesIO
+from docx import Document
+from docx.shared import Pt, RGBColor, Cm
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT, WD_TAB_LEADER
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+from weasyprint import HTML, CSS
+
+# Sistema de logging unificado
+from logging_config import setup_logger
+logger = setup_logger("VANT_LOGIC")
+
+# ==============================================================================
+# HELPER FUNCTIONS (ESSENCIAIS PARA O PARSER)
+# ==============================================================================
+
+def safe_txt(text):
+    """
+    Limpa caracteres quebrados de encoding e normaliza espaços.
+    
+    Args:
+        text (str): Texto bruto a ser limpo.
+    
+    Returns:
+        str: Texto limpo com caracteres especiais substituídos e espaços normalizados.
+    """
+    if not text: return ""
+    replacements = {
+        '–': '-', '—': '-', '“': '"', '”': '"', '‘': "'", '’': "'", 
+        '•': '', '●': '', '⚫': '', '■': '', '\u200b': '', '\t': ' ', '*': '' 
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    
+    # Remove espaços duplos
+    text = re.sub(r'\s{2,}', ' ', text)
+    # Remove markdown residual se necessário
+    text = text.replace('**', '').replace('__', '').replace('#', '')
+    if text.strip().startswith('- '): text = text.strip()[2:]
+    
+    return text.strip()
+
+def clean_garbage(text):
+    """Remove termos como (não informado) e sujeira de OCR."""
+    if not text: return ""
+    garbage = [
+        r'\(?n[ãa]o\s*informado\)?', r'\(?n[ãa]o\s*fornecido\)?', 
+        r'\(?sem\s*telefone\)?', r'\(?undefined\)?', r'null'
+    ]
+    clean = text
+    for p in garbage: 
+        clean = re.sub(p, '', clean, flags=re.IGNORECASE)
+    
+    clean = clean.strip().rstrip('|').strip()
+    
+    # Se sobrou apenas o rótulo, retorna vazio
+    if clean.lower() in ['telefone:', 'email:', 'linkedin:', 'local:', 'e', 'a']: 
+        return ""
+        
+    return clean
+
+def normalize_visual(text):
+    if not text:
+        return ""
+
+    # Remove Markdown estrutural (títulos, bold, etc)
+    text = re.sub(r'^#+\s*', '', text)   # remove #, ##, ### no início
+    text = re.sub(r'[*_`]+', '', text)   # remove ** __ `
+
+    # Normalizações visuais que você já tem
+    text = unicodedata.normalize("NFKC", text)
+    text = re.sub(r'\s{2,}', ' ', text)
+
+    return text.strip()
+
+
+
+def extract_date(text):
+    """Extrai padrões de data (ex: Jan 2020 - Atual) e retorna o resto do texto."""
+    # Padrões comuns de data em CVs
+    patterns = [
+        r'(\b(?:jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-z]*\s*(?:de)?\s*\d{4}\s*[-–]\s*(?:presente|atual|\w+\s*\d{4}))',
+        r'(\d{2}/\d{4}\s*[-–]\s*(?:presente|atual|\d{2}/\d{4}))',
+        r'(\d{4}\s*[-–]\s*(?:presente|atual|\d{4}))'
+    ]
+    found = ""
+    text_clean = text
+    
+    for pat in patterns:
+        m = re.search(pat, text, re.IGNORECASE)
+        if m:
+            found = m.group(1).strip()
+            # Remove a data do texto original para sobrar só o Cargo
+            text_clean = text.replace(m.group(0), '').strip()
+            # Limpa separadores que sobraram no fim
+            if text_clean.endswith('|') or text_clean.endswith('-'): 
+                text_clean = text_clean[:-1].strip()
+            break
+            
+    return text_clean, found
 
 # ============================================================
 # IMPORTA A INTELIGÊNCIA
@@ -15,8 +114,7 @@ from llm_core import run_llm_orchestrator
 # ============================================================
 # CONFIG
 # ============================================================
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("VANT_LOGIC")
+# Configuração de logging já feita via setup_logger
 
 # ============================================================
 # CSS (EXIGIDO PELO app.py)
@@ -298,42 +396,122 @@ def detect_job_area(job_description):
             
     return best_match
 
-# Adicione esta função auxiliar no logic.py (pode ser antes de 'gerar_link_amazon')
-def format_text_to_html(text):
+def format_text_to_html_diagnostic(text):
     """
-    Converte Markdown para HTML com Classes CSS semânticas.
-    Refatorado para remover estilos inline e facilitar controle via CSS.
+    Versão específica para blocos de diagnóstico (mantém cores vibrantes).
+    Diferente do Paper View que usa preto.
     """
     if not text: return ""
     
+    # Escapa HTML
     text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     
-    # 1. Títulos
-    # Mantemos o estilo inline aqui por ser muito específico e estrutural
-    text = re.sub(
-        r'###\s*(.*?)(?:\n|$)', 
-        r'<h3 style="color: #0f172a; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; margin-top: 25px; margin-bottom: 15px; padding-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">\1</h3>', 
-        text
-    )
+    # Negrito → Ciano Neon (cor de destaque do sistema)
+    text = re.sub(r'\*\*(.*?)\*\*', r'<strong style="color: #38BDF8; font-weight: 700;">\1</strong>', text)
     
-    # [ALTERAÇÃO TECH LEAD] - Usamos classe CSS em vez de cor fixa
-    # Isso permite que o .paper-view mude a cor automaticamente
-    text = re.sub(r'\*\*(.*?)\*\*', r'<strong class="vant-highlight">\1</strong>', text)
+    # Itálico
+    text = re.sub(r'(?<!\*)\*(?!\*)(.*?)\*', r'<em style="color: #94A3B8; font-style: normal; font-weight: 600;">\1</em>', text)
     
-    # 3. Itálico
-    text = re.sub(r'(?<!\*)\*(?!\*)(.*?)\*', r'<em style="color: #64748b; font-style: normal; font-weight: 600;">\1</em>', text)
-    
-    # 4. Listas (Bullets)
-    text = re.sub(
-        r'^\s*-\s+(.*?)(?:\n|$)', 
-        r'<div style="display: flex; gap: 10px; margin-bottom: 6px; align-items: flex-start;"><span style="color: #38BDF8; font-weight: bold; line-height: 1.6;">•</span><span style="flex: 1; line-height: 1.6;">\1</span></div>', 
-        text, 
-        flags=re.MULTILINE
-    )
-    
+    # Quebras de linha
     text = text.replace('\n', '<br>')
     
     return text
+
+# ============================================================
+# FORMATADOR HTML V11 (STABLE LAYOUT - DUAL ROW)
+# ============================================================
+def format_text_to_html(text):
+    if not text: return ""
+    
+    text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    html_output = []
+    lines = text.split('\n')
+    
+    for line in lines:
+        line = line.strip()
+        if not line: continue
+            
+        # 1. NOME & 2. SEÇÕES (Manter igual)
+        if line.startswith('# '):
+            clean = line.replace('# ', '').upper()
+            html_output.append(f'<h1 class="vant-cv-name">{clean}</h1>')
+        elif line.startswith('###'):
+            clean = line.replace('###', '').strip().upper()
+            html_output.append(f'<h2 class="vant-cv-section">{clean}</h2>')
+            
+        # 3. TRATAMENTO DE LISTAS (CARGOS vs TAREFAS)
+        elif line.startswith('- ') or line.startswith('* ') or line.startswith('• '):
+            clean = re.sub(r'^[-*•]\s+', '', line)
+            clean = re.sub(r'\*\*(.*?)\*\*', r'<span class="vant-bold">\1</span>', clean)
+            
+            # --- LÓGICA DE HEADER DE VAGA (ESTRUTURA DE 2 LINHAS) ---
+            if '|' in line:
+                parts = [p.strip() for p in clean.split('|')]
+                
+                # Variáveis padrão
+                cargo = clean
+                empresa = ""
+                data = ""
+                
+                if len(parts) >= 3:
+                    cargo = parts[0]
+                    empresa = parts[1]
+                    data = parts[2].replace('*', '').replace('_', '').strip()
+                elif len(parts) == 2:
+                    cargo = parts[0]
+                    empresa = parts[1].replace('*', '').strip()
+                
+                # Montagem do HTML com quebra forçada
+                job_html = f"""
+                <div class="vant-cv-job-container">
+                    <div class="vant-job-row-primary">
+                        <span class="vant-job-title">{cargo}</span>
+                        <span class="vant-job-sep">|</span>
+                        <span class="vant-job-company">{empresa}</span>
+                    </div>
+                    """
+                
+                # Só adiciona a linha da data se ela existir
+                if data:
+                    job_html += f"""
+                    <div class="vant-job-row-secondary">
+                        <span class="vant-job-date">{data}</span>
+                    </div>
+                    """
+                
+                job_html += "</div>"
+                html_output.append(job_html)
+            
+            # --- LÓGICA DE TAREFAS (Manter igual) ---
+            else:
+                row = f"""
+                <div class="vant-cv-grid-row">
+                    <div class="vant-cv-bullet-col">•</div>
+                    <div class="vant-cv-text-col">{clean}</div>
+                </div>
+                """
+                html_output.append(row)
+
+        # 4. CONTATOS & 5. TEXTO CORRIDO (Manter igual)
+        elif ('|' in line or '@' in line) and len(line) < 300:
+            clean_line = line.replace('**', '')
+            parts = [p.strip() for p in clean_line.split('|')]
+            items_html = []
+            for p in parts:
+                if p:
+                    if ":" in p:
+                        label, val = p.split(":", 1)
+                        block = f'<span class="vant-contact-block"><span class="vant-bold">{label}:</span> {val}</span>'
+                        items_html.append(block)
+                    else:
+                        items_html.append(f'<span class="vant-contact-block">{p}</span>')
+            full_html = '<span class="vant-contact-separator"> • </span>'.join(items_html)
+            html_output.append(f'<div class="vant-cv-contact-line">{full_html}</div>')
+        else:
+            clean = re.sub(r'\*\*(.*?)\*\*', r'<span class="vant-bold">\1</span>', line)
+            html_output.append(f'<p class="vant-cv-paragraph">{clean}</p>')
+            
+    return "\n".join(html_output)
 
 # ============================================================
 # LINK AMAZON INTELIGENTE
@@ -358,170 +536,325 @@ def gerar_link_amazon(titulo_livro, autor=None):
         return f"https://www.amazon.com.br/s?k=livros+profissionais&tag={tag_afiliado}"
 
 # ============================================================
-# PDF FINAL (COM SANITIZAÇÃO DE ENCODING)
+# GERADOR DE PDF (VERSÃO FINAL COM WEASYPRINT)
 # ============================================================
-def clean_text_for_pdf(text):
-    """Remove caracteres que quebram o encoding latin-1 do FPDF (ex: emojis, bullets complexos)"""
-    if not text: return ""
-    # Substitui caracteres comuns problemáticos
-    replacements = {
-        '–': '-', '—': '-', '“': '"', '”': '"', '’': "'", '‘': "'", '…': '...', '•': '-'
-    }
-    for old, new in replacements.items():
-        text = text.replace(old, new)
-    
-    # Remove qualquer coisa que não seja latin-1 compatível
-    return text.encode('latin-1', 'replace').decode('latin-1')
+# GERADOR DE PDF (VERSÃO FINAL COM WEASYPRINT)
+# ============================================================
+from weasyprint import HTML, CSS
+import re
+import unicodedata
 
-# ============================================================
-# GERADOR DE PDF (COM MARCA D'ÁGUA DE TOPO - À PROVA DE FALHAS)
-# ============================================================
+# Importa constantes CSS centralizadas
+from css_constants import CSS_V13, CSS_PDF
+# ==============================================================================
+# 1. PARSER ENGINE (Mantido para limpar seus dados brutos)
+# ==============================================================================
+
+def parse_raw_data_to_struct(raw_text):
+    """
+    CÉREBRO DO SISTEMA: Transforma texto bruto em dados estruturados.
+    Versão Fiel: Mantém rótulos (Email:, Telefone:) exatamente como aparecem.
+    """
+    raw_lines = raw_text.split('\n')
+    parsed = {"name": "", "contacts": [], "sections": []}
+    curr_sec = None
+    buffer = []
+
+    def flush():
+        nonlocal curr_sec
+        if not curr_sec:
+            buffer.clear()
+            return
+        
+        # SKILLS
+        if any(k in curr_sec for k in ["SKILLS", "COMPETÊNCIAS"]):
+            txt = " ".join(buffer).replace('\n', ' ')
+            if '|' in txt:
+                s = [safe_txt(x) for x in txt.split('|') if safe_txt(x)]
+            else:
+                s = [safe_txt(x) for x in re.split(r'\s{2,}', txt) if safe_txt(x)]
+
+            if s:
+                parsed["sections"].append({
+                    "title": curr_sec,
+                    "type": "chips",
+                    "content": s
+                })
+
+        # RESUMO
+        elif "RESUMO" in curr_sec:
+            full = " ".join([safe_txt(x) for x in buffer if safe_txt(x)])
+            if full:
+                parsed["sections"].append({
+                    "title": curr_sec,
+                    "type": "paragraph",
+                    "content": full
+                })
+
+        # LISTAS SIMPLES
+        elif any(k in curr_sec for k in ["IDIOMA", "CERTIFICA"]):
+            l = [safe_txt(x) for x in buffer if safe_txt(x)]
+            if l:
+                parsed["sections"].append({
+                    "title": curr_sec,
+                    "type": "list_simple",
+                    "content": l
+                })
+
+        # JOBS / EXPERIÊNCIA
+        else:
+            job_blocks = []
+            clean_lines = [safe_txt(x) for x in buffer if safe_txt(x)]
+            i = 0
+
+            while i < len(clean_lines):
+                line = clean_lines[i]
+
+                # REGRA DE OURO:
+                # Só é cabeçalho de cargo se tiver "|"
+                is_job_header = '|' in line
+
+                if is_job_header:
+                    text_rem, date_found = extract_date(line)
+
+                    # Divide cargo | empresa
+                    parts = text_rem.split('|', 1)
+                    cargo = parts[0].strip()
+                    empresa = parts[1].strip() if len(parts) > 1 else ""
+
+                    job_blocks.append({
+                        "cargo": cargo,
+                        "empresa": empresa,
+                        "date": date_found,
+                        "details": []
+                    })
+
+                else:
+                    # Tudo que NÃO é cabeçalho vira detalhe
+                    if job_blocks:
+                        clean_detail = line.strip()
+
+                        # ignora lixo visual
+                        if clean_detail not in ['.', '-', '•', '|']:
+                            job_blocks[-1]["details"].append(clean_detail)
+
+                i += 1
+
+            # SALVA UMA ÚNICA VEZ
+            if job_blocks:
+                parsed["sections"].append({
+                    "title": curr_sec,
+                    "type": "jobs",
+                    "content": job_blocks
+                })
+
+        buffer.clear()
+
+
+    # ================= LOOP PRINCIPAL =================
+    for line in raw_lines:
+        raw = line.strip()
+        if not raw:
+            continue
+
+        # NOME — apenas normalização visual
+        if not parsed["name"]:
+            parsed["name"] = normalize_visual(raw)
+            continue
+
+        # CONTATOS — CÓPIA LITERAL DA LINHA INTEIRA
+        if not parsed["sections"] and (
+            "@" in raw or
+            "linkedin" in raw.lower() or
+            "telefone" in raw.lower() or
+            "local" in raw.lower()
+        ):
+            parsed["contacts"].append(raw.strip())
+            continue
+
+
+        # A PARTIR DAQUI, LIMPEZA SEMÂNTICA NORMAL
+        clean = clean_garbage(safe_txt(raw))
+
+        # 🔥 EXCEÇÃO PARA IDIOMAS E CERTIFICAÇÕES
+        if not clean:
+            if curr_sec and any(k in curr_sec for k in ["IDIOMA", "IDIOMAS", "CERTIFICAÇÃO", "CERTIFICAÇÕES"]):
+                buffer.append(raw)
+            continue
+
+        upper = clean.upper()
+        KEYWORDS = ["RESUMO", "SKILLS", "EXPERIÊNCIA", "HISTÓRICO", "FORMAÇÃO", "IDIOMA", "CERTIFICA"]
+        if any(k in upper for k in KEYWORDS) and len(clean) < 50:
+            flush()
+            curr_sec = upper
+            continue
+
+        if curr_sec:
+            buffer.append(raw)
+
+    flush()
+    print(parsed)
+    return parsed
+
+# ==============================================================================
+# 2. HTML GENERATOR
+# ==============================================================================
+
+def render_cv_html(parsed_data):
+    """
+    FONTE ÚNICA DA VERDADE (HTML PURO).
+    HTML final deve ficar VISUALMENTE IDÊNTICO À TELA.
+    """
+    import re
+
+    def normalize(txt: str) -> str:
+        return re.sub(r'[^\w\s]', '', txt.lower()).strip()
+
+    # --- CONTATOS ---
+    contacts_html = ""
+    if parsed_data.get("contacts"):
+        raw = parsed_data["contacts"][0]
+        raw = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', raw)
+        raw = re.sub(r'\s*\|\s*', ' <span class="vant-contact-separator">•</span> ', raw)
+        contacts_html = raw.replace('\n', ' ')
+
+    sections_html = ""
+
+    for sec in parsed_data.get("sections", []):
+        content_html = ""
+
+        # --- SKILLS ---
+        if sec["type"] == "chips":
+            content_html = (
+                '<div class="vant-skills-container">' +
+                ''.join(f'<span class="vant-skill-chip">{s}</span>' for s in sec.get("content", [])) +
+                '</div>'
+            )
+
+        # --- PARÁGRAFO ---
+        elif sec["type"] == "paragraph":
+            txt = re.sub(r'\*\*(.*?)\*\*', r'<span class="vant-bold">\1</span>', sec.get("content", ""))
+            content_html = f'<div class="summary-text">{txt}</div>'
+
+        # --- EXPERIÊNCIA ---
+        elif sec["type"] == "jobs":
+            jobs_html = ""
+
+            for job in sec.get("content", []):
+                bullets_html = ""
+
+                cargo_norm = normalize(job.get("cargo", ""))
+
+                raw_details = []
+
+                for d in job.get("details", []):
+                    parts = [p.strip() for p in d.split('|') if p.strip()]
+                    raw_details.extend(parts)
+
+                for raw in raw_details:
+                    bullets_html += f"""
+                    <div class="vant-cv-grid-row">
+                        <div class="vant-cv-bullet-col">•</div>
+                        <div class="vant-cv-text-col">{raw}</div>
+                    </div>
+                    """
+
+
+                empresa = job.get("empresa", "")
+                date = job.get("date", "")
+
+                jobs_html += f"""
+                <div class="vant-cv-job-container vant-avoid-break">
+                    <div class="vant-job-title">
+                        {job.get("cargo", "")}
+                        <span class="vant-job-company"> | {empresa}</span>
+                    </div>
+                    <div class="vant-job-date">{date}</div>
+                    {bullets_html}
+                </div>
+                """
+
+            content_html = jobs_html
+
+        # --- SEÇÃO ---
+        sections_html += f"""
+        <div class="vant-cv-section">{sec.get("title", "")}</div>
+        {content_html}
+        """
+
+    return f"""
+    <div class="cv-paper-sheet">
+        <div class="vant-cv-name">{parsed_data.get("name", "")}</div>
+        <div class="vant-cv-contact-line">{contacts_html}</div>
+        {sections_html}
+    </div>
+    """
+# ==============================================================================
+# 3. FUNÇÃO PRINCIPAL (Interface com seu app.py)
+# ==============================================================================
+
 def gerar_pdf_candidato(data):
+    """
+    Gera PDF via WeasyPrint usando a MESMA estrutura da tela.
+    """
     try:
-        pdf = FPDF()
+        # 1. Obter texto bruto
+        raw_text = data.get('cv_otimizado_completo', '')
         
-        # [TECH LEAD MAGIC] - Metadado Oculto (Camada 1 de Segurança)
-        pdf.set_creator("VANT_NEURAL_ENGINE_V2") 
-        pdf.set_author("Vant AI System")
+        # 2. Obter o HTML do componente (O MESMO DA TELA)
+        # USAR format_text_to_html DIRETAMENTE PARA GARANTIR FIDELIDADE VISUAL
+        body_html = format_text_to_html(raw_text)
         
-        pdf.add_page()
+        # Envolver em div cv-paper-sheet para casar com o CSS
+        body_html = f'<div class="cv-paper-sheet">{body_html}</div>'
         
-        # [TECH LEAD MAGIC] - Marca d'água no TOPO (Camada 2 de Segurança)
-        # Motivo: O usuário sempre seleciona o topo. É impossível "esquecer".
-        # Disfarçamos de "ID de Protocolo" para dar autoridade.
-        pdf.set_font("Arial", "I", 8)
-        pdf.set_text_color(160, 160, 160) # Cinza claro profissional
-        protocolo = "DOC-REF: VANT-NEURAL-ENGINE-CERTIFIED | SYSTEM V2.0"
-        pdf.cell(0, 5, clean_text_for_pdf(protocolo), ln=True, align="R") # Alinhado à direita (chique)
-        pdf.ln(5)
-
-        # Restaura fonte para o Título Principal
-        pdf.set_text_color(0, 0, 0) # Preto
-        pdf.set_font("Arial", "B", 16)
+        # 3. Criar o envelope HTML completo para o PDF
+        full_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                /* Injeta o CSS V13 aqui para garantir a formatação */
+                {CSS_V13}
+            </style>
+        </head>
+        <body>
+            {body_html}
+        </body>
+        </html>
+        """
         
-        titulo = clean_text_for_pdf(f"DOSSIE VANT — Nota ATS: {data.get('nota_ats', 0)}")
-        pdf.cell(0, 10, titulo, ln=True, align="C")
-        pdf.ln(5)
-
-        # GAPS
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, clean_text_for_pdf("1. Gaps Fatais:"), ln=True)
-        pdf.set_font("Arial", size=11)
-
-        for gap in data.get("gaps_fatais", []):
-            erro = clean_text_for_pdf(gap.get("erro", ""))
-            correcao = clean_text_for_pdf(gap.get("correcao_sugerida", ""))
-
-            pdf.set_text_color(180, 0, 0)
-            pdf.cell(0, 8, f"[X] {erro}", ln=True)
-            pdf.set_text_color(0, 0, 0)
-            pdf.multi_cell(0, 7, f"Acao recomendada: {correcao}")
-            pdf.ln(1)
-
-        # PERFIL
-        pdf.ln(3)
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, clean_text_for_pdf("2. Perfil Otimizado:"), ln=True)
-        pdf.set_font("Arial", size=11)
-
-        headline = clean_text_for_pdf(data.get('linkedin_headline',''))
-        resumo = clean_text_for_pdf(data.get('resumo_otimizado',''))
-
-        pdf.multi_cell(
-            0,
-            7,
-            f"Headline:\n{headline}\n\nResumo:\n{resumo}"
+        # 4. Render PDF
+        pdf_bytes = HTML(string=full_html).write_pdf(
+            stylesheets=[CSS(string=CSS_PDF)]
         )
-        
-        # Opcional: Rodapé simples apenas para branding (não crítico para detecção)
-        pdf.set_y(-15)
-        pdf.set_font("Arial", "I", 8)
-        pdf.set_text_color(200, 200, 200)
-        pdf.cell(0, 10, clean_text_for_pdf("Gerado por VANT AI"), 0, 0, 'C')
+        return pdf_bytes
 
-        return pdf.output(dest="S").encode("latin-1")
     except Exception as e:
-        logger.error(f"Erro ao gerar PDF: {e}")
-        return b"%PDF-1.4\n%Error generating PDF"
-
+        # Fallback mantido
+        from fpdf import FPDF as FPDF_ERR
+        err = FPDF_ERR(); err.add_page(); err.set_font("Arial", size=12)
+        err.cell(0, 10, f"Erro WeasyPrint: {str(e)}", ln=True)
+        return err.output(dest="S").encode("latin-1")
 # ============================================================
-# ORQUESTRADOR BLINDADO (ATUALIZADO COM CONCORRÊNCIA)
+# HELPER FUNCTIONS PARA ANÁLISE DE CV
 # ============================================================
-def analyze_cv_logic(cv_text, job_description, competitor_files=None):
-    
-    # [DEV MODE - INICIO] -----------------------------------------
-    # Mude para True para testar o CSS/Layout instantaneamente.
-    # Mude para False (ou apague este bloco) para voltar à IA real.
-    DEV_MODE = False 
 
-    if DEV_MODE:
-        logger.info("🚧 DEV MODE: Bypass de IA ativado.")
-        return {
-            "veredito": "APROVADO (MOCK)",
-            "nota_ats": 88,
-            "analise_por_pilares": {"impacto": 90, "keywords": 85, "ats": 95},
-            "linkedin_headline": "Senior Software Engineer | Python | AWS",
-            "resumo_otimizado": "Profissional focado em arquitetura escalável...",
-            
-            # TESTE DO REGEX: Incluímos ### e ** e - para ver se o CSS limpa tudo
-            "cv_otimizado_completo": """### Experiência Profissional
-
-**Senior Tech Lead** | Vant Corp
-*Jan 2022 - Presente*
-- **Liderança Técnica**: Gerenciei equipe de **15 devs**, focando em microsserviços.
-- **Resultados**: Reduzi custos da **AWS** em **40%** otimizando clusters.
-- **Pipeline**: Criei CI/CD que reduziu deploy para **5 minutos**.
-
-### Projetos Anteriores
-
-**Backend Dev** | StartUp X
-*2018 - 2021*
-- **API**: Criei APIs em **Python** para **1M requests/dia**.
-- **Performance**: Melhorei queries SQL em **300%**.""",
-
-            "gaps_fatais": [
-                {"erro": "Falta de Métricas", "evidencia": "Texto vago", "correcao_sugerida": "Use **números**."},
-                {"erro": "Tecnologia Antiga", "evidencia": "Uso de SVN", "correcao_sugerida": "Migre para **Git**."}
-            ],
-            "analise_comparativa": {
-                "vantagens_concorrentes": ["O Benchmark tem PMP.", "O Sênior fala alemão."],
-                "seus_diferenciais": ["Você domina **Python**.", "Você tem **Startup** no CV."],
-                "plano_de_ataque": "Aposte na agilidade.",
-                "probabilidade_aprovacao": 72
-            },
-            # Dados mínimos para as outras abas não quebrarem
-            "biblioteca_tecnica": [{"titulo": "Clean Code", "autor": "Uncle Bob", "motivo": "Essencial."}],
-            "roadmap_semanal": [{"semana": "Semana 1", "tarefas": ["Arrumar LinkedIn"]}],
-            "perguntas_entrevista": [{"pergunta": "Fale sobre um erro.", "expectativa_recrutador": "Honestidade.", "dica_resposta": "Seja direto."}],
-            "kit_hacker": {"boolean_string": "site:linkedin.com/in python"}
-        }
-    # [DEV MODE - FIM] --------------------------------------------
-    
-    
-    # 1. Validação de Input (Fail Fast)
-    if not cv_text or len(cv_text.strip()) < 50:
-        logger.warning("Tentativa de análise com CV vazio ou inválido.")
-        return {
-            "veredito": "Erro de Leitura (Arquivo Vazio/Inválido)",
-            "nota_ats": 0,
-            "gaps_fatais": [{"erro": "Arquivo Ilegível", "evidencia": "Não conseguimos extrair texto do PDF.", "correcao_sugerida": "Envie um PDF selecionável (texto), não escaneado."}]
-        }
-
-    # 2. PROCESSA CONCORRENTES (AQUI ESTÁ A ATUALIZAÇÃO CRÍTICA)
+def _process_competitors(competitor_files):
+    """Processa arquivos de concorrentes e retorna texto formatado."""
     competitors_text = ""
     if competitor_files:
         for i, comp_file in enumerate(competitor_files):
-            # Extrai texto de cada arquivo
             c_text = extrair_texto_pdf(comp_file)
             if c_text:
                 competitors_text += f"\n--- CONCORRENTE {i+1} ---\n{c_text[:15000]}\n"
         logger.info(f"⚔️ Processando {len(competitor_files)} arquivos de concorrência.")
+    return competitors_text
 
-    # 3. Lógica Original de Catálogo
+def _curate_books(area_detected):
+    """Cura lista de livros baseada na área detectada."""
     books_catalog = load_books_catalog()
-    area_detected = detect_job_area(job_description)
-    logger.info(f"🔎 Área detectada: {area_detected.upper()}") 
-    
     curated_books = []
     seen_titles = set()
 
@@ -565,8 +898,65 @@ def analyze_cv_logic(cv_text, job_description, competitor_files=None):
         for b in fallback_list:
             add_book_safe(b, "fallback")
 
-    # Prepara payload
-    catalog_payload = {"biblioteca_universal": curated_books}
+    return {"biblioteca_universal": curated_books}
+
+# ============================================================
+# ORQUESTRADOR BLINDADO (ATUALIZADO)
+# ============================================================
+def analyze_cv_logic(cv_text, job_description, competitor_files=None):
+    
+    # [DEV MODE - INICIO] -----------------------------------------
+    DEV_MODE = False  # Toggle para testes rápidos sem gastar tokens
+
+    if DEV_MODE:
+        logger.info("🚧 DEV MODE: Bypass de IA ativado.")
+        return {
+            "veredito": "APROVADO (MOCK)",
+            "nota_ats": 88,
+            "analise_por_pilares": {"impacto": 90, "keywords": 85, "ats": 95},
+            "linkedin_headline": "Senior Software Engineer | Python | AWS",
+            "resumo_otimizado": "Profissional focado em arquitetura escalável...",
+            "cv_otimizado_completo": """### Experiência Profissional...""",
+            "gaps_fatais": [
+                {"erro": "Falta de Métricas", "evidencia": "Texto vago", "correcao_sugerida": "Use **números**."},
+                {"erro": "Tecnologia Antiga", "evidencia": "Uso de SVN", "correcao_sugerida": "Migre para **Git**."}
+            ],
+            "analise_comparativa": {
+                "vantagens_concorrentes": ["O Benchmark tem PMP.", "O Sênior fala alemão."],
+                "seus_diferenciais": ["Você domina **Python**.", "Você tem **Startup** no CV."],
+                "plano_de_ataque": "Aposte na agilidade.",
+                "probabilidade_aprovacao": 72
+            },
+            # [ATUALIZADO] Mock alinhado com a nova estrutura (sem roadmap)
+            "biblioteca_tecnica": [{"titulo": "Clean Code", "autor": "Uncle Bob", "motivo": "Essencial."}],
+            "perguntas_entrevista": [{"pergunta": "Fale sobre um erro.", "expectativa_recrutador": "Honestidade.", "dica_resposta": "Seja direto."}],
+            "kit_hacker": {"boolean_string": "site:linkedin.com/in python"},
+            "projeto_pratico": {
+                "titulo": "API de Alta Performance",
+                "descricao": "Criar uma API em FastAPI com cache Redis.",
+                "como_apresentar": "Diga que reduziu latência em 50ms."
+            }
+        }
+    # [DEV MODE - FIM] --------------------------------------------
+    
+    
+    # 1. Validação de Input (Fail Fast)
+    if not cv_text or len(cv_text.strip()) < 50:
+        logger.warning("Tentativa de análise com CV vazio ou inválido.")
+        return {
+            "veredito": "Erro de Leitura (Arquivo Vazio/Inválido)",
+            "nota_ats": 0,
+            "gaps_fatais": [{"erro": "Arquivo Ilegível", "evidencia": "Não conseguimos extrair texto do PDF.", "correcao_sugerida": "Envie um PDF selecionável (texto), não escaneado."}]
+        }
+
+    # 2. PROCESSA CONCORRENTES
+    competitors_text = _process_competitors(competitor_files)
+
+    # 3. Lógica Original de Catálogo
+    area_detected = detect_job_area(job_description)
+    logger.info(f"🔎 Área detectada: {area_detected.upper()}") 
+    
+    catalog_payload = _curate_books(area_detected)
     
     # Chama o orquestrador
     try:
@@ -586,3 +976,619 @@ def analyze_cv_logic(cv_text, job_description, competitor_files=None):
             "nota_ats": 0,
             "gaps_fatais": [{"erro": "Falha no Processamento", "evidencia": str(e), "correcao_sugerida": "Tente novamente mais tarde."}]
         }
+        
+# ============================================================
+# [ATUALIZADO] ENGINE HEURÍSTICO COM ENRIQUECIMENTO DE CARGO
+# ============================================================
+def analyze_preview_lite(cv_text, job_description):
+    import string
+    import re
+
+    # 1. BANCO DE DADOS DE CARGOS (HARDCODED PARA RAPIDEZ)
+    # Palavras que OBRIGATORIAMENTE deveriam ter nessas vagas
+    JOB_ROLES_DB = {
+        # T.I. / Tech
+        r"(dev|desenvolvedor|engenheiro de software|programador|front|back|full)": 
+            {"clean code", "git", "api", "rest", "docker", "testes", "agile", "scrum", "banco de dados"},
+        
+        r"(dados|data|analista de dados|cientista)": 
+            {"sql", "python", "etl", "dashboard", "power bi", "estatística", "modelagem", "analytics"},
+            
+        r"(suporte|infra|sysadmin|ti|help desk|técnico)": 
+            {"sla", "chamados", "windows", "linux", "redes", "hardware", "configuração", "manutenção", "azure", "ad"},
+            
+        # Negócios
+        r"(vendas|sales|comercial|vendedor|sdr|bdr)": 
+            {"prospecção", "crm", "funil", "negociação", "fechamento", "cold call", "metas", "leads"},
+            
+        r"(marketing|growth|mkt)": 
+            {"seo", "branding", "conteúdo", "analytics", "campanhas", "social media", "tráfego", "copy"},
+            
+        r"(produto|product|pm|po)": 
+            {"roadmap", "backlog", "discovery", "user", "metrics", "kpis", "stakeholders", "priorização"},
+        
+        # Administrativo / RH
+        r"(rh|recursos humanos|recrutador|bp)": 
+            {"triagem", "entrevistas", "cultura", "treinamento", "turnover", "admissão", "benefícios"},
+            
+        r"(financeiro|contábil|fiscal)": 
+            {"fluxo de caixa", "conciliação", "excel", "relatórios", "auditoria", "impostos", "dre"}
+    }
+    
+    # Lista Genérica de "Alta Performance" (Fallback do Fallback)
+    UNIVERSAL_KEYWORDS = {"liderança", "comunicação", "projetos", "resultados", "kpis", "processos", "equipe", "inglês", "gestão"}
+
+    # ============================================================
+
+    def normalize(text):
+        translator = str.maketrans('', '', string.punctuation)
+        return set(text.lower().translate(translator).split())
+
+    cv_tokens = normalize(cv_text)
+    
+    # --- LÓGICA DE DETECÇÃO DE INPUT PREGUIÇOSO ---
+    is_lazy_input = len(job_description) < 200 # Se tiver menos de 200 caracteres, é só título
+    job_tokens = set()
+
+    if is_lazy_input:
+        # Tenta achar o cargo no texto curto do usuário
+        input_lower = job_description.lower()
+        role_found = False
+        
+        for pattern, keywords in JOB_ROLES_DB.items():
+            if re.search(pattern, input_lower):
+                job_tokens = keywords # Injeta as palavras do banco
+                role_found = True
+                break
+        
+        # Se não achou cargo nenhum, usa as universais
+        if not role_found:
+            job_tokens = UNIVERSAL_KEYWORDS
+    else:
+        # Se o texto for longo, processa normal
+        job_tokens = normalize(job_description)
+        stopwords = {'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que', 'os', 'as', 'uma', 'um', 'and', 'the', 'to', 'of', 'in', 'for', 'with', 'pelo', 'pela', 'na', 'no'}
+        job_tokens = job_tokens - stopwords
+
+    # --- FIM DA LÓGICA DE DETECÇÃO ---
+
+    # 3. Cálculo de Match
+    matches = cv_tokens.intersection(job_tokens)
+    missing = job_tokens - cv_tokens
+    
+    # Remove palavras curtas (<3 chars) da lista de falta
+    missing = {m for m in missing if len(m) > 3}
+    
+    match_count = len(matches)
+    total_relevant = len(job_tokens) if len(job_tokens) > 0 else 1
+    
+    raw_score = (match_count / total_relevant) * 100
+    
+    # Calibração de Vendas (Peso por tamanho do CV)
+    length_bonus = min(len(cv_text) / 500, 10) 
+    final_score = min(int(raw_score + length_bonus + 30), 85)
+    
+    # 4. GERAÇÃO DOS GAPS (HÍBRIDO: MEDO vs. AMBIÇÃO)
+    gaps_formatted = []
+
+    # Se input for preguiçoso, somos mais bonzinhos na nota para não frustrar, 
+    # mas geramos gaps de "Hard Skills" para impressionar.
+    if is_lazy_input:
+        final_score = max(final_score, 65) # Garante pelo menos 65 para não parecer erro
+
+    # CENÁRIO A: PERFIL FORTE (Nota > 75)
+    if final_score > 75:
+        gaps_formatted = [
+            {
+                "erro": "Narrativa Passiva (Risco de 'Invisible Candidate')",
+                "evidencia": "Skills técnicas detectadas, mas a estrutura frasal foca em tarefas e não em RESULTADOS mensuráveis.",
+                "correcao_sugerida": "A IA precisa reescrever seus bullets points focando em métricas de impacto."
+            },
+            {
+                "erro": "Ausência de Gatilhos de Liderança",
+                "evidencia": "Faltam 'Power Words' que demonstrem autonomia e ownership (Diferencial Sênior).",
+                "correcao_sugerida": "Utilize o Ghostwriter para injetar autoridade no resumo."
+            }
+        ]
+        final_score = min(final_score, 82) # Teto de vidro
+
+    # CENÁRIO B: PERFIL MÉDIO/BAIXO
+    else:
+        top_missing = sorted(list(missing), key=len, reverse=True)[:3]
+        for word in top_missing:
+            gaps_formatted.append({
+                "erro": f"Ausência de Skill Crítica: '{word.upper()}'",
+                "evidencia": "Requisito fundamental de mercado para esta posição.",
+                "correcao_sugerida": "Incluir explicitamente para passar no filtro ATS."
+            })
+            
+        if not gaps_formatted:
+            gaps_formatted.append({"erro": "Densidade Baixa", "evidencia": "Texto genérico", "correcao_sugerida": "Use termos da vaga."})
+
+    return {
+        "veredito": "ANÁLISE DE MERCADO (LITE)",
+        "nota_ats": final_score,
+        "analise_por_pilares": {
+            "impacto": int(final_score * 0.9),
+            "keywords": int(raw_score * 1.5) if raw_score * 1.5 < 100 else 95,
+            "ats": int(final_score),
+            "setor_detectado": detect_job_area(job_description).upper()
+        },
+        "gaps_fatais": gaps_formatted,
+        "linkedin_headline": "🔒 [CONTEÚDO BLOQUEADO]",
+        "resumo_otimizado": "🔒 [RESUMO ESTRATÉGICO OCULTO]",
+        "cv_otimizado_completo": "🔒",
+        "kit_hacker": {"boolean_string": "🔒"},
+        "biblioteca_tecnica": []
+    }
+    
+# ============================================================
+# GERADOR DE WORD V7 (DESIGN SYSTEM TRANSLATION)
+# ============================================================
+def gerar_word_candidato(data):
+    """
+    VERSÃO V10 ESTÁVEL: Reorganizada e testada
+    Corrige ordem de definições e remove dependências circulares
+    """
+    from docx import Document
+    from docx.shared import Pt, RGBColor, Cm
+    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    from io import BytesIO
+    import re
+
+    # ============================================================
+    # CONSTANTES DE CORES E FONTES
+    # ============================================================
+    COLOR_TEXT   = RGBColor(51, 65, 85)
+    COLOR_TITLE  = RGBColor(15, 23, 42)
+    COLOR_ACCENT = RGBColor(16, 185, 129)
+    COLOR_SUB    = RGBColor(100, 116, 139)
+    COLOR_CHIP_TEXT = RGBColor(71, 85, 105)
+    COLOR_BORDER_HEX = "E2E8F0"
+    COLOR_CHIP_BG = "F1F5F9"
+    FONT_MAIN = 'Segoe UI'
+
+    # ============================================================
+    # FUNÇÕES HELPER DE VALIDAÇÃO (DEFINIDAS PRIMEIRO)
+    # ============================================================
+    
+    def is_valid(text):
+        """Valida se o texto não é lixo"""
+        if not text: 
+            return False
+        t = str(text).strip().lower()
+        garbage = ["não informado", "nao informado", "n/a", "null", "none", ""]
+        return t not in garbage and len(t) > 1
+    
+    def is_contact_line(text):
+        """Detecta se é linha de contato"""
+        if not text:
+            return False
+        t = str(text).lower()
+        keywords = ['@', 'linkedin', 'github', 'telefone', 'email', '.com']
+        return any(kw in t for kw in keywords)
+
+    # ============================================================
+    # FUNÇÕES HELPER XML (FORMATAÇÃO WORD)
+    # ============================================================
+    
+    def set_border_bottom(paragraph):
+        """Adiciona borda inferior ao parágrafo"""
+        try:
+            p = paragraph._p
+            pPr = p.get_or_add_pPr()
+            pBdr = OxmlElement('w:pBdr')
+            bottom = OxmlElement('w:bottom')
+            bottom.set(qn('w:val'), 'single')
+            bottom.set(qn('w:sz'), '4')
+            bottom.set(qn('w:space'), '6')
+            bottom.set(qn('w:color'), COLOR_BORDER_HEX)
+            pBdr.append(bottom)
+            pPr.append(pBdr)
+        except:
+            pass
+
+    def apply_chip_background(run):
+        """Aplica fundo colorido ao texto (chip)"""
+        try:
+            rPr = run._r.get_or_add_rPr()
+            shd = OxmlElement('w:shd')
+            shd.set(qn('w:val'), 'clear')
+            shd.set(qn('w:color'), 'auto')
+            shd.set(qn('w:fill'), COLOR_CHIP_BG)
+            rPr.append(shd)
+        except:
+            pass
+
+    def set_keep_with_next(paragraph):
+        """Mantém parágrafo grudado no próximo"""
+        try:
+            p = paragraph._p
+            pPr = p.get_or_add_pPr()
+            keepNext = OxmlElement('w:keepNext')
+            pPr.append(keepNext)
+        except:
+            pass
+
+    def set_keep_together(paragraph):
+        """Evita quebra dentro do parágrafo"""
+        try:
+            p = paragraph._p
+            pPr = p.get_or_add_pPr()
+            keepLines = OxmlElement('w:keepLines')
+            pPr.append(keepLines)
+        except:
+            pass
+
+    # ============================================================
+    # PARSER DE SKILLS (HEURÍSTICA SIMPLIFICADA)
+    # ============================================================
+    
+    def extract_skills_simple(text):
+        """
+        Extrai skills de texto corrido usando múltiplas estratégias
+        VERSÃO SIMPLIFICADA E ROBUSTA
+        """
+        if not text:
+            return []
+        
+        try:
+            # Limpa o texto
+            text = re.sub(r'\s+', ' ', str(text)).strip()
+            skills = []
+            
+            # ESTRATÉGIA 1: Detecta palavras/frases capitalizadas
+            # Exemplo: "Análise de Dados" "Automação de Processos"
+            words = text.split()
+            current_skill = []
+            
+            for word in words:
+                # Se começa com maiúscula ou é conectora
+                if word and (word[0].isupper() or word.lower() in ['de', 'e', 'da', 'do', 'em', 'com', 'a', 'o']):
+                    current_skill.append(word)
+                else:
+                    # Finaliza skill atual
+                    if current_skill:
+                        skill_text = ' '.join(current_skill)
+                        if len(skill_text) > 3 and len(skill_text) < 50:
+                            skills.append(skill_text)
+                    current_skill = []
+            
+            # Adiciona última skill
+            if current_skill:
+                skill_text = ' '.join(current_skill)
+                if len(skill_text) > 3 and len(skill_text) < 50:
+                    skills.append(skill_text)
+            
+            # Remove duplicatas
+            seen = set()
+            unique = []
+            for s in skills:
+                s_lower = s.lower().strip()
+                if s_lower not in seen and len(s) > 3:
+                    seen.add(s_lower)
+                    unique.append(s)
+            
+            return unique[:15]
+        
+        except Exception as e:
+            # Se der erro, retorna lista vazia
+            return []
+
+    # ============================================================
+    # INICIALIZA DOCUMENTO
+    # ============================================================
+    
+    doc = Document()
+    section = doc.sections[0]
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
+    section.left_margin = Cm(1.8)
+    section.right_margin = Cm(1.8)
+
+    # ============================================================
+    # PROCESSA TEXTO BRUTO
+    # ============================================================
+    
+    raw_text = data.get('cv_otimizado_completo', '')
+    if not raw_text:
+        # Documento vazio se não houver conteúdo
+        p = doc.add_paragraph("Currículo vazio")
+        stream = BytesIO()
+        doc.save(stream)
+        stream.seek(0)
+        return stream
+    
+    lines = raw_text.split('\n')
+    
+    # Estrutura para organizar o conteúdo
+    sections = []
+    current_section = None
+    buffer = []
+    contact_lines = []
+    name_found = False
+    
+    # ============================================================
+    # PARSING LINHA POR LINHA
+    # ============================================================
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        
+        # Remove markdown
+        clean = line.replace('**', '').replace('*', '')
+        
+        # 1. DETECTA NOME (primeira linha ou linha com # )
+        if not name_found:
+            if clean.startswith('# '):
+                sections.append({
+                    'type': 'name',
+                    'content': clean.replace('# ', '')
+                })
+                name_found = True
+                continue
+            elif len(clean) < 100 and not clean.startswith('|') and not is_contact_line(clean):
+                # Primeira linha não vazia = nome
+                sections.append({
+                    'type': 'name',
+                    'content': clean
+                })
+                name_found = True
+                continue
+        
+        # 2. DETECTA CONTATOS (antes da primeira seção)
+        if not current_section and is_contact_line(clean):
+            contact_lines.append(clean)
+            continue
+        
+        # 3. DETECTA SEÇÃO (| TÍTULO ou ### TÍTULO)
+        if clean.startswith('|') or clean.startswith('###'):
+            # Salva seção anterior
+            if current_section and buffer:
+                sections.append({
+                    'type': 'section',
+                    'title': current_section,
+                    'content': buffer.copy()
+                })
+            
+            # Salva contatos se tiver
+            if contact_lines:
+                sections.append({
+                    'type': 'contact',
+                    'content': contact_lines.copy()
+                })
+                contact_lines = []
+            
+            # Nova seção
+            current_section = clean.replace('|', '').replace('###', '').strip()
+            buffer = []
+            continue
+        
+        # 4. ACUMULA CONTEÚDO
+        if current_section:
+            buffer.append(clean)
+    
+    # Salva última seção
+    if current_section and buffer:
+        sections.append({
+            'type': 'section',
+            'title': current_section,
+            'content': buffer.copy()
+        })
+
+    # ============================================================
+    # RENDERIZA DOCUMENTO
+    # ============================================================
+    
+    for sec in sections:
+        sec_type = sec.get('type', '')
+        
+        # ========== NOME ==========
+        if sec_type == 'name':
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_after = Pt(4)
+            
+            r = p.add_run(sec['content'].upper())
+            r.bold = True
+            r.font.name = FONT_MAIN
+            r.font.size = Pt(24)
+            r.font.color.rgb = COLOR_TITLE
+            set_keep_with_next(p)
+        
+        # ========== CONTATOS ==========
+        elif sec_type == 'contact':
+            for contact_line in sec.get('content', []):
+                # Remove rótulos
+                clean = contact_line
+                for label in ['Email:', 'Telefone:', 'LinkedIn:', 'GitHub:', 'Local:']:
+                    clean = clean.replace(label, '')
+                
+                # Split por | ou •
+                parts = re.split(r'\s*[|•]\s*', clean)
+                valid_parts = [p.strip() for p in parts if is_valid(p)]
+                
+                if valid_parts:
+                    p = doc.add_paragraph()
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    p.paragraph_format.space_after = Pt(12)
+                    
+                    for i, part in enumerate(valid_parts):
+                        r = p.add_run(part)
+                        r.font.name = FONT_MAIN
+                        r.font.size = Pt(9.5)
+                        r.font.color.rgb = COLOR_SUB
+                        
+                        if i < len(valid_parts) - 1:
+                            r_sep = p.add_run("  •  ")
+                            r_sep.font.color.rgb = COLOR_ACCENT
+                            r_sep.bold = True
+        
+        # ========== SEÇÕES ==========
+        elif sec_type == 'section':
+            title = sec.get('title', '').upper()
+            content = sec.get('content', [])
+            
+            if not content:
+                continue
+            
+            # Título da seção
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(12)
+            p.paragraph_format.space_after = Pt(6)
+            set_border_bottom(p)
+            set_keep_with_next(p)
+            
+            r_marker = p.add_run("| ")
+            r_marker.font.name = FONT_MAIN
+            r_marker.font.size = Pt(14)
+            r_marker.bold = True
+            r_marker.font.color.rgb = COLOR_ACCENT
+            
+            r_title = p.add_run(title)
+            r_title.bold = True
+            r_title.font.name = FONT_MAIN
+            r_title.font.size = Pt(11)
+            r_title.font.color.rgb = COLOR_TITLE
+            
+            # ========== SKILLS (DETECÇÃO ESPECIAL) ==========
+            if any(kw in title for kw in ['SKILL', 'COMPETÊNCIA', 'TÉCNICA']):
+                full_text = ' '.join(content)
+                skills = extract_skills_simple(full_text)
+                
+                if skills:
+                    p = doc.add_paragraph()
+                    p.paragraph_format.space_after = Pt(8)
+                    p.paragraph_format.line_spacing = 1.3
+                    
+                    for i, skill in enumerate(skills):
+                        if i > 0:
+                            p.add_run("  ")
+                        
+                        r_chip = p.add_run(f"  {skill}  ")
+                        r_chip.font.name = FONT_MAIN
+                        r_chip.font.size = Pt(9.5)
+                        r_chip.font.color.rgb = COLOR_CHIP_TEXT
+                        apply_chip_background(r_chip)
+                else:
+                    # Fallback: texto corrido
+                    p = doc.add_paragraph(full_text)
+                    p.paragraph_format.space_after = Pt(8)
+                
+                continue
+            
+            # ========== CONTEÚDO GERAL ==========
+            for line in content:
+                if not is_valid(line):
+                    continue
+                
+                # CABEÇALHO DE EXPERIÊNCIA (tem |)
+                if '|' in line and len(line) < 150:
+                    # Remove bullet se tiver
+                    line_clean = line
+                    if line_clean.startswith('- '):
+                        line_clean = line_clean[2:]
+                    
+                    parts = [p.strip() for p in line_clean.split('|')]
+                    
+                    # Valida (pelo menos 2 partes válidas)
+                    if len(parts) >= 2 and is_valid(parts[0]) and is_valid(parts[1]):
+                        # Cargo + Empresa
+                        p = doc.add_paragraph()
+                        p.paragraph_format.space_before = Pt(10)
+                        p.paragraph_format.space_after = Pt(1)
+                        set_keep_together(p)
+                        
+                        r_cargo = p.add_run(parts[0])
+                        r_cargo.bold = True
+                        r_cargo.font.name = FONT_MAIN
+                        r_cargo.font.size = Pt(11.5)
+                        r_cargo.font.color.rgb = COLOR_TITLE
+                        
+                        r_sep = p.add_run(" | ")
+                        r_sep.font.color.rgb = COLOR_SUB
+                        
+                        r_emp = p.add_run(parts[1])
+                        r_emp.bold = True
+                        r_emp.font.name = FONT_MAIN
+                        r_emp.font.size = Pt(11)
+                        r_emp.font.color.rgb = COLOR_ACCENT
+                        
+                        # Data (se tiver)
+                        if len(parts) >= 3 and is_valid(parts[2]):
+                            p_date = doc.add_paragraph()
+                            p_date.paragraph_format.space_after = Pt(3)
+                            
+                            r_date = p_date.add_run(parts[2])
+                            r_date.font.name = FONT_MAIN
+                            r_date.font.size = Pt(9)
+                            r_date.font.color.rgb = COLOR_SUB
+                        
+                        continue
+                
+                # BULLET POINT (descrição de experiência)
+                if line.startswith('- ') or line.startswith('• '):
+                    clean = line[2:].strip()
+                    
+                    p = doc.add_paragraph()
+                    p.paragraph_format.space_after = Pt(2)
+                    p.paragraph_format.line_spacing = 1.25
+                    
+                    # Hanging indent
+                    p.paragraph_format.tab_stops.add_tab_stop(Cm(0.5), WD_TAB_ALIGNMENT.LEFT)
+                    p.paragraph_format.left_indent = Cm(0.5)
+                    p.paragraph_format.first_line_indent = Cm(-0.5)
+                    set_keep_together(p)
+                    
+                    # Bullet
+                    r_bullet = p.add_run("•")
+                    r_bullet.font.name = FONT_MAIN
+                    r_bullet.font.size = Pt(12)
+                    r_bullet.font.color.rgb = COLOR_ACCENT
+                    p.add_run("\t")
+                    
+                    # Texto (com negrito em títulos se tiver :)
+                    if ':' in clean:
+                        title_part, desc_part = clean.split(':', 1)
+                        
+                        r_title = p.add_run(title_part + ':')
+                        r_title.bold = True
+                        r_title.font.name = FONT_MAIN
+                        r_title.font.size = Pt(10.5)
+                        r_title.font.color.rgb = COLOR_TITLE
+                        
+                        r_desc = p.add_run(' ' + desc_part.strip())
+                        r_desc.font.name = FONT_MAIN
+                        r_desc.font.size = Pt(10.5)
+                        r_desc.font.color.rgb = COLOR_TEXT
+                    else:
+                        r_txt = p.add_run(clean)
+                        r_txt.font.name = FONT_MAIN
+                        r_txt.font.size = Pt(10.5)
+                        r_txt.font.color.rgb = COLOR_TEXT
+                    
+                    continue
+                
+                # TEXTO CORRIDO
+                p = doc.add_paragraph()
+                p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p.paragraph_format.line_spacing = 1.25
+                p.paragraph_format.space_after = Pt(6)
+                
+                r = p.add_run(line)
+                r.font.name = FONT_MAIN
+                r.font.size = Pt(10.5)
+                r.font.color.rgb = COLOR_TEXT
+
+    # ============================================================
+    # SALVA E RETORNA
+    # ============================================================
+    
+    stream = BytesIO()
+    doc.save(stream)
+    stream.seek(0)
+    return stream
