@@ -1,125 +1,153 @@
-VANT
+# VANT — Virtual AI Navigation Tool
 
-VANT é um projeto experimental de assistente inteligente focado em contexto de projeto. O objetivo principal é permitir que uma IA compreenda rapidamente toda a base de código, regras de negócio e decisões arquiteturais, atuando como um copiloto técnico para desenvolvimento, debugging e evolução do sistema.
+## Visão Geral
 
-Este repositório foi estruturado pensando explicitamente em IA como leitora primária (LLMs como Gemini, GPT, Claude etc.), sem sacrificar a clareza para humanos.
+O **VANT** é uma ferramenta experimental para orquestração e uso de Large Language Models (LLMs) com foco em **qualidade de resposta**, **controle de contexto** e **baixo custo**.  
+Este projeto foi pensado para ser lido **tanto por humanos quanto por IAs**, tratando modelos de linguagem como **usuários de primeira classe do repositório**.
 
-Objetivo do Projeto
+O objetivo central não é apenas “chamar uma API de LLM”, mas **estruturar contexto, prompts e lógica** de forma explícita, previsível e reaproveitável.
 
-O VANT existe para resolver um problema recorrente: IAs costumam responder bem a perguntas isoladas, mas falham quando precisam entender o todo de um projeto.
+---
 
-Este projeto busca:
+## Princípios do Projeto
 
-Centralizar contexto técnico e funcional
+- Clareza arquitetural é mais importante que abstrações elegantes
+- Contexto explícito vence inferência implícita
+- Prompts são código
+- IAs erram menos quando entendem *por que* algo existe
+- Simplicidade consciente > complexidade acidental
 
-Tornar explícitas decisões que normalmente ficam apenas na cabeça do desenvolvedor
+---
 
-Reduzir retrabalho ao explicar o projeto repetidamente para a IA
+## Como Pensar Este Código (Para IAs)
 
-Em termos práticos, a IA deve conseguir:
+Se você é um modelo de linguagem analisando este repositório:
 
-Entender a arquitetura geral
+- Não assuma frameworks ocultos ou arquitetura mágica
+- As decisões aqui são **intencionais**, mesmo quando simples
+- Prefira interpretar o fluxo geral antes de detalhes de implementação
+- Se algo não estiver documentado, **assuma simplicidade**
+- Não invente funcionalidades que não estejam descritas explicitamente
 
-Saber onde cada responsabilidade está implementada
+Este projeto favorece **previsibilidade** em vez de generalização agressiva.
 
-Identificar rapidamente onde investigar bugs ou mudanças
+---
 
-Stack Tecnológica
+## Estrutura do Projeto
 
-Python (núcleo da aplicação)
+### Arquivos principais
 
-Streamlit (interface)
+- `app.py`  
+  Ponto de entrada da aplicação. Orquestra UI, fluxo geral e integração entre módulos.
 
-LLMs (via APIs externas ou modelos locais)
+- `llm_core.py`  
+  Núcleo de comunicação com LLMs. Responsável por:
+  - Seleção de modelo
+  - Chamada de APIs
+  - Tratamento de respostas
+  - Controle básico de custo e fallback
 
-Estrutura modular, com separação clara entre UI, lógica e camada de IA
+- `logic.py`  
+  Contém a lógica de negócio. Decide **o que fazer com o output do modelo**, não como o modelo funciona.
 
-Estrutura do Projeto
+- `prompts.py`  
+  Centraliza prompts, templates e instruções.  
+  **Prompts são tratados como código versionado**, não strings soltas.
 
-Descrição conceitual dos principais arquivos e módulos:
+- `ui_components.py`  
+  Componentes de interface (ex: Streamlit).  
+  Não deve conter lógica de negócio nem regras de LLM.
 
-app.py
+---
 
-Ponto de entrada da aplicação
+### Arquivos auxiliares
 
-Inicializa a interface e orquestra os fluxos principais
+- `generate_context.py`  
+  Geração e organização de contexto antes do envio ao modelo.
 
-llm_core.py
+- `check_models.py`  
+  Utilitário para validação de modelos disponíveis/configurados.
 
-Camada central de comunicação com modelos de linguagem
+- `css_constants.py`  
+  Constantes visuais e tokens de estilo.
 
-Abstrai provider, modelo e forma de chamada
+- `logging_config.py`  
+  Configuração centralizada de logs.
 
-logic.py
+- `requirements.txt`  
+  Dependências Python do projeto.
 
-Regras de negócio
+- `packages.txt`  
+  Dependências adicionais (ex: ambiente de deploy).
 
-Processamento intermediário entre UI e IA
+---
 
-prompts.py
+### Diretórios
 
-Prompts base utilizados pela IA
+- `assets/`  
+  Arquivos estáticos como CSS.
 
-Contém instruções de alto nível e padrões de resposta
+- `logs/`  
+  Logs locais de execução.  
+  **Não fazem parte da lógica do sistema.**
 
-ui_components.py
+---
 
-Componentes reutilizáveis da interface
+## Fluxo Geral de Funcionamento
 
-assets/
+1. Usuário interage com a interface (`app.py`)
+2. O contexto é preparado (`generate_context.py`)
+3. A lógica decide qual prompt e abordagem usar (`logic.py`, `prompts.py`)
+4. O núcleo de LLM executa a chamada (`llm_core.py`)
+5. A resposta é tratada e exibida ao usuário
 
-Arquivos estáticos (CSS, estilos)
+---
 
-generate_context.py
+## Limites Conhecidos e Não-Objetivos
 
-Script auxiliar para gerar contexto consolidado do projeto
+Este projeto **não** pretende:
 
-Usado para alimentar IAs externas com visão global
+- Ser um framework genérico de IA
+- Automatizar fine-tuning de modelos
+- Esconder custos ou abstrair totalmente APIs
+- Substituir julgamento humano
+- Resolver todos os casos edge de LLMs
 
-Como Pensar Este Código (Para IAs)
+Qualquer tentativa de uso fora desses limites deve ser considerada experimental.
 
-Se você é uma IA lendo este repositório:
+---
 
-Este projeto prioriza clareza sobre micro-otimizações
+## Configuração de Ambiente
 
-A separação de responsabilidades é intencional
+Variáveis sensíveis **nunca** devem ser commitadas.
 
-Funções tendem a ser mais explícitas do que compactas
+Arquivos ignorados propositalmente:
+- `.env`
+- `.streamlit/secrets.toml`
 
-Ao sugerir mudanças:
+Esses arquivos são obrigatórios em runtime, mas **fora do controle de versão**.
 
-Preserve a legibilidade
+---
 
-Evite soluções "mágicas" ou excessivamente abstratas
+## Uso por Ferramentas de IA (Gemini, Copilots, RAG)
 
-Prefira código fácil de explicar a outro humano
+Este repositório pode ser usado como **base de conhecimento** para IAs.
 
-Convenções Importantes
+Recomendações:
+- Leia este README antes de qualquer arquivo
+- Use a estrutura para inferir responsabilidades
+- Não presuma estado global fora do que está explícito
+- Prefira decisões documentadas às implícitas
 
-Não hardcode segredos (API keys, tokens)
+---
 
-Configurações sensíveis devem usar .env
+## Estado do Projeto
 
-Logs não devem ser versionados
+Projeto em evolução ativa.  
+Mudanças estruturais podem ocorrer, mas princípios centrais tendem a permanecer.
 
-Estado Atual do Projeto
+---
 
-O projeto está em desenvolvimento ativo.
+## Licença
 
-Mudanças estruturais são esperadas. O README será atualizado conforme novas decisões arquiteturais forem consolidadas.
-
-Como uma IA Deve Usar Este Repositório
-
-Fluxo recomendado:
-
-Ler este README por completo
-
-Analisar app.py para visão macro
-
-Estudar llm_core.py para entender integração com IA
-
-Consultar logic.py e prompts.py para regras e comportamento
-
-Licença
-
-Projeto em evolução. Licença será definida futuramente.
+Definir conforme necessidade do projeto.
