@@ -10,10 +10,16 @@ __pycache__/
 # Streamlit Secrets (CRÍTICO - NÃO REMOVER)
 .streamlit/secrets.toml
 
-# Virtual Environments (se houver no futuro)
+# Virtual Environments
 venv/
 .venv/
 env/
+
+# Logs
+logs/
+
+# IDE
+.vscode/
 
 # OS Specific
 .DS_Store
