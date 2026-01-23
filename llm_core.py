@@ -6,6 +6,7 @@ import concurrent.futures
 from google import genai
 from google.genai import types
 from groq import Groq
+from io import BytesIO
 
 # ============================================================
 # LOGGING & CONFIG
@@ -292,3 +293,65 @@ def run_llm_orchestrator(
 
     logger.info("🏁 Orquestração concluída")
     return result
+
+# ============================================================
+# FUNÇÕES DE ÁUDIO E ENTREVISTA (NOVO)
+# ============================================================
+
+def transcribe_audio_groq(audio_bytes):
+    """
+    Transcreve áudio usando Groq (Whisper-Large-V3).
+    Rápido e barato.
+    """
+    if not groq_client:
+        logger.error("❌ Groq Client não configurado.")
+        return "Erro: API Groq indisponível."
+
+    try:
+        # Cria um arquivo em memória com nome (necessário para a API)
+        audio_file = BytesIO(audio_bytes)
+        audio_file.name = "audio.webm"  # Streamlit grava em webm/wav
+        
+        # Chamada à API Groq
+        transcription = groq_client.audio.transcriptions.create(
+            file=audio_file,
+            model="whisper-large-v3",
+            response_format="text",
+            temperature=0.0
+        )
+        return transcription
+
+    except Exception as e:
+        logger.error(f"❌ Erro na transcrição Groq: {e}")
+        return f"Erro ao transcrever áudio: {str(e)}"
+
+
+def analyze_interview_gemini(pergunta, resposta_texto, contexto_vaga):
+    """
+    Analisa a resposta do candidato usando a persona de Tech Lead.
+    """
+    if not resposta_texto or len(resposta_texto) < 5:
+        return {
+            "nota_final": 0,
+            "feedback_curto": "Áudio inaudível ou muito curto.",
+            "pontos_melhoria": ["Tente falar mais próximo ao microfone."],
+            "analise_fina": {}
+        }
+
+    payload = f"""
+    CONTEXTO DA VAGA:
+    {contexto_vaga}
+
+    PERGUNTA FEITA PELO ENTREVISTADOR:
+    "{pergunta}"
+
+    RESPOSTA TRANSCRITA DO CANDIDATO:
+    "{resposta_texto}"
+    """
+
+    # Reutiliza a infraestrutura robusta do call_llm
+    return call_llm(
+        system_prompt=SYSTEM_AGENT_INTERVIEW_EVALUATOR,
+        payload=payload,
+        agent_name="interview_evaluator"
+    )
