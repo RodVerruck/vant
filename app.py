@@ -659,8 +659,13 @@ elif st.session_state.stage == 'paid':
         """)
         
         # [REFACTOR] Abas Reorganizadas (Roadmap Removido, X-Ray movido para Diagnóstico)
-        tabs = ["📊 DIAGNÓSTICO E AÇÃO", "📝 CV OTIMIZADO", "⚔️ CONCORRÊNCIA", "🎤 SIMULADOR", "📚 BIBLIOTECA"]
-        t1, t2, t3, t4, t5 = st.tabs(tabs)
+        # --- VERSÃO ORIGINAL (5 ABAS) - COMENTADA PARA MVP ---
+        # tabs = ["📊 DIAGNÓSTICO E AÇÃO", "📝 CV OTIMIZADO", "⚔️ CONCORRÊNCIA", "🎤 SIMULADOR", "📚 BIBLIOTECA"]
+        # t1, t2, t3, t4, t5 = st.tabs(tabs)
+        
+        # --- VERSÃO MVP (3 ABAS) ---
+        tabs = ["📊 DIAGNÓSTICO E AÇÃO", "📄 CV OTIMIZADO", "📚 BIBLIOTECA"]
+        t1, t2, t3 = st.tabs(tabs)
         
         # 1. DIAGNÓSTICO + PLANO TÁTICO
         with t1:
@@ -1073,211 +1078,211 @@ elif st.session_state.stage == 'paid':
             except Exception as e:
                 st.warning(f"Não foi possível gerar os arquivos: {e}")
 
-        # 3. CONCORRÊNCIA
-        with t3:
-            if comp_data:
-                st.subheader("⚔️ Benchmarking Competitivo")
-                st.caption("Comparativo direto entre seu Perfil e os Benchmarks anexados por você.")
-                
-                c_a, c_b = st.columns(2, gap="medium")
-                
-                with c_a: # Gaps
-                    items_html = ""
-                    for item in comp_data.get("vantagens_concorrentes", []):
-                        items_html += f"<li style='margin-bottom:8px; color:#CBD5E1;'>{item}</li>"
-                    
-                    st.html(f"""
-                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 20px; height: 100%;">
-                        <h4 style="color: #EF4444; margin-top: 0; display: flex; align-items: center; gap: 8px;">❌ GAPS DE MERCADO</h4>
-                        <ul style="padding-left: 20px; margin: 0; font-size: 0.9rem;">{items_html}</ul>
-                    </div>
-                    """)
+        #. CONCORRÊNCIA
+        #h t3:
+        # if comp_data:
+        #     st.subheader("⚔️ Benchmarking Competitivo")
+        #     st.caption("Comparativo direto entre seu Perfil e os Benchmarks anexados por você.")
+        #     
+        #     c_a, c_b = st.columns(2, gap="medium")
+        #     
+        #     with c_a: # Gaps
+        #         items_html = ""
+        #         for item in comp_data.get("vantagens_concorrentes", []):
+        #             items_html += f"<li style='margin-bottom:8px; color:#CBD5E1;'>{item}</li>"
+        #         
+        #         st.html(f"""
+        #         <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 20px; height: 100%;">
+        #             <h4 style="color: #EF4444; margin-top: 0; display: flex; align-items: center; gap: 8px;">❌ GAPS DE MERCADO</h4>
+        #             <ul style="padding-left: 20px; margin: 0; font-size: 0.9rem;">{items_html}</ul>
+        #         </div>
+        #         """)
 
-                with c_b: # Diferenciais
-                    items_html_diff = ""
-                    for item in comp_data.get("seus_diferenciais", []):
-                        items_html_diff += f"<li style='margin-bottom:8px; color:#E2E8F0;'>{item}</li>"
+        #     with c_b: # Diferenciais
+        #         items_html_diff = ""
+        #         for item in comp_data.get("seus_diferenciais", []):
+        #             items_html_diff += f"<li style='margin-bottom:8px; color:#E2E8F0;'>{item}</li>"
 
-                    st.html(f"""
-                    <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px; height: 100%;">
-                        <h4 style="color: #10B981; margin-top: 0; display: flex; align-items: center; gap: 8px;">✅ SEUS TRUNFOS</h4>
-                        <ul style="padding-left: 20px; margin: 0; font-size: 0.9rem;">{items_html_diff}</ul>
-                    </div>
-                    """)
-                
-                st.markdown("<br>", unsafe_allow_html=True)
+        #         st.html(f"""
+        #         <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px; height: 100%;">
+        #             <h4 style="color: #10B981; margin-top: 0; display: flex; align-items: center; gap: 8px;">✅ SEUS TRUNFOS</h4>
+        #             <ul style="padding-left: 20px; margin: 0; font-size: 0.9rem;">{items_html_diff}</ul>
+        #         </div>
+        #         """)
+        #     
+        #     st.markdown("<br>", unsafe_allow_html=True)
 
-                plano = comp_data.get('plano_de_ataque', 'Foque nos seus diferenciais.')
-                st.html(f"""
-                <div style="background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38BDF8; padding: 15px; border-radius: 4px;">
-                    <strong style="color: #38BDF8;">💡 ESTRATÉGIA RECOMENDADA:</strong><br>
-                    <span style="color: #E2E8F0;">{plano}</span>
-                </div>
-                """)
-                
-                prob = comp_data.get("probabilidade_aprovacao", 0)
-                bar_color = "#EF4444" if prob < 40 else "#F59E0B" if prob < 70 else "#10B981"
-                
-                st.markdown(f"""
-                <div style="margin-top: 25px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-weight: bold; color: #94A3B8;">PROBABILIDADE ESTIMADA DE ENTREVISTA</span>
-                        <span style="font-weight: 800; color: {bar_color};">{prob}%</span>
-                    </div>
-                    <div style="width: 100%; background: #1E293B; height: 10px; border-radius: 5px; overflow: hidden;">
-                        <div style="width: {prob}%; background: {bar_color}; height: 100%; border-radius: 5px;"></div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+        #     plano = comp_data.get('plano_de_ataque', 'Foque nos seus diferenciais.')
+        #     st.html(f"""
+        #     <div style="background: rgba(56, 189, 248, 0.1); border-left: 4px solid #38BDF8; padding: 15px; border-radius: 4px;">
+        #         <strong style="color: #38BDF8;">💡 ESTRATÉGIA RECOMENDADA:</strong><br>
+        #         <span style="color: #E2E8F0;">{plano}</span>
+        #     </div>
+        #     """)
+        #     
+        #     prob = comp_data.get("probabilidade_aprovacao", 0)
+        #     bar_color = "#EF4444" if prob < 40 else "#F59E0B" if prob < 70 else "#10B981"
+        #     
+        #     st.markdown(f"""
+        #     <div style="margin-top: 25px;">
+        #         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        #             <span style="font-weight: bold; color: #94A3B8;">PROBABILIDADE ESTIMADA DE ENTREVISTA</span>
+        #             <span style="font-weight: 800; color: {bar_color};">{prob}%</span>
+        #         </div>
+        #         <div style="width: 100%; background: #1E293B; height: 10px; border-radius: 5px; overflow: hidden;">
+        #             <div style="width: {prob}%; background: {bar_color}; height: 100%; border-radius: 5px;"></div>
+        #         </div>
+        #     </div>
+        #     """, unsafe_allow_html=True)
 
-            else:
-                st.warning("⚠️ Esta análise requer que você envie CVs de referência na etapa inicial.")
+        # else:
+        #     st.warning("⚠️ Esta análise requer que você envie CVs de referência na etapa inicial.")
 
-        # 4. SIMULADOR
-        with t4:
-            st.subheader("🎤 Simulador de Entrevista (IA Feedback)")
-            
-            questions = data.get('perguntas_entrevista', [])
-            
-            # States locais para o simulador
-            if 'sim_transcript' not in st.session_state: st.session_state.sim_transcript = ""
-            if 'sim_feedback' not in st.session_state: st.session_state.sim_feedback = None
-            if 'last_audio_bytes' not in st.session_state: st.session_state.last_audio_bytes = None
-            if 'retry_count' not in st.session_state: st.session_state.retry_count = 0
+        #. SIMULADOR
+        #h t4:
+        # st.subheader("🎤 Simulador de Entrevista (IA Feedback)")
+        # 
+        # questions = data.get('perguntas_entrevista', [])
+        # 
+        # # States locais para o simulador
+        # if 'sim_transcript' not in st.session_state: st.session_state.sim_transcript = ""
+        # if 'sim_feedback' not in st.session_state: st.session_state.sim_feedback = None
+        # if 'last_audio_bytes' not in st.session_state: st.session_state.last_audio_bytes = None
+        # if 'retry_count' not in st.session_state: st.session_state.retry_count = 0
 
-            if questions and len(questions) > 0:
-                idx = st.session_state.interview_idx
-                q = questions[idx % len(questions)]
-                
-                st.html(f"""
-                <div class="interview-card">
-                    <div class="interview-header">
-                        <span style="color: #94A3B8; font-size: 0.85rem;">Pergunta {(idx % len(questions)) + 1} de {len(questions)}</span>
-                        <span style="color: #38BDF8; font-size: 0.85rem; font-weight: 600;">Tempo ideal: 90s</span>
-                    </div>
-                    <div class="interview-question-box">
-                        <div class="interview-bar"></div>
-                        <div class="interview-text">"{q.get('pergunta')}"</div>
-                    </div>
-                    <div class="interview-footer">
-                        <span style="color: #E2E8F0; font-weight: 600; font-size: 0.9rem;">O que o recrutador espera: </span>
-                        <span style="color: #94A3B8; font-size: 0.9rem;">{q.get('expectativa_recrutador')}</span>
-                    </div>
-                </div>
-                """)
-                
-                audio_key = f"audio_rec_{st.session_state.interview_idx}_v{st.session_state.retry_count}"
-                audio_value = st.audio_input("Grave sua resposta", key=audio_key)
+        # if questions and len(questions) > 0:
+        #     idx = st.session_state.interview_idx
+        #     q = questions[idx % len(questions)]
+        #     
+        #     st.html(f"""
+        #     <div class="interview-card">
+        #         <div class="interview-header">
+        #             <span style="color: #94A3B8; font-size: 0.85rem;">Pergunta {(idx % len(questions)) + 1} de {len(questions)}</span>
+        #             <span style="color: #38BDF8; font-size: 0.85rem; font-weight: 600;">Tempo ideal: 90s</span>
+        #         </div>
+        #         <div class="interview-question-box">
+        #             <div class="interview-bar"></div>
+        #             <div class="interview-text">"{q.get('pergunta')}"</div>
+        #         </div>
+        #         <div class="interview-footer">
+        #             <span style="color: #E2E8F0; font-weight: 600; font-size: 0.9rem;">O que o recrutador espera: </span>
+        #             <span style="color: #94A3B8; font-size: 0.9rem;">{q.get('expectativa_recrutador')}</span>
+        #         </div>
+        #     </div>
+        #     """)
+        #     
+        #     audio_key = f"audio_rec_{st.session_state.interview_idx}_v{st.session_state.retry_count}"
+        #     audio_value = st.audio_input("Grave sua resposta", key=audio_key)
 
-                if audio_value:
-                    audio_bytes = audio_value.getvalue()
-                    if st.session_state.last_audio_bytes != audio_bytes:
-                        st.session_state.last_audio_bytes = audio_bytes
-                        st.session_state.sim_transcript = "" 
-                        st.session_state.sim_feedback = None 
-                        
-                        with st.spinner("🎧 Ouvindo e analisando..."):
-                            from llm_core import transcribe_audio_groq, analyze_interview_gemini
-                            text = transcribe_audio_groq(audio_bytes)
-                            st.session_state.sim_transcript = text
-                        
-                        if text and "Erro" not in text:
-                            with st.spinner("🧠 Gerando feedback técnico..."):
-                                job_context = st.session_state.saved_job
-                                feedback = analyze_interview_gemini(q.get('pergunta'), text, job_context)
-                                st.session_state.sim_feedback = feedback
+        #     if audio_value:
+        #         audio_bytes = audio_value.getvalue()
+        #         if st.session_state.last_audio_bytes != audio_bytes:
+        #             st.session_state.last_audio_bytes = audio_bytes
+        #             st.session_state.sim_transcript = "" 
+        #             st.session_state.sim_feedback = None 
+        #             
+        #             with st.spinner("🎧 Ouvindo e analisando..."):
+        #                 from llm_core import transcribe_audio_groq, analyze_interview_gemini
+        #                 text = transcribe_audio_groq(audio_bytes)
+        #                 st.session_state.sim_transcript = text
+        #             
+        #             if text and "Erro" not in text:
+        #                 with st.spinner("🧠 Gerando feedback técnico..."):
+        #                     job_context = st.session_state.saved_job
+        #                     feedback = analyze_interview_gemini(q.get('pergunta'), text, job_context)
+        #                     st.session_state.sim_feedback = feedback
 
-                if st.session_state.sim_transcript:
-                    st.html(f"""
-                    <div class="transcript-box">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                            <div style="display:flex; gap:8px; align-items:center;">
-                                <span>📝</span><span style="color: #F8FAFC; font-weight: 600;">Sua Resposta</span>
-                            </div>
-                            <div style="padding: 5px; opacity: 0.7;">✏️</div>
-                        </div>
-                        <div class="transcript-text">"{st.session_state.sim_transcript}"</div>
-                    </div>
-                    """)
+        #     if st.session_state.sim_transcript:
+        #         st.html(f"""
+        #         <div class="transcript-box">
+        #             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        #                 <div style="display:flex; gap:8px; align-items:center;">
+        #                     <span>📝</span><span style="color: #F8FAFC; font-weight: 600;">Sua Resposta</span>
+        #                 </div>
+        #                 <div style="padding: 5px; opacity: 0.7;">✏️</div>
+        #             </div>
+        #             <div class="transcript-text">"{st.session_state.sim_transcript}"</div>
+        #         </div>
+        #         """)
 
-                fb = st.session_state.sim_feedback
-                if fb:
-                    score = fb.get('nota_final', 0)
-                    af = fb.get('analise_fina', {})
-                    exemplo_ideal = fb.get('exemplo_resposta_star', None)
-                    
-                    if score >= 90:
-                        score_color, badge_bg, msg_title = "#10B981", "rgba(16, 185, 129, 0.1)", "Resposta de Especialista! 🏆"
-                    elif score >= 70:
-                        score_color, badge_bg, msg_title = "#34D399", "rgba(52, 211, 153, 0.1)", "Mandou bem!"
-                    elif score >= 41:
-                        score_color, badge_bg, msg_title = "#F59E0B", "rgba(245, 158, 11, 0.1)", "Boa base, vamos refinar?"
-                    elif score > 0:
-                        score_color, badge_bg, msg_title = "#F59E0B", "rgba(245, 158, 11, 0.1)", "Vamos ajustar?"
-                    else:
-                        score_color, badge_bg, msg_title = "#EF4444", "rgba(239, 68, 68, 0.1)", "Resposta Inválida"
+        #     fb = st.session_state.sim_feedback
+        #     if fb:
+        #         score = fb.get('nota_final', 0)
+        #         af = fb.get('analise_fina', {})
+        #         exemplo_ideal = fb.get('exemplo_resposta_star', None)
+        #         
+        #         if score >= 90:
+        #             score_color, badge_bg, msg_title = "#10B981", "rgba(16, 185, 129, 0.1)", "Resposta de Especialista! 🏆"
+        #         elif score >= 70:
+        #             score_color, badge_bg, msg_title = "#34D399", "rgba(52, 211, 153, 0.1)", "Mandou bem!"
+        #         elif score >= 41:
+        #             score_color, badge_bg, msg_title = "#F59E0B", "rgba(245, 158, 11, 0.1)", "Boa base, vamos refinar?"
+        #         elif score > 0:
+        #             score_color, badge_bg, msg_title = "#F59E0B", "rgba(245, 158, 11, 0.1)", "Vamos ajustar?"
+        #         else:
+        #             score_color, badge_bg, msg_title = "#EF4444", "rgba(239, 68, 68, 0.1)", "Resposta Inválida"
 
-                    feedback_display = fb.get('feedback_curto', '')
-                    if score == 0: feedback_display = "Não detectamos uma resposta coerente."
+        #         feedback_display = fb.get('feedback_curto', '')
+        #         if score == 0: feedback_display = "Não detectamos uma resposta coerente."
 
-                    st.html(f"""
-                        <div class="feedback-card" style="border: 1px solid {score_color}40;">
-                            <div class="card-header-flex">
-                                <div>
-                                    <h3 class="card-title-text">{msg_title}</h3>
-                                    <p class="card-subtitle-text">{feedback_display}</p>
-                                </div>
-                                <div class="score-badge" style="background: {badge_bg}; color: {score_color}; border: 1px solid {score_color};">
-                                    {score}
-                                </div>
-                            </div>
-                            <div class="card-stats-grid">
-                                {_render_progress_bar("Clareza", af.get('clareza',0))}
-                                {_render_progress_bar("Estrutura", af.get('estrutura',0))}
-                                {_render_progress_bar("Impacto", af.get('impacto',0))}
-                                {_render_progress_bar("Conteúdo Técnico", af.get('conteudo_tecnico',0))}
-                            </div>
-                            <div class="action-plan-box">
-                                <h4 style="color: #F59E0B; margin-top: 0; margin-bottom: 15px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
-                                    ⚡ Plano de Ação
-                                </h4>
-                                <ul class="action-list">
-                                    {"".join([f"<li>{p}</li>" for p in fb.get('pontos_melhoria', [])])}
-                                </ul>
-                            </div>
-                        </div>
-                        """)
-                    
-                    if exemplo_ideal:
-                        exemplo_html = format_text_to_html(exemplo_ideal)
-                        with st.expander("✨ Ver Exemplo de Resposta Ideal (Referência)", expanded=False):
-                            st.html(f"<div class='ideal-answer-box'>{exemplo_html}</div>")
+        #         st.html(f"""
+        #             <div class="feedback-card" style="border: 1px solid {score_color}40;">
+        #                 <div class="card-header-flex">
+        #                     <div>
+        #                         <h3 class="card-title-text">{msg_title}</h3>
+        #                         <p class="card-subtitle-text">{feedback_display}</p>
+        #                     </div>
+        #                     <div class="score-badge" style="background: {badge_bg}; color: {score_color}; border: 1px solid {score_color};">
+        #                         {score}
+        #                     </div>
+        #                 </div>
+        #                 <div class="card-stats-grid">
+        #                     {_render_progress_bar("Clareza", af.get('clareza',0))}
+        #                     {_render_progress_bar("Estrutura", af.get('estrutura',0))}
+        #                     {_render_progress_bar("Impacto", af.get('impacto',0))}
+        #                     {_render_progress_bar("Conteúdo Técnico", af.get('conteudo_tecnico',0))}
+        #                 </div>
+        #                 <div class="action-plan-box">
+        #                     <h4 style="color: #F59E0B; margin-top: 0; margin-bottom: 15px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+        #                         ⚡ Plano de Ação
+        #                     </h4>
+        #                     <ul class="action-list">
+        #                         {"".join([f"<li>{p}</li>" for p in fb.get('pontos_melhoria', [])])}
+        #                     </ul>
+        #                 </div>
+        #             </div>
+        #             """)
+        #         
+        #         if exemplo_ideal:
+        #             exemplo_html = format_text_to_html(exemplo_ideal)
+        #             with st.expander("✨ Ver Exemplo de Resposta Ideal (Referência)", expanded=False):
+        #                 st.html(f"<div class='ideal-answer-box'>{exemplo_html}</div>")
 
-                st.markdown("<br>", unsafe_allow_html=True)
-                c_retry, c_next = st.columns([1, 1])
-                is_passing = fb and fb.get('nota_final', 0) >= 70
-                
-                with c_retry:
-                    btn_type = "secondary" if is_passing else "primary"
-                    if st.button("🔄 Tentar Novamente", use_container_width=True, type=btn_type):
-                        st.session_state.retry_count += 1
-                        st.session_state.sim_transcript = ""
-                        st.session_state.sim_feedback = None
-                        st.session_state.last_audio_bytes = None
-                        st.rerun()
-                
-                with c_next:
-                    btn_type = "primary" if is_passing else "secondary"
-                    btn_label = "Próxima Pergunta ➡️" if is_passing else "Pular / Próxima ⏩"
-                    if st.button(btn_label, use_container_width=True, type=btn_type):
-                        st.session_state.interview_idx += 1
-                        st.session_state.retry_count = 0
-                        st.session_state.sim_transcript = ""
-                        st.session_state.sim_feedback = None
-                        st.session_state.last_audio_bytes = None
-                        st.rerun()
-            else:
-                 st.info("💡 Realize o diagnóstico do CV na aba inicial para gerar as perguntas personalizadas.")
+        #     st.markdown("<br>", unsafe_allow_html=True)
+        #     c_retry, c_next = st.columns([1, 1])
+        #     is_passing = fb and fb.get('nota_final', 0) >= 70
+        #     
+        #     with c_retry:
+        #         btn_type = "secondary" if is_passing else "primary"
+        #         if st.button("🔄 Tentar Novamente", use_container_width=True, type=btn_type):
+        #             st.session_state.retry_count += 1
+        #             st.session_state.sim_transcript = ""
+        #             st.session_state.sim_feedback = None
+        #             st.session_state.last_audio_bytes = None
+        #             st.rerun()
+        #     
+        #     with c_next:
+        #         btn_type = "primary" if is_passing else "secondary"
+        #         btn_label = "Próxima Pergunta ➡️" if is_passing else "Pular / Próxima ⏩"
+        #         if st.button(btn_label, use_container_width=True, type=btn_type):
+        #             st.session_state.interview_idx += 1
+        #             st.session_state.retry_count = 0
+        #             st.session_state.sim_transcript = ""
+        #             st.session_state.sim_feedback = None
+        #             st.session_state.last_audio_bytes = None
+        #             st.rerun()
+        # else:
+        #      st.info("💡 Realize o diagnóstico do CV na aba inicial para gerar as perguntas personalizadas.")
 
         # 5. BIBLIOTECA
         with t5:
