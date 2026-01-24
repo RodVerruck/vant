@@ -37,7 +37,11 @@ st.set_page_config(
     }
 )
 
-GA4_MEASUREMENT_ID = "G-EYNHF1X75P"
+GA4_MEASUREMENT_ID = (
+    st.secrets.get("GA4_MEASUREMENT_ID")
+    or os.getenv("GA4_MEASUREMENT_ID")
+    or "G-EYNHF1X75P"
+)
 
 def _inject_ga4(measurement_id: str):
     if not measurement_id:

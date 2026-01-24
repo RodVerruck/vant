@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import streamlit as st
 import re
 import concurrent.futures
@@ -17,8 +18,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("VANT_CORE")
 
-GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY")
-GROQ_API_KEY = st.secrets.get("GROQ_API_KEY")
+GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+GROQ_API_KEY = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 
 if GOOGLE_API_KEY:
     genai_client = genai.Client(api_key=GOOGLE_API_KEY)
