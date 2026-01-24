@@ -112,6 +112,7 @@ def _call_google_cached(
     user_content: str,
     agent_name: str,
     model_name: str,
+    key_state: int = 0,
 ):
     global genai_client
     if not genai_client:
@@ -200,8 +201,10 @@ Apenas JSON válido.
         )
 
 def call_llm(system_prompt: str, payload: str, agent_name: str):
+    api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    key_state = 1 if api_key else 0
     model = AGENT_MODEL_REGISTRY.get(agent_name, DEFAULT_MODEL)
-    return _call_google_cached(system_prompt, payload, agent_name, model)
+    return _call_google_cached(system_prompt, payload, agent_name, model, key_state)
 
 # ============================================================
 # PIPELINE CV (CORE PRODUCT)
