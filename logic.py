@@ -906,7 +906,7 @@ def _curate_books(area_detected):
 def analyze_cv_logic(cv_text, job_description, competitor_files=None):
     
     # [DEV MODE - INICIO] -----------------------------------------
-    DEV_MODE = False  # Toggle para testes rápidos sem gastar tokens
+    DEV_MODE = os.getenv("VANT_DEV_MODE", "0") == "1"  # Toggle para testes rápidos sem gastar tokens
 
     if DEV_MODE:
         logger.info("🚧 DEV MODE: Bypass de IA ativado.")

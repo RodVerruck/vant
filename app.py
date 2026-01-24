@@ -3,6 +3,10 @@ import time
 import base64
 import textwrap
 import urllib.parse 
+import os
+import json
+import hashlib
+import io
 # Certifique-se de que logic.py existe e tem todas essas funções
 from logic import extrair_texto_pdf, analyze_cv_logic, gerar_pdf_candidato, format_text_to_html, gerar_word_candidato
 from logic import analyze_preview_lite, parse_raw_data_to_struct, render_cv_html
@@ -70,6 +74,110 @@ if 'report_data' not in st.session_state: st.session_state.report_data = None
 if 'saved_file' not in st.session_state: st.session_state.saved_file = None
 if 'saved_job' not in st.session_state: st.session_state.saved_job = None
 if 'competitor_files' not in st.session_state: st.session_state.competitor_files = None
+if 'dev_mode' not in st.session_state: st.session_state.dev_mode = False
+
+CACHE_DIR = os.path.join(os.path.dirname(__file__), ".cache")
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+LAST_CV_PATH = os.path.join(CACHE_DIR, "last_cv.pdf")
+LAST_JOB_PATH = os.path.join(CACHE_DIR, "last_job.txt")
+
+def _read_text_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return None
+
+def _write_text_file(path, content):
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content or "")
+        return True
+    except Exception:
+        return False
+
+def _get_file_bytes(file_obj):
+    if file_obj is None:
+        return None
+    if hasattr(file_obj, "getvalue"):
+        try:
+            return file_obj.getvalue()
+        except Exception:
+            return None
+    try:
+        pos = None
+        if hasattr(file_obj, "tell"):
+            try:
+                pos = file_obj.tell()
+            except Exception:
+                pos = None
+        b = file_obj.read()
+        if hasattr(file_obj, "seek"):
+            try:
+                file_obj.seek(pos if pos is not None else 0)
+            except Exception:
+                pass
+        return b
+    except Exception:
+        return None
+
+def _write_bytes_file(path, b):
+    try:
+        with open(path, "wb") as f:
+            f.write(b or b"")
+        return True
+    except Exception:
+        return False
+
+def _sha256_text(text):
+    return hashlib.sha256((text or "").encode("utf-8", errors="ignore")).hexdigest()
+
+def _sha256_bytes(b):
+    return hashlib.sha256(b or b"").hexdigest()
+
+def _hash_competitors(files):
+    if not files:
+        return "none"
+    h = hashlib.sha256()
+    for f in files:
+        try:
+            name = getattr(f, "name", "")
+            h.update(name.encode("utf-8", errors="ignore"))
+            fb = _get_file_bytes(f) or b""
+            h.update(_sha256_bytes(fb).encode("utf-8"))
+        except Exception:
+            continue
+    return h.hexdigest()
+
+def _premium_cache_path(text_cv, job_text, competitor_files):
+    key_material = "|".join([
+        _sha256_text(text_cv),
+        _sha256_text(job_text),
+        _hash_competitors(competitor_files)
+    ])
+    key = hashlib.sha256(key_material.encode("utf-8")).hexdigest()
+    return os.path.join(CACHE_DIR, f"premium_{key}.json")
+
+def _load_json(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+def _save_json(path, data):
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+        return True
+    except Exception:
+        return False
+
+if not st.session_state.saved_job:
+    last_job = _read_text_file(LAST_JOB_PATH)
+    if last_job:
+        st.session_state.saved_job = last_job
 
 # Estados para Gamificação
 if 'interview_idx' not in st.session_state: st.session_state.interview_idx = 0
@@ -278,13 +386,23 @@ if st.session_state.stage == 'hero':
             
         with c2:
             st.markdown("##### 2. SEU CV (PDF) 📄")
-            st.session_state.saved_file = st.file_uploader(
+            uploaded_cv = st.file_uploader(
                 "CV", 
                 type="pdf", 
                 label_visibility="collapsed"
             )
+            if uploaded_cv is not None:
+                st.session_state.saved_file = uploaded_cv
             if st.session_state.saved_file:
                 st.success("✅ Arquivo carregado!")
+            if (not st.session_state.saved_file) and os.path.exists(LAST_CV_PATH):
+                if st.button("Usar último CV", use_container_width=True):
+                    try:
+                        with open(LAST_CV_PATH, "rb") as f:
+                            st.session_state.saved_file = io.BytesIO(f.read())
+                        st.success("✅ Último CV carregado.")
+                    except Exception:
+                        st.error("Não foi possível carregar o último CV.")
 
         st.markdown("<br>", unsafe_allow_html=True)
         
@@ -304,6 +422,10 @@ if st.session_state.stage == 'hero':
         # 4. CTA
         if st.button("OTIMIZAR PARA ESSA VAGA 🚀", use_container_width=True, type="primary"):
             if st.session_state.saved_job and st.session_state.saved_file:
+                _write_text_file(LAST_JOB_PATH, st.session_state.saved_job)
+                cv_bytes = _get_file_bytes(st.session_state.saved_file)
+                if cv_bytes:
+                    _write_bytes_file(LAST_CV_PATH, cv_bytes)
                 st.session_state.stage = 'analyzing'
                 st.rerun()
             else:
@@ -550,17 +672,33 @@ elif st.session_state.stage == 'processing_premium':
         
         # Agora sim chamamos a LLM cara (analyze_cv_logic ORIGINAL)
         try:
+            dev_mode = st.checkbox("DEV: usar mock (sem tokens)", value=st.session_state.dev_mode)
+            st.session_state.dev_mode = dev_mode
+            os.environ["VANT_DEV_MODE"] = "1" if dev_mode else "0"
+            force_recalc = st.checkbox("Recalcular (gasta tokens)", value=False)
             status.text("Reescrevendo seu CV (GPT-4o Agent)...")
             prog.progress(25)
             
             text_cv = extrair_texto_pdf(st.session_state.saved_file)
+
+            cache_path = _premium_cache_path(text_cv, st.session_state.saved_job, st.session_state.competitor_files)
+            if (not force_recalc) and os.path.exists(cache_path):
+                cached = _load_json(cache_path)
+                if cached:
+                    full_data = cached
+                else:
+                    full_data = None
+            else:
+                full_data = None
             
             # Chama a função PESADA original
-            full_data = analyze_cv_logic(
-                text_cv, 
-                st.session_state.saved_job,
-                st.session_state.competitor_files
-            )
+            if full_data is None:
+                full_data = analyze_cv_logic(
+                    text_cv, 
+                    st.session_state.saved_job,
+                    st.session_state.competitor_files
+                )
+                _save_json(cache_path, full_data)
             
             prog.progress(90)
             status.text("Finalizando Dossiê...")
