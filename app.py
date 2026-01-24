@@ -8,6 +8,7 @@ import os
 import json
 import hashlib
 import io
+import stripe
 # Certifique-se de que logic.py existe e tem todas essas funções
 from logic import extrair_texto_pdf, analyze_cv_logic, gerar_pdf_candidato, format_text_to_html, gerar_word_candidato
 from logic import analyze_preview_lite, parse_raw_data_to_struct, render_cv_html
@@ -37,6 +38,47 @@ st.set_page_config(
     }
 )
 
+STRIPE_SECRET_KEY = st.secrets.get("STRIPE_SECRET_KEY") or os.getenv("STRIPE_SECRET_KEY")
+APP_BASE_URL = st.secrets.get("APP_BASE_URL") or os.getenv("APP_BASE_URL")
+
+STRIPE_PRICE_ID_BASIC = st.secrets.get("STRIPE_PRICE_ID_BASIC") or os.getenv("STRIPE_PRICE_ID_BASIC")
+STRIPE_PRICE_ID_PRO = st.secrets.get("STRIPE_PRICE_ID_PRO") or os.getenv("STRIPE_PRICE_ID_PRO")
+STRIPE_PRICE_ID_UNLIMITED = st.secrets.get("STRIPE_PRICE_ID_UNLIMITED") or os.getenv("STRIPE_PRICE_ID_UNLIMITED")
+STRIPE_PRICE_ID_PREMIUM_PLUS = (
+    st.secrets.get("STRIPE_PRICE_ID_PREMIUM_PLUS")
+    or os.getenv("STRIPE_PRICE_ID_PREMIUM_PLUS")
+    or STRIPE_PRICE_ID_UNLIMITED
+)
+
+PRICING = {
+    "basico": {
+        "price": 29.90,
+        "name": "1 Otimização",
+        "stripe_price_id": STRIPE_PRICE_ID_BASIC,
+        "credits": 1,
+        "billing": "one_time",
+    },
+    "pro": {
+        "price": 69.90,
+        "name": "Pacote 3 Vagas",
+        "stripe_price_id": STRIPE_PRICE_ID_PRO,
+        "credits": 3,
+        "badge": "🔥 MAIS VENDIDO",
+        "billing": "one_time",
+    },
+    "premium_plus": {
+        "price": 49.90,
+        "name": "VANT - Pacote Premium Plus",
+        "stripe_price_id": STRIPE_PRICE_ID_PREMIUM_PLUS,
+        "credits": 30,
+        "badge": "💎 PREMIUM PLUS",
+        "billing": "subscription",
+    },
+}
+
+if STRIPE_SECRET_KEY:
+    stripe.api_key = STRIPE_SECRET_KEY
+
 GA4_MEASUREMENT_ID = (
     st.secrets.get("GA4_MEASUREMENT_ID")
     or os.getenv("GA4_MEASUREMENT_ID")
@@ -61,6 +103,7 @@ def _inject_ga4(measurement_id: str):
         height=0,
         width=0,
     )
+
     st.session_state["ga4_injected"] = True
 
 _inject_ga4(GA4_MEASUREMENT_ID)
@@ -129,6 +172,11 @@ if 'saved_job' not in st.session_state: st.session_state.saved_job = None
 if 'competitor_files' not in st.session_state: st.session_state.competitor_files = None
 if 'dev_mode' not in st.session_state: st.session_state.dev_mode = False
 if 'last_uploaded_cv_hash' not in st.session_state: st.session_state.last_uploaded_cv_hash = None
+if 'payment_verified' not in st.session_state: st.session_state.payment_verified = False
+if 'stripe_session_id' not in st.session_state: st.session_state.stripe_session_id = None
+if 'selected_plan' not in st.session_state: st.session_state.selected_plan = "basico"
+if 'credits_remaining' not in st.session_state: st.session_state.credits_remaining = 0
+if 'purchased_plan' not in st.session_state: st.session_state.purchased_plan = None
 
 CACHE_DIR = os.path.join(os.path.dirname(__file__), ".cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -416,6 +464,56 @@ def render_trust_footer():
 # ============================================================
 # LÓGICA DE ROTEAMENTO
 # ============================================================
+try:
+    qp = st.query_params
+except Exception:
+    qp = {}
+
+def _qp_first(v):
+    if isinstance(v, (list, tuple)):
+        return v[0] if v else None
+    return v
+
+qp_payment = _qp_first(qp.get("payment"))
+qp_session_id = _qp_first(qp.get("session_id"))
+
+if qp_payment == "success" and qp_session_id and not st.session_state.payment_verified:
+    if not STRIPE_SECRET_KEY:
+        st.error("Stripe não configurado (STRIPE_SECRET_KEY ausente).")
+    else:
+        try:
+            session = stripe.checkout.Session.retrieve(qp_session_id)
+            is_paid = bool(
+                session
+                and (
+                    session.get("payment_status") in ("paid", "no_payment_required")
+                    or (session.get("mode") == "subscription" and session.get("status") == "complete")
+                )
+            )
+            if is_paid:
+                meta = session.get("metadata") or {}
+                plan_id = (meta.get("plan") or "basico").strip()
+                if plan_id not in PRICING:
+                    plan_id = "basico"
+
+                purchased_credits = PRICING[plan_id].get("credits", 1)
+                current = int(st.session_state.credits_remaining or 0)
+                st.session_state.credits_remaining = current + int(purchased_credits)
+
+                st.session_state.selected_plan = plan_id
+                st.session_state.purchased_plan = plan_id
+                st.session_state.payment_verified = True
+                st.session_state.stripe_session_id = qp_session_id
+                st.session_state.stage = 'processing_premium'
+                st.rerun()
+            else:
+                st.error("Pagamento não confirmado ainda. Tente novamente em alguns segundos.")
+        except Exception as e:
+            st.error(f"Falha ao validar pagamento: {type(e).__name__}: {e}")
+
+if qp_payment == "cancel" and not st.session_state.payment_verified:
+    st.info("Pagamento cancelado. Você pode tentar novamente.")
+
 if st.session_state.stage == 'hero':
     with main_stage.container():
         # 1. TIPO 1: PROPOSTA DE VALOR
@@ -683,50 +781,184 @@ elif st.session_state.stage == 'preview':
         # D. CHECKOUT & FECHAMENTO (BOTTOM)
         # ---------------------------------------------------------
         st.markdown("---")
-        
-        # Preço Ancorado
-        st.html("""
-            <div class="price-container" style="max-width: 600px; margin: 0 auto; text-align: center;">
-                <p style="margin-bottom:5px; font-size:1rem; color:#10B981; font-weight:600;">✅ Diagnóstico Completo Gerado</p>
-                <div style="display:flex; align-items:center; justify-content:center; gap:15px; margin: 10px 0;">
-                    <span class="old-price" style="font-size:1.2rem; text-decoration: line-through; color: #64748B;">R$ 97,90</span>
-                    <span class="new-price" style="font-size:2.5rem; font-weight: 800; color: #F8FAFC;">R$ 29,90</span>
+
+        if st.session_state.payment_verified and st.session_state.credits_remaining != 0:
+            credits_label = str(int(st.session_state.credits_remaining or 0))
+            st.success(f"✅ Pagamento já confirmado nesta sessão. Créditos disponíveis: {credits_label}")
+            if st.button("GERAR DOSSIÊ AGORA (usar 1 crédito)", key="use_credit_now", use_container_width=True, type="primary"):
+                st.session_state.stage = 'processing_premium'
+                st.rerun()
+
+        st.markdown("### 💳 Escolha Seu Plano")
+        col1, col2, col3 = st.columns(3, gap="medium")
+
+        with col1:
+            st.html("""
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #94A3B8; font-size: 0.8rem; margin-bottom: 10px;">BÁSICO</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 29,90</div>
+                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 15px;">Pagamento único</div>
+                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
+                    ✅ 1 CV otimizado<br>
+                    ✅ Análise ATS<br>
+                    ✅ Download PDF + DOCX<br>
+                    ✅ X-Ray Search
                 </div>
-                <p style="font-size:0.9rem; opacity:0.8; color:#CBD5E1;">
-                    Desbloqueie agora: <strong>CV Reescrito</strong> + <strong>X-Ray Search</strong> + <strong>Roadmap</strong>
-                </p>
             </div>
-        """)
+            """)
+            if st.button("ESCOLHER BÁSICO", key="plan_basic", use_container_width=True):
+                st.session_state.selected_plan = "basico"
+                track_event("plan_selected", {"plan": "basico", "score": int(nota) if nota is not None else 0})
+                st.session_state.stage = 'checkout'
+                st.rerun()
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        with col2:
+            st.html("""
+            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1)); border: 2px solid #10B981; border-radius: 12px; padding: 20px; text-align: center; position: relative;">
+                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">
+                    🔥 MAIS VENDIDO
+                </div>
+                <div style="color: #10B981; font-size: 0.8rem; margin-bottom: 10px; margin-top: 8px;">PRO</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 69,90</div>
+                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 5px;">R$ 23,30/CV</div>
+                <div style="background: rgba(16, 185, 129, 0.2); color: #10B981; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; display: inline-block; margin-bottom: 10px;">
+                    Economize 20%
+                </div>
+                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
+                    ✅ 3 CVs otimizados<br>
+                    ✅ Análise comparativa<br>
+                    ✅ Templates premium<br>
+                    ✅ Simulador de entrevista<br>
+                    ✅ Biblioteca curada
+                </div>
+            </div>
+            """)
+            if st.button("ESCOLHER PRO", key="plan_pro", use_container_width=True, type="primary"):
+                st.session_state.selected_plan = "pro"
+                track_event("plan_selected", {"plan": "pro", "score": int(nota) if nota is not None else 0})
+                st.session_state.stage = 'checkout'
+                st.rerun()
 
-        # ---------------------------------------------------------
-        # [BOTÃO INTELIGENTE V2] MEDO vs AMBIÇÃO
-        # ---------------------------------------------------------
-        if nota > 70:
-            # COPY PARA QUEM FOI BEM (AMBIÇÃO)
-            cta_text = "🚀 DESBLOQUEAR MEU PERFIL DE ELITE"
-            cta_sub = "Você está quase lá. Falta apenas o polimento final da IA para chegar no Top 1%."
-        else:
-            # COPY PARA QUEM FOI MAL (MEDO)
-            cta_text = "🔥 CORRIGIR MEU CURRÍCULO AGORA"
-            cta_sub = "Seu currículo atual está sendo descartado por robôs. Corrija agora."
-
-        # Mostra o subtexto persuasivo antes do botão
-        st.markdown(f"<p style='text-align: center; color: #94A3B8; font-size: 0.85rem; margin-bottom: 10px;'>{cta_sub}</p>", unsafe_allow_html=True)
-        
-        # Botão Final (Key Única Garantida)
-        if st.button(cta_text, key="pay_btn_final_dynamic", use_container_width=True, type="primary"):
-            track_event("payment_button_clicked", {"score": int(nota) if nota is not None else 0})
-            st.session_state.stage = 'processing_premium'
-            st.rerun()
+        with col3:
+            st.html("""
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #F59E0B; font-size: 0.8rem; margin-bottom: 10px;">PREMIUM PLUS</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 49,90</div>
+                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 15px;">por mês (assinatura)</div>
+                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
+                    ✅ 30 CVs por mês<br>
+                    ✅ Tudo do Pro<br>
+                    ✅ Suporte prioritário<br>
+                    ✅ Acesso antecipado<br>
+                    💎 Melhor para quem aplica para várias vagas
+                </div>
+            </div>
+            """)
+            if st.button("ESCOLHER PREMIUM PLUS", key="plan_premium_plus", use_container_width=True):
+                st.session_state.selected_plan = "premium_plus"
+                track_event("plan_selected", {"plan": "premium_plus", "score": int(nota) if nota is not None else 0})
+                st.session_state.stage = 'checkout'
+                st.rerun()
             
+elif st.session_state.stage == 'checkout':
+    main_stage.empty()
+
+    with main_stage.container():
+        st.markdown("<div class='loading-logo'>vant.checkout</div>", unsafe_allow_html=True)
+
+        plan_id = st.session_state.get("selected_plan") or "basico"
+        if plan_id not in PRICING:
+            plan_id = "basico"
+        plan = PRICING[plan_id]
+        price_id = plan.get("stripe_price_id")
+
+        if not STRIPE_SECRET_KEY or not price_id:
+            st.error("Stripe não configurado. Defina STRIPE_SECRET_KEY e os STRIPE_PRICE_ID_* em secrets/env.")
+            if st.button("Voltar"):
+                st.session_state.stage = 'preview'
+                st.rerun()
+            st.stop()
+
+        if not APP_BASE_URL:
+            st.error("APP_BASE_URL não configurado. Ex: https://seuapp.streamlit.app")
+            if st.button("Voltar"):
+                st.session_state.stage = 'preview'
+                st.rerun()
+            st.stop()
+
+        try:
+            success_url = f"{APP_BASE_URL}?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+            cancel_url = f"{APP_BASE_URL}?payment=cancel"
+
+            billing = (plan.get("billing") or "one_time").strip().lower()
+            is_subscription = billing == "subscription"
+            billing_line = "✅ Pagamento único · ✅ Acesso imediato" if not is_subscription else "✅ Assinatura mensal · ✅ 30 CVs/mês"
+
+            st.markdown(f"### Confirmar Compra: {plan_id.upper()}")
+            st.html(f"""
+            <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
+                    <span style="color:#94A3B8;">Plano</span>
+                    <strong style="color:#F8FAFC;">{plan.get('name','')}</strong>
+                </div>
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
+                    <span style="color:#94A3B8;">Valor</span>
+                    <strong style="color:#10B981; font-size: 1.4rem;">R$ {plan.get('price',0):.2f}</strong>
+                </div>
+                <div style="color:#64748B; font-size: 0.8rem;">{billing_line}</div>
+            </div>
+            """)
+
+            session = stripe.checkout.Session.create(
+                mode="subscription" if is_subscription else "payment",
+                line_items=[{"price": price_id, "quantity": 1}],
+                success_url=success_url,
+                cancel_url=cancel_url,
+                allow_promotion_codes=True,
+                metadata={
+                    "plan": plan_id,
+                    "score": str(int(st.session_state.report_data.get('nota_ats', 0)) if st.session_state.report_data else 0),
+                },
+            )
+
+            st.session_state.stripe_session_id = session.get("id")
+            st.link_button("Continuar para pagamento", session.get("url"), use_container_width=True)
+            st.caption("Se o redirecionamento não abrir automaticamente, use o botão acima.")
+
+            st.html(
+                f"""
+                <script>
+                  window.location.href = "{session.get('url')}";
+                </script>
+                """,
+            )
+
+        except Exception as e:
+            st.error(f"Erro ao iniciar checkout: {type(e).__name__}: {e}")
+            if st.button("Voltar"):
+                st.session_state.stage = 'preview'
+                st.rerun()
+                
 # --- NOVO STAGE: PROCESSING PREMIUM (Onde o gasto acontece) ---
 elif st.session_state.stage == 'processing_premium':
     main_stage.empty()
     
     with main_stage.container():
         st.markdown("<div class='loading-logo'>vant.neural engine</div>", unsafe_allow_html=True)
+        if not st.session_state.payment_verified:
+            st.warning("🔒 Você precisa concluir o pagamento para continuar.")
+            if st.button("Ir para pagamento", use_container_width=True, type="primary"):
+                st.session_state.stage = 'checkout'
+                st.rerun()
+            st.stop()
+
+        if st.session_state.credits_remaining == 0:
+            st.warning("Você não tem mais créditos disponíveis nesta sessão.")
+            if st.button("Comprar mais créditos", use_container_width=True, type="primary"):
+                st.session_state.stage = 'preview'
+                st.rerun()
+            st.stop()
+
         st.info("🔒 Pagamento Verificado. Iniciando Inteligência Artificial Generativa...")
         
         prog = st.progress(0)
@@ -761,6 +993,9 @@ elif st.session_state.stage == 'processing_premium':
                     st.session_state.competitor_files
                 )
                 _save_json(cache_path, full_data)
+
+                if st.session_state.credits_remaining > 0:
+                    st.session_state.credits_remaining = max(0, int(st.session_state.credits_remaining) - 1)
             
             prog.progress(90)
             status.text("Finalizando Dossiê...")
@@ -782,6 +1017,17 @@ elif st.session_state.stage == 'paid':
         st.error("Dados da sessão perdidos. Por favor, reinicie.")
         if st.button("Reiniciar"): st.session_state.stage = 'hero'; st.rerun()
         st.stop()
+
+    credits_label = str(int(st.session_state.credits_remaining or 0))
+    st.caption(f"Créditos nesta sessão: {credits_label}")
+    if st.session_state.credits_remaining != 0:
+        if st.button("Nova otimização", use_container_width=True):
+            st.session_state.report_data = None
+            st.session_state.saved_file = None
+            st.session_state.competitor_files = None
+            st.session_state.last_uploaded_cv_hash = None
+            st.session_state.stage = 'hero'
+            st.rerun()
 
     comp_data = data.get("analise_comparativa", {})
     
