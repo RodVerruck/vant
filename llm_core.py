@@ -29,7 +29,7 @@ else:
 
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-def _vant_error(message: str, agent_name: str | None = None, model_name: str | None = None):
+def _vant_error(message: str, agent_name=None, model_name=None):
     payload = {
         "_vant_error": True,
         "message": message,
@@ -121,7 +121,7 @@ def _call_google_cached(
             model_name=model_name,
         )
 
-    try:
+    def _generate(model_to_use: str):
         # Prompt unificado forçando JSON
         prompt = f"""
 INSTRUÇÃO DO SISTEMA:
@@ -135,7 +135,7 @@ Apenas JSON válido.
 """
 
         response = genai_client.models.generate_content(
-            model=model_name,
+            model=model_to_use,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -151,20 +151,34 @@ Apenas JSON válido.
             return json.loads(cleaned_text)
         except json.JSONDecodeError:
             # TENTATIVA 2 (FALLBACK): O texto existe, mas o JSON quebrou.
-            # Em vez de retornar None, retornamos o texto bruto empacotado.
             logger.warning(f"⚠️ JSON quebrado em [{agent_name}]. Usando Fallback de Texto Bruto.")
-            
-            # Criamos um dicionário "coringa" que serve para qualquer agente
+
             return {
-                "texto_reescrito": response.text,      # Para Agente 2A
-                "cv_otimizado_texto": response.text,   # Para Agente 2B
-                "veredito": "Análise Realizada (Texto Bruto)", # Para Diagnosis
+                "texto_reescrito": response.text,
+                "cv_otimizado_texto": response.text,
+                "veredito": "Análise Realizada (Texto Bruto)",
                 "gaps_fatais": [],
                 "biblioteca_tecnica": [],
                 "perguntas_entrevista": []
             }
 
+    try:
+        return _generate(model_name)
+
     except Exception as e:
+        msg = str(e).lower()
+        if model_name != DEFAULT_MODEL and ("not found" in msg or "404" in msg or "permission" in msg or "403" in msg):
+            logger.warning(f"⚠️ Modelo [{model_name}] indisponível/sem permissão. Tentando fallback [{DEFAULT_MODEL}]...")
+            try:
+                return _generate(DEFAULT_MODEL)
+            except Exception as e2:
+                logger.error(f"❌ Fallback de modelo também falhou [{agent_name} | {DEFAULT_MODEL}]: {e2}")
+                return _vant_error(
+                    f"Falha ao chamar o modelo ({agent_name}). Modelo [{model_name}] não disponível e fallback falhou. Detalhe: {type(e2).__name__}: {e2}",
+                    agent_name=agent_name,
+                    model_name=DEFAULT_MODEL,
+                )
+
         logger.error(f"❌ Erro Fatal LLM [{agent_name} | {model_name}]: {e}")
         return _vant_error(
             f"Falha ao chamar o modelo ({agent_name}). Verifique GOOGLE_API_KEY e a versão do pacote google-genai. Detalhe: {type(e).__name__}: {e}",
