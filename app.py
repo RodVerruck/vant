@@ -1285,7 +1285,7 @@ elif st.session_state.stage == 'paid':
         #      st.info("💡 Realize o diagnóstico do CV na aba inicial para gerar as perguntas personalizadas.")
 
         # 5. BIBLIOTECA
-        with t5:
+        with t3:
             st.subheader("📚 Biblioteca Definitiva")
             for i, book in enumerate(data.get('biblioteca_tecnica', [])):
                 link = f"https://www.amazon.com.br/s?k={urllib.parse.quote(book.get('titulo', ''))}"
