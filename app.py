@@ -61,6 +61,30 @@ def _inject_ga4(measurement_id: str):
 
 _inject_ga4(GA4_MEASUREMENT_ID)
 
+def track_event(event_name: str, params=None):
+    if not event_name:
+        return
+    payload = params or {}
+    try:
+        payload_json = json.dumps(payload, ensure_ascii=False)
+    except Exception:
+        payload_json = "{}"
+    components.html(
+        f"""
+        <script>
+          (function() {{
+            try {{
+              if (typeof window.gtag === 'function') {{
+                window.gtag('event', '{event_name}', {payload_json});
+              }}
+            }} catch (e) {{}}
+          }})();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
 # ============================================================
 # INJEÇÃO DE DEPENDÊNCIAS (CSS & JS)
 # ============================================================
@@ -100,6 +124,7 @@ if 'saved_file' not in st.session_state: st.session_state.saved_file = None
 if 'saved_job' not in st.session_state: st.session_state.saved_job = None
 if 'competitor_files' not in st.session_state: st.session_state.competitor_files = None
 if 'dev_mode' not in st.session_state: st.session_state.dev_mode = False
+if 'last_uploaded_cv_hash' not in st.session_state: st.session_state.last_uploaded_cv_hash = None
 
 CACHE_DIR = os.path.join(os.path.dirname(__file__), ".cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -418,6 +443,12 @@ if st.session_state.stage == 'hero':
             )
             if uploaded_cv is not None:
                 st.session_state.saved_file = uploaded_cv
+                cv_bytes = _get_file_bytes(uploaded_cv)
+                if cv_bytes:
+                    cv_hash = _sha256_bytes(cv_bytes)
+                    if st.session_state.last_uploaded_cv_hash != cv_hash:
+                        st.session_state.last_uploaded_cv_hash = cv_hash
+                        track_event("cv_uploaded", {"size_bytes": len(cv_bytes)})
             if st.session_state.saved_file:
                 st.success("✅ Arquivo carregado!")
             if (not st.session_state.saved_file) and os.path.exists(LAST_CV_PATH):
@@ -447,6 +478,7 @@ if st.session_state.stage == 'hero':
         # 4. CTA
         if st.button("OTIMIZAR PARA ESSA VAGA 🚀", use_container_width=True, type="primary"):
             if st.session_state.saved_job and st.session_state.saved_file:
+                track_event("analysis_started")
                 _write_text_file(LAST_JOB_PATH, st.session_state.saved_job)
                 cv_bytes = _get_file_bytes(st.session_state.saved_file)
                 if cv_bytes:
@@ -681,6 +713,7 @@ elif st.session_state.stage == 'preview':
         
         # Botão Final (Key Única Garantida)
         if st.button(cta_text, key="pay_btn_final_dynamic", use_container_width=True, type="primary"):
+            track_event("payment_button_clicked", {"score": int(nota) if nota is not None else 0})
             st.session_state.stage = 'processing_premium'
             st.rerun()
             
