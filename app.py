@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import time
 import base64
 import textwrap
@@ -35,6 +36,30 @@ st.set_page_config(
         'About': "Vant Neural Engine - Otimização de CVs com IA"
     }
 )
+
+GA4_MEASUREMENT_ID = "G-EYNHF1X75P"
+
+def _inject_ga4(measurement_id: str):
+    if not measurement_id:
+        return
+    if st.session_state.get("ga4_injected"):
+        return
+    components.html(
+        f"""
+        <script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){{dataLayer.push(arguments);}}
+          gtag('js', new Date());
+          gtag('config', '{measurement_id}');
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+    st.session_state["ga4_injected"] = True
+
+_inject_ga4(GA4_MEASUREMENT_ID)
 
 # ============================================================
 # INJEÇÃO DE DEPENDÊNCIAS (CSS & JS)
