@@ -9,6 +9,7 @@ import json
 import hashlib
 import io
 import stripe
+from supabase import create_client
 # Certifique-se de que logic.py existe e tem todas essas funções
 from logic import extrair_texto_pdf, analyze_cv_logic, gerar_pdf_candidato, format_text_to_html, gerar_word_candidato
 from logic import analyze_preview_lite, parse_raw_data_to_struct, render_cv_html
@@ -49,6 +50,17 @@ STRIPE_PRICE_ID_PREMIUM_PLUS = (
     or os.getenv("STRIPE_PRICE_ID_PREMIUM_PLUS")
     or STRIPE_PRICE_ID_UNLIMITED
 )
+
+SUPABASE_URL = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = st.secrets.get("SUPABASE_ANON_KEY") or os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_ROLE_KEY = st.secrets.get("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+supabase_public = None
+supabase_admin = None
+if SUPABASE_URL and SUPABASE_ANON_KEY:
+    supabase_public = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 PRICING = {
     "basico": {
@@ -177,6 +189,10 @@ if 'stripe_session_id' not in st.session_state: st.session_state.stripe_session_
 if 'selected_plan' not in st.session_state: st.session_state.selected_plan = "basico"
 if 'credits_remaining' not in st.session_state: st.session_state.credits_remaining = 0
 if 'purchased_plan' not in st.session_state: st.session_state.purchased_plan = None
+if 'auth_user_id' not in st.session_state: st.session_state.auth_user_id = None
+if 'auth_email' not in st.session_state: st.session_state.auth_email = None
+if 'supabase_session' not in st.session_state: st.session_state.supabase_session = None
+if 'entitlements_synced' not in st.session_state: st.session_state.entitlements_synced = False
 
 CACHE_DIR = os.path.join(os.path.dirname(__file__), ".cache")
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -476,6 +492,132 @@ def _qp_first(v):
 
 qp_payment = _qp_first(qp.get("payment"))
 qp_session_id = _qp_first(qp.get("session_id"))
+qp_code = _qp_first(qp.get("code")) or _qp_first(qp.get("auth_code"))
+
+def _auth_clear_query_params():
+    try:
+        for k in ["code", "auth_code", "type", "auth", "next"]:
+            try:
+                del st.query_params[k]
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+def _sync_entitlements_from_db(user_id: str):
+    if not supabase_admin or not user_id:
+        return
+    try:
+        subs = (
+            supabase_admin.table("subscriptions")
+            .select("plan,status,current_period_start,current_period_end")
+            .eq("user_id", user_id)
+            .order("current_period_end", desc=True)
+            .limit(1)
+            .execute()
+        )
+        sub = (subs.data or [None])[0]
+
+        if sub and (sub.get("plan") == "premium_plus") and (sub.get("status") == "active"):
+            period_start = sub.get("current_period_start")
+            usage = (
+                supabase_admin.table("usage")
+                .select("used,limit")
+                .eq("user_id", user_id)
+                .eq("period_start", period_start)
+                .limit(1)
+                .execute()
+            )
+            row = (usage.data or [None])[0]
+            used = int((row or {}).get("used") or 0)
+            limit_val = int((row or {}).get("limit") or 30)
+            st.session_state.credits_remaining = max(0, limit_val - used)
+            st.session_state.payment_verified = st.session_state.credits_remaining > 0
+            st.session_state.purchased_plan = "premium_plus"
+            return
+
+        credits = (
+            supabase_admin.table("user_credits")
+            .select("balance")
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+        row = (credits.data or [None])[0]
+        balance = int((row or {}).get("balance") or 0)
+        st.session_state.credits_remaining = max(0, balance)
+        st.session_state.payment_verified = balance > 0
+    except Exception:
+        return
+
+def _consume_one_credit(user_id: str):
+    if not supabase_admin or not user_id:
+        raise RuntimeError("Banco não configurado")
+
+    subs = (
+        supabase_admin.table("subscriptions")
+        .select("plan,status,current_period_start,current_period_end")
+        .eq("user_id", user_id)
+        .order("current_period_end", desc=True)
+        .limit(1)
+        .execute()
+    )
+    sub = (subs.data or [None])[0]
+    if sub and (sub.get("plan") == "premium_plus") and (sub.get("status") == "active"):
+        period_start = sub.get("current_period_start")
+        usage = (
+            supabase_admin.table("usage")
+            .select("used,limit")
+            .eq("user_id", user_id)
+            .eq("period_start", period_start)
+            .limit(1)
+            .execute()
+        )
+        row = (usage.data or [None])[0]
+        used = int((row or {}).get("used") or 0)
+        limit_val = int((row or {}).get("limit") or 30)
+        if used >= limit_val:
+            raise RuntimeError("Limite mensal atingido")
+
+        if row is None:
+            supabase_admin.table("usage").insert({"user_id": user_id, "period_start": period_start, "used": 1, "limit": limit_val}).execute()
+        else:
+            supabase_admin.table("usage").update({"used": used + 1}).eq("user_id", user_id).eq("period_start", period_start).execute()
+        return
+
+    credits = (
+        supabase_admin.table("user_credits")
+        .select("balance")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    row = (credits.data or [None])[0]
+    balance = int((row or {}).get("balance") or 0)
+    if balance <= 0:
+        raise RuntimeError("Sem créditos")
+    supabase_admin.table("user_credits").upsert({"user_id": user_id, "balance": balance - 1}).execute()
+
+if qp_code and supabase_public and not st.session_state.auth_user_id:
+    try:
+        resp = supabase_public.auth.exchange_code_for_session({"auth_code": qp_code})
+        session = getattr(resp, "session", None) or (resp.get("session") if isinstance(resp, dict) else None)
+        user = getattr(resp, "user", None) or (resp.get("user") if isinstance(resp, dict) else None)
+        if user:
+            st.session_state.auth_user_id = user.id if hasattr(user, "id") else user.get("id")
+            st.session_state.auth_email = user.email if hasattr(user, "email") else user.get("email")
+            st.session_state.supabase_session = session
+            st.session_state.entitlements_synced = False
+            _auth_clear_query_params()
+            _sync_entitlements_from_db(st.session_state.auth_user_id)
+            st.session_state.entitlements_synced = True
+            st.rerun()
+    except Exception as e:
+        st.error(f"Falha no login: {type(e).__name__}: {e}")
+
+if st.session_state.auth_user_id and supabase_admin and not st.session_state.entitlements_synced:
+    _sync_entitlements_from_db(st.session_state.auth_user_id)
+    st.session_state.entitlements_synced = True
 
 if qp_payment == "success" and qp_session_id and not st.session_state.payment_verified:
     if not STRIPE_SECRET_KEY:
@@ -496,9 +638,51 @@ if qp_payment == "success" and qp_session_id and not st.session_state.payment_ve
                 if plan_id not in PRICING:
                     plan_id = "basico"
 
-                purchased_credits = PRICING[plan_id].get("credits", 1)
-                current = int(st.session_state.credits_remaining or 0)
-                st.session_state.credits_remaining = current + int(purchased_credits)
+                if not st.session_state.auth_user_id:
+                    st.error("Faça login para finalizar a ativação do seu plano.")
+                    st.stop()
+
+                if not supabase_admin:
+                    st.error("Banco não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.")
+                    st.stop()
+
+                if (PRICING[plan_id].get("billing") or "one_time") == "subscription":
+                    subscription_id = session.get("subscription")
+                    if not subscription_id:
+                        st.error("Assinatura não encontrada nesta sessão do Stripe.")
+                        st.stop()
+                    sub = stripe.Subscription.retrieve(subscription_id)
+                    cps = int(sub.get("current_period_start") or 0)
+                    cpe = int(sub.get("current_period_end") or 0)
+                    supabase_admin.table("subscriptions").upsert(
+                        {
+                            "user_id": st.session_state.auth_user_id,
+                            "plan": "premium_plus",
+                            "stripe_subscription_id": subscription_id,
+                            "status": sub.get("status"),
+                            "current_period_start": cps,
+                            "current_period_end": cpe,
+                        }
+                    ).execute()
+                    supabase_admin.table("usage").upsert(
+                        {"user_id": st.session_state.auth_user_id, "period_start": cps, "used": 0, "limit": 30}
+                    ).execute()
+                else:
+                    purchased_credits = int(PRICING[plan_id].get("credits", 1))
+                    existing = (
+                        supabase_admin.table("user_credits")
+                        .select("balance")
+                        .eq("user_id", st.session_state.auth_user_id)
+                        .limit(1)
+                        .execute()
+                    )
+                    row = (existing.data or [None])[0]
+                    balance = int((row or {}).get("balance") or 0)
+                    supabase_admin.table("user_credits").upsert(
+                        {"user_id": st.session_state.auth_user_id, "balance": balance + purchased_credits}
+                    ).execute()
+
+                _sync_entitlements_from_db(st.session_state.auth_user_id)
 
                 st.session_state.selected_plan = plan_id
                 st.session_state.purchased_plan = plan_id
@@ -782,6 +966,19 @@ elif st.session_state.stage == 'preview':
         # ---------------------------------------------------------
         st.markdown("---")
 
+        if not st.session_state.auth_user_id:
+            st.info("🔐 Entre com seu e-mail para salvar créditos/assinatura e acessar de qualquer dispositivo.")
+            if supabase_public:
+                email = st.text_input("Seu e-mail", key="login_email_preview")
+                if st.button("Enviar link de acesso", key="send_magic_preview", use_container_width=True):
+                    if not email or "@" not in email:
+                        st.error("Digite um e-mail válido.")
+                    else:
+                        supabase_public.auth.sign_in_with_otp({"email": email, "options": {"email_redirect_to": f"{APP_BASE_URL}?auth=callback"}})
+                        st.success("Link enviado. Abra o e-mail e clique para entrar.")
+            else:
+                st.warning("Supabase ainda não configurado no app.")
+
         if st.session_state.payment_verified and st.session_state.credits_remaining != 0:
             credits_label = str(int(st.session_state.credits_remaining or 0))
             st.success(f"✅ Pagamento já confirmado nesta sessão. Créditos disponíveis: {credits_label}")
@@ -866,6 +1063,26 @@ elif st.session_state.stage == 'checkout':
     with main_stage.container():
         st.markdown("<div class='loading-logo'>vant.checkout</div>", unsafe_allow_html=True)
 
+        if not st.session_state.auth_user_id:
+            st.warning("🔐 Faça login para continuar.")
+            if not supabase_public:
+                st.error("Supabase não configurado. Defina SUPABASE_URL e SUPABASE_ANON_KEY.")
+                if st.button("Voltar"):
+                    st.session_state.stage = 'preview'
+                    st.rerun()
+                st.stop()
+            email = st.text_input("Seu e-mail", key="login_email_checkout")
+            if st.button("Enviar link de acesso", key="send_magic_checkout", use_container_width=True):
+                if not email or "@" not in email:
+                    st.error("Digite um e-mail válido.")
+                else:
+                    supabase_public.auth.sign_in_with_otp({"email": email, "options": {"email_redirect_to": f"{APP_BASE_URL}?auth=callback"}})
+                    st.success("Link enviado. Abra o e-mail e clique para entrar.")
+            if st.button("Voltar"):
+                st.session_state.stage = 'preview'
+                st.rerun()
+            st.stop()
+
         plan_id = st.session_state.get("selected_plan") or "basico"
         if plan_id not in PRICING:
             plan_id = "basico"
@@ -915,6 +1132,8 @@ elif st.session_state.stage == 'checkout':
                 success_url=success_url,
                 cancel_url=cancel_url,
                 allow_promotion_codes=True,
+                customer_email=st.session_state.auth_email,
+                client_reference_id=st.session_state.auth_user_id,
                 metadata={
                     "plan": plan_id,
                     "score": str(int(st.session_state.report_data.get('nota_ats', 0)) if st.session_state.report_data else 0),
@@ -953,7 +1172,7 @@ elif st.session_state.stage == 'processing_premium':
             st.stop()
 
         if st.session_state.credits_remaining == 0:
-            st.warning("Você não tem mais créditos disponíveis nesta sessão.")
+            st.warning("Você não tem mais créditos disponíveis.")
             if st.button("Comprar mais créditos", use_container_width=True, type="primary"):
                 st.session_state.stage = 'preview'
                 st.rerun()
@@ -987,15 +1206,23 @@ elif st.session_state.stage == 'processing_premium':
             
             # Chama a função PESADA original
             if full_data is None:
+                if st.session_state.auth_user_id and supabase_admin:
+                    try:
+                        _consume_one_credit(st.session_state.auth_user_id)
+                        _sync_entitlements_from_db(st.session_state.auth_user_id)
+                    except Exception as e:
+                        st.warning(str(e))
+                        if st.button("Voltar", use_container_width=True):
+                            st.session_state.stage = 'preview'
+                            st.rerun()
+                        st.stop()
+
                 full_data = analyze_cv_logic(
                     text_cv, 
                     st.session_state.saved_job,
                     st.session_state.competitor_files
                 )
                 _save_json(cache_path, full_data)
-
-                if st.session_state.credits_remaining > 0:
-                    st.session_state.credits_remaining = max(0, int(st.session_state.credits_remaining) - 1)
             
             prog.progress(90)
             status.text("Finalizando Dossiê...")
