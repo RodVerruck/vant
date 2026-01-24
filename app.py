@@ -48,7 +48,6 @@ def _inject_ga4(measurement_id: str):
         return
     if st.session_state.get("ga4_injected"):
         return
-    st.write("INJETANDO GA4")
     components.html(
         f"""
         <script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>
