@@ -113,13 +113,26 @@ def _call_google_cached(
     agent_name: str,
     model_name: str,
 ):
+    global genai_client
     if not genai_client:
-        logger.error("❌ genai_client indisponível")
-        return _vant_error(
-            "GOOGLE_API_KEY não configurada. No Streamlit Cloud, defina em App settings → Secrets (chave GOOGLE_API_KEY).",
-            agent_name=agent_name,
-            model_name=model_name,
-        )
+        api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if api_key:
+            try:
+                genai_client = genai.Client(api_key=api_key)
+            except Exception as e:
+                logger.error(f"❌ Falha ao inicializar genai_client: {e}")
+                return _vant_error(
+                    f"Falha ao inicializar cliente Google GenAI. Verifique GOOGLE_API_KEY e a versão do pacote google-genai. Detalhe: {type(e).__name__}: {e}",
+                    agent_name=agent_name,
+                    model_name=model_name,
+                )
+        else:
+            logger.error("❌ genai_client indisponível (GOOGLE_API_KEY ausente)")
+            return _vant_error(
+                "GOOGLE_API_KEY não configurada. No Streamlit Cloud, defina em App settings → Secrets (chave GOOGLE_API_KEY) e reinicie o app.",
+                agent_name=agent_name,
+                model_name=model_name,
+            )
 
     def _generate(model_to_use: str):
         # Prompt unificado forçando JSON
