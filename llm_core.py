@@ -29,6 +29,17 @@ else:
 
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
+def _vant_error(message: str, agent_name: str | None = None, model_name: str | None = None):
+    payload = {
+        "_vant_error": True,
+        "message": message,
+    }
+    if agent_name:
+        payload["agent"] = agent_name
+    if model_name:
+        payload["model"] = model_name
+    return payload
+
 # ============================================================
 # AGENT → MODEL REGISTRY
 # ============================================================
@@ -104,7 +115,11 @@ def _call_google_cached(
 ):
     if not genai_client:
         logger.error("❌ genai_client indisponível")
-        return None
+        return _vant_error(
+            "GOOGLE_API_KEY não configurada. No Streamlit Cloud, defina em App settings → Secrets (chave GOOGLE_API_KEY).",
+            agent_name=agent_name,
+            model_name=model_name,
+        )
 
     try:
         # Prompt unificado forçando JSON
@@ -151,8 +166,11 @@ Apenas JSON válido.
 
     except Exception as e:
         logger.error(f"❌ Erro Fatal LLM [{agent_name} | {model_name}]: {e}")
-        return None
-
+        return _vant_error(
+            f"Falha ao chamar o modelo ({agent_name}). Verifique GOOGLE_API_KEY e a versão do pacote google-genai. Detalhe: {type(e).__name__}: {e}",
+            agent_name=agent_name,
+            model_name=model_name,
+        )
 
 def call_llm(system_prompt: str, payload: str, agent_name: str):
     model = AGENT_MODEL_REGISTRY.get(agent_name, DEFAULT_MODEL)
@@ -171,9 +189,11 @@ def run_cv_pipeline(cv_text: str, strategy_payload: dict):
         "cv_writer_semantic",
     )
 
-    # Se falhou totalmente (erro de API), aborta
+    # Se falhou totalmente (erro de API / secrets / SDK), aborta com diagnóstico
     if not semantic_cv:
-        return {"cv_otimizado_completo": "Erro na conexão com a IA (Escrita). Tente novamente."}
+        return {"cv_otimizado_completo": "Erro na conexão com a IA (Escrita)."}
+    if isinstance(semantic_cv, dict) and semantic_cv.get("_vant_error"):
+        return {"cv_otimizado_completo": semantic_cv.get("message", "Erro na conexão com a IA (Escrita).")}
 
     # Se veio do fallback, semantic_cv['texto_reescrito'] conterá o texto bruto (markdown)
     # Isso permite que o processo continue!
