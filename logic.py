@@ -974,154 +974,69 @@ def analyze_cv_logic(cv_text, job_description, competitor_files=None):
         return {
             "veredito": "Erro Técnico",
             "nota_ats": 0,
-            "gaps_fatais": [{"erro": "Falha no Processamento", "evidencia": str(e), "correcao_sugerida": "Tente novamente mais tarde."}]
+            "gaps_fatais": [
+                {
+                    "erro": "Falha no Processamento",
+                    "evidencia": str(e),
+                    "correcao_sugerida": "Tente novamente mais tarde."
+                }
+            ]
         }
-        
-# ============================================================
 # [ATUALIZADO] ENGINE HEURÍSTICO COM ENRIQUECIMENTO DE CARGO
 # ============================================================
 def analyze_preview_lite(cv_text, job_description):
+    """
+    Versão FREE: Mostra APENAS a nota + 1 gap + tease.
+    Objetivo: Criar urgência sem entregar valor completo.
+    """
     import string
     import re
-
-    # 1. BANCO DE DADOS DE CARGOS (HARDCODED PARA RAPIDEZ)
-    # Palavras que OBRIGATORIAMENTE deveriam ter nessas vagas
-    JOB_ROLES_DB = {
-        # T.I. / Tech
-        r"(dev|desenvolvedor|engenheiro de software|programador|front|back|full)": 
-            {"clean code", "git", "api", "rest", "docker", "testes", "agile", "scrum", "banco de dados"},
-        
-        r"(dados|data|analista de dados|cientista)": 
-            {"sql", "python", "etl", "dashboard", "power bi", "estatística", "modelagem", "analytics"},
-            
-        r"(suporte|infra|sysadmin|ti|help desk|técnico)": 
-            {"sla", "chamados", "windows", "linux", "redes", "hardware", "configuração", "manutenção", "azure", "ad"},
-            
-        # Negócios
-        r"(vendas|sales|comercial|vendedor|sdr|bdr)": 
-            {"prospecção", "crm", "funil", "negociação", "fechamento", "cold call", "metas", "leads"},
-            
-        r"(marketing|growth|mkt)": 
-            {"seo", "branding", "conteúdo", "analytics", "campanhas", "social media", "tráfego", "copy"},
-            
-        r"(produto|product|pm|po)": 
-            {"roadmap", "backlog", "discovery", "user", "metrics", "kpis", "stakeholders", "priorização"},
-        
-        # Administrativo / RH
-        r"(rh|recursos humanos|recrutador|bp)": 
-            {"triagem", "entrevistas", "cultura", "treinamento", "turnover", "admissão", "benefícios"},
-            
-        r"(financeiro|contábil|fiscal)": 
-            {"fluxo de caixa", "conciliação", "excel", "relatórios", "auditoria", "impostos", "dre"}
-    }
-    
-    # Lista Genérica de "Alta Performance" (Fallback do Fallback)
-    UNIVERSAL_KEYWORDS = {"liderança", "comunicação", "projetos", "resultados", "kpis", "processos", "equipe", "inglês", "gestão"}
-
-    # ============================================================
-
+     
     def normalize(text):
         translator = str.maketrans('', '', string.punctuation)
         return set(text.lower().translate(translator).split())
-
+     
     cv_tokens = normalize(cv_text)
-    
-    # --- LÓGICA DE DETECÇÃO DE INPUT PREGUIÇOSO ---
-    is_lazy_input = len(job_description) < 200 # Se tiver menos de 200 caracteres, é só título
-    job_tokens = set()
-
-    if is_lazy_input:
-        # Tenta achar o cargo no texto curto do usuário
-        input_lower = job_description.lower()
-        role_found = False
-        
-        for pattern, keywords in JOB_ROLES_DB.items():
-            if re.search(pattern, input_lower):
-                job_tokens = keywords # Injeta as palavras do banco
-                role_found = True
-                break
-        
-        # Se não achou cargo nenhum, usa as universais
-        if not role_found:
-            job_tokens = UNIVERSAL_KEYWORDS
-    else:
-        # Se o texto for longo, processa normal
-        job_tokens = normalize(job_description)
-        stopwords = {'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que', 'os', 'as', 'uma', 'um', 'and', 'the', 'to', 'of', 'in', 'for', 'with', 'pelo', 'pela', 'na', 'no'}
-        job_tokens = job_tokens - stopwords
-
-    # --- FIM DA LÓGICA DE DETECÇÃO ---
-
-    # 3. Cálculo de Match
+    job_tokens = normalize(job_description)
+     
+    stopwords = {'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que'}
+    job_tokens = job_tokens - stopwords
+     
     matches = cv_tokens.intersection(job_tokens)
-    missing = job_tokens - cv_tokens
-    
-    # Remove palavras curtas (<3 chars) da lista de falta
-    missing = {m for m in missing if len(m) > 3}
-    
     match_count = len(matches)
     total_relevant = len(job_tokens) if len(job_tokens) > 0 else 1
-    
+     
     raw_score = (match_count / total_relevant) * 100
-    
-    # Calibração de Vendas (Peso por tamanho do CV)
-    length_bonus = min(len(cv_text) / 500, 10) 
-    final_score = min(int(raw_score + length_bonus + 30), 85)
-    
-    # 4. GERAÇÃO DOS GAPS (HÍBRIDO: MEDO vs. AMBIÇÃO)
-    gaps_formatted = []
-
-    # Se input for preguiçoso, somos mais bonzinhos na nota para não frustrar, 
-    # mas geramos gaps de "Hard Skills" para impressionar.
-    if is_lazy_input:
-        final_score = max(final_score, 65) # Garante pelo menos 65 para não parecer erro
-
-    # CENÁRIO A: PERFIL FORTE (Nota > 75)
-    if final_score > 75:
-        gaps_formatted = [
-            {
-                "erro": "Narrativa Passiva (Risco de 'Invisible Candidate')",
-                "evidencia": "Skills técnicas detectadas, mas a estrutura frasal foca em tarefas e não em RESULTADOS mensuráveis.",
-                "correcao_sugerida": "A IA precisa reescrever seus bullets points focando em métricas de impacto."
-            },
-            {
-                "erro": "Ausência de Gatilhos de Liderança",
-                "evidencia": "Faltam 'Power Words' que demonstrem autonomia e ownership (Diferencial Sênior).",
-                "correcao_sugerida": "Utilize o Ghostwriter para injetar autoridade no resumo."
-            }
-        ]
-        final_score = min(final_score, 82) # Teto de vidro
-
-    # CENÁRIO B: PERFIL MÉDIO/BAIXO
-    else:
-        top_missing = sorted(list(missing), key=len, reverse=True)[:3]
-        for word in top_missing:
-            gaps_formatted.append({
-                "erro": f"Ausência de Skill Crítica: '{word.upper()}'",
-                "evidencia": "Requisito fundamental de mercado para esta posição.",
-                "correcao_sugerida": "Incluir explicitamente para passar no filtro ATS."
-            })
-            
-        if not gaps_formatted:
-            gaps_formatted.append({"erro": "Densidade Baixa", "evidencia": "Texto genérico", "correcao_sugerida": "Use termos da vaga."})
-
+    length_bonus = min(len(cv_text) / 500, 10)
+     
+    final_score = min(int(raw_score + length_bonus - 10), 65)
+    final_score = max(final_score, 0)
+     
+    area_detected = detect_job_area(job_description)
+     
     return {
-        "veredito": "ANÁLISE DE MERCADO (LITE)",
+        "veredito": "ANÁLISE SUPERFICIAL (VERSÃO GRATUITA)",
         "nota_ats": final_score,
         "analise_por_pilares": {
-            "impacto": int(final_score * 0.9),
-            "keywords": int(raw_score * 1.5) if raw_score * 1.5 < 100 else 95,
-            "ats": int(final_score),
-            "setor_detectado": detect_job_area(job_description).upper()
+            "impacto": max(final_score - 5, 0),
+            "keywords": final_score,
+            "ats": min(final_score + 5, 100),
+            "setor_detectado": area_detected.upper()
         },
-        "gaps_fatais": gaps_formatted,
-        "linkedin_headline": "🔒 [CONTEÚDO BLOQUEADO]",
-        "resumo_otimizado": "🔒 [RESUMO ESTRATÉGICO OCULTO]",
+        "gaps_fatais": [
+            {
+                "erro": "Análise Completa Bloqueada",
+                "evidencia": "Você está vendo apenas 1 dos 4 gaps críticos identificados.",
+                "correcao_sugerida": "Desbloqueie o diagnóstico completo para ver todos os problemas que estão impedindo sua aprovação."
+            }
+        ],
+        "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
+        "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
         "cv_otimizado_completo": "🔒",
         "kit_hacker": {"boolean_string": "🔒"},
         "biblioteca_tecnica": []
     }
-    
+ 
 # ============================================================
 # GERADOR DE WORD V7 (DESIGN SYSTEM TRANSLATION)
 # ============================================================
