@@ -188,6 +188,11 @@ REGRA ZERO (INVIOLÁVEL):
 - PROCESSAR O TEXTO INTEIRO. NÃO PARE NA METADE.
 Se o texto for longo, continue até a última linha. Não trunque.
 
+🚨 REGRAS DE LIMPEZA (CRÍTICO):
+1. IGNORE linhas de localização geográfica soltas. 
+   Exemplo: Se aparecer "Florianópolis, Santa Catarina, Brasil" solto no meio da experiência, DELETE essa linha.
+2. PROCESSAR O TEXTO INTEIRO.
+
 # --- MÓDULO 1: HIGIENE VISUAL (CORREÇÕES AUTOMÁTICAS) ---
 1. **Limpeza de Rótulos:** Se o texto vier com colchetes ex: `[Atendimento]`, transforme em Negrito ex: `**Atendimento**`.
 2. **Bullets:** Use SEMPRE hífen e espaço `- ` para listas. Jamais use `•`.
