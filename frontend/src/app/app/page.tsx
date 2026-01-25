@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 const HERO_INNER_HTML = `
     <div class="badge">
@@ -115,14 +116,26 @@ export default function AppPage() {
     const [competitorFiles, setCompetitorFiles] = useState<File[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<"basico" | "pro" | "premium_plus" | "">("");
     const [authEmail, setAuthEmail] = useState<string>("");
+    const [authUserId, setAuthUserId] = useState<string>("");
+    const [creditsRemaining, setCreditsRemaining] = useState<number>(0);
     const [checkoutError, setCheckoutError] = useState<string>("");
     const [stripeSessionId, setStripeSessionId] = useState<string>("");
+    const [needsActivation, setNeedsActivation] = useState<boolean>(false);
     const [progress, setProgress] = useState<number>(0);
     const [statusText, setStatusText] = useState<string>("");
     const [apiError, setApiError] = useState<string>("");
     const [previewData, setPreviewData] = useState<any>(null);
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
+
+    const supabase = useMemo(() => {
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        if (!url || !key) {
+            return null;
+        }
+        return createClient(url, key);
+    }, []);
 
     const trustFooterHtml = useMemo(() => {
         const cvCount = calculateDynamicCvCount();
@@ -172,9 +185,69 @@ export default function AppPage() {
             return;
         }
 
+        const initSession = async () => {
+            if (!supabase) {
+                return;
+            }
+            const { data } = await supabase.auth.getSession();
+            const session = data?.session;
+            const user = session?.user;
+            if (user?.id) {
+                setAuthUserId(user.id);
+                if (user.email) {
+                    setAuthEmail(user.email);
+                }
+            }
+        };
+
+        initSession();
+
         const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
         const payment = url.searchParams.get("payment");
         const sessionId = url.searchParams.get("session_id") || "";
+
+        if (code && supabase) {
+            (async () => {
+                try {
+                    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                    if (error) {
+                        throw new Error(error.message);
+                    }
+                    const user = data?.session?.user;
+                    if (user?.id) {
+                        setAuthUserId(user.id);
+                        if (user.email) {
+                            setAuthEmail(user.email);
+                        }
+                        setCheckoutError("");
+                    }
+                } catch (e: any) {
+                    setCheckoutError(e?.message ? String(e.message) : "Falha no login");
+                }
+            })();
+
+            url.searchParams.delete("code");
+            window.history.replaceState({}, "", url.toString());
+        }
+
+        const activateEntitlements = async (sid: string, uid: string) => {
+            const resp = await fetch("http://127.0.0.1:8000/api/entitlements/activate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: sid, user_id: uid }),
+            });
+            const payload = await resp.json();
+            if (!resp.ok) {
+                throw new Error(payload?.error || `HTTP ${resp.status}`);
+            }
+            if (payload?.plan_id) {
+                setSelectedPlan(payload.plan_id);
+            }
+            if (typeof payload?.credits_remaining === "number") {
+                setCreditsRemaining(payload.credits_remaining);
+            }
+        };
 
         if (payment === "success" && sessionId) {
             setStripeSessionId(sessionId);
@@ -198,6 +271,14 @@ export default function AppPage() {
                         if (payload?.plan_id) {
                             setSelectedPlan(payload.plan_id);
                         }
+                        if (!authUserId) {
+                            setNeedsActivation(true);
+                            setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
+                            setStage("checkout");
+                            return;
+                        }
+                        await activateEntitlements(sessionId, authUserId);
+                        setNeedsActivation(false);
                         setStage("paid");
                     } else {
                         setCheckoutError("Pagamento não confirmado ainda. Tente novamente em alguns segundos.");
@@ -218,7 +299,38 @@ export default function AppPage() {
             url.searchParams.delete("payment");
             window.history.replaceState({}, "", url.toString());
         }
-    }, []);
+    }, [authUserId, supabase]);
+
+    useEffect(() => {
+        if (!needsActivation || !authUserId || !stripeSessionId) {
+            return;
+        }
+
+        (async () => {
+            try {
+                const resp = await fetch("http://127.0.0.1:8000/api/entitlements/activate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ session_id: stripeSessionId, user_id: authUserId }),
+                });
+                const payload = await resp.json();
+                if (!resp.ok) {
+                    throw new Error(payload?.error || `HTTP ${resp.status}`);
+                }
+                if (payload?.plan_id) {
+                    setSelectedPlan(payload.plan_id);
+                }
+                if (typeof payload?.credits_remaining === "number") {
+                    setCreditsRemaining(payload.credits_remaining);
+                }
+                setNeedsActivation(false);
+                setCheckoutError("");
+                setStage("paid");
+            } catch (e: any) {
+                setCheckoutError(e?.message ? String(e.message) : "Falha ao ativar plano");
+            }
+        })();
+    }, [authUserId, needsActivation, stripeSessionId]);
 
     async function startCheckout() {
         setCheckoutError("");
@@ -229,6 +341,11 @@ export default function AppPage() {
             return;
         }
 
+        if (!authUserId) {
+            setCheckoutError("Faça login para continuar.");
+            return;
+        }
+
         try {
             const resp = await fetch("http://127.0.0.1:8000/api/stripe/create-checkout-session", {
                 method: "POST",
@@ -236,6 +353,7 @@ export default function AppPage() {
                 body: JSON.stringify({
                     plan_id: planId,
                     customer_email: authEmail,
+                    client_reference_id: authUserId,
                     score: typeof previewData?.nota_ats === "number" ? previewData.nota_ats : 0,
                 }),
             });
@@ -254,6 +372,31 @@ export default function AppPage() {
         } catch (e: any) {
             setCheckoutError(e?.message ? String(e.message) : "Erro ao iniciar checkout");
         }
+    }
+
+    async function sendMagicLink() {
+        setCheckoutError("");
+        if (!supabase) {
+            setCheckoutError("Supabase não configurado no frontend (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).");
+            return;
+        }
+        if (!authEmail || !authEmail.includes("@")) {
+            setCheckoutError("Digite um e-mail válido.");
+            return;
+        }
+
+        const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/app` : undefined;
+        const { error } = await supabase.auth.signInWithOtp({
+            email: authEmail,
+            options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
+        });
+
+        if (error) {
+            setCheckoutError(error.message);
+            return;
+        }
+
+        setCheckoutError("Link enviado. Abra o e-mail e clique para entrar.");
     }
 
     function sleep(ms: number) {
@@ -945,15 +1088,27 @@ export default function AppPage() {
                                             placeholder="voce@exemplo.com"
                                             style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "10px 12px" }}
                                         />
-                                        <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 8 }}>
-                                            Usaremos seu e-mail como referência na compra.
-                                        </div>
+                                        {!authUserId ? (
+                                            <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 8 }}>
+                                                🔐 Entre com seu e-mail para salvar créditos/assinatura e acessar de qualquer dispositivo.
+                                            </div>
+                                        ) : (
+                                            <div style={{ color: "#10B981", fontSize: "0.8rem", marginTop: 8, fontWeight: 700 }}>
+                                                ✅ Logado
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                        <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
-                                            Continuar para pagamento
-                                        </button>
+                                        {!authUserId ? (
+                                            <button type="button" data-kind="secondary" onClick={sendMagicLink} style={{ width: "100%" }}>
+                                                Enviar link de acesso
+                                            </button>
+                                        ) : (
+                                            <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
+                                                Continuar para pagamento
+                                            </button>
+                                        )}
                                     </div>
 
                                     {stripeSessionId && (
@@ -963,7 +1118,15 @@ export default function AppPage() {
                                     )}
 
                                     {checkoutError && (
-                                        <div style={{ marginTop: 12, color: "#EF4444", fontSize: "0.85rem" }}>{checkoutError}</div>
+                                        <div
+                                            style={{
+                                                marginTop: 12,
+                                                color: checkoutError.startsWith("Link enviado") || checkoutError.startsWith("Pagamento confirmado") ? "#10B981" : "#EF4444",
+                                                fontSize: "0.85rem",
+                                            }}
+                                        >
+                                            {checkoutError}
+                                        </div>
                                     )}
 
                                     <div style={{ height: 16 }} />
@@ -989,6 +1152,8 @@ export default function AppPage() {
                         </div>
                         <div style={{ color: "#94A3B8", fontSize: "0.9rem", lineHeight: 1.6 }}>
                             Plano ativado: <strong style={{ color: "#E2E8F0" }}>{(selectedPlan || "basico").toUpperCase()}</strong>
+                            <br />
+                            Créditos disponíveis: <strong style={{ color: "#E2E8F0" }}>{creditsRemaining}</strong>
                             <br />
                             Próximo passo: conectar uso de crédito + geração premium.
                         </div>

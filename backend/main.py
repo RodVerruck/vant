@@ -10,6 +10,7 @@ from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
+from supabase import create_client
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
@@ -27,23 +28,33 @@ STRIPE_PRICE_ID_PREMIUM_PLUS = os.getenv("STRIPE_PRICE_ID_PREMIUM_PLUS")
 
 FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
 
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+supabase_admin = None
+if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
 PRICING: dict[str, dict[str, Any]] = {
     "basico": {
         "price": 29.90,
         "name": "1 Otimização",
         "stripe_price_id": STRIPE_PRICE_ID_BASIC,
+        "credits": 1,
         "billing": "one_time",
     },
     "pro": {
         "price": 69.90,
         "name": "Pacote 3 Vagas",
         "stripe_price_id": STRIPE_PRICE_ID_PRO,
+        "credits": 3,
         "billing": "one_time",
     },
     "premium_plus": {
         "price": 49.90,
         "name": "VANT - Pacote Premium Plus",
         "stripe_price_id": STRIPE_PRICE_ID_PREMIUM_PLUS,
+        "credits": 30,
         "billing": "subscription",
     },
 }
@@ -79,6 +90,92 @@ def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...))
         cv_text = extrair_texto_pdf(_upload_to_bytes_io(file))
         data = analyze_preview_lite(cv_text, job_description)
         return JSONResponse(content=data)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+class ActivateEntitlementsRequest(BaseModel):
+    session_id: str
+    user_id: str
+
+
+@app.post("/api/entitlements/activate")
+def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
+    if not STRIPE_SECRET_KEY:
+        return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
+    if not supabase_admin:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
+        )
+
+    try:
+        session = stripe.checkout.Session.retrieve(payload.session_id)
+        is_paid = bool(
+            session
+            and (
+                session.get("payment_status") in ("paid", "no_payment_required")
+                or (session.get("mode") == "subscription" and session.get("status") == "complete")
+            )
+        )
+        if not is_paid:
+            return JSONResponse(status_code=400, content={"error": "Pagamento não confirmado."})
+
+        meta = session.get("metadata") or {}
+        plan_id = (meta.get("plan") or "basico").strip()
+        if plan_id not in PRICING:
+            plan_id = "basico"
+
+        plan = PRICING[plan_id]
+        billing = (plan.get("billing") or "one_time").strip().lower()
+
+        if billing == "subscription":
+            subscription_id = session.get("subscription")
+            if not subscription_id:
+                return JSONResponse(status_code=400, content={"error": "Assinatura não encontrada nesta sessão do Stripe."})
+
+            sub = stripe.Subscription.retrieve(subscription_id)
+            cps = int(sub.get("current_period_start") or 0)
+            cpe = int(sub.get("current_period_end") or 0)
+
+            supabase_admin.table("subscriptions").upsert(
+                {
+                    "user_id": payload.user_id,
+                    "plan": "premium_plus",
+                    "stripe_subscription_id": subscription_id,
+                    "status": sub.get("status"),
+                    "current_period_start": cps,
+                    "current_period_end": cpe,
+                }
+            ).execute()
+
+            supabase_admin.table("usage").upsert(
+                {"user_id": payload.user_id, "period_start": cps, "used": 0, "limit": int(plan.get("credits") or 30)}
+            ).execute()
+
+            credits_remaining = int(plan.get("credits") or 30)
+        else:
+            purchased_credits = int(plan.get("credits") or 1)
+            existing = (
+                supabase_admin.table("user_credits")
+                .select("balance")
+                .eq("user_id", payload.user_id)
+                .limit(1)
+                .execute()
+            )
+            row = (existing.data or [None])[0]
+            balance = int((row or {}).get("balance") or 0)
+            new_balance = balance + purchased_credits
+            supabase_admin.table("user_credits").upsert({"user_id": payload.user_id, "balance": new_balance}).execute()
+            credits_remaining = new_balance
+
+        return JSONResponse(
+            content={
+                "ok": True,
+                "plan_id": plan_id,
+                "credits_remaining": credits_remaining,
+            }
+        )
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
