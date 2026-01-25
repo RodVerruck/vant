@@ -250,6 +250,30 @@ export default function AppPage() {
             }
         };
 
+        const pendingSid = window.localStorage.getItem("vant_pending_stripe_session_id") || "";
+        if (pendingSid) {
+            setStripeSessionId(pendingSid);
+            setNeedsActivation(true);
+
+            if (!authUserId) {
+                setStage("checkout");
+                setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
+            } else {
+                (async () => {
+                    try {
+                        await activateEntitlements(pendingSid, authUserId);
+                        window.localStorage.removeItem("vant_pending_stripe_session_id");
+                        setNeedsActivation(false);
+                        setCheckoutError("");
+                        setStage("paid");
+                    } catch (e: any) {
+                        setCheckoutError(e?.message ? String(e.message) : "Falha ao ativar plano");
+                        setStage("checkout");
+                    }
+                })();
+            }
+        }
+
         if (payment === "success" && sessionId) {
             setStripeSessionId(sessionId);
             setStage("checkout");
@@ -274,11 +298,13 @@ export default function AppPage() {
                         }
                         if (!authUserId) {
                             setNeedsActivation(true);
+                            window.localStorage.setItem("vant_pending_stripe_session_id", sessionId);
                             setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
                             setStage("checkout");
                             return;
                         }
                         await activateEntitlements(sessionId, authUserId);
+                        window.localStorage.removeItem("vant_pending_stripe_session_id");
                         setNeedsActivation(false);
                         setStage("paid");
                     } else {
@@ -342,21 +368,20 @@ export default function AppPage() {
             return;
         }
 
-        if (!authUserId) {
-            setCheckoutError("Faça login para continuar.");
-            return;
-        }
-
         try {
+            const body: any = {
+                plan_id: planId,
+                customer_email: authEmail,
+                score: typeof previewData?.nota_ats === "number" ? previewData.nota_ats : 0,
+            };
+            if (authUserId) {
+                body.client_reference_id = authUserId;
+            }
+
             const resp = await fetch("http://127.0.0.1:8000/api/stripe/create-checkout-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    plan_id: planId,
-                    customer_email: authEmail,
-                    client_reference_id: authUserId,
-                    score: typeof previewData?.nota_ats === "number" ? previewData.nota_ats : 0,
-                }),
+                body: JSON.stringify(body),
             });
             const payload = await resp.json();
             if (!resp.ok) {
