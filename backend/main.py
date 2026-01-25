@@ -94,9 +94,170 @@ def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...))
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
+class EntitlementsStatusRequest(BaseModel):
+    user_id: str
+
+
+@app.post("/api/entitlements/status")
+def entitlements_status(payload: EntitlementsStatusRequest) -> JSONResponse:
+    if not supabase_admin:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
+        )
+    try:
+        return JSONResponse(content=_entitlements_status(payload.user_id))
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+class ConsumeOneCreditRequest(BaseModel):
+    user_id: str
+
+
+@app.post("/api/entitlements/consume-one")
+def entitlements_consume_one(payload: ConsumeOneCreditRequest) -> JSONResponse:
+    if not supabase_admin:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
+        )
+    try:
+        _consume_one_credit(payload.user_id)
+        return JSONResponse(content=_entitlements_status(payload.user_id))
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+
+
+@app.post("/api/analyze-premium-paid")
+def analyze_premium_paid(
+    user_id: str = Form(...),
+    file: UploadFile = File(...),
+    job_description: str = Form(...),
+    competitor_files: list[UploadFile] | None = File(None),
+) -> JSONResponse:
+    if not supabase_admin:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
+        )
+    try:
+        status = _entitlements_status(user_id)
+        if not status.get("payment_verified") or int(status.get("credits_remaining") or 0) <= 0:
+            return JSONResponse(status_code=400, content={"error": "Você não tem créditos disponíveis."})
+
+        _consume_one_credit(user_id)
+
+        cv_text = extrair_texto_pdf(_upload_to_bytes_io(file))
+        competitors = []
+        if competitor_files:
+            for f in competitor_files:
+                competitors.append(_upload_to_bytes_io(f))
+        data = analyze_cv_logic(cv_text, job_description, competitors)
+        new_status = _entitlements_status(user_id)
+        return JSONResponse(content={"data": data, "entitlements": new_status})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
 class ActivateEntitlementsRequest(BaseModel):
     session_id: str
     user_id: str
+
+
+def _entitlements_status(user_id: str) -> dict[str, Any]:
+    if not supabase_admin or not user_id:
+        return {"payment_verified": False, "credits_remaining": 0, "plan": None}
+
+    subs = (
+        supabase_admin.table("subscriptions")
+        .select("plan,status,current_period_start,current_period_end")
+        .eq("user_id", user_id)
+        .order("current_period_end", desc=True)
+        .limit(1)
+        .execute()
+    )
+    sub = (subs.data or [None])[0]
+
+    if sub and (sub.get("plan") == "premium_plus") and (sub.get("status") == "active"):
+        period_start = sub.get("current_period_start")
+        usage = (
+            supabase_admin.table("usage")
+            .select("used,limit")
+            .eq("user_id", user_id)
+            .eq("period_start", period_start)
+            .limit(1)
+            .execute()
+        )
+        row = (usage.data or [None])[0]
+        used = int((row or {}).get("used") or 0)
+        limit_val = int((row or {}).get("limit") or 30)
+        credits_remaining = max(0, limit_val - used)
+        return {
+            "payment_verified": credits_remaining > 0,
+            "credits_remaining": credits_remaining,
+            "plan": "premium_plus",
+        }
+
+    credits = (
+        supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
+    )
+    row = (credits.data or [None])[0]
+    balance = int((row or {}).get("balance") or 0)
+    return {
+        "payment_verified": balance > 0,
+        "credits_remaining": max(0, balance),
+        "plan": None,
+    }
+
+
+def _consume_one_credit(user_id: str) -> None:
+    if not supabase_admin or not user_id:
+        raise RuntimeError("Banco não configurado")
+
+    subs = (
+        supabase_admin.table("subscriptions")
+        .select("plan,status,current_period_start,current_period_end")
+        .eq("user_id", user_id)
+        .order("current_period_end", desc=True)
+        .limit(1)
+        .execute()
+    )
+    sub = (subs.data or [None])[0]
+    if sub and (sub.get("plan") == "premium_plus") and (sub.get("status") == "active"):
+        period_start = sub.get("current_period_start")
+        usage = (
+            supabase_admin.table("usage")
+            .select("used,limit")
+            .eq("user_id", user_id)
+            .eq("period_start", period_start)
+            .limit(1)
+            .execute()
+        )
+        row = (usage.data or [None])[0]
+        used = int((row or {}).get("used") or 0)
+        limit_val = int((row or {}).get("limit") or 30)
+        if used >= limit_val:
+            raise RuntimeError("Limite mensal atingido")
+
+        if row is None:
+            supabase_admin.table("usage").insert(
+                {"user_id": user_id, "period_start": period_start, "used": 1, "limit": limit_val}
+            ).execute()
+        else:
+            supabase_admin.table("usage").update({"used": used + 1}).eq("user_id", user_id).eq(
+                "period_start", period_start
+            ).execute()
+        return
+
+    credits = (
+        supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
+    )
+    row = (credits.data or [None])[0]
+    balance = int((row or {}).get("balance") or 0)
+    if balance <= 0:
+        raise RuntimeError("Sem créditos")
+    supabase_admin.table("user_credits").upsert({"user_id": user_id, "balance": balance - 1}).execute()
 
 
 @app.post("/api/entitlements/activate")

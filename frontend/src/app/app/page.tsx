@@ -110,7 +110,7 @@ function calculateDynamicCvCount() {
 }
 
 export default function AppPage() {
-    const [stage, setStage] = useState<"hero" | "analyzing" | "preview" | "checkout" | "paid">("hero");
+    const [stage, setStage] = useState<"hero" | "analyzing" | "preview" | "checkout" | "processing_premium" | "paid">("hero");
     const [jobDescription, setJobDescription] = useState<string>("");
     const [file, setFile] = useState<File | null>(null);
     const [competitorFiles, setCompetitorFiles] = useState<File[]>([]);
@@ -127,6 +127,8 @@ export default function AppPage() {
     const [statusText, setStatusText] = useState<string>("");
     const [apiError, setApiError] = useState<string>("");
     const [previewData, setPreviewData] = useState<any>(null);
+    const [reportData, setReportData] = useState<any>(null);
+    const [premiumError, setPremiumError] = useState<string>("");
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -486,6 +488,124 @@ export default function AppPage() {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    async function syncEntitlements(userId: string) {
+        const resp = await fetch("http://127.0.0.1:8000/api/entitlements/status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId }),
+        });
+        const payload = await resp.json();
+        if (!resp.ok) {
+            throw new Error(payload?.error || `HTTP ${resp.status}`);
+        }
+        if (typeof payload?.credits_remaining === "number") {
+            setCreditsRemaining(payload.credits_remaining);
+        }
+    }
+
+    async function downloadFile(endpoint: string, filename: string) {
+        if (!reportData) {
+            return;
+        }
+        const resp = await fetch(`http://127.0.0.1:8000${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(reportData),
+        });
+        if (!resp.ok) {
+            const text = await resp.text();
+            throw new Error(text || `HTTP ${resp.status}`);
+        }
+        const blob = await resp.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    }
+
+    useEffect(() => {
+        if (!authUserId) {
+            return;
+        }
+        (async () => {
+            try {
+                await syncEntitlements(authUserId);
+            } catch {
+                return;
+            }
+        })();
+    }, [authUserId]);
+
+    useEffect(() => {
+        if (stage !== "processing_premium") {
+            return;
+        }
+        if (!authUserId) {
+            setPremiumError("Faça login para continuar.");
+            setStage("checkout");
+            return;
+        }
+        if (!jobDescription.trim() || !file) {
+            setPremiumError("Dados da sessão incompletos. Volte e envie seu CV novamente.");
+            setStage("preview");
+            return;
+        }
+
+        (async () => {
+            setPremiumError("");
+            setProgress(0);
+            setStatusText("");
+            try {
+                const updateStatus = async (text: string, percent: number) => {
+                    setStatusText(text);
+                    setProgress(percent);
+                    await sleep(220);
+                };
+
+                await updateStatus("🔒 PAGAMENTO VERIFICADO. INICIANDO IA GENERATIVA...", 10);
+                await updateStatus("REESCREVENDO SEU CV (AGENT)...", 35);
+
+                const form = new FormData();
+                form.append("user_id", authUserId);
+                form.append("job_description", jobDescription);
+                form.append("file", file);
+                if (competitorFiles && competitorFiles.length) {
+                    for (const cf of competitorFiles) {
+                        form.append("competitor_files", cf);
+                    }
+                }
+
+                const resp = await fetch("http://127.0.0.1:8000/api/analyze-premium-paid", {
+                    method: "POST",
+                    body: form,
+                });
+                const payload = await resp.json();
+                if (!resp.ok) {
+                    throw new Error(payload?.error || `HTTP ${resp.status}`);
+                }
+
+                await updateStatus("FINALIZANDO DOSSIÊ...", 90);
+                await sleep(350);
+                await updateStatus("DOSSIÊ PRONTO.", 100);
+                await sleep(200);
+
+                setReportData(payload?.data || null);
+                const cr = payload?.entitlements?.credits_remaining;
+                if (typeof cr === "number") {
+                    setCreditsRemaining(cr);
+                }
+                setStage("paid");
+            } catch (e: any) {
+                setPremiumError(e?.message ? String(e.message) : "Erro na geração premium");
+                setStage("paid");
+            }
+        })();
+    }, [authUserId, competitorFiles, file, jobDescription, stage]);
+
     async function onStart() {
         if (!jobDescription.trim() || !file) {
             return;
@@ -493,6 +613,8 @@ export default function AppPage() {
 
         setApiError("");
         setPreviewData(null);
+        setReportData(null);
+        setPremiumError("");
         setProgress(0);
         setStatusText("");
         setStage("analyzing");
@@ -842,6 +964,30 @@ export default function AppPage() {
                 </>
             )}
 
+            {stage === "processing_premium" && (
+                <div className="hero-container">
+                    <div className="loading-logo">vant.neural engine</div>
+                    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+                        <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
+                            <div
+                                style={{
+                                    width: `${Math.max(0, Math.min(100, progress))}%`,
+                                    height: "100%",
+                                    background: "linear-gradient(90deg, #10B981, #38BDF8)",
+                                    transition: "width 0.25s ease",
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginTop: 18 }}>
+                            <div className="terminal-log" style={{ color: "#10B981" }}>
+                                &gt;&gt; {statusText || "Processando..."}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {stage === "analyzing" && (
                 <div className="hero-container">
                     <div className="loading-logo">vant.core scanner</div>
@@ -1183,26 +1329,31 @@ export default function AppPage() {
                                     </div>
 
                                     <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                        {!authUserId ? (
-                                            <button
-                                                type="button"
-                                                data-kind="secondary"
-                                                onClick={sendMagicLink}
-                                                disabled={isSendingMagicLink || magicLinkCooldownSeconds > 0}
-                                                style={{ width: "100%" }}
-                                            >
-                                                {isSendingMagicLink
-                                                    ? "Enviando..."
-                                                    : magicLinkCooldownSeconds > 0
-                                                        ? `Aguarde ${magicLinkCooldownSeconds}s`
-                                                        : "Enviar link de acesso"}
-                                            </button>
-                                        ) : (
-                                            <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
-                                                Continuar para pagamento
-                                            </button>
-                                        )}
+                                        <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
+                                            Continuar para pagamento
+                                        </button>
                                     </div>
+
+                                    {!authUserId && (
+                                        <>
+                                            <div style={{ height: 12 }} />
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button
+                                                    type="button"
+                                                    data-kind="secondary"
+                                                    onClick={sendMagicLink}
+                                                    disabled={isSendingMagicLink || magicLinkCooldownSeconds > 0}
+                                                    style={{ width: "100%" }}
+                                                >
+                                                    {isSendingMagicLink
+                                                        ? "Enviando..."
+                                                        : magicLinkCooldownSeconds > 0
+                                                            ? `Aguarde ${magicLinkCooldownSeconds}s`
+                                                            : "Enviar link de acesso"}
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
 
                                     {stripeSessionId && (
                                         <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 10 }}>
@@ -1240,24 +1391,115 @@ export default function AppPage() {
                 <div className="hero-container">
                     <div className="loading-logo">vant.neural engine</div>
                     <div className="action-island-container" style={{ textAlign: "left" }}>
-                        <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.1rem", marginBottom: 10 }}>
-                            ✅ Pagamento confirmado
-                        </div>
-                        <div style={{ color: "#94A3B8", fontSize: "0.9rem", lineHeight: 1.6 }}>
-                            Plano ativado: <strong style={{ color: "#E2E8F0" }}>{(selectedPlan || "basico").toUpperCase()}</strong>
-                            <br />
-                            Créditos disponíveis: <strong style={{ color: "#E2E8F0" }}>{creditsRemaining}</strong>
-                            <br />
-                            Próximo passo: conectar uso de crédito + geração premium.
-                        </div>
+                        {!reportData ? (
+                            <>
+                                <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.1rem", marginBottom: 10 }}>
+                                    ✅ Pagamento confirmado
+                                </div>
+                                <div style={{ color: "#94A3B8", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                                    Plano ativado: <strong style={{ color: "#E2E8F0" }}>{(selectedPlan || "basico").toUpperCase()}</strong>
+                                    <br />
+                                    Créditos disponíveis: <strong style={{ color: "#E2E8F0" }}>{creditsRemaining}</strong>
+                                </div>
 
-                        <div style={{ height: 16 }} />
+                                {premiumError && (
+                                    <div style={{ marginTop: 12, color: "#EF4444", fontSize: "0.85rem" }}>{premiumError}</div>
+                                )}
 
-                        <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                            <button type="button" data-kind="primary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
-                                VOLTAR AO PREVIEW
-                            </button>
-                        </div>
+                                <div style={{ height: 16 }} />
+
+                                {creditsRemaining > 0 ? (
+                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                        <button type="button" data-kind="primary" onClick={() => setStage("processing_premium")} style={{ width: "100%" }}>
+                                            GERAR DOSSIÊ AGORA (usar 1 crédito)
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div style={{ marginTop: 12, color: "#F59E0B", fontSize: "0.9rem" }}>
+                                        Você não tem mais créditos disponíveis.
+                                    </div>
+                                )}
+
+                                <div style={{ height: 16 }} />
+
+                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                    <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
+                                        VOLTAR AO PREVIEW
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.1rem", marginBottom: 10 }}>
+                                    ✅ Dossiê Premium pronto
+                                </div>
+
+                                <div style={{ color: "#94A3B8", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                                    Créditos restantes: <strong style={{ color: "#E2E8F0" }}>{creditsRemaining}</strong>
+                                </div>
+
+                                {premiumError && (
+                                    <div style={{ marginTop: 12, color: "#EF4444", fontSize: "0.85rem" }}>{premiumError}</div>
+                                )}
+
+                                <div style={{ height: 16 }} />
+
+                                <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                                    <div data-testid="stButton" className="stButton" style={{ flex: "1 1 220px" }}>
+                                        <button
+                                            type="button"
+                                            data-kind="primary"
+                                            onClick={async () => {
+                                                try {
+                                                    await downloadFile("/api/render/pdf", "vant.pdf");
+                                                    setPremiumError("");
+                                                } catch (e: any) {
+                                                    setPremiumError(e?.message ? String(e.message) : "Falha ao baixar PDF");
+                                                }
+                                            }}
+                                            style={{ width: "100%" }}
+                                        >
+                                            BAIXAR PDF
+                                        </button>
+                                    </div>
+
+                                    <div data-testid="stButton" className="stButton" style={{ flex: "1 1 220px" }}>
+                                        <button
+                                            type="button"
+                                            data-kind="secondary"
+                                            onClick={async () => {
+                                                try {
+                                                    await downloadFile("/api/render/docx", "vant.docx");
+                                                    setPremiumError("");
+                                                } catch (e: any) {
+                                                    setPremiumError(e?.message ? String(e.message) : "Falha ao baixar DOCX");
+                                                }
+                                            }}
+                                            style={{ width: "100%" }}
+                                        >
+                                            BAIXAR DOCX
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style={{ height: 16 }} />
+
+                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                    <button
+                                        type="button"
+                                        data-kind="secondary"
+                                        onClick={() => {
+                                            setReportData(null);
+                                            setPremiumError("");
+                                            setStage("preview");
+                                        }}
+                                        style={{ width: "100%" }}
+                                    >
+                                        VOLTAR AO PREVIEW
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
