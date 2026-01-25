@@ -121,6 +121,7 @@ export default function AppPage() {
     const [checkoutError, setCheckoutError] = useState<string>("");
     const [stripeSessionId, setStripeSessionId] = useState<string>("");
     const [needsActivation, setNeedsActivation] = useState<boolean>(false);
+    const [isSendingMagicLink, setIsSendingMagicLink] = useState<boolean>(false);
     const [progress, setProgress] = useState<number>(0);
     const [statusText, setStatusText] = useState<string>("");
     const [apiError, setApiError] = useState<string>("");
@@ -375,6 +376,10 @@ export default function AppPage() {
     }
 
     async function sendMagicLink() {
+        if (isSendingMagicLink) {
+            return;
+        }
+
         setCheckoutError("");
         if (!supabase) {
             setCheckoutError("Supabase não configurado no frontend (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).");
@@ -397,22 +402,30 @@ export default function AppPage() {
             });
         };
 
-        const { error } = await attempt(true);
+        setIsSendingMagicLink(true);
+        try {
+            const first = await attempt(false);
+            if (!first.error) {
+                setCheckoutError("Link enviado. Abra o e-mail e clique para entrar.");
+                return;
+            }
 
-        if (error) {
-            if (String(error.message || "").toLowerCase().includes("database error saving new user")) {
-                const retry = await attempt(false);
-                if (!retry.error) {
+            const msg = String(first.error.message || "").toLowerCase();
+            const mightNeedSignup = msg.includes("user not found") || msg.includes("invalid") || msg.includes("signup");
+            if (mightNeedSignup) {
+                const second = await attempt(true);
+                if (!second.error) {
                     setCheckoutError("Link enviado. Abra o e-mail e clique para entrar.");
                     return;
                 }
+                setCheckoutError(second.error.message);
+                return;
             }
 
-            setCheckoutError(error.message);
-            return;
+            setCheckoutError(first.error.message);
+        } finally {
+            setIsSendingMagicLink(false);
         }
-
-        setCheckoutError("Link enviado. Abra o e-mail e clique para entrar.");
     }
 
     function sleep(ms: number) {
