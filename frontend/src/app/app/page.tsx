@@ -141,6 +141,16 @@ export default function AppPage() {
         return createClient(url, key);
     }, []);
 
+    // Restaurar jobDescription do localStorage para evitar perda em recarregamentos
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("vant_jobDescription");
+            if (saved && !jobDescription) {
+                setJobDescription(saved);
+            }
+        }
+    }, [jobDescription]);
+
     const trustFooterHtml = useMemo(() => {
         const cvCount = calculateDynamicCvCount();
         return `
@@ -552,9 +562,16 @@ export default function AppPage() {
             return;
         }
         if (!jobDescription.trim() || !file) {
+            console.error("[processing_premium] Dados incompletos:", { jobDescription: !!jobDescription, file: !!file, authUserId });
             setPremiumError("Dados da sessão incompletos. Volte e envie seu CV novamente.");
             setStage("preview");
             return;
+        }
+
+        // Persistir dados essenciais em localStorage para evitar perda em recarregamentos
+        if (typeof window !== "undefined") {
+            if (jobDescription) localStorage.setItem("vant_jobDescription", jobDescription);
+            // Não armazenamos o File em localStorage (muito grande), mas podemos avisar se ele foi perdido
         }
 
         (async () => {

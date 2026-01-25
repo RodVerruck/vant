@@ -171,7 +171,7 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
 
     subs = (
         supabase_admin.table("subscriptions")
-        .select("plan,status,current_period_start,current_period_end")
+        .select("subscription_plan,subscription_status,current_period_start,current_period_end")
         .eq("user_id", user_id)
         .order("current_period_end", desc=True)
         .limit(1)
@@ -179,11 +179,11 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
     )
     sub = (subs.data or [None])[0]
 
-    if sub and (sub.get("plan") == "premium_plus") and (sub.get("status") == "active"):
+    if sub and (sub.get("subscription_plan") == "premium_plus") and (sub.get("subscription_status") == "active"):
         period_start = sub.get("current_period_start")
         usage = (
             supabase_admin.table("usage")
-            .select("used,limit")
+            .select("used,usage_limit")
             .eq("user_id", user_id)
             .eq("period_start", period_start)
             .limit(1)
@@ -191,7 +191,7 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
         )
         row = (usage.data or [None])[0]
         used = int((row or {}).get("used") or 0)
-        limit_val = int((row or {}).get("limit") or 30)
+        limit_val = int((row or {}).get("usage_limit") or 30)
         credits_remaining = max(0, limit_val - used)
         return {
             "payment_verified": credits_remaining > 0,
@@ -217,18 +217,18 @@ def _consume_one_credit(user_id: str) -> None:
 
     subs = (
         supabase_admin.table("subscriptions")
-        .select("plan,status,current_period_start,current_period_end")
+        .select("subscription_plan,subscription_status,current_period_start,current_period_end")
         .eq("user_id", user_id)
         .order("current_period_end", desc=True)
         .limit(1)
         .execute()
     )
     sub = (subs.data or [None])[0]
-    if sub and (sub.get("plan") == "premium_plus") and (sub.get("status") == "active"):
+    if sub and (sub.get("subscription_plan") == "premium_plus") and (sub.get("subscription_status") == "active"):
         period_start = sub.get("current_period_start")
         usage = (
             supabase_admin.table("usage")
-            .select("used,limit")
+            .select("used,usage_limit")
             .eq("user_id", user_id)
             .eq("period_start", period_start)
             .limit(1)
@@ -236,13 +236,13 @@ def _consume_one_credit(user_id: str) -> None:
         )
         row = (usage.data or [None])[0]
         used = int((row or {}).get("used") or 0)
-        limit_val = int((row or {}).get("limit") or 30)
+        limit_val = int((row or {}).get("usage_limit") or 30)
         if used >= limit_val:
             raise RuntimeError("Limite mensal atingido")
 
         if row is None:
             supabase_admin.table("usage").insert(
-                {"user_id": user_id, "period_start": period_start, "used": 1, "limit": limit_val}
+                {"user_id": user_id, "period_start": period_start, "used": 1, "usage_limit": limit_val}
             ).execute()
         else:
             supabase_admin.table("usage").update({"used": used + 1}).eq("user_id", user_id).eq(
@@ -302,16 +302,16 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
             supabase_admin.table("subscriptions").upsert(
                 {
                     "user_id": payload.user_id,
-                    "plan": "premium_plus",
+                    "subscription_plan": "premium_plus",
                     "stripe_subscription_id": subscription_id,
-                    "status": sub.get("status"),
+                    "subscription_status": sub.get("status"),
                     "current_period_start": cps,
                     "current_period_end": cpe,
                 }
             ).execute()
 
             supabase_admin.table("usage").upsert(
-                {"user_id": payload.user_id, "period_start": cps, "used": 0, "limit": int(plan.get("credits") or 30)}
+                {"user_id": payload.user_id, "period_start": cps, "used": 0, "usage_limit": int(plan.get("credits") or 30)}
             ).execute()
 
             credits_remaining = int(plan.get("credits") or 30)
