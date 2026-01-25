@@ -141,16 +141,55 @@ export default function AppPage() {
         return createClient(url, key);
     }, []);
 
-    // Restaurar jobDescription do localStorage para evitar perda em recarregamentos
+    // Restaurar jobDescription e file do sessionStorage ao montar
     useEffect(() => {
-        console.log("[useEffect localStorage jobDescription] Rodou.");
         if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("vant_jobDescription");
-            if (saved && !jobDescription) {
-                setJobDescription(saved);
+            const savedJob = sessionStorage.getItem("vant_jobDescription");
+            const savedFileName = sessionStorage.getItem("vant_file_name");
+            const savedFileType = sessionStorage.getItem("vant_file_type");
+            const savedFileB64 = sessionStorage.getItem("vant_file_b64");
+            if (savedJob && !jobDescription) {
+                setJobDescription(savedJob);
+            }
+            if (savedFileName && savedFileType && savedFileB64 && !file) {
+                fetch(savedFileB64)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const restoredFile = new File([blob], savedFileName, { type: savedFileType });
+                        setFile(restoredFile);
+                    });
+            }
+        }
+    }, [jobDescription, file]);
+
+    // Salvar jobDescription e file em sessionStorage quando mudarem
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            if (jobDescription) {
+                sessionStorage.setItem("vant_jobDescription", jobDescription);
+            } else {
+                sessionStorage.removeItem("vant_jobDescription");
             }
         }
     }, [jobDescription]);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    sessionStorage.setItem("vant_file_b64", reader.result as string);
+                    sessionStorage.setItem("vant_file_name", file.name);
+                    sessionStorage.setItem("vant_file_type", file.type);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                sessionStorage.removeItem("vant_file_b64");
+                sessionStorage.removeItem("vant_file_name");
+                sessionStorage.removeItem("vant_file_type");
+            }
+        }
+    }, [file]);
 
     const trustFooterHtml = useMemo(() => {
         const cvCount = calculateDynamicCvCount();
