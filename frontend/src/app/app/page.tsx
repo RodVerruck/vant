@@ -109,9 +109,14 @@ function calculateDynamicCvCount() {
 }
 
 export default function AppPage() {
+    const [stage, setStage] = useState<"hero" | "analyzing" | "preview">("hero");
     const [jobDescription, setJobDescription] = useState<string>("");
     const [file, setFile] = useState<File | null>(null);
     const [competitorFiles, setCompetitorFiles] = useState<File[]>([]);
+    const [progress, setProgress] = useState<number>(0);
+    const [statusText, setStatusText] = useState<string>("");
+    const [apiError, setApiError] = useState<string>("");
+    const [previewData, setPreviewData] = useState<any>(null);
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -158,9 +163,60 @@ export default function AppPage() {
     `;
     }, []);
 
-    function onStart() {
+    function sleep(ms: number) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function onStart() {
         if (!jobDescription.trim() || !file) {
             return;
+        }
+
+        setApiError("");
+        setPreviewData(null);
+        setProgress(0);
+        setStatusText("");
+        setStage("analyzing");
+
+        await sleep(120);
+
+        try {
+            const updateStatus = async (text: string, percent: number) => {
+                setStatusText(text);
+                setProgress(percent);
+                await sleep(220);
+            };
+
+            await updateStatus("INICIANDO SCANNER BIOMÉTRICO DO CV...", 10);
+            await updateStatus("MAPEANDO DENSIDADE DE PALAVRAS-CHAVE...", 40);
+
+            const form = new FormData();
+            form.append("job_description", jobDescription);
+            form.append("file", file);
+
+            const resp = await fetch("http://127.0.0.1:8000/api/analyze-lite", {
+                method: "POST",
+                body: form,
+            });
+
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(text || `HTTP ${resp.status}`);
+            }
+
+            const data = await resp.json();
+
+            await updateStatus("CALCULANDO SCORE DE ADERÊNCIA...", 80);
+            await sleep(450);
+            await updateStatus("RELATÓRIO PRELIMINAR PRONTO.", 100);
+            await sleep(350);
+
+            setPreviewData(data);
+            setStage("preview");
+        } catch (e: any) {
+            const message = e?.message ? String(e.message) : "Erro no Scanner Lite";
+            setApiError(message);
+            setStage("hero");
         }
     }
 
@@ -174,91 +230,170 @@ export default function AppPage() {
 
     return (
         <main>
-            <div className="hero-container">
-                <div dangerouslySetInnerHTML={{ __html: HERO_INNER_HTML }} />
+            {stage === "hero" && (
+                <>
+                    <div className="hero-container">
+                        <div dangerouslySetInnerHTML={{ __html: HERO_INNER_HTML }} />
 
-                <div className="action-island-container">
-                    <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-                        <div style={{ flex: "1 1 380px" }}>
-                            <h5>1. VAGA ALVO 🎯</h5>
-                            <div className="stTextArea">
-                                <textarea
-                                    value={jobDescription}
-                                    onChange={(e) => setJobDescription(e.target.value)}
-                                    placeholder="Dê um Ctrl+V sem medo..."
-                                    style={{ height: 185, width: "100%", boxSizing: "border-box" }}
-                                />
-                            </div>
-                        </div>
-
-                        <div style={{ flex: "1 1 380px" }}>
-                            <h5>2. SEU CV (PDF) 📄</h5>
-                            <div data-testid="stFileUploader">
-                                <section>
-                                    <div>
-                                        <div>
-                                            <span>Drag and drop file here</span>
-                                        </div>
-                                        <small>Limit: 10MB • PDF</small>
-                                        <button type="button" onClick={openFileDialog}>Browse files</button>
-                                        <input
-                                            ref={uploaderInputRef}
-                                            type="file"
-                                            accept="application/pdf"
-                                            style={{ display: "none" }}
-                                            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                        <div className="action-island-container">
+                            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+                                <div style={{ flex: "1 1 380px" }}>
+                                    <h5>1. VAGA ALVO 🎯</h5>
+                                    <div className="stTextArea">
+                                        <textarea
+                                            value={jobDescription}
+                                            onChange={(e) => setJobDescription(e.target.value)}
+                                            placeholder="Dê um Ctrl+V sem medo..."
+                                            style={{ height: 185, width: "100%", boxSizing: "border-box" }}
                                         />
                                     </div>
-                                </section>
+                                </div>
+
+                                <div style={{ flex: "1 1 380px" }}>
+                                    <h5>2. SEU CV (PDF) 📄</h5>
+                                    <div data-testid="stFileUploader">
+                                        <section>
+                                            <div>
+                                                <div>
+                                                    <span>Drag and drop file here</span>
+                                                </div>
+                                                <small>Limit: 10MB • PDF</small>
+                                                <button type="button" onClick={openFileDialog}>Browse files</button>
+                                                <input
+                                                    ref={uploaderInputRef}
+                                                    type="file"
+                                                    accept="application/pdf"
+                                                    style={{ display: "none" }}
+                                                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                                                />
+                                            </div>
+                                        </section>
+                                    </div>
+                                </div>
                             </div>
+
+                            <div style={{ height: 16 }} />
+
+                            <details data-testid="stExpander">
+                                <summary>📂 Comparar com Referência de Mercado (Opcional)</summary>
+                                <div>
+                                    <div dangerouslySetInnerHTML={{ __html: LINKEDIN_INSTRUCTIONS_HTML }} />
+                                    <div data-testid="stFileUploader">
+                                        <section>
+                                            <div>
+                                                <div>
+                                                    <span>Drag and drop file here</span>
+                                                </div>
+                                                <small>Limit: 10MB • PDF</small>
+                                                <button type="button" onClick={openCompetitorFileDialog}>Browse files</button>
+                                                <input
+                                                    ref={competitorUploaderInputRef}
+                                                    type="file"
+                                                    accept="application/pdf"
+                                                    multiple
+                                                    style={{ display: "none" }}
+                                                    onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
+                                                />
+                                            </div>
+                                        </section>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <div style={{ height: 8 }} />
+
+                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
+                                    OTIMIZAR PARA ESSA VAGA 🚀
+                                </button>
+                            </div>
+
+                            {apiError && (
+                                <div style={{ marginTop: 12, color: "#EF4444", fontSize: "0.85rem" }}>{apiError}</div>
+                            )}
+
+                            <p className="cta-trust-line" style={{ textAlign: "center", color: "#64748B", fontSize: "0.8rem", marginTop: 15 }}>
+                                🛡️ <strong>1ª análise 100% gratuita e segura.</strong>
+                                <br />
+                                Seus dados são processados em RAM volátil e deletados após a sessão.
+                            </p>
                         </div>
                     </div>
 
-                    <div style={{ height: 16 }} />
+                    <div style={{ marginTop: 20 }} dangerouslySetInnerHTML={{ __html: trustFooterHtml }} />
+                </>
+            )}
 
-                    <details data-testid="stExpander">
-                        <summary>📂 Comparar com Referência de Mercado (Opcional)</summary>
-                        <div>
-                            <div dangerouslySetInnerHTML={{ __html: LINKEDIN_INSTRUCTIONS_HTML }} />
-                            <div data-testid="stFileUploader">
-                                <section>
-                                    <div>
-                                        <div>
-                                            <span>Drag and drop file here</span>
-                                        </div>
-                                        <small>Limit: 10MB • PDF</small>
-                                        <button type="button" onClick={openCompetitorFileDialog}>Browse files</button>
-                                        <input
-                                            ref={competitorUploaderInputRef}
-                                            type="file"
-                                            accept="application/pdf"
-                                            multiple
-                                            style={{ display: "none" }}
-                                            onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
-                                        />
-                                    </div>
-                                </section>
+            {stage === "analyzing" && (
+                <div className="hero-container">
+                    <div className="loading-logo">vant.core scanner</div>
+                    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+                        <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
+                            <div
+                                style={{
+                                    width: `${Math.max(0, Math.min(100, progress))}%`,
+                                    height: "100%",
+                                    background: "linear-gradient(90deg, #38BDF8, #818CF8)",
+                                    transition: "width 0.25s ease",
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginTop: 18 }}>
+                            <div className="terminal-log" style={{ color: "#38BDF8" }}>
+                                &gt;&gt; {statusText}
                             </div>
                         </div>
-                    </details>
-
-                    <div style={{ height: 8 }} />
-
-                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                        <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
-                            OTIMIZAR PARA ESSA VAGA 🚀
-                        </button>
                     </div>
-
-                    <p className="cta-trust-line" style={{ textAlign: "center", color: "#64748B", fontSize: "0.8rem", marginTop: 15 }}>
-                        🛡️ <strong>1ª análise 100% gratuita e segura.</strong>
-                        <br />
-                        Seus dados são processados em RAM volátil e deletados após a sessão.
-                    </p>
                 </div>
-            </div>
+            )}
 
-            <div style={{ marginTop: 20 }} dangerouslySetInnerHTML={{ __html: trustFooterHtml }} />
+            {stage === "preview" && (
+                <div className="hero-container">
+                    <div className="action-island-container" style={{ textAlign: "left" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                            <div>
+                                <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+                                    Preview Lite
+                                </div>
+                                <div style={{ marginTop: 6, color: "#E2E8F0", fontSize: "1.1rem", fontWeight: 800 }}>
+                                    {previewData?.veredito ?? "ANÁLISE CONCLUÍDA"}
+                                </div>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                                <div style={{ color: "#38BDF8", fontSize: "2.2rem", fontWeight: 900, lineHeight: 1 }}>
+                                    {typeof previewData?.nota_ats === "number" ? `${previewData.nota_ats}%` : "--"}
+                                </div>
+                                <div style={{ color: "#94A3B8", fontSize: "0.85rem" }}>Score ATS</div>
+                            </div>
+                        </div>
+
+                        <div style={{ height: 14 }} />
+
+                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.6 }}>
+                            Setor detectado: <strong style={{ color: "#E2E8F0" }}>{previewData?.analise_por_pilares?.setor_detectado ?? "-"}</strong>
+                        </div>
+
+                        <div style={{ height: 18 }} />
+
+                        <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                            <button
+                                type="button"
+                                data-kind="secondary"
+                                onClick={() => {
+                                    setStage("hero");
+                                    setProgress(0);
+                                    setStatusText("");
+                                }}
+                                style={{ width: "100%" }}
+                            >
+                                VOLTAR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }
