@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const HERO_INNER_HTML = `
     <div class="badge">
@@ -109,11 +109,14 @@ function calculateDynamicCvCount() {
 }
 
 export default function AppPage() {
-    const [stage, setStage] = useState<"hero" | "analyzing" | "preview" | "checkout">("hero");
+    const [stage, setStage] = useState<"hero" | "analyzing" | "preview" | "checkout" | "paid">("hero");
     const [jobDescription, setJobDescription] = useState<string>("");
     const [file, setFile] = useState<File | null>(null);
     const [competitorFiles, setCompetitorFiles] = useState<File[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<"basico" | "pro" | "premium_plus" | "">("");
+    const [authEmail, setAuthEmail] = useState<string>("");
+    const [checkoutError, setCheckoutError] = useState<string>("");
+    const [stripeSessionId, setStripeSessionId] = useState<string>("");
     const [progress, setProgress] = useState<number>(0);
     const [statusText, setStatusText] = useState<string>("");
     const [apiError, setApiError] = useState<string>("");
@@ -163,6 +166,95 @@ export default function AppPage() {
     </div>
     `;
     }, []);
+
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+        const payment = url.searchParams.get("payment");
+        const sessionId = url.searchParams.get("session_id") || "";
+
+        if (payment === "success" && sessionId) {
+            setStripeSessionId(sessionId);
+            setStage("checkout");
+            setCheckoutError("");
+
+            (async () => {
+                try {
+                    const resp = await fetch("http://127.0.0.1:8000/api/stripe/verify-checkout-session", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ session_id: sessionId }),
+                    });
+
+                    const payload = await resp.json();
+                    if (!resp.ok) {
+                        throw new Error(payload?.error || `HTTP ${resp.status}`);
+                    }
+
+                    if (payload?.paid) {
+                        if (payload?.plan_id) {
+                            setSelectedPlan(payload.plan_id);
+                        }
+                        setStage("paid");
+                    } else {
+                        setCheckoutError("Pagamento não confirmado ainda. Tente novamente em alguns segundos.");
+                    }
+                } catch (e: any) {
+                    setCheckoutError(e?.message ? String(e.message) : "Falha ao validar pagamento");
+                }
+            })();
+
+            url.searchParams.delete("payment");
+            url.searchParams.delete("session_id");
+            window.history.replaceState({}, "", url.toString());
+        }
+
+        if (payment === "cancel") {
+            setCheckoutError("Pagamento cancelado. Você pode tentar novamente.");
+            setStage("checkout");
+            url.searchParams.delete("payment");
+            window.history.replaceState({}, "", url.toString());
+        }
+    }, []);
+
+    async function startCheckout() {
+        setCheckoutError("");
+
+        const planId = (selectedPlan || "basico").trim();
+        if (!authEmail || !authEmail.includes("@")) {
+            setCheckoutError("Digite um e-mail válido.");
+            return;
+        }
+
+        try {
+            const resp = await fetch("http://127.0.0.1:8000/api/stripe/create-checkout-session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    plan_id: planId,
+                    customer_email: authEmail,
+                    score: typeof previewData?.nota_ats === "number" ? previewData.nota_ats : 0,
+                }),
+            });
+            const payload = await resp.json();
+            if (!resp.ok) {
+                throw new Error(payload?.error || `HTTP ${resp.status}`);
+            }
+            if (payload?.id) {
+                setStripeSessionId(payload.id);
+            }
+            const checkoutUrl = String(payload?.url || "");
+            if (!checkoutUrl) {
+                throw new Error("URL de checkout não retornada pelo backend");
+            }
+            window.location.href = checkoutUrl;
+        } catch (e: any) {
+            setCheckoutError(e?.message ? String(e.message) : "Erro ao iniciar checkout");
+        }
+    }
 
     function sleep(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
@@ -808,17 +900,104 @@ export default function AppPage() {
                 <div className="hero-container">
                     <div className="loading-logo">vant.checkout</div>
                     <div className="action-island-container" style={{ textAlign: "left" }}>
+                        {(() => {
+                            const planId = (selectedPlan || "basico").trim();
+                            const prices: any = {
+                                basico: { price: 29.90, name: "1 Otimização", billing: "one_time" },
+                                pro: { price: 69.90, name: "Pacote 3 Vagas", billing: "one_time" },
+                                premium_plus: { price: 49.90, name: "VANT - Pacote Premium Plus", billing: "subscription" },
+                            };
+                            const plan = prices[planId] || prices.basico;
+                            const isSubscription = plan.billing === "subscription";
+                            const billingLine = !isSubscription
+                                ? "✅ Pagamento único · ✅ Acesso imediato"
+                                : "✅ Assinatura mensal · ✅ 30 CVs/mês";
+
+                            const boxHtml = `
+            <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
+                    <span style="color:#94A3B8;">Plano</span>
+                    <strong style="color:#F8FAFC;">${plan.name}</strong>
+                </div>
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
+                    <span style="color:#94A3B8;">Valor</span>
+                    <strong style="color:#10B981; font-size: 1.4rem;">R$ ${plan.price.toFixed(2)}</strong>
+                </div>
+                <div style="color:#64748B; font-size: 0.8rem;">${billingLine}</div>
+            </div>
+            `;
+
+                            return (
+                                <>
+                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 12 }}>
+                                        Confirmar Compra: {planId.toUpperCase()}
+                                    </div>
+
+                                    <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
+
+                                    <div style={{ marginBottom: 12 }}>
+                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+                                            Seu e-mail
+                                        </div>
+                                        <input
+                                            value={authEmail}
+                                            onChange={(e) => setAuthEmail(e.target.value)}
+                                            placeholder="voce@exemplo.com"
+                                            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "10px 12px" }}
+                                        />
+                                        <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 8 }}>
+                                            Usaremos seu e-mail como referência na compra.
+                                        </div>
+                                    </div>
+
+                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                        <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
+                                            Continuar para pagamento
+                                        </button>
+                                    </div>
+
+                                    {stripeSessionId && (
+                                        <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 10 }}>
+                                            Session ID: {stripeSessionId}
+                                        </div>
+                                    )}
+
+                                    {checkoutError && (
+                                        <div style={{ marginTop: 12, color: "#EF4444", fontSize: "0.85rem" }}>{checkoutError}</div>
+                                    )}
+
+                                    <div style={{ height: 16 }} />
+
+                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                        <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
+                                            VOLTAR
+                                        </button>
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </div>
+                </div>
+            )}
+
+            {stage === "paid" && (
+                <div className="hero-container">
+                    <div className="loading-logo">vant.neural engine</div>
+                    <div className="action-island-container" style={{ textAlign: "left" }}>
+                        <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.1rem", marginBottom: 10 }}>
+                            ✅ Pagamento confirmado
+                        </div>
                         <div style={{ color: "#94A3B8", fontSize: "0.9rem", lineHeight: 1.6 }}>
-                            Plano selecionado: <strong style={{ color: "#E2E8F0" }}>{selectedPlan || "-"}</strong>
+                            Plano ativado: <strong style={{ color: "#E2E8F0" }}>{(selectedPlan || "basico").toUpperCase()}</strong>
                             <br />
-                            Checkout/Stripe e login serão conectados no próximo passo.
+                            Próximo passo: conectar uso de crédito + geração premium.
                         </div>
 
                         <div style={{ height: 16 }} />
 
                         <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                            <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
-                                VOLTAR
+                            <button type="button" data-kind="primary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
+                                VOLTAR AO PREVIEW
                             </button>
                         </div>
                     </div>
