@@ -435,7 +435,9 @@ export default function AppPage() {
             return;
         }
 
-        const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/app` : undefined;
+        const redirectTo =
+            process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL ||
+            (typeof window !== "undefined" ? `${window.location.origin}/app` : undefined);
 
         const attempt = async (shouldCreateUser: boolean) => {
             return await supabase.auth.signInWithOtp({
