@@ -143,6 +143,7 @@ export default function AppPage() {
 
     // Restaurar jobDescription do localStorage para evitar perda em recarregamentos
     useEffect(() => {
+        console.log("[useEffect localStorage jobDescription] Rodou.");
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem("vant_jobDescription");
             if (saved && !jobDescription) {
@@ -195,6 +196,7 @@ export default function AppPage() {
     }, []);
 
     useEffect(() => {
+        console.log("[useEffect URL params] Rodou.");
         if (typeof window === "undefined") {
             return;
         }
@@ -344,6 +346,7 @@ export default function AppPage() {
     const magicLinkCooldownSeconds = Math.max(0, Math.ceil((magicLinkCooldownUntil - Date.now()) / 1000));
 
     useEffect(() => {
+        console.log("[useEffect magicLinkCooldown] Rodou.");
         if (magicLinkCooldownSeconds <= 0) {
             return;
         }
@@ -354,6 +357,7 @@ export default function AppPage() {
     }, [magicLinkCooldownSeconds]);
 
     useEffect(() => {
+        console.log("[useEffect needsActivation] Rodou.");
         if (!needsActivation || !authUserId || !stripeSessionId) {
             return;
         }
@@ -540,6 +544,7 @@ export default function AppPage() {
     }
 
     useEffect(() => {
+        console.log("[useEffect syncEntitlements] Rodou.");
         if (!authUserId) {
             return;
         }
@@ -553,7 +558,9 @@ export default function AppPage() {
     }, [authUserId]);
 
     useEffect(() => {
+        console.log("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
         if (stage !== "processing_premium") {
+            console.log("[useEffect processing_premium] Stage não é processing_premium, saindo.");
             return;
         }
         if (!authUserId) {
@@ -562,7 +569,31 @@ export default function AppPage() {
             return;
         }
         if (!jobDescription.trim() || !file) {
-            console.error("[processing_premium] Dados incompletos:", { jobDescription: !!jobDescription, file: !!file, authUserId });
+            // Tentar restaurar do sessionStorage (caso de remontagem)
+            if (typeof window !== "undefined") {
+                const savedJob = sessionStorage.getItem("vant_jobDescription");
+                const savedFileB64 = sessionStorage.getItem("vant_file_b64");
+                const savedFileName = sessionStorage.getItem("vant_file_name");
+                const savedFileType = sessionStorage.getItem("vant_file_type");
+                if (savedJob && savedFileB64 && savedFileName && savedFileType) {
+                    console.log("[processing_premium] Restaurando do sessionStorage...");
+                    setJobDescription(savedJob);
+                    // Converter base64 de volta para File
+                    fetch(savedFileB64)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const restoredFile = new File([blob], savedFileName, { type: savedFileType });
+                            setFile(restoredFile);
+                            sessionStorage.removeItem("vant_jobDescription");
+                            sessionStorage.removeItem("vant_file_b64");
+                            sessionStorage.removeItem("vant_file_name");
+                            sessionStorage.removeItem("vant_file_type");
+                        });
+                    return; // aguardar próximo ciclo do useEffect
+                }
+            }
+            console.error("[processing_premium] Dados incompletos:", { jobDescription: !!jobDescription, file: !!file, authUserId, stage });
+            console.trace("[processing_premium] Stack trace para descobrir quem resetou os dados:");
             setPremiumError("Dados da sessão incompletos. Volte e envie seu CV novamente.");
             setStage("preview");
             return;
@@ -623,10 +654,12 @@ export default function AppPage() {
                 setStage("paid");
             }
         })();
-    }, [authUserId, competitorFiles, file, jobDescription, stage]);
+    }, [authUserId, competitorFiles, stage]);
 
     async function onStart() {
+        console.log("[onStart] Chamado. Estado atual:", { jobDescription: !!jobDescription, file: !!file, stage });
         if (!jobDescription.trim() || !file) {
+            console.warn("[onStart] Retorno antecipado: jobDescription ou file vazios.");
             return;
         }
 
@@ -910,24 +943,34 @@ export default function AppPage() {
 
                                 <div style={{ flex: "1 1 380px" }}>
                                     <h5>2. SEU CV (PDF) 📄</h5>
-                                    <div data-testid="stFileUploader">
-                                        <section>
-                                            <div>
+                                    {file ? (
+                                        <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center" }}>
+                                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ Arquivo carregado</div>
+                                            <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>{file.name}</div>
+                                            <button type="button" onClick={() => setFile(null)} style={{ marginTop: 8, fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                Remover
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div data-testid="stFileUploader">
+                                            <section>
                                                 <div>
-                                                    <span>Drag and drop file here</span>
+                                                    <div>
+                                                        <span>Drag and drop file here</span>
+                                                    </div>
+                                                    <small>Limit: 10MB • PDF</small>
+                                                    <button type="button" onClick={openFileDialog}>Browse files</button>
+                                                    <input
+                                                        ref={uploaderInputRef}
+                                                        type="file"
+                                                        accept="application/pdf"
+                                                        style={{ display: "none" }}
+                                                        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                                                    />
                                                 </div>
-                                                <small>Limit: 10MB • PDF</small>
-                                                <button type="button" onClick={openFileDialog}>Browse files</button>
-                                                <input
-                                                    ref={uploaderInputRef}
-                                                    type="file"
-                                                    accept="application/pdf"
-                                                    style={{ display: "none" }}
-                                                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                                                />
-                                            </div>
-                                        </section>
-                                    </div>
+                                            </section>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -937,25 +980,39 @@ export default function AppPage() {
                                 <summary>📂 Comparar com Referência de Mercado (Opcional)</summary>
                                 <div>
                                     <div dangerouslySetInnerHTML={{ __html: LINKEDIN_INSTRUCTIONS_HTML }} />
-                                    <div data-testid="stFileUploader">
-                                        <section>
-                                            <div>
-                                                <div>
-                                                    <span>Drag and drop file here</span>
-                                                </div>
-                                                <small>Limit: 10MB • PDF</small>
-                                                <button type="button" onClick={openCompetitorFileDialog}>Browse files</button>
-                                                <input
-                                                    ref={competitorUploaderInputRef}
-                                                    type="file"
-                                                    accept="application/pdf"
-                                                    multiple
-                                                    style={{ display: "none" }}
-                                                    onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
-                                                />
+                                    {competitorFiles.length > 0 ? (
+                                        <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center", marginTop: 12 }}>
+                                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ {competitorFiles.length} arquivo(s) carregado(s)</div>
+                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", marginBottom: 8 }}>
+                                                {competitorFiles.map((f, i) => (
+                                                    <div key={i} style={{ marginBottom: 2 }}>{f.name}</div>
+                                                ))}
                                             </div>
-                                        </section>
-                                    </div>
+                                            <button type="button" onClick={() => setCompetitorFiles([])} style={{ fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                Remover todos
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div data-testid="stFileUploader">
+                                            <section>
+                                                <div>
+                                                    <div>
+                                                        <span>Drag and drop file here</span>
+                                                    </div>
+                                                    <small>Limit: 10MB • PDF</small>
+                                                    <button type="button" onClick={openCompetitorFileDialog}>Browse files</button>
+                                                    <input
+                                                        ref={competitorUploaderInputRef}
+                                                        type="file"
+                                                        accept="application/pdf"
+                                                        multiple
+                                                        style={{ display: "none" }}
+                                                        onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
+                                                    />
+                                                </div>
+                                            </section>
+                                        </div>
+                                    )}
                                 </div>
                             </details>
 
@@ -1428,11 +1485,43 @@ export default function AppPage() {
                                 <div style={{ height: 16 }} />
 
                                 {creditsRemaining > 0 ? (
-                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                        <button type="button" data-kind="primary" onClick={() => setStage("processing_premium")} style={{ width: "100%" }}>
-                                            GERAR DOSSIÊ AGORA (usar 1 crédito)
-                                        </button>
-                                    </div>
+                                    jobDescription && file ? (
+                                        <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                            <button type="button" data-kind="primary" onClick={async () => {
+                                                console.log("[Botão GERAR DOSSIÊ] Clique. Estado antes:", { jobDescription: !!jobDescription, file: !!file });
+                                                // Salvar em sessionStorage para sobreviver a remontagens
+                                                if (typeof window !== "undefined") {
+                                                    sessionStorage.setItem("vant_jobDescription", jobDescription);
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            sessionStorage.setItem("vant_file_b64", reader.result as string);
+                                                            sessionStorage.setItem("vant_file_name", file.name);
+                                                            sessionStorage.setItem("vant_file_type", file.type);
+                                                            setStage("processing_premium");
+                                                            console.log("[Botão GERAR DOSSIÊ] Após setStage processing_premium. Estado:", { jobDescription: !!jobDescription, file: !!file });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                        return;
+                                                    }
+                                                }
+                                                setStage("processing_premium");
+                                            }} style={{ width: "100%" }}>
+                                                GERAR DOSSIÊ AGORA (usar 1 crédito)
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div style={{ marginTop: 12, color: "#F59E0B", fontSize: "0.9rem", marginBottom: 12 }}>
+                                                Preencha a vaga e anexe seu CV para gerar o dossiê.
+                                            </div>
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
+                                                    PREENCHER VAGA E CV
+                                                </button>
+                                            </div>
+                                        </>
+                                    )
                                 ) : (
                                     <div style={{ marginTop: 12, color: "#F59E0B", fontSize: "0.9rem" }}>
                                         Você não tem mais créditos disponíveis.
