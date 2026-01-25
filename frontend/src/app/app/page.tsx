@@ -122,6 +122,7 @@ export default function AppPage() {
     const [stripeSessionId, setStripeSessionId] = useState<string>("");
     const [needsActivation, setNeedsActivation] = useState<boolean>(false);
     const [isSendingMagicLink, setIsSendingMagicLink] = useState<boolean>(false);
+    const [magicLinkCooldownUntil, setMagicLinkCooldownUntil] = useState<number>(0);
     const [progress, setProgress] = useState<number>(0);
     const [statusText, setStatusText] = useState<string>("");
     const [apiError, setApiError] = useState<string>("");
@@ -328,6 +329,18 @@ export default function AppPage() {
         }
     }, [authUserId, supabase]);
 
+    const magicLinkCooldownSeconds = Math.max(0, Math.ceil((magicLinkCooldownUntil - Date.now()) / 1000));
+
+    useEffect(() => {
+        if (magicLinkCooldownSeconds <= 0) {
+            return;
+        }
+        const t = window.setTimeout(() => {
+            setMagicLinkCooldownUntil((v) => v);
+        }, 250);
+        return () => window.clearTimeout(t);
+    }, [magicLinkCooldownSeconds]);
+
     useEffect(() => {
         if (!needsActivation || !authUserId || !stripeSessionId) {
             return;
@@ -405,6 +418,11 @@ export default function AppPage() {
             return;
         }
 
+        if (magicLinkCooldownSeconds > 0) {
+            setCheckoutError(`Aguarde ${magicLinkCooldownSeconds}s para reenviar o link.`);
+            return;
+        }
+
         setCheckoutError("");
         if (!supabase) {
             setCheckoutError("Supabase não configurado no frontend (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).");
@@ -436,11 +454,22 @@ export default function AppPage() {
             }
 
             const msg = String(first.error.message || "").toLowerCase();
+            if (msg.includes("rate limit")) {
+                setMagicLinkCooldownUntil(Date.now() + 60_000);
+                setCheckoutError("Muitos envios em pouco tempo. Aguarde 1 minuto e tente novamente.");
+                return;
+            }
             const mightNeedSignup = msg.includes("user not found") || msg.includes("invalid") || msg.includes("signup");
             if (mightNeedSignup) {
                 const second = await attempt(true);
                 if (!second.error) {
                     setCheckoutError("Link enviado. Abra o e-mail e clique para entrar.");
+                    return;
+                }
+                const msg2 = String(second.error.message || "").toLowerCase();
+                if (msg2.includes("rate limit")) {
+                    setMagicLinkCooldownUntil(Date.now() + 60_000);
+                    setCheckoutError("Muitos envios em pouco tempo. Aguarde 1 minuto e tente novamente.");
                     return;
                 }
                 setCheckoutError(second.error.message);
@@ -1155,8 +1184,18 @@ export default function AppPage() {
 
                                     <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
                                         {!authUserId ? (
-                                            <button type="button" data-kind="secondary" onClick={sendMagicLink} style={{ width: "100%" }}>
-                                                Enviar link de acesso
+                                            <button
+                                                type="button"
+                                                data-kind="secondary"
+                                                onClick={sendMagicLink}
+                                                disabled={isSendingMagicLink || magicLinkCooldownSeconds > 0}
+                                                style={{ width: "100%" }}
+                                            >
+                                                {isSendingMagicLink
+                                                    ? "Enviando..."
+                                                    : magicLinkCooldownSeconds > 0
+                                                        ? `Aguarde ${magicLinkCooldownSeconds}s`
+                                                        : "Enviar link de acesso"}
                                             </button>
                                         ) : (
                                             <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
