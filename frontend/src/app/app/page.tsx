@@ -386,12 +386,28 @@ export default function AppPage() {
         }
 
         const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/app` : undefined;
-        const { error } = await supabase.auth.signInWithOtp({
-            email: authEmail,
-            options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
-        });
+
+        const attempt = async (shouldCreateUser: boolean) => {
+            return await supabase.auth.signInWithOtp({
+                email: authEmail,
+                options: {
+                    emailRedirectTo: redirectTo || undefined,
+                    shouldCreateUser,
+                },
+            });
+        };
+
+        const { error } = await attempt(true);
 
         if (error) {
+            if (String(error.message || "").toLowerCase().includes("database error saving new user")) {
+                const retry = await attempt(false);
+                if (!retry.error) {
+                    setCheckoutError("Link enviado. Abra o e-mail e clique para entrar.");
+                    return;
+                }
+            }
+
             setCheckoutError(error.message);
             return;
         }
