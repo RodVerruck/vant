@@ -1108,6 +1108,76 @@ export default function AppPage() {
                 </div>
             )}
 
+            {stage === "paid" && (
+                <div className="hero-container">
+                    <h2 style={{ color: "#F8FAFC", marginBottom: 20 }}>📄 CV OTIMIZADO - EM CONSTRUÇÃO</h2>
+                    <p style={{ color: "#94A3B8", marginBottom: 30 }}>
+                        Implementando visualização do CV, editor e downloads PDF/Word...
+                    </p>
+
+                    {/* Preview do CV */}
+                    <div style={{
+                        backgroundColor: "#ffffff",
+                        width: "100%",
+                        maxWidth: 820,
+                        margin: "0 auto",
+                        padding: "4rem 4.5rem",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.02), 0 10px 40px -10px rgba(0,0,0,0.08)",
+                        borderRadius: 4,
+                        color: "#334155",
+                        fontFamily: "'Inter', sans-serif",
+                        borderTop: "6px solid #10B981",
+                        lineHeight: 1.6,
+                        marginBottom: 20
+                    }}>
+                        <h1 style={{ color: "#0f172a", fontSize: "2.5rem", fontWeight: 900, textAlign: "center", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "-0.02em" }}>
+                            JOÃO SILVA
+                        </h1>
+                        <p style={{ color: "#64748B", textAlign: "center", marginBottom: "3rem" }}>
+                            (11) 98765-4321 | linkedin.com/in/joaosilva
+                        </p>
+                        <h3 style={{ color: "#0f172a", fontSize: "0.85rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: "1px solid #e2e8f0", paddingBottom: "0.5rem", marginTop: "2rem", marginBottom: "1.5rem" }}>
+                            RESUMO
+                        </h3>
+                        <p style={{ marginBottom: "0.5rem", lineHeight: 1.6 }}>
+                            Engenheiro de Software com 5 anos de experiência em desenvolvimento de sistemas escaláveis e aplicações web modernas. Especializado em Node.js, React e Python, com foco em criar soluções eficientes e de alta qualidade.
+                        </p>
+                    </div>
+
+                    {/* Botões de download */}
+                    <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+                        <button
+                            onClick={() => alert("Download PDF em desenvolvimento")}
+                            style={{
+                                background: "#10B981",
+                                color: "white",
+                                border: "none",
+                                padding: "12px 20px",
+                                borderRadius: 8,
+                                fontWeight: 600,
+                                cursor: "pointer"
+                            }}
+                        >
+                            📥 BAIXAR PDF (OFICIAL)
+                        </button>
+                        <button
+                            onClick={() => alert("Download Word em desenvolvimento")}
+                            style={{
+                                background: "#38BDF8",
+                                color: "#0F172A",
+                                border: "none",
+                                padding: "12px 20px",
+                                borderRadius: 8,
+                                fontWeight: 600,
+                                cursor: "pointer"
+                            }}
+                        >
+                            📝 BAIXAR WORD (EDITÁVEL)
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {stage === "analyzing" && (
                 <div className="hero-container">
                     <div className="loading-logo">vant.core scanner</div>
@@ -1382,69 +1452,20 @@ export default function AppPage() {
                                                 DESBLOQUEAR COMPLETO
                                             </button>
                                         </div>
+                                        {(() => {
+                                            const planId = (selectedPlan || "basico").trim();
+                                            const prices: any = {
+                                                basico: { price: 29.90, name: "1 Otimização", billing: "one_time" },
+                                                pro: { price: 69.90, name: "Pacote 3 Vagas", billing: "one_time" },
+                                                premium_plus: { price: 49.90, name: "VANT - Pacote Premium Plus", billing: "subscription" },
+                                            };
+                                            const plan = prices[planId] || prices.basico;
+                                            const isSubscription = plan.billing === "subscription";
+                                            const billingLine = !isSubscription
+                                                ? "✅ Pagamento único · ✅ Acesso imediato"
+                                                : "✅ Assinatura mensal · ✅ 30 CVs/mês";
 
-                                        <div data-testid="stButton" className="stButton" style={{ flex: "1 1 220px" }}>
-                                            <button
-                                                type="button"
-                                                data-kind="secondary"
-                                                onClick={() => setStage("hero")}
-                                                style={{ width: "100%" }}
-                                            >
-                                                REFAZER ANÁLISE
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Botão de debug para pular direto para paid com mock */}
-                                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 16, marginTop: 16 }}>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                // Limpa estados de pagamento para não confundir com pagamento real
-                                                setStripeSessionId("");
-                                                setAuthUserId("");
-                                                setReportData(null); // força usar mockData
-                                                setStage("paid");
-                                            }}
-                                            style={{
-                                                background: "rgba(56, 189, 248, 0.1)",
-                                                border: "1px solid #38BDF8",
-                                                color: "#38BDF8",
-                                                padding: "8px 16px",
-                                                borderRadius: 6,
-                                                fontSize: "0.8rem",
-                                                cursor: "pointer",
-                                                width: "100%"
-                                            }}
-                                        >
-                                            🔧 [DEV] Pular para paid (mock)
-                                        </button>
-                                    </div>
-                                </div>
-                            </>
-                        );
-                    })()}
-                </div>
-            )}
-
-            {stage === "checkout" && (
-                <div className="hero-container">
-                    <div className="loading-logo">vant.checkout</div>
-                    <div className="action-island-container" style={{ textAlign: "left" }}>
-                        {(() => {
-                            const planId = (selectedPlan || "basico").trim();
-                            const prices: any = {
-                                basico: { price: 29.90, name: "1 Otimização", billing: "one_time" },
-                                pro: { price: 69.90, name: "Pacote 3 Vagas", billing: "one_time" },
-                                premium_plus: { price: 49.90, name: "VANT - Pacote Premium Plus", billing: "subscription" },
-                            };
-                            const plan = prices[planId] || prices.basico;
-                            const isSubscription = plan.billing === "subscription";
-                            const billingLine = !isSubscription
-                                ? "✅ Pagamento único · ✅ Acesso imediato"
-                                : "✅ Assinatura mensal · ✅ 30 CVs/mês";
-
-                            const boxHtml = `
+                                            const boxHtml = `
             <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
                 <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
                     <span style="color:#94A3B8;">Plano</span>
@@ -1458,456 +1479,101 @@ export default function AppPage() {
             </div>
             `;
 
-                            return (
-                                <>
-                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 12 }}>
-                                        Confirmar Compra: {planId.toUpperCase()}
+                                            return (
+                                                <>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 12 }}>
+                                                        Confirmar Compra: {planId.toUpperCase()}
+                                                    </div>
+
+                                                    <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
+
+                                                    <div style={{ marginBottom: 12 }}>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+                                                            Seu e-mail
+                                                        </div>
+                                                        <input
+                                                            value={authEmail}
+                                                            onChange={(e) => setAuthEmail(e.target.value)}
+                                                            placeholder="voce@exemplo.com"
+                                                            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "10px 12px" }}
+                                                        />
+                                                        {!authUserId ? (
+                                                            <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 8 }}>
+                                                                🔐 Entre com seu e-mail para salvar créditos/assinatura e acessar de qualquer dispositivo.
+                                                            </div>
+                                                        ) : (
+                                                            <div style={{ color: "#10B981", fontSize: "0.8rem", marginTop: 8, fontWeight: 700 }}>
+                                                                ✅ Logado
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                        <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
+                                                            Continuar para pagamento
+                                                        </button>
+                                                    </div>
+
+                                                    {!authUserId && (
+                                                        <>
+                                                            <div style={{ height: 12 }} />
+                                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                                <button
+                                                                    type="button"
+                                                                    data-kind="secondary"
+                                                                    onClick={sendMagicLink}
+                                                                    disabled={isSendingMagicLink || magicLinkCooldownSeconds > 0}
+                                                                    style={{ width: "100%" }}
+                                                                >
+                                                                    {isSendingMagicLink
+                                                                        ? "Enviando..."
+                                                                        : magicLinkCooldownSeconds > 0
+                                                                            ? `Aguarde ${magicLinkCooldownSeconds}s`
+                                                                            : "Enviar link de acesso"}
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    )}
+
+                                                    {stripeSessionId && (
+                                                        <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 10 }}>
+                                                            Session ID: {stripeSessionId}
+                                                        </div>
+                                                    )}
+
+                                                    {checkoutError && (
+                                                        <div
+                                                            style={{
+                                                                marginTop: 12,
+                                                                color: checkoutError.startsWith("Link enviado") || checkoutError.startsWith("Pagamento confirmado") ? "#10B981" : "#EF4444",
+                                                                fontSize: "0.85rem",
+                                                            }}
+                                                        >
+                                                            {checkoutError}
+                                                        </div>
+                                                    )}
+
+                                                    <div style={{ height: 16 }} />
+
+                                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                        <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
+                                                            VOLTAR
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
-
-                                    <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
-
-                                    <div style={{ marginBottom: 12 }}>
-                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
-                                            Seu e-mail
-                                        </div>
-                                        <input
-                                            value={authEmail}
-                                            onChange={(e) => setAuthEmail(e.target.value)}
-                                            placeholder="voce@exemplo.com"
-                                            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "10px 12px" }}
-                                        />
-                                        {!authUserId ? (
-                                            <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 8 }}>
-                                                🔐 Entre com seu e-mail para salvar créditos/assinatura e acessar de qualquer dispositivo.
-                                            </div>
-                                        ) : (
-                                            <div style={{ color: "#10B981", fontSize: "0.8rem", marginTop: 8, fontWeight: 700 }}>
-                                                ✅ Logado
-                                            </div>
+                                </div>
                                         )}
-                                    </div>
-
-                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                        <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
-                                            Continuar para pagamento
-                                        </button>
-                                    </div>
-
-                                    {!authUserId && (
-                                        <>
-                                            <div style={{ height: 12 }} />
-                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                <button
-                                                    type="button"
-                                                    data-kind="secondary"
-                                                    onClick={sendMagicLink}
-                                                    disabled={isSendingMagicLink || magicLinkCooldownSeconds > 0}
-                                                    style={{ width: "100%" }}
-                                                >
-                                                    {isSendingMagicLink
-                                                        ? "Enviando..."
-                                                        : magicLinkCooldownSeconds > 0
-                                                            ? `Aguarde ${magicLinkCooldownSeconds}s`
-                                                            : "Enviar link de acesso"}
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {stripeSessionId && (
-                                        <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 10 }}>
-                                            Session ID: {stripeSessionId}
-                                        </div>
-                                    )}
-
-                                    {checkoutError && (
-                                        <div
-                                            style={{
-                                                marginTop: 12,
-                                                color: checkoutError.startsWith("Link enviado") || checkoutError.startsWith("Pagamento confirmado") ? "#10B981" : "#EF4444",
-                                                fontSize: "0.85rem",
-                                            }}
-                                        >
-                                            {checkoutError}
-                                        </div>
-                                    )}
-
-                                    <div style={{ height: 16 }} />
-
-                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                        <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
-                                            VOLTAR
-                                        </button>
-                                    </div>
-                                </>
-                            );
-                        })()}
-                    </div>
-                </div>
-            )}
-
-            {stage === "processing_premium" && (
-                <div className="hero-container">
-                    <div className="loading-logo">vant.processing</div>
-                    <div className="action-island-container">
-                        <h2 style={{ color: "#F8FAFC", marginBottom: 16 }}>Gerando dossiê completo...</h2>
-                        <p style={{ color: "#94A3B8" }}>
-                            Isso pode levar até 60 segundos. Estamos criando seu CV otimizado e análise completa.
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {stage === "paid" && (
-                <div className="hero-container">
-                    {(() => {
-                        // Mock/Cache para testes rápidos sem esperar IA
-                        const mockData = {
-                            nota_ats: 78,
-                            gaps_fatais: [
-                                { erro: "Contato incompleto", evidencia: "Faltou telefone e LinkedIn", correcao_sugerida: "Adicione telefone e URL do LinkedIn" },
-                                { erro: "Sem resultados quantificáveis", evidencia: "Relatos vagos", correcao_sugerida: "**Use números** e métricas" }
-                            ],
-                            linkedin_headline: "Engenheiro de Software | Python | AWS | ML",
-                            resumo_otimizado: "**Profissional com 5 anos** em engenharia de dados...",
-                            kit_hacker: { boolean_string: "site:linkedin.com/in \"engenheiro de software\" São Paulo" },
-                            projeto_pratico: {
-                                titulo: "API de Previsão de Demanda",
-                                descricao: "Construí uma API usando FastAPI e Prophet.",
-                                como_apresentar: "Desenvolvi um projeto que reduziu erros de estoque em 23%..."
-                            },
-                            cv_otimizado_completo: "# JOÃO SILVA\n\n(11) 98765-4321 | linkedin.com/in/joaosilva\n\n## RESUMO\nEngenheiro de Software com 5 anos...",
-                            biblioteca_tecnica: [
-                                { titulo: "Designing Data-Intensive Applications", autor: "Martin Kleppmann", motivo: "Base sólida de arquitetura de sistemas." },
-                                { titulo: "Clean Code", autor: "Robert C. Martin", motivo: "Essencial para código legível e manutenível." }
-                            ]
-                        };
-
-                        // Se não tem reportData, verifica o fluxo
-                        if (!reportData) {
-                            // Verifica se veio de pagamento real (tem stripeSessionId) vs debug
-                            if (stripeSessionId && authUserId) {
-                                // Pagamento real: ir para processing_premium para processar IA
-                                setStage("processing_premium");
-                                return (
-                                    <div className="hero-container">
-                                        <div className="loading-logo">vant.processing</div>
-                                        <div className="action-island-container">
-                                            <h2 style={{ color: "#F8FAFC", marginBottom: 16 }}>Gerando dossiê completo...</h2>
-                                            <p style={{ color: "#94A3B8" }}>
-                                                Isso pode levar até 60 segundos. Estamos criando seu CV otimizado e análise completa.
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            } else {
-                                // Debug mode: usar mockData
-                                setReportData(mockData);
-                            }
-                        }
-
-                        const data = reportData || mockData;
-                        const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
-                        const completedCount = 0; // TODO: persistir completed_tasks se quiser gamificar
-                        const xpAtual = Math.min(100, nota + (completedCount * 5));
-
-                        let nivelLabel, barColor, bgGlow, msgEgo;
-                        if (xpAtual < 60) {
-                            nivelLabel = "FORMATADO COMO JÚNIOR 🧱";
-                            barColor = "#EF4444";
-                            bgGlow = "rgba(239, 68, 68, 0.2)";
-                            msgEgo = "Seu currículo está escondendo sua senioridade real.";
-                        } else if (xpAtual < 85) {
-                            nivelLabel = "FORMATADO COMO PLENO ⚔️";
-                            barColor = "#F59E0B";
-                            bgGlow = "rgba(245, 158, 11, 0.2)";
-                            msgEgo = "Bom potencial, mas a formatação limita seu salário.";
-                        } else {
-                            nivelLabel = "FORMATADO COMO SÊNIOR 👑";
-                            barColor = "#10B981";
-                            bgGlow = "rgba(16, 185, 129, 0.2)";
-                            msgEgo = "Documento alinhado com sua experiência real.";
-                        }
-
-                        // Função de cópia (simulando copyFromBase64 do Streamlit)
-                        const copyToClipboard = (text: string, btnElement?: HTMLButtonElement) => {
-                            navigator.clipboard.writeText(text).then(() => {
-                                if (btnElement) {
-                                    const originalText = btnElement.innerText;
-                                    btnElement.innerText = "COPIADO! ✅";
-                                    setTimeout(() => { btnElement.innerText = originalText; }, 2000);
-                                }
-                            }).catch(() => {
-                                if (btnElement) {
-                                    btnElement.innerText = "ERRO ❌";
-                                }
-                            });
-                        };
-
-                        // Função para formatar texto com **negrito**
-                        const formatText = (text: string) => {
-                            return text.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#38BDF8!important">$1</strong>');
-                        };
-
-                        return (
-                            <>
-                                {/* Dashboard de XP */}
-                                <div style={{
-                                    background: "linear-gradient(90deg, rgba(15,23,42,1) 0%, rgba(30,41,59,1) 100%)",
-                                    padding: 25,
-                                    borderRadius: 16,
-                                    border: `1px solid ${barColor}40`,
-                                    marginBottom: 30,
-                                    boxShadow: `0 4px 20px ${bgGlow}`,
-                                }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 15 }}>
-                                        <div>
-                                            <div style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "1px", marginBottom: 4 }}>DIAGNÓSTICO TÉCNICO</div>
-                                            <div style={{ color: barColor, fontWeight: 800, fontSize: "1.4rem" }}>{nivelLabel}</div>
-                                            <div style={{ color: "#CBD5E1", fontSize: "0.9rem", marginTop: 4, fontStyle: "italic" }}>"{msgEgo}"</div>
-                                        </div>
-                                        <div style={{ textAlign: "right" }}>
-                                            <div style={{ fontSize: "2rem", fontWeight: 800, color: "#F8FAFC", lineHeight: 1 }}>
-                                                {xpAtual}<span style={{ fontSize: "1rem", color: "#64748B" }}>/100</span>
-                                            </div>
-                                            <div style={{ fontSize: "0.75rem", color: barColor, fontWeight: "bold" }}>SCORE ATS</div>
-                                        </div>
-                                    </div>
-                                    <div style={{ width: "100%", background: "rgba(0,0,0,0.6)", height: 14, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)" }}>
-                                        <div style={{ width: `${xpAtual}%`, background: barColor, height: "100%", transition: "width 1.5s cubic-bezier(0.4, 0, 0.2, 1)", boxShadow: `0 0 15px ${barColor}` }} />
-                                    </div>
-                                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, fontSize: "0.8rem", color: "#64748B" }}>
-                                        <span>Análise Estrutural: <strong style={{ color: "#E2E8F0" }}>Concluída</strong></span>
-                                        <span>Otimização Semântica: <strong style={{ color: "#E2E8F0" }}>Aplicada</strong></span>
-                                    </div>
-                                </div>
-
-                                {/* Progresso do Dossiê */}
-                                <div style={{ background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(56, 189, 248, 0.1)", borderRadius: 12, padding: 20, marginBottom: 25 }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
-                                        <span style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 600 }}>PROGRESSO DO DOSSIÊ</span>
-                                        <span style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700 }}>5/5 SEÇÕES ✓</span>
-                                    </div>
-                                    <div style={{ display: "flex", gap: 8 }}>
-                                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Diagnóstico" />
-                                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="CV Otimizado" />
-                                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Concorrência" />
-                                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Simulador" />
-                                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Biblioteca" />
-                                    </div>
-                                    <p style={{ color: "#64748B", fontSize: "0.75rem", marginTop: 10, marginBottom: 0 }}>
-                                        🎉 Dossiê completo gerado! Explore todas as abas acima.
-                                    </p>
-                                </div>
-
-                                {/* Abas */}
-                                <div style={{ background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 20, marginBottom: 16 }}>
-                                    <div style={{ display: "flex", gap: 16, borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 12, marginBottom: 16 }}>
-                                        <button style={{ background: "none", border: "none", color: "#38BDF8", fontWeight: 600, cursor: "pointer" }}>📊 DIAGNÓSTICO E AÇÃO</button>
-                                        <button style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer" }}>📄 CV OTIMIZADO</button>
-                                        <button style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer" }}>📚 BIBLIOTECA</button>
-                                    </div>
-
-                                    {/* Conteúdo da aba DIAGNÓSTICO E AÇÃO */}
-                                    <div>
-                                        <h3 style={{ color: "#F8FAFC", marginBottom: 16 }}>1. Plano de Correção Imediata</h3>
-                                        {(data.gaps_fatais || []).map((gap: any, i: number) => (
-                                            <div key={i} className="opportunity-box" style={{
-                                                background: "rgba(245, 158, 11, 0.1)",
-                                                border: "1px solid rgba(245, 158, 11, 0.4)",
-                                                borderRadius: 12,
-                                                padding: 20,
-                                                marginBottom: 20,
-                                            }}>
-                                                <div className="opportunity-title" style={{ color: "#F59E0B", fontWeight: 700, marginBottom: 8 }}>⚡ {gap.erro}</div>
-                                                <div className="evidence-box" style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 8 }}>
-                                                    Evidência: "{formatText(gap.evidencia)}"
-                                                </div>
-                                                <div className="solution-box" style={{ color: "#38BDF8" }}>
-                                                    💡 <span dangerouslySetInnerHTML={{ __html: formatText(gap.correcao_sugerida) }} />
-                                                </div>
-                                            </div>
-                                        ))}
-
-                                        <div style={{ margin: "24px 0" }}>
-                                            <div className="unified-doc-container" style={{
-                                                border: "1px solid rgba(56, 189, 248, 0.3)",
-                                                borderRadius: 8,
-                                                marginBottom: 20,
-                                            }}>
-                                                <div className="doc-header" style={{
-                                                    backgroundColor: "rgba(56, 189, 248, 0.1)",
-                                                    padding: "10px 20px",
-                                                    borderBottom: "1px solid rgba(56, 189, 248, 0.3)",
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    alignItems: "center",
-                                                }}>
-                                                    <div className="doc-title" style={{ color: "#38BDF8", fontWeight: 600 }}>💼 Headline LinkedIn</div>
-                                                    <button
-                                                        className="header-copy-btn"
-                                                        onClick={(e) => copyToClipboard(data.linkedin_headline || "", e.currentTarget)}
-                                                        style={{
-                                                            background: "rgba(56, 189, 248, 0.1)",
-                                                            border: "1px solid #38BDF8",
-                                                            color: "#38BDF8",
-                                                            padding: "6px 12px",
-                                                            borderRadius: 6,
-                                                            cursor: "pointer",
-                                                            fontWeight: 600,
-                                                        }}
-                                                    >
-                                                        COPIAR TEXTO 📋
-                                                    </button>
-                                                </div>
-                                                <div className="doc-body" style={{
-                                                    padding: 20,
-                                                    textAlign: "center",
-                                                    fontWeight: 700,
-                                                    color: "#38BDF8",
-                                                    fontFamily: "monospace",
-                                                    fontSize: "0.9rem",
-                                                }}>
-                                                    {data.linkedin_headline}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div style={{ marginBottom: 24 }}>
-                                            <div className="unified-doc-container" style={{
-                                                border: "1px solid rgba(56, 189, 248, 0.3)",
-                                                borderRadius: 8,
-                                                marginBottom: 20,
-                                            }}>
-                                                <div className="doc-header" style={{
-                                                    backgroundColor: "rgba(56, 189, 248, 0.1)",
-                                                    padding: "10px 20px",
-                                                    borderBottom: "1px solid rgba(56, 189, 248, 0.3)",
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    alignItems: "center",
-                                                }}>
-                                                    <div className="doc-title" style={{ color: "#38BDF8", fontWeight: 600 }}>📝 Resumo Profissional Otimizado</div>
-                                                    <button
-                                                        className="header-copy-btn"
-                                                        onClick={(e) => copyToClipboard(data.resumo_otimizado || "", e.currentTarget)}
-                                                        style={{
-                                                            background: "rgba(56, 189, 248, 0.1)",
-                                                            border: "1px solid #38BDF8",
-                                                            color: "#38BDF8",
-                                                            padding: "6px 12px",
-                                                            borderRadius: 6,
-                                                            cursor: "pointer",
-                                                            fontWeight: 600,
-                                                        }}
-                                                    >
-                                                        COPIAR TEXTO 📋
-                                                    </button>
-                                                </div>
-                                                <div className="doc-body" style={{
-                                                    padding: 20,
-                                                    color: "#E2E8F0",
-                                                    lineHeight: 1.6,
-                                                }}>
-                                                    <span dangerouslySetInnerHTML={{ __html: formatText(data.resumo_otimizado) }} />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div style={{ marginBottom: 24 }}>
-                                            <h4 style={{ color: "#F8FAFC", marginBottom: 8 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h4>
-                                            <div style={{
-                                                background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)",
-                                                border: "1px solid #38BDF8",
-                                                borderRadius: 12,
-                                                padding: 20,
-                                                position: "relative",
-                                                overflow: "hidden"
-                                            }}>
-                                                <div style={{
-                                                    position: "absolute",
-                                                    top: -20,
-                                                    right: -20,
-                                                    width: 80,
-                                                    height: 80,
-                                                    background: "#38BDF8",
-                                                    filter: "blur(50px)",
-                                                    opacity: 0.2,
-                                                }} />
-
-                                                <div style={{ marginBottom: 16 }}>
-                                                    <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>Como encontrar os Recrutadores dessa vaga?</strong>
-                                                    <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 5, lineHeight: 1.5 }}>
-                                                        Não espere eles te acharem. Nossa IA gerou um código de busca avançada (Google Dorking) para filtrar Gestores, Recrutadores e Pares Sêniores (para pedir indicação).
-                                                    </p>
-                                                </div>
-
-                                                <a href={`https://www.google.com/search?q=${encodeURIComponent(data.kit_hacker?.boolean_string || "")}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-                                                    <div style={{
-                                                        background: "#38BDF8",
-                                                        color: "#0F172A",
-                                                        textAlign: "center",
-                                                        padding: 12,
-                                                        borderRadius: 8,
-                                                        fontWeight: 800,
-                                                        fontSize: "1rem",
-                                                        transition: "transform 0.2s",
-                                                        boxShadow: "0 4px 15px rgba(56, 189, 248, 0.3)",
-                                                        cursor: "pointer"
-                                                    }}>
-                                                        🔍 CLIQUE PARA RODAR A BUSCA NO GOOGLE
-                                                    </div>
-                                                </a>
-
-                                                <div style={{ marginTop: 20 }}>
-                                                    <p style={{ fontSize: "0.75rem", color: "#64748B", marginBottom: 5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px" }}>
-                                                        CÓDIGO GERADO PELA IA:
-                                                    </p>
-                                                    <div style={{
-                                                        background: "rgba(0,0,0,0.3)",
-                                                        padding: 10,
-                                                        borderRadius: 6,
-                                                        borderLeft: "2px solid #64748B",
-                                                        fontFamily: "monospace",
-                                                        fontSize: "0.75rem",
-                                                        color: "#CBD5E1",
-                                                        wordBreak: "break-all"
-                                                    }}>
-                                                        {data.kit_hacker?.boolean_string}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <h4 style={{ color: "#10B981", marginBottom: 8 }}>🏆 Projeto Prático (Diferencial)</h4>
-                                            <div style={{
-                                                background: "rgba(16, 185, 129, 0.05)",
-                                                border: "1px solid #10B981",
-                                                borderRadius: 12,
-                                                padding: 20
-                                            }}>
-                                                <h3 style={{ color: "#10B981", marginTop: 0 }}>🔨 {data.projeto_pratico?.titulo}</h3>
-                                                <p style={{ color: "#E2E8F0", fontSize: "1rem" }}>{data.projeto_pratico?.descricao}</p>
-                                                <div style={{ marginTop: 15, paddingTop: 10, borderTop: "1px dashed rgba(16, 185, 129, 0.3)" }}>
-                                                    <strong style={{ color: "#38BDF8" }}>🚀 Pitch para Entrevista:</strong><br />
-                                                    <span style={{ color: "#94A3B8", fontStyle: "italic" }}>"{data.projeto_pratico?.como_apresentar}"</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Placeholder para outras abas */}
-                                <div style={{ background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 20, textAlign: "center", color: "#94A3B8" }}>
-                                    📄 CV OTIMIZADO | 📚 BIBLIOTECA<br />
-                                    <small>(Em construção: portando do Streamlit)</small>
-                                </div>
+                            </div >
+                            </div >
                             </>
-                        );
-                    })()}
-                </div>
-            )}
-        </main>
+    );
+}) ()}
+        </div >
+    )
+}
+        </main >
     );
 }
