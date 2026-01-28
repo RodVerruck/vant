@@ -121,6 +121,7 @@ export default function AppPage() {
     const [checkoutError, setCheckoutError] = useState<string>("");
     const [stripeSessionId, setStripeSessionId] = useState<string>("");
     const [needsActivation, setNeedsActivation] = useState<boolean>(false);
+    const [isActivating, setIsActivating] = useState<boolean>(false);
     const [isSendingMagicLink, setIsSendingMagicLink] = useState<boolean>(false);
     const [magicLinkCooldownUntil, setMagicLinkCooldownUntil] = useState<number>(0);
     const [progress, setProgress] = useState<number>(0);
@@ -397,12 +398,14 @@ export default function AppPage() {
 
     useEffect(() => {
         console.log("[useEffect needsActivation] Rodou.");
-        if (!needsActivation || !authUserId || !stripeSessionId) {
+        if (!needsActivation || !authUserId || !stripeSessionId || isActivating) {
             return;
         }
 
         (async () => {
+            setIsActivating(true);
             try {
+                console.log("[needsActivation] Chamando /api/entitlements/activate...");
                 const resp = await fetch("http://127.0.0.1:8000/api/entitlements/activate", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -423,9 +426,11 @@ export default function AppPage() {
                 setStage("paid");
             } catch (e: any) {
                 setCheckoutError(e?.message ? String(e.message) : "Falha ao ativar plano");
+            } finally {
+                setIsActivating(false);
             }
         })();
-    }, [authUserId, needsActivation, stripeSessionId]);
+    }, [authUserId, needsActivation, stripeSessionId, isActivating]);
 
     async function startCheckout() {
         setCheckoutError("");

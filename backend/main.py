@@ -327,6 +327,7 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
             row = (existing.data or [None])[0]
             balance = int((row or {}).get("balance") or 0)
             new_balance = balance + purchased_credits
+            print(f"[DEBUG] activate_entitlements: user_id={payload.user_id} plan={plan_id} purchased={purchased_credits} old_balance={balance} new_balance={new_balance}")
             supabase_admin.table("user_credits").upsert({"user_id": payload.user_id, "balance": new_balance}).execute()
             credits_remaining = new_balance
 
@@ -339,6 +340,18 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
         )
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+@app.post("/api/debug/reset-credits")
+def reset_credits(payload: dict):
+    """DEBUG ONLY: Reseta créditos do usuário para 3."""
+    if not supabase_admin:
+        raise HTTPException(status_code=500, detail="Supabase não configurado")
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id obrigatório")
+    supabase_admin.table("user_credits").upsert({"user_id": user_id, "balance": 3}).execute()
+    return {"ok": True, "credits": 3}
 
 
 @app.post("/api/analyze-premium")
