@@ -1603,6 +1603,26 @@ export default function AppPage() {
                             msgEgo = "Documento alinhado com sua experiência real.";
                         }
 
+                        // Função de cópia (simulando copyFromBase64 do Streamlit)
+                        const copyToClipboard = (text: string, btnElement?: HTMLButtonElement) => {
+                            navigator.clipboard.writeText(text).then(() => {
+                                if (btnElement) {
+                                    const originalText = btnElement.innerText;
+                                    btnElement.innerText = "COPIADO! ✅";
+                                    setTimeout(() => { btnElement.innerText = originalText; }, 2000);
+                                }
+                            }).catch(() => {
+                                if (btnElement) {
+                                    btnElement.innerText = "ERRO ❌";
+                                }
+                            });
+                        };
+
+                        // Função para formatar texto com **negrito**
+                        const formatText = (text: string) => {
+                            return text.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#38BDF8!important">$1</strong>');
+                        };
+
                         return (
                             <>
                                 {/* Dashboard de XP */}
@@ -1666,46 +1686,167 @@ export default function AppPage() {
                                     <div>
                                         <h3 style={{ color: "#F8FAFC", marginBottom: 16 }}>1. Plano de Correção Imediata</h3>
                                         {(data.gaps_fatais || []).map((gap: any, i: number) => (
-                                            <div key={i} style={{ background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: 12, padding: 16, marginBottom: 12 }}>
-                                                <div style={{ color: "#EF4444", fontWeight: 700, marginBottom: 8 }}>⚡ {gap.erro}</div>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 8 }}>Evidência: "{gap.evidencia}"</div>
-                                                <div style={{ color: "#38BDF8" }}>💡 {gap.correcao_sugerida.replace(/\*\*(.*?)\*\*/g, "<strong style='color:#38BDF8'>$1</strong>")}</div>
+                                            <div key={i} className="opportunity-box" style={{
+                                                background: "rgba(245, 158, 11, 0.1)",
+                                                border: "1px solid rgba(245, 158, 11, 0.4)",
+                                                borderRadius: 12,
+                                                padding: 20,
+                                                marginBottom: 20,
+                                            }}>
+                                                <div className="opportunity-title" style={{ color: "#F59E0B", fontWeight: 700, marginBottom: 8 }}>⚡ {gap.erro}</div>
+                                                <div className="evidence-box" style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 8 }}>
+                                                    Evidência: "{formatText(gap.evidencia)}"
+                                                </div>
+                                                <div className="solution-box" style={{ color: "#38BDF8" }}>
+                                                    💡 <span dangerouslySetInnerHTML={{ __html: formatText(gap.correcao_sugerida) }} />
+                                                </div>
                                             </div>
                                         ))}
 
                                         <div style={{ margin: "24px 0" }}>
-                                            <h4 style={{ color: "#F8FAFC", marginBottom: 8 }}>💼 Headline LinkedIn</h4>
-                                            <div style={{ background: "rgba(56, 189, 248, 0.1)", border: "1px solid #38BDF8", borderRadius: 8, padding: 12, color: "#38BDF8", fontFamily: "monospace", fontSize: "0.9rem" }}>
-                                                {data.linkedin_headline}
+                                            <div className="unified-doc-container" style={{
+                                                border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                borderRadius: 8,
+                                                marginBottom: 20,
+                                            }}>
+                                                <div className="doc-header" style={{
+                                                    backgroundColor: "rgba(56, 189, 248, 0.1)",
+                                                    padding: "10px 20px",
+                                                    borderBottom: "1px solid rgba(56, 189, 248, 0.3)",
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center",
+                                                }}>
+                                                    <div className="doc-title" style={{ color: "#38BDF8", fontWeight: 600 }}>💼 Headline LinkedIn</div>
+                                                    <button
+                                                        className="header-copy-btn"
+                                                        onClick={(e) => copyToClipboard(data.linkedin_headline || "", e.currentTarget)}
+                                                        style={{
+                                                            background: "rgba(56, 189, 248, 0.1)",
+                                                            border: "1px solid #38BDF8",
+                                                            color: "#38BDF8",
+                                                            padding: "6px 12px",
+                                                            borderRadius: 6,
+                                                            cursor: "pointer",
+                                                            fontWeight: 600,
+                                                        }}
+                                                    >
+                                                        COPIAR TEXTO 📋
+                                                    </button>
+                                                </div>
+                                                <div className="doc-body" style={{
+                                                    padding: 20,
+                                                    textAlign: "center",
+                                                    fontWeight: 700,
+                                                    color: "#38BDF8",
+                                                    fontFamily: "monospace",
+                                                    fontSize: "0.9rem",
+                                                }}>
+                                                    {data.linkedin_headline}
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div style={{ marginBottom: 24 }}>
-                                            <h4 style={{ color: "#F8FAFC", marginBottom: 8 }}>📝 Resumo Profissional Otimizado</h4>
-                                            <div style={{ background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: 12, color: "#E2E8F0", lineHeight: 1.6 }}>
-                                                {data.resumo_otimizado}
+                                            <div className="unified-doc-container" style={{
+                                                border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                borderRadius: 8,
+                                                marginBottom: 20,
+                                            }}>
+                                                <div className="doc-header" style={{
+                                                    backgroundColor: "rgba(56, 189, 248, 0.1)",
+                                                    padding: "10px 20px",
+                                                    borderBottom: "1px solid rgba(56, 189, 248, 0.3)",
+                                                    display: "flex",
+                                                    justifyContent: "space-between",
+                                                    alignItems: "center",
+                                                }}>
+                                                    <div className="doc-title" style={{ color: "#38BDF8", fontWeight: 600 }}>📝 Resumo Profissional Otimizado</div>
+                                                    <button
+                                                        className="header-copy-btn"
+                                                        onClick={(e) => copyToClipboard(data.resumo_otimizado || "", e.currentTarget)}
+                                                        style={{
+                                                            background: "rgba(56, 189, 248, 0.1)",
+                                                            border: "1px solid #38BDF8",
+                                                            color: "#38BDF8",
+                                                            padding: "6px 12px",
+                                                            borderRadius: 6,
+                                                            cursor: "pointer",
+                                                            fontWeight: 600,
+                                                        }}
+                                                    >
+                                                        COPIAR TEXTO 📋
+                                                    </button>
+                                                </div>
+                                                <div className="doc-body" style={{
+                                                    padding: 20,
+                                                    color: "#E2E8F0",
+                                                    lineHeight: 1.6,
+                                                }}>
+                                                    <span dangerouslySetInnerHTML={{ __html: formatText(data.resumo_otimizado) }} />
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div style={{ marginBottom: 24 }}>
                                             <h4 style={{ color: "#F8FAFC", marginBottom: 8 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h4>
-                                            <div style={{ background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)", border: "1px solid #38BDF8", borderRadius: 12, padding: 20 }}>
+                                            <div style={{
+                                                background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)",
+                                                border: "1px solid #38BDF8",
+                                                borderRadius: 12,
+                                                padding: 20,
+                                                position: "relative",
+                                                overflow: "hidden"
+                                            }}>
+                                                <div style={{
+                                                    position: "absolute",
+                                                    top: -20,
+                                                    right: -20,
+                                                    width: 80,
+                                                    height: 80,
+                                                    background: "#38BDF8",
+                                                    filter: "blur(50px)",
+                                                    opacity: 0.2,
+                                                }} />
+
                                                 <div style={{ marginBottom: 16 }}>
                                                     <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>Como encontrar os Recrutadores dessa vaga?</strong>
                                                     <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 5, lineHeight: 1.5 }}>
-                                                        Não espere eles te acharem. Nossa IA gerou um código de busca avançada (Google Dorking) para filtrar Gestores, Recrutadores e Pares Sêniores.
+                                                        Não espere eles te acharem. Nossa IA gerou um código de busca avançada (Google Dorking) para filtrar Gestores, Recrutadores e Pares Sêniores (para pedir indicação).
                                                     </p>
                                                 </div>
+
                                                 <a href={`https://www.google.com/search?q=${encodeURIComponent(data.kit_hacker?.boolean_string || "")}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-                                                    <div style={{ background: "#38BDF8", color: "#0F172A", textAlign: "center", padding: 12, borderRadius: 8, fontWeight: 800, fontSize: "1rem", cursor: "pointer", transition: "transform 0.2s", boxShadow: "0 4px 15px rgba(56, 189, 248, 0.3)" }}>
+                                                    <div style={{
+                                                        background: "#38BDF8",
+                                                        color: "#0F172A",
+                                                        textAlign: "center",
+                                                        padding: 12,
+                                                        borderRadius: 8,
+                                                        fontWeight: 800,
+                                                        fontSize: "1rem",
+                                                        transition: "transform 0.2s",
+                                                        boxShadow: "0 4px 15px rgba(56, 189, 248, 0.3)",
+                                                        cursor: "pointer"
+                                                    }}>
                                                         🔍 CLIQUE PARA RODAR A BUSCA NO GOOGLE
                                                     </div>
                                                 </a>
+
                                                 <div style={{ marginTop: 20 }}>
                                                     <p style={{ fontSize: "0.75rem", color: "#64748B", marginBottom: 5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px" }}>
                                                         CÓDIGO GERADO PELA IA:
                                                     </p>
-                                                    <div style={{ background: "rgba(0,0,0,0.3)", padding: 10, borderRadius: 6, borderLeft: "2px solid #64748B", fontFamily: "monospace", fontSize: "0.75rem", color: "#CBD5E1", wordBreak: "break-all" }}>
+                                                    <div style={{
+                                                        background: "rgba(0,0,0,0.3)",
+                                                        padding: 10,
+                                                        borderRadius: 6,
+                                                        borderLeft: "2px solid #64748B",
+                                                        fontFamily: "monospace",
+                                                        fontSize: "0.75rem",
+                                                        color: "#CBD5E1",
+                                                        wordBreak: "break-all"
+                                                    }}>
                                                         {data.kit_hacker?.boolean_string}
                                                     </div>
                                                 </div>
@@ -1714,7 +1855,12 @@ export default function AppPage() {
 
                                         <div>
                                             <h4 style={{ color: "#10B981", marginBottom: 8 }}>🏆 Projeto Prático (Diferencial)</h4>
-                                            <div style={{ background: "rgba(16, 185, 129, 0.05)", border: "1px solid #10B981", borderRadius: 12, padding: 20 }}>
+                                            <div style={{
+                                                background: "rgba(16, 185, 129, 0.05)",
+                                                border: "1px solid #10B981",
+                                                borderRadius: 12,
+                                                padding: 20
+                                            }}>
                                                 <h3 style={{ color: "#10B981", marginTop: 0 }}>🔨 {data.projeto_pratico?.titulo}</h3>
                                                 <p style={{ color: "#E2E8F0", fontSize: "1rem" }}>{data.projeto_pratico?.descricao}</p>
                                                 <div style={{ marginTop: 15, paddingTop: 10, borderTop: "1px dashed rgba(16, 185, 129, 0.3)" }}>
