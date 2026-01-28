@@ -1400,8 +1400,11 @@ export default function AppPage() {
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                setStage("paid");
+                                                // Limpa estados de pagamento para não confundir com pagamento real
+                                                setStripeSessionId("");
+                                                setAuthUserId("");
                                                 setReportData(null); // força usar mockData
+                                                setStage("paid");
                                             }}
                                             style={{
                                                 background: "rgba(56, 189, 248, 0.1)",
@@ -1579,6 +1582,29 @@ export default function AppPage() {
                                 { titulo: "Clean Code", autor: "Robert C. Martin", motivo: "Essencial para código legível e manutenível." }
                             ]
                         };
+
+                        // Se não tem reportData, verifica o fluxo
+                        if (!reportData) {
+                            // Verifica se veio de pagamento real (tem stripeSessionId) vs debug
+                            if (stripeSessionId && authUserId) {
+                                // Pagamento real: ir para processing_premium para processar IA
+                                setStage("processing_premium");
+                                return (
+                                    <div className="hero-container">
+                                        <div className="loading-logo">vant.processing</div>
+                                        <div className="action-island-container">
+                                            <h2 style={{ color: "#F8FAFC", marginBottom: 16 }}>Gerando dossiê completo...</h2>
+                                            <p style={{ color: "#94A3B8" }}>
+                                                Isso pode levar até 60 segundos. Estamos criando seu CV otimizado e análise completa.
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            } else {
+                                // Debug mode: usar mockData
+                                setReportData(mockData);
+                            }
+                        }
 
                         const data = reportData || mockData;
                         const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
