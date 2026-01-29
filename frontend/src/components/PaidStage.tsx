@@ -115,10 +115,101 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
 
     const formatTextToHtml = (text: string) => {
         if (!text) return "";
-        let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        html = html.replace(/\*\*(.*?)\*\*/g, '<span class="vant-bold">$1</span>');
-        html = html.replace(/\n/g, '<br>');
-        return html;
+
+        text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        let html_output: string[] = [];
+        let lines = text.split('\n');
+
+        for (let line of lines) {
+            line = line.trim();
+            if (!line) continue;
+
+            // Nome (h1)
+            if (line.startsWith('# ')) {
+                let clean = line.replace('# ', '').toUpperCase();
+                html_output.push(`<h1 class="vant-cv-name">${clean}</h1>`);
+            }
+            // Seções (h2)
+            else if (line.startsWith('###')) {
+                let clean = line.replace('###', '').trim().toUpperCase();
+                html_output.push(`<h2 class="vant-cv-section">${clean}</h2>`);
+            }
+            // Listas (experiências e tarefas)
+            else if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('• ')) {
+                let clean = line.replace(/^[-*•]\s+/, '').replace(/\*\*(.*?)\*\*/g, '<span class="vant-bold">$1</span>');
+
+                // Se tem |, é cargo/empresa/data
+                if (line.includes('|')) {
+                    let parts = clean.split('|').map(p => p.trim());
+                    let cargo = clean;
+                    let empresa = "";
+                    let data = "";
+
+                    if (parts.length >= 3) {
+                        cargo = parts[0];
+                        empresa = parts[1];
+                        data = parts[2].replace('*', '').replace('_', '').trim();
+                    } else if (parts.length === 2) {
+                        cargo = parts[0];
+                        empresa = parts[1].replace('*', '').trim();
+                    }
+
+                    let job_html = `
+                    <div class="vant-cv-job-container">
+                        <div class="vant-job-row-primary">
+                            <span class="vant-job-title">${cargo}</span>
+                            <span class="vant-job-sep">|</span>
+                            <span class="vant-job-company">${empresa}</span>
+                        </div>`;
+
+                    if (data) {
+                        job_html += `
+                        <div class="vant-job-row-secondary">
+                            <span class="vant-job-date">${data}</span>
+                        </div>`;
+                    }
+
+                    job_html += "</div>";
+                    html_output.push(job_html);
+                }
+                // Senão é tarefa com bullet
+                else {
+                    let row = `
+                    <div class="vant-cv-grid-row">
+                        <div class="vant-cv-bullet-col">•</div>
+                        <div class="vant-cv-text-col">${clean}</div>
+                    </div>`;
+                    html_output.push(row);
+                }
+            }
+            // Contato (linha com | ou @)
+            else if ((line.includes('|') || line.includes('@')) && line.length < 300) {
+                let clean_line = line.replace('**', '');
+                let parts = clean_line.split('|').map(p => p.trim());
+                let items_html: string[] = [];
+
+                for (let p of parts) {
+                    if (p) {
+                        if (p.includes(':')) {
+                            let [label, val] = p.split(":", 2);
+                            let block = `<span class="vant-contact-block"><span class="vant-bold">${label}:</span> ${val}</span>`;
+                            items_html.push(block);
+                        } else {
+                            items_html.push(`<span class="vant-contact-block">${p}</span>`);
+                        }
+                    }
+                }
+                let full_html = items_html.join('<span class="vant-contact-separator"> • </span>');
+                html_output.push(`<div class="vant-cv-contact-line">${full_html}</div>`);
+            }
+            // Texto corrido
+            else {
+                let clean = line.replace(/\*\*(.*?)\*\*/g, '<span class="vant-bold">$1</span>');
+                html_output.push(`<p class="vant-cv-paragraph">${clean}</p>`);
+            }
+        }
+
+        return html_output.join("\n");
     };
 
     const kitHacker = reportData.kit_hacker || { boolean_string: "" };
@@ -400,19 +491,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                         </details>
 
                         {/* Preview do CV */}
-                        <div style={{
-                            backgroundColor: "#ffffff",
-                            width: "100%",
-                            maxWidth: 820,
-                            margin: "0 auto 20px",
-                            padding: "4rem 4.5rem",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.02), 0 10px 40px -10px rgba(0,0,0,0.08)",
-                            borderRadius: 4,
-                            color: "#334155",
-                            fontFamily: "'Inter', sans-serif",
-                            borderTop: "6px solid #10B981",
-                            lineHeight: 1.6
-                        }}>
+                        <div className="cv-paper-sheet">
                             <div
                                 className="cv-content-flow"
                                 dangerouslySetInnerHTML={{ __html: formatTextToHtml(reportData.cv_otimizado_completo || "") }}
