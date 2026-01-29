@@ -125,27 +125,21 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
     const googleLink = `https://www.google.com/search?q=${encodeURIComponent(kitHacker.boolean_string)}`;
 
     return (
-        <div className="hero-container">
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 0" }}>
             {/* Dashboard de XP */}
-            <div
-                style={{
-                    background: "linear-gradient(90deg, rgba(15,23,42,1) 0%, rgba(30,41,59,1) 100%)",
-                    padding: "25px",
-                    borderRadius: "16px",
-                    border: `1px solid ${barColor}40`,
-                    marginBottom: "30px",
-                    boxShadow: `0 4px 20px ${bgGlow}`
-                }}
-            >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "15px" }}>
+            <div style={{
+                background: "linear-gradient(90deg, rgba(15,23,42,1) 0%, rgba(30,41,59,1) 100%)",
+                padding: 25,
+                borderRadius: 16,
+                border: `1px solid ${barColor}40`,
+                marginBottom: 30,
+                boxShadow: `0 4px 20px ${bgGlow}`
+            }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 15 }}>
                     <div>
-                        <div style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 600, letterSpacing: 1, marginBottom: 4 }}>
-                            DIAGNÓSTICO TÉCNICO
-                        </div>
+                        <div style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "1px", marginBottom: 4 }}>DIAGNÓSTICO TÉCNICO</div>
                         <div style={{ color: barColor, fontWeight: 800, fontSize: "1.4rem" }}>{nivelLabel}</div>
-                        <div style={{ color: "#CBD5E1", fontSize: "0.9rem", marginTop: 4, fontStyle: "italic" }}>
-                            "{msgEgo}"
-                        </div>
+                        <div style={{ color: "#CBD5E1", fontSize: "0.9rem", marginTop: 4, fontStyle: "italic" }}>"{msgEgo}"</div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                         <div style={{ fontSize: "2rem", fontWeight: 800, color: "#F8FAFC", lineHeight: 1 }}>
@@ -155,8 +149,21 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     </div>
                 </div>
 
-                <div style={{ width: "100%", background: "rgba(0,0,0,0.6)", height: 14, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)" }}>
-                    <div style={{ width: `${xpAtual}%`, background: barColor, height: "100%", transition: "width 1.5s cubic-bezier(0.4, 0, 0.2, 1)", boxShadow: `0 0 15px ${barColor}` }} />
+                <div style={{
+                    width: "100%",
+                    background: "rgba(0,0,0,0.6)",
+                    height: 14,
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    border: "1px solid rgba(255,255,255,0.05)"
+                }}>
+                    <div style={{
+                        width: `${xpAtual}%`,
+                        background: barColor,
+                        height: "100%",
+                        transition: "width 1.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                        boxShadow: `0 0 15px ${barColor}`
+                    }} />
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, fontSize: "0.8rem", color: "#64748B" }}>
@@ -165,16 +172,22 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                 </div>
             </div>
 
-            {/* Progress do Dossiê */}
-            <div style={{ background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(56, 189, 248, 0.1)", borderRadius: 12, padding: 20, marginBottom: 25 }}>
+            {/* Progresso do Dossiê */}
+            <div style={{
+                background: "rgba(15, 23, 42, 0.6)",
+                border: "1px solid rgba(56, 189, 248, 0.1)",
+                borderRadius: 12,
+                padding: 20,
+                marginBottom: 25
+            }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
                     <span style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 600 }}>PROGRESSO DO DOSSIÊ</span>
                     <span style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700 }}>3/3 SEÇÕES ✓</span>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
-                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Diagnóstico" />
-                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="CV Otimizado" />
-                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Biblioteca" />
+                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Diagnóstico"></div>
+                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="CV Otimizado"></div>
+                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Biblioteca"></div>
                 </div>
                 <p style={{ color: "#64748B", fontSize: "0.75rem", marginTop: 10, marginBottom: 0 }}>
                     🎉 Dossiê completo gerado! Explore todas as abas abaixo.
@@ -211,8 +224,8 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
 
                 {/* Tab Content */}
                 {activeTab === "diagnostico" && (
-                    <div>
-                        <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>1. Plano de Correção Imediata</h3>
+                    <div style={{ maxWidth: 850, margin: "0 auto" }}>
+                        <h3 style={{ color: "#F8FAFC", marginBottom: 20, fontSize: "1.5rem", fontWeight: 600 }}>1. Plano de Correção Imediata</h3>
                         {reportData.gaps_fatais?.map((gap, idx) => (
                             <GapCard key={idx} gap={gap} />
                         ))}
@@ -223,7 +236,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
 
                         {/* X-Ray Search */}
                         <div style={{ marginTop: 30, marginBottom: 20, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
-                            <h3 style={{ color: "#F8FAFC", marginBottom: 15 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h3>
+                            <h3 style={{ color: "#F8FAFC", marginBottom: 15, fontSize: "1.5rem", fontWeight: 600 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h3>
                             <div style={{
                                 background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)",
                                 border: "1px solid #38BDF8",
@@ -282,17 +295,17 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                         {reportData.projeto_pratico && (
                             <>
                                 <div style={{ height: 20 }} />
-                                <h3 style={{ color: "#F8FAFC", marginBottom: 15 }}>🏆 Projeto Prático (Diferencial)</h3>
+                                <h3 style={{ color: "#F8FAFC", marginBottom: 15, fontSize: "1.5rem", fontWeight: 600 }}>🏆 Projeto Prático (Diferencial)</h3>
                                 <div style={{
                                     background: "rgba(16, 185, 129, 0.05)",
                                     border: "1px solid #10B981",
                                     borderRadius: 12,
                                     padding: 20
                                 }}>
-                                    <h3 style={{ color: "#10B981", marginTop: 0 }}>
+                                    <h3 style={{ color: "#10B981", marginTop: 0, fontSize: "1.3rem", fontWeight: 700 }}>
                                         🔨 {reportData.projeto_pratico.titulo}
                                     </h3>
-                                    <p style={{ color: "#E2E8F0", fontSize: "1rem" }}>
+                                    <p style={{ color: "#E2E8F0", fontSize: "1rem", lineHeight: 1.6 }}>
                                         {reportData.projeto_pratico.descricao}
                                     </p>
                                     <div style={{
@@ -312,7 +325,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                 )}
 
                 {activeTab === "cv" && (
-                    <div>
+                    <div style={{ maxWidth: 850, margin: "0 auto" }}>
                         <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>🚀 Currículo Reestruturado Integralmente</h3>
 
                         {/* Editor */}
@@ -441,7 +454,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                 )}
 
                 {activeTab === "biblioteca" && (
-                    <div>
+                    <div style={{ maxWidth: 850, margin: "0 auto" }}>
                         <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>📚 Biblioteca Definitiva</h3>
                         {reportData.biblioteca_tecnica?.map((book, idx) => (
                             <BookCard key={idx} book={book} index={idx} />

@@ -337,19 +337,6 @@ export default function AppPage() {
             if (!authUserId) {
                 setStage("checkout");
                 setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
-            } else {
-                (async () => {
-                    try {
-                        await activateEntitlements(pendingSid, authUserId);
-                        window.localStorage.removeItem("vant_pending_stripe_session_id");
-                        setNeedsActivation(false);
-                        setCheckoutError("");
-                        setStage("paid");
-                    } catch (e: unknown) {
-                        setCheckoutError(getErrorMessage(e, "Falha ao ativar plano"));
-                        setStage("checkout");
-                    }
-                })();
             }
         }
 
@@ -386,7 +373,8 @@ export default function AppPage() {
                         await activateEntitlements(sessionId, authUserId);
                         window.localStorage.removeItem("vant_pending_stripe_session_id");
                         setNeedsActivation(false);
-                        setStage("paid");
+                        // Em vez de ir direto para paid, vai para processing_premium para processar o arquivo
+                        setStage("processing_premium");
                     } else {
                         setCheckoutError("Pagamento não confirmado ainda. Tente novamente em alguns segundos.");
                     }
@@ -449,7 +437,8 @@ export default function AppPage() {
                 }
                 setNeedsActivation(false);
                 setCheckoutError("");
-                setStage("paid");
+                // Em vez de ir direto para paid, vai para processing_premium para processar o arquivo
+                setStage("processing_premium");
             } catch (e: unknown) {
                 setCheckoutError(getErrorMessage(e, "Falha ao ativar plano"));
             } finally {
@@ -494,7 +483,28 @@ export default function AppPage() {
             if (!checkoutUrl) {
                 throw new Error("URL de checkout não retornada pelo backend");
             }
-            window.location.href = checkoutUrl;
+
+            // Salvar dados no sessionStorage antes de redirecionar para o pagamento
+            if (typeof window !== "undefined" && jobDescription && file) {
+                console.log("[startCheckout] Salvando dados no sessionStorage antes do pagamento...");
+                sessionStorage.setItem("vant_jobDescription", jobDescription);
+
+                // Converter arquivo para base64 e aguardar conclusão
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result as string;
+                    sessionStorage.setItem("vant_file_b64", base64);
+                    sessionStorage.setItem("vant_file_name", file.name);
+                    sessionStorage.setItem("vant_file_type", file.type);
+                    console.log("[startCheckout] Dados salvos com sucesso. Redirecionando...");
+                    window.location.href = checkoutUrl;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Se não houver dados para salvar, redireciona imediatamente
+                window.location.href = checkoutUrl;
+            }
+            return; // Evita que o redirecionamento abaixo execute antes da hora
         } catch (e: unknown) {
             setCheckoutError(getErrorMessage(e, "Erro ao iniciar checkout"));
         }
@@ -801,42 +811,12 @@ export default function AppPage() {
         `;
     }
 
-    function renderDashboardMetrics(nota: number, veredito: string, potencial: number, pilares: PilaresData) {
-        let theme_color = "#F59E0B";
-        let shadow_color = "rgba(245, 158, 11, 0.4)";
-        let bg_gradient = "linear-gradient(145deg, rgba(245, 158, 11, 0.1), rgba(0, 0, 0, 0))";
+    function renderLockedBlur(title: string, subtitle: string, contentPreview: string) {
+        const longContent = `${contentPreview} <br><br> ` +
+            "Impacto Técnico: Implementação de rotinas de backup que reduziram incidentes em 15%. ".repeat(3) +
+            "Gestão de Tickets: SLA mantido acima de 98% com ferramenta GLPI e Jira. ";
 
-        if (nota < 50) {
-            theme_color = "#EF4444";
-            shadow_color = "rgba(239, 68, 68, 0.4)";
-            bg_gradient = "linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(0, 0, 0, 0))";
-        } else if (nota >= 80) {
-            theme_color = "#10B981";
-            shadow_color = "rgba(16, 185, 129, 0.4)";
-            bg_gradient = "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(0, 0, 0, 0))";
-        }
-
-        const miniBar = (label: string, value: number | null | undefined) => {
-            const safeValue = typeof value === "number" ? value : 0;
-            return `
-        <div style="margin-bottom: 12px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                <span style="color:#94A3B8; font-size:0.75rem; font-weight:600; letter-spacing:0.5px;">${label.toUpperCase()}</span>
-                <span style="color:#F8FAFC; font-size:0.75rem; font-weight:bold; font-family:monospace;">${safeValue}%</span>
-            </div>
-            <div style="width:100%; background:rgba(255,255,255,0.05); height:6px; border-radius:3px; overflow: hidden;">
-                <div style="width:${safeValue}%; background:${theme_color}; height:100%; border-radius:3px; box-shadow: 0 0 8px ${shadow_color};"></div>
-            </div>
-        </div>
-        `;
-        };
-
-        function renderLockedBlur(title: string, subtitle: string, contentPreview: string) {
-            const longContent = `${contentPreview} <br><br> ` +
-                "Impacto Técnico: Implementação de rotinas de backup que reduziram incidentes em 15%. ".repeat(3) +
-                "Gestão de Tickets: SLA mantido acima de 98% com ferramenta GLPI e Jira. ";
-
-            return `
+        return `
     <div class="locked-container" style="position: relative; overflow: hidden; border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; background: rgba(15, 23, 42, 0.6);">
         <div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div style="color: #38BDF8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
@@ -859,12 +839,12 @@ export default function AppPage() {
         </div>
     </div>
     `;
-        }
+    }
 
-        function renderOfferCard(itensChecklist: string[]) {
-            let listaHtml = "";
-            for (const item of itensChecklist) {
-                listaHtml += `
+    function renderOfferCard(itensChecklist: string[]) {
+        let listaHtml = "";
+        for (const item of itensChecklist) {
+            listaHtml += `
         <li style="margin-bottom:12px; display:flex; align-items:start; gap:10px; line-height:1.4;">
             <div style="
                 min-width: 20px; height: 20px; 
@@ -877,9 +857,9 @@ export default function AppPage() {
             <span style="color:#E2E8F0; font-size:0.9rem;">${item}</span>
         </li>
         `;
-            }
+        }
 
-            return `
+        return `
     <div style="
         background: rgba(15, 23, 42, 0.8);
         background-image: linear-gradient(160deg, rgba(56, 189, 248, 0.05), rgba(16, 185, 129, 0.05));
@@ -918,207 +898,207 @@ export default function AppPage() {
         </div>
     </div>
     `;
-        }
+    }
 
-        return (
-            <main>
-                {stage === "hero" && (
-                    <>
-                        <div className="hero-container">
-                            <div dangerouslySetInnerHTML={{ __html: HERO_INNER_HTML }} />
+    return (
+        <main>
+            {stage === "hero" && (
+                <>
+                    <div className="hero-container">
+                        <div dangerouslySetInnerHTML={{ __html: HERO_INNER_HTML }} />
 
-                            <div className="action-island-container">
-                                <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-                                    <div style={{ flex: "1 1 380px" }}>
-                                        <h5>1. VAGA ALVO 🎯</h5>
-                                        <div className="stTextArea">
-                                            <textarea
-                                                value={jobDescription}
-                                                onChange={(e) => setJobDescription(e.target.value)}
-                                                placeholder="Dê um Ctrl+V sem medo..."
-                                                style={{ height: 185, width: "100%", boxSizing: "border-box" }}
-                                            />
+                        <div className="action-island-container">
+                            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+                                <div style={{ flex: "1 1 380px" }}>
+                                    <h5>1. VAGA ALVO 🎯</h5>
+                                    <div className="stTextArea">
+                                        <textarea
+                                            value={jobDescription}
+                                            onChange={(e) => setJobDescription(e.target.value)}
+                                            placeholder="Dê um Ctrl+V sem medo..."
+                                            style={{ height: 185, width: "100%", boxSizing: "border-box" }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{ flex: "1 1 380px" }}>
+                                    <h5>2. SEU CV (PDF) 📄</h5>
+                                    {file ? (
+                                        <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center" }}>
+                                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ Arquivo carregado</div>
+                                            <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>{file.name}</div>
+                                            <button type="button" onClick={() => setFile(null)} style={{ marginTop: 8, fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                Remover
+                                            </button>
                                         </div>
-                                    </div>
-
-                                    <div style={{ flex: "1 1 380px" }}>
-                                        <h5>2. SEU CV (PDF) 📄</h5>
-                                        {file ? (
-                                            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center" }}>
-                                                <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ Arquivo carregado</div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>{file.name}</div>
-                                                <button type="button" onClick={() => setFile(null)} style={{ marginTop: 8, fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                                                    Remover
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div data-testid="stFileUploader">
-                                                <section>
+                                    ) : (
+                                        <div data-testid="stFileUploader">
+                                            <section>
+                                                <div>
                                                     <div>
-                                                        <div>
-                                                            <span>Drag and drop file here</span>
-                                                        </div>
-                                                        <small>Limit: 10MB • PDF</small>
-                                                        <button type="button" onClick={openFileDialog}>Browse files</button>
-                                                        <input
-                                                            ref={uploaderInputRef}
-                                                            type="file"
-                                                            accept="application/pdf"
-                                                            style={{ display: "none" }}
-                                                            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                                                        />
+                                                        <span>Drag and drop file here</span>
                                                     </div>
-                                                </section>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div style={{ height: 16 }} />
-
-                                <details data-testid="stExpander">
-                                    <summary>📂 Comparar com Referência de Mercado (Opcional)</summary>
-                                    <div>
-                                        <div dangerouslySetInnerHTML={{ __html: LINKEDIN_INSTRUCTIONS_HTML }} />
-                                        {competitorFiles.length > 0 ? (
-                                            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center", marginTop: 12 }}>
-                                                <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ {competitorFiles.length} arquivo(s) carregado(s)</div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.75rem", marginBottom: 8 }}>
-                                                    {competitorFiles.map((f, i) => (
-                                                        <div key={i} style={{ marginBottom: 2 }}>{f.name}</div>
-                                                    ))}
+                                                    <small>Limit: 10MB • PDF</small>
+                                                    <button type="button" onClick={openFileDialog}>Browse files</button>
+                                                    <input
+                                                        ref={uploaderInputRef}
+                                                        type="file"
+                                                        accept="application/pdf"
+                                                        style={{ display: "none" }}
+                                                        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                                                    />
                                                 </div>
-                                                <button type="button" onClick={() => setCompetitorFiles([])} style={{ fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                                                    Remover todos
-                                                </button>
+                                            </section>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div style={{ height: 16 }} />
+
+                            <details data-testid="stExpander">
+                                <summary>📂 Comparar com Referência de Mercado (Opcional)</summary>
+                                <div>
+                                    <div dangerouslySetInnerHTML={{ __html: LINKEDIN_INSTRUCTIONS_HTML }} />
+                                    {competitorFiles.length > 0 ? (
+                                        <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center", marginTop: 12 }}>
+                                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ {competitorFiles.length} arquivo(s) carregado(s)</div>
+                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", marginBottom: 8 }}>
+                                                {competitorFiles.map((f, i) => (
+                                                    <div key={i} style={{ marginBottom: 2 }}>{f.name}</div>
+                                                ))}
                                             </div>
-                                        ) : (
-                                            <div data-testid="stFileUploader">
-                                                <section>
+                                            <button type="button" onClick={() => setCompetitorFiles([])} style={{ fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                Remover todos
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div data-testid="stFileUploader">
+                                            <section>
+                                                <div>
                                                     <div>
-                                                        <div>
-                                                            <span>Drag and drop file here</span>
-                                                        </div>
-                                                        <small>Limit: 10MB • PDF</small>
-                                                        <button type="button" onClick={openCompetitorFileDialog}>Browse files</button>
-                                                        <input
-                                                            ref={competitorUploaderInputRef}
-                                                            type="file"
-                                                            accept="application/pdf"
-                                                            multiple
-                                                            style={{ display: "none" }}
-                                                            onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
-                                                        />
+                                                        <span>Drag and drop file here</span>
                                                     </div>
-                                                </section>
-                                            </div>
-                                        )}
-                                    </div>
-                                </details>
-
-                                <div style={{ height: 8 }} />
-
-                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                    <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
-                                        OTIMIZAR PARA ESSA VAGA 🚀
-                                    </button>
+                                                    <small>Limit: 10MB • PDF</small>
+                                                    <button type="button" onClick={openCompetitorFileDialog}>Browse files</button>
+                                                    <input
+                                                        ref={competitorUploaderInputRef}
+                                                        type="file"
+                                                        accept="application/pdf"
+                                                        multiple
+                                                        style={{ display: "none" }}
+                                                        onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
+                                                    />
+                                                </div>
+                                            </section>
+                                        </div>
+                                    )}
                                 </div>
+                            </details>
 
-                                {apiError && (
-                                    <div style={{ marginTop: 12, color: "#EF4444", fontSize: "0.85rem" }}>{apiError}</div>
-                                )}
+                            <div style={{ height: 8 }} />
 
-                                <p className="cta-trust-line" style={{ textAlign: "center", color: "#64748B", fontSize: "0.8rem", marginTop: 15 }}>
-                                    🛡️ <strong>1ª análise 100% gratuita e segura.</strong>
-                                    <br />
-                                    Seus dados são processados em RAM volátil e deletados após a sessão.
-                                </p>
+                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
+                                    OTIMIZAR PARA ESSA VAGA 🚀
+                                </button>
                             </div>
+
+                            {apiError && (
+                                <div style={{ marginTop: 12, color: "#EF4444", fontSize: "0.85rem" }}>{apiError}</div>
+                            )}
+
+                            <p className="cta-trust-line" style={{ textAlign: "center", color: "#64748B", fontSize: "0.8rem", marginTop: 15 }}>
+                                🛡️ <strong>1ª análise 100% gratuita e segura.</strong>
+                                <br />
+                                Seus dados são processados em RAM volátil e deletados após a sessão.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: 20 }} dangerouslySetInnerHTML={{ __html: trustFooterHtml }} />
+                </>
+            )}
+
+            {stage === "processing_premium" && (
+                <div className="hero-container">
+                    <div className="loading-logo">vant.neural engine</div>
+                    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+                        <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
+                            <div
+                                style={{
+                                    width: `${Math.max(0, Math.min(100, progress))}%`,
+                                    height: "100%",
+                                    background: "linear-gradient(90deg, #10B981, #38BDF8)",
+                                    transition: "width 0.25s ease",
+                                }}
+                            />
                         </div>
 
-                        <div style={{ marginTop: 20 }} dangerouslySetInnerHTML={{ __html: trustFooterHtml }} />
-                    </>
-                )}
-
-                {stage === "processing_premium" && (
-                    <div className="hero-container">
-                        <div className="loading-logo">vant.neural engine</div>
-                        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-                            <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
-                                <div
-                                    style={{
-                                        width: `${Math.max(0, Math.min(100, progress))}%`,
-                                        height: "100%",
-                                        background: "linear-gradient(90deg, #10B981, #38BDF8)",
-                                        transition: "width 0.25s ease",
-                                    }}
-                                />
-                            </div>
-
-                            <div style={{ marginTop: 18 }}>
-                                <div className="terminal-log" style={{ color: "#10B981" }}>
-                                    &gt;&gt; {statusText || "Processando..."}
-                                </div>
+                        <div style={{ marginTop: 18 }}>
+                            <div className="terminal-log" style={{ color: "#10B981" }}>
+                                &gt;&gt; {statusText || "Processando..."}
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {stage === "paid" && (
-                    <PaidStage
-                        reportData={reportData}
-                        authUserId={authUserId}
-                        onNewOptimization={() => {
-                            setReportData(null);
-                            setFile(null);
-                            setCompetitorFiles([]);
-                            setStage("hero");
-                        }}
-                        onUpdateReport={(updated) => setReportData(updated)}
-                    />
-                )}
+            {stage === "paid" && (
+                <PaidStage
+                    reportData={reportData}
+                    authUserId={authUserId}
+                    onNewOptimization={() => {
+                        setReportData(null);
+                        setFile(null);
+                        setCompetitorFiles([]);
+                        setStage("hero");
+                    }}
+                    onUpdateReport={(updated) => setReportData(updated)}
+                />
+            )}
 
-                {stage === "analyzing" && (
-                    <div className="hero-container">
-                        <div className="loading-logo">vant.core scanner</div>
-                        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-                            <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
-                                <div
-                                    style={{
-                                        width: `${Math.max(0, Math.min(100, progress))}%`,
-                                        height: "100%",
-                                        background: "linear-gradient(90deg, #38BDF8, #818CF8)",
-                                        transition: "width 0.25s ease",
-                                    }}
-                                />
-                            </div>
+            {stage === "analyzing" && (
+                <div className="hero-container">
+                    <div className="loading-logo">vant.core scanner</div>
+                    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+                        <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
+                            <div
+                                style={{
+                                    width: `${Math.max(0, Math.min(100, progress))}%`,
+                                    height: "100%",
+                                    background: "linear-gradient(90deg, #38BDF8, #818CF8)",
+                                    transition: "width 0.25s ease",
+                                }}
+                            />
+                        </div>
 
-                            <div style={{ marginTop: 18 }}>
-                                <div className="terminal-log" style={{ color: "#38BDF8" }}>
-                                    &gt;&gt; {statusText}
-                                </div>
+                        <div style={{ marginTop: 18 }}>
+                            <div className="terminal-log" style={{ color: "#38BDF8" }}>
+                                &gt;&gt; {statusText}
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
 
-                {stage === "preview" && (
-                    <div className="hero-container">
-                        {(() => {
-                            const data: Partial<PreviewData> = previewData ?? {};
-                            const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
-                            const pilares = data.analise_por_pilares || {};
-                            const veredito = data.veredito || "ANÁLISE CONCLUÍDA";
-                            const potencial = calcPotencial(nota);
+            {stage === "preview" && (
+                <div className="hero-container">
+                    {(() => {
+                        const data: Partial<PreviewData> = previewData ?? {};
+                        const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
+                        const pilares = data.analise_por_pilares || {};
+                        const veredito = data.veredito || "ANÁLISE CONCLUÍDA";
+                        const potencial = calcPotencial(nota);
 
-                            let texto_destaque = "Recrutadores e Gestores";
-                            const jobText = (jobDescription || "").toLowerCase();
-                            if (jobText.includes("nubank")) texto_destaque += " do Nubank";
-                            else if (jobText.includes("google")) texto_destaque += " do Google";
-                            else if (jobText.includes("amazon")) texto_destaque += " da Amazon";
-                            else if (jobText.includes("itaú") || jobText.includes("itau")) texto_destaque += " do Itaú";
+                        let texto_destaque = "Recrutadores e Gestores";
+                        const jobText = (jobDescription || "").toLowerCase();
+                        if (jobText.includes("nubank")) texto_destaque += " do Nubank";
+                        else if (jobText.includes("google")) texto_destaque += " do Google";
+                        else if (jobText.includes("amazon")) texto_destaque += " da Amazon";
+                        else if (jobText.includes("itaú") || jobText.includes("itau")) texto_destaque += " do Itaú";
 
-                            const metaHtml = `
+                        const metaHtml = `
     <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 185, 129, 0.1)); 
                 border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; margin-top: 20px;">
         <div style="display: flex; align-items: center; gap: 15px;">
@@ -1134,29 +1114,29 @@ export default function AppPage() {
     </div>
     `;
 
-                            const dashHtml = renderDashboardMetricsHtml(nota, veredito, potencial, pilares);
+                        const dashHtml = renderDashboardMetricsHtml(nota, veredito, potencial, pilares);
 
-                            const setorDetectado = typeof pilares.setor_detectado === "string" ? pilares.setor_detectado : "Gestão Estratégica";
-                            const exemploMelhoria = `Especialista em ${setorDetectado} com histórico de ` +
-                                "liderança em projetos de alta complexidade. Otimizou o budget operacional em 22%..." +
-                                "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
+                        const setorDetectado = typeof pilares.setor_detectado === "string" ? pilares.setor_detectado : "Gestão Estratégica";
+                        const exemploMelhoria = `Especialista em ${setorDetectado} com histórico de ` +
+                            "liderança em projetos de alta complexidade. Otimizou o budget operacional em 22%..." +
+                            "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
 
-                            const lockedHtml = renderLockedBlur(
-                                "Ghostwriter V2 (Amostra)",
-                                "IA reescrevendo seu CV com keywords de elite:",
-                                (exemploMelhoria + exemploMelhoria)
-                            );
+                        const lockedHtml = renderLockedBlur(
+                            "Ghostwriter V2 (Amostra)",
+                            "IA reescrevendo seu CV com keywords de elite:",
+                            (exemploMelhoria + exemploMelhoria)
+                        );
 
-                            const offerChecklist = [
-                                "<b>Ghostwriter V2:</b> Seu CV 100% Otimizado (ATS)",
-                                "<b>Radar X-Ray:</b> <span style='color:#FCD34D'>Recrutadores</span> buscando você",
-                                "<b>Análise de Gap:</b> O que falta para o nível Sênior",
-                                "<b>Bônus:</b> Script de Entrevista Comportamental",
-                            ];
+                        const offerChecklist = [
+                            "<b>Ghostwriter V2:</b> Seu CV 100% Otimizado (ATS)",
+                            "<b>Radar X-Ray:</b> <span style='color:#FCD34D'>Recrutadores</span> buscando você",
+                            "<b>Análise de Gap:</b> O que falta para o nível Sênior",
+                            "<b>Bônus:</b> Script de Entrevista Comportamental",
+                        ];
 
-                            const offerHtml = renderOfferCard(offerChecklist);
+                        const offerHtml = renderOfferCard(offerChecklist);
 
-                            const xrayHtml = `
+                        const xrayHtml = `
         <div style='background: rgba(15, 23, 42, 0.6); border: 1px solid #38BDF8; padding: 20px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 25px;'>
             <div style="position: absolute; top: -10px; right: -10px; background: #38BDF8; width: 50px; height: 50px; filter: blur(30px); opacity: 0.2;"></div>
             
@@ -1182,49 +1162,49 @@ export default function AppPage() {
         </div>
         `;
 
-                            return (
-                                <>
-                                    <div dangerouslySetInnerHTML={{ __html: metaHtml }} />
+                        return (
+                            <>
+                                <div dangerouslySetInnerHTML={{ __html: metaHtml }} />
 
-                                    <div className="action-island-container" style={{ textAlign: "left", marginTop: 18 }}>
-                                        <div dangerouslySetInnerHTML={{ __html: dashHtml }} />
+                                <div className="action-island-container" style={{ textAlign: "left", marginTop: 18 }}>
+                                    <div dangerouslySetInnerHTML={{ __html: dashHtml }} />
 
-                                        <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-                                            <div style={{ flex: "1.3 1 420px" }}>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.8rem", marginBottom: 10 }}>
-                                                    👁️ PREVIEW DO GHOSTWRITER (BLOQUEADO)
-                                                </div>
-                                                <div dangerouslySetInnerHTML={{ __html: lockedHtml }} />
+                                    <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+                                        <div style={{ flex: "1.3 1 420px" }}>
+                                            <div style={{ color: "#94A3B8", fontSize: "0.8rem", marginBottom: 10 }}>
+                                                👁️ PREVIEW DO GHOSTWRITER (BLOQUEADO)
                                             </div>
-
-                                            <div style={{ flex: "1 1 320px" }}>
-                                                <div dangerouslySetInnerHTML={{ __html: offerHtml }} />
-                                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                    <button
-                                                        type="button"
-                                                        data-kind="primary"
-                                                        onClick={() => {
-                                                            setSelectedPlan("basico");
-                                                            setStage("checkout");
-                                                        }}
-                                                        style={{ width: "100%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
-                                                    >
-                                                        DESBLOQUEAR AGORA
-                                                    </button>
-                                                </div>
-                                            </div>
+                                            <div dangerouslySetInnerHTML={{ __html: lockedHtml }} />
                                         </div>
 
-                                        <div dangerouslySetInnerHTML={{ __html: xrayHtml }} />
+                                        <div style={{ flex: "1 1 320px" }}>
+                                            <div dangerouslySetInnerHTML={{ __html: offerHtml }} />
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button
+                                                    type="button"
+                                                    data-kind="primary"
+                                                    onClick={() => {
+                                                        setSelectedPlan("basico");
+                                                        setStage("checkout");
+                                                    }}
+                                                    style={{ width: "100%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
+                                                >
+                                                    DESBLOQUEAR AGORA
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                        <div style={{ height: 12 }} />
+                                    <div dangerouslySetInnerHTML={{ __html: xrayHtml }} />
 
-                                        <details data-testid="stExpander">
-                                            <summary>❓ Por que não apenas buscar no LinkedIn?</summary>
-                                            <div>
-                                                <div
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: `
+                                    <div style={{ height: 12 }} />
+
+                                    <details data-testid="stExpander">
+                                        <summary>❓ Por que não apenas buscar no LinkedIn?</summary>
+                                        <div>
+                                            <div
+                                                dangerouslySetInnerHTML={{
+                                                    __html: `
             <div style="font-size: 0.85rem; color: #CBD5E1;">
                 <p>A busca comum do LinkedIn tem travas. O <strong>X-Ray Search</strong> usa o Google para:</p>
                 <ul style="padding-left: 15px; margin-bottom: 0;">
@@ -1233,22 +1213,22 @@ export default function AppPage() {
                 </ul>
             </div>
             `,
-                                                    }}
-                                                />
-                                            </div>
-                                        </details>
-
-                                        <div style={{ marginTop: 22, marginBottom: 18, borderTop: "1px solid rgba(255,255,255,0.08)" }} />
-
-                                        <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 14 }}>
-                                            💳 Escolha Seu Plano
+                                                }}
+                                            />
                                         </div>
+                                    </details>
 
-                                        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-                                            <div style={{ flex: "1 1 220px" }}>
-                                                <div
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: `
+                                    <div style={{ marginTop: 22, marginBottom: 18, borderTop: "1px solid rgba(255,255,255,0.08)" }} />
+
+                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 14 }}>
+                                        💳 Escolha Seu Plano
+                                    </div>
+
+                                    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                                        <div style={{ flex: "1 1 220px" }}>
+                                            <div
+                                                dangerouslySetInnerHTML={{
+                                                    __html: `
             <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center;">
                 <div style="color: #94A3B8; font-size: 0.8rem; margin-bottom: 10px;">BÁSICO</div>
                 <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 29,90</div>
@@ -1261,27 +1241,27 @@ export default function AppPage() {
                 </div>
             </div>
             `,
+                                                }}
+                                            />
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button
+                                                    type="button"
+                                                    data-kind="secondary"
+                                                    onClick={() => {
+                                                        setSelectedPlan("basico");
+                                                        setStage("checkout");
                                                     }}
-                                                />
-                                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                    <button
-                                                        type="button"
-                                                        data-kind="secondary"
-                                                        onClick={() => {
-                                                            setSelectedPlan("basico");
-                                                            setStage("checkout");
-                                                        }}
-                                                        style={{ width: "100%" }}
-                                                    >
-                                                        ESCOLHER BÁSICO
-                                                    </button>
-                                                </div>
+                                                    style={{ width: "100%" }}
+                                                >
+                                                    ESCOLHER BÁSICO
+                                                </button>
                                             </div>
+                                        </div>
 
-                                            <div style={{ flex: "1 1 220px" }}>
-                                                <div
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: `
+                                        <div style={{ flex: "1 1 220px" }}>
+                                            <div
+                                                dangerouslySetInnerHTML={{
+                                                    __html: `
             <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1)); border: 2px solid #10B981; border-radius: 12px; padding: 20px; text-align: center; position: relative;">
                 <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">
                     🔥 MAIS VENDIDO
@@ -1301,27 +1281,27 @@ export default function AppPage() {
                 </div>
             </div>
             `,
+                                                }}
+                                            />
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button
+                                                    type="button"
+                                                    data-kind="secondary"
+                                                    onClick={() => {
+                                                        setSelectedPlan("pro");
+                                                        setStage("checkout");
                                                     }}
-                                                />
-                                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                    <button
-                                                        type="button"
-                                                        data-kind="secondary"
-                                                        onClick={() => {
-                                                            setSelectedPlan("pro");
-                                                            setStage("checkout");
-                                                        }}
-                                                        style={{ width: "100%" }}
-                                                    >
-                                                        ESCOLHER PRO
-                                                    </button>
-                                                </div>
+                                                    style={{ width: "100%" }}
+                                                >
+                                                    ESCOLHER PRO
+                                                </button>
                                             </div>
+                                        </div>
 
-                                            <div style={{ flex: "1 1 220px" }}>
-                                                <div
-                                                    dangerouslySetInnerHTML={{
-                                                        __html: `
+                                        <div style={{ flex: "1 1 220px" }}>
+                                            <div
+                                                dangerouslySetInnerHTML={{
+                                                    __html: `
             <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
                 <div style="color: #F59E0B; font-size: 0.8rem; margin-bottom: 10px;">PREMIUM PLUS</div>
                 <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 49,90</div>
@@ -1335,55 +1315,55 @@ export default function AppPage() {
                 </div>
             </div>
             `,
+                                                }}
+                                            />
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button
+                                                    type="button"
+                                                    data-kind="secondary"
+                                                    onClick={() => {
+                                                        setSelectedPlan("premium_plus");
+                                                        setStage("checkout");
                                                     }}
-                                                />
-                                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                    <button
-                                                        type="button"
-                                                        data-kind="secondary"
-                                                        onClick={() => {
-                                                            setSelectedPlan("premium_plus");
-                                                            setStage("checkout");
-                                                        }}
-                                                        style={{ width: "100%" }}
-                                                    >
-                                                        ESCOLHER PREMIUM PLUS
-                                                    </button>
-                                                </div>
+                                                    style={{ width: "100%" }}
+                                                >
+                                                    ESCOLHER PREMIUM PLUS
+                                                </button>
                                             </div>
                                         </div>
-
-                                        <div style={{ height: 16 }} />
-
-                                        <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                            <button type="button" data-kind="secondary" onClick={() => setStage("hero")} style={{ width: "100%" }}>
-                                                VOLTAR
-                                            </button>
-                                        </div>
                                     </div>
-                                </>
-                            );
-                        })()}
-                    </div>
-                )}
 
-                {stage === "checkout" && (
-                    <div className="hero-container">
-                        <div className="action-island-container">
-                            {(() => {
-                                const planId = (selectedPlan || "basico").trim();
-                                const prices: any = {
-                                    basico: { price: 29.90, name: "1 Otimização", billing: "one_time" },
-                                    pro: { price: 69.90, name: "Pacote 3 Vagas", billing: "one_time" },
-                                    premium_plus: { price: 49.90, name: "VANT - Pacote Premium Plus", billing: "subscription" },
-                                };
-                                const plan = prices[planId] || prices.basico;
-                                const isSubscription = plan.billing === "subscription";
-                                const billingLine = !isSubscription
-                                    ? "✅ Pagamento único · ✅ Acesso imediato"
-                                    : "✅ Assinatura mensal · ✅ 30 CVs/mês";
+                                    <div style={{ height: 16 }} />
 
-                                const boxHtml = `
+                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                        <button type="button" data-kind="secondary" onClick={() => setStage("hero")} style={{ width: "100%" }}>
+                                            VOLTAR
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
+                </div>
+            )}
+
+            {stage === "checkout" && (
+                <div className="hero-container">
+                    <div className="action-island-container">
+                        {(() => {
+                            const planId = (selectedPlan || "basico").trim();
+                            const prices: any = {
+                                basico: { price: 29.90, name: "1 Otimização", billing: "one_time" },
+                                pro: { price: 69.90, name: "Pacote 3 Vagas", billing: "one_time" },
+                                premium_plus: { price: 49.90, name: "VANT - Pacote Premium Plus", billing: "subscription" },
+                            };
+                            const plan = prices[planId] || prices.basico;
+                            const isSubscription = plan.billing === "subscription";
+                            const billingLine = !isSubscription
+                                ? "✅ Pagamento único · ✅ Acesso imediato"
+                                : "✅ Assinatura mensal · ✅ 30 CVs/mês";
+
+                            const boxHtml = `
             <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
                 <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
                     <span style="color:#94A3B8;">Plano</span>
@@ -1397,94 +1377,93 @@ export default function AppPage() {
             </div>
             `;
 
-                                return (
-                                    <>
-                                        <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 12 }}>
-                                            Confirmar Compra: {planId.toUpperCase()}
+                            return (
+                                <>
+                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 12 }}>
+                                        Confirmar Compra: {planId.toUpperCase()}
+                                    </div>
+
+                                    <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
+
+                                    <div style={{ marginBottom: 12 }}>
+                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+                                            Seu e-mail
                                         </div>
-
-                                        <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
-
-                                        <div style={{ marginBottom: 12 }}>
-                                            <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
-                                                Seu e-mail
+                                        <input
+                                            value={authEmail}
+                                            onChange={(e) => setAuthEmail(e.target.value)}
+                                            placeholder="voce@exemplo.com"
+                                            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "10px 12px" }}
+                                        />
+                                        {!authUserId ? (
+                                            <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 8 }}>
+                                                🔐 Entre com seu e-mail para salvar créditos/assinatura e acessar de qualquer dispositivo.
                                             </div>
-                                            <input
-                                                value={authEmail}
-                                                onChange={(e) => setAuthEmail(e.target.value)}
-                                                placeholder="voce@exemplo.com"
-                                                style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "10px 12px" }}
-                                            />
-                                            {!authUserId ? (
-                                                <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 8 }}>
-                                                    🔐 Entre com seu e-mail para salvar créditos/assinatura e acessar de qualquer dispositivo.
-                                                </div>
-                                            ) : (
-                                                <div style={{ color: "#10B981", fontSize: "0.8rem", marginTop: 8, fontWeight: 700 }}>
-                                                    ✅ Logado
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                            <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
-                                                Continuar para pagamento
-                                            </button>
-                                        </div>
-
-                                        {!authUserId && (
-                                            <>
-                                                <div style={{ height: 12 }} />
-                                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                    <button
-                                                        type="button"
-                                                        data-kind="secondary"
-                                                        onClick={sendMagicLink}
-                                                        disabled={isSendingMagicLink || magicLinkCooldownSeconds > 0}
-                                                        style={{ width: "100%" }}
-                                                    >
-                                                        {isSendingMagicLink
-                                                            ? "Enviando..."
-                                                            : magicLinkCooldownSeconds > 0
-                                                                ? `Aguarde ${magicLinkCooldownSeconds}s`
-                                                                : "Enviar link de acesso"}
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        {stripeSessionId && (
-                                            <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 10 }}>
-                                                Session ID: {stripeSessionId}
+                                        ) : (
+                                            <div style={{ color: "#10B981", fontSize: "0.8rem", marginTop: 8, fontWeight: 700 }}>
+                                                ✅ Logado
                                             </div>
                                         )}
+                                    </div>
 
-                                        {checkoutError && (
-                                            <div
-                                                style={{
-                                                    marginTop: 12,
-                                                    color: checkoutError.startsWith("Link enviado") || checkoutError.startsWith("Pagamento confirmado") ? "#10B981" : "#EF4444",
-                                                    fontSize: "0.85rem",
-                                                }}
-                                            >
-                                                {checkoutError}
+                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                        <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%" }}>
+                                            Continuar para pagamento
+                                        </button>
+                                    </div>
+
+                                    {!authUserId && (
+                                        <>
+                                            <div style={{ height: 12 }} />
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button
+                                                    type="button"
+                                                    data-kind="secondary"
+                                                    onClick={sendMagicLink}
+                                                    disabled={isSendingMagicLink || magicLinkCooldownSeconds > 0}
+                                                    style={{ width: "100%" }}
+                                                >
+                                                    {isSendingMagicLink
+                                                        ? "Enviando..."
+                                                        : magicLinkCooldownSeconds > 0
+                                                            ? `Aguarde ${magicLinkCooldownSeconds}s`
+                                                            : "Enviar link de acesso"}
+                                                </button>
                                             </div>
-                                        )}
+                                        </>
+                                    )}
 
-                                        <div style={{ height: 16 }} />
-
-                                        <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                            <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
-                                                VOLTAR
-                                            </button>
+                                    {stripeSessionId && (
+                                        <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 10 }}>
+                                            Session ID: {stripeSessionId}
                                         </div>
-                                    </>
-                                );
-                            })()}
-                        </div>
+                                    )}
+
+                                    {checkoutError && (
+                                        <div
+                                            style={{
+                                                marginTop: 12,
+                                                color: checkoutError.startsWith("Link enviado") || checkoutError.startsWith("Pagamento confirmado") ? "#10B981" : "#EF4444",
+                                                fontSize: "0.85rem",
+                                            }}
+                                        >
+                                            {checkoutError}
+                                        </div>
+                                    )}
+
+                                    <div style={{ height: 16 }} />
+
+                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                        <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
+                                            VOLTAR
+                                        </button>
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </div>
-                )}
-            </main>
-        );
-    }
+                </div>
+            )}
+        </main>
+    );
 }
