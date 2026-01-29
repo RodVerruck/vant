@@ -141,6 +141,7 @@ export default function AppPage() {
     const [previewData, setPreviewData] = useState<PreviewData | null>(null);
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [, setPremiumError] = useState("");
+    const [isRestoringData, setIsRestoringData] = useState(false);
 
     // Refs
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
@@ -635,25 +636,31 @@ export default function AppPage() {
                 const savedFileType = sessionStorage.getItem("vant_file_type");
                 if (savedJob && savedFileB64 && savedFileName && savedFileType) {
                     console.log("[processing_premium] Restaurando do sessionStorage...");
+                    setIsRestoringData(true);
                     setJobDescription(savedJob);
-                    // Converter base64 de volta para File
                     fetch(savedFileB64)
                         .then(res => res.blob())
                         .then(blob => {
                             const restoredFile = new File([blob], savedFileName, { type: savedFileType });
                             setFile(restoredFile);
-                            sessionStorage.removeItem("vant_jobDescription");
-                            sessionStorage.removeItem("vant_file_b64");
-                            sessionStorage.removeItem("vant_file_name");
-                            sessionStorage.removeItem("vant_file_type");
+                            setIsRestoringData(false);
+                            console.log("[processing_premium] Dados restaurados!");
+                        })
+                        .catch(err => {
+                            console.error("[processing_premium] Erro:", err);
+                            setIsRestoringData(false);
                         });
-                    return; // aguardar próximo ciclo do useEffect
+                    return;
                 }
             }
-            console.error("[processing_premium] Dados incompletos:", { jobDescription: !!jobDescription, file: !!file, authUserId, stage });
-            console.trace("[processing_premium] Stack trace para descobrir quem resetou os dados:");
+            console.error("[processing_premium] Dados incompletos:", { jobDescription: !!jobDescription, file: !!file });
             setPremiumError("Dados da sessão incompletos. Volte e envie seu CV novamente.");
             setStage("preview");
+            return;
+        }
+
+        if (isRestoringData) {
+            console.log("[processing_premium] Aguardando restauração...");
             return;
         }
 
