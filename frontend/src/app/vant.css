@@ -1512,6 +1512,8 @@ h5 {
     color: #334155;
     font-family: 'Inter', sans-serif;
     border-top: 6px solid #10B981;
+    overflow: visible;
+    /* Garante que o conteúdo não seja cortado */
 }
 
 /* Variáveis de espaçamento */
@@ -1765,4 +1767,14 @@ h5 {
 .evidence-box i {
     color: #CBD5E1 !important;
     font-style: italic;
+}
+
+/* Garante que o conteúdo do CV não seja cortado */
+.cv-content-flow {
+    text-align: left;
+    white-space: normal;
+    line-height: 1.6;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
 }

@@ -184,7 +184,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
             }
             // Contato (linha com | ou @)
             else if ((line.includes('|') || line.includes('@')) && line.length < 300) {
-                let clean_line = line.replace('**', '');
+                let clean_line = line.replace(/\*\*/g, ''); // Remove todos os ** da linha
                 let parts = clean_line.split('|').map(p => p.trim());
                 let items_html: string[] = [];
 
