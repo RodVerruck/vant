@@ -166,13 +166,13 @@ export default function AppPage() {
         return fallback;
     }
 
-    // Restaurar jobDescription e file do sessionStorage ao montar
+    // Restaurar jobDescription e file do localStorage ao montar
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const savedJob = sessionStorage.getItem("vant_jobDescription");
-            const savedFileName = sessionStorage.getItem("vant_file_name");
-            const savedFileType = sessionStorage.getItem("vant_file_type");
-            const savedFileB64 = sessionStorage.getItem("vant_file_b64");
+            const savedJob = localStorage.getItem("vant_jobDescription");
+            const savedFileName = localStorage.getItem("vant_file_name");
+            const savedFileType = localStorage.getItem("vant_file_type");
+            const savedFileB64 = localStorage.getItem("vant_file_b64");
             if (savedJob && !jobDescription) {
                 setJobDescription(savedJob);
             }
@@ -187,13 +187,13 @@ export default function AppPage() {
         }
     }, [jobDescription, file]);
 
-    // Salvar jobDescription e file em sessionStorage quando mudarem
+    // Salvar jobDescription e file em localStorage quando mudarem
     useEffect(() => {
         if (typeof window !== "undefined") {
             if (jobDescription) {
-                sessionStorage.setItem("vant_jobDescription", jobDescription);
+                localStorage.setItem("vant_jobDescription", jobDescription);
             } else {
-                sessionStorage.removeItem("vant_jobDescription");
+                localStorage.removeItem("vant_jobDescription");
             }
         }
     }, [jobDescription]);
@@ -203,15 +203,15 @@ export default function AppPage() {
             if (file) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    sessionStorage.setItem("vant_file_b64", reader.result as string);
-                    sessionStorage.setItem("vant_file_name", file.name);
-                    sessionStorage.setItem("vant_file_type", file.type);
+                    localStorage.setItem("vant_file_b64", reader.result as string);
+                    localStorage.setItem("vant_file_name", file.name);
+                    localStorage.setItem("vant_file_type", file.type);
                 };
                 reader.readAsDataURL(file);
             } else {
-                sessionStorage.removeItem("vant_file_b64");
-                sessionStorage.removeItem("vant_file_name");
-                sessionStorage.removeItem("vant_file_type");
+                localStorage.removeItem("vant_file_b64");
+                localStorage.removeItem("vant_file_name");
+                localStorage.removeItem("vant_file_type");
             }
         }
     }, [file]);
@@ -312,7 +312,7 @@ export default function AppPage() {
         }
 
         const activateEntitlements = async (sid: string, uid: string) => {
-            const resp = await fetch("http://127.0.0.1:8000/api/entitlements/activate", {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/entitlements/activate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ session_id: sid, user_id: uid }),
@@ -348,7 +348,7 @@ export default function AppPage() {
 
             (async () => {
                 try {
-                    const resp = await fetch("http://127.0.0.1:8000/api/stripe/verify-checkout-session", {
+                    const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/verify-checkout-session`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ session_id: sessionId }),
@@ -420,7 +420,7 @@ export default function AppPage() {
             setIsActivating(true);
             try {
                 console.log("[needsActivation] Chamando /api/entitlements/activate...");
-                const resp = await fetch("http://127.0.0.1:8000/api/entitlements/activate", {
+                const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/entitlements/activate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ session_id: stripeSessionId, user_id: authUserId }),
@@ -467,7 +467,7 @@ export default function AppPage() {
                 body.client_reference_id = authUserId;
             }
 
-            const resp = await fetch("http://127.0.0.1:8000/api/stripe/create-checkout-session", {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-checkout-session`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
@@ -485,18 +485,18 @@ export default function AppPage() {
                 throw new Error("URL de checkout não retornada pelo backend");
             }
 
-            // Salvar dados no sessionStorage antes de redirecionar para o pagamento
+            // Salvar dados no localStorage antes de redirecionar para o pagamento
             if (typeof window !== "undefined" && jobDescription && file) {
-                console.log("[startCheckout] Salvando dados no sessionStorage antes do pagamento...");
-                sessionStorage.setItem("vant_jobDescription", jobDescription);
+                console.log("[startCheckout] Salvando dados no localStorage antes do pagamento...");
+                localStorage.setItem("vant_jobDescription", jobDescription);
 
                 // Converter arquivo para base64 e aguardar conclusão
                 const reader = new FileReader();
                 reader.onload = () => {
                     const base64 = reader.result as string;
-                    sessionStorage.setItem("vant_file_b64", base64);
-                    sessionStorage.setItem("vant_file_name", file.name);
-                    sessionStorage.setItem("vant_file_type", file.type);
+                    localStorage.setItem("vant_file_b64", base64);
+                    localStorage.setItem("vant_file_name", file.name);
+                    localStorage.setItem("vant_file_type", file.type);
                     console.log("[startCheckout] Dados salvos com sucesso. Redirecionando...");
                     window.location.href = checkoutUrl;
                 };
@@ -587,7 +587,7 @@ export default function AppPage() {
     }
 
     async function syncEntitlements(userId: string) {
-        const resp = await fetch("http://127.0.0.1:8000/api/entitlements/status", {
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/entitlements/status`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: userId }),
@@ -628,14 +628,14 @@ export default function AppPage() {
             return;
         }
         if (!jobDescription.trim() || !file) {
-            // Tentar restaurar do sessionStorage (caso de remontagem)
+            // Tentar restaurar do localStorage (caso de remontagem)
             if (typeof window !== "undefined") {
-                const savedJob = sessionStorage.getItem("vant_jobDescription");
-                const savedFileB64 = sessionStorage.getItem("vant_file_b64");
-                const savedFileName = sessionStorage.getItem("vant_file_name");
-                const savedFileType = sessionStorage.getItem("vant_file_type");
+                const savedJob = localStorage.getItem("vant_jobDescription");
+                const savedFileB64 = localStorage.getItem("vant_file_b64");
+                const savedFileName = localStorage.getItem("vant_file_name");
+                const savedFileType = localStorage.getItem("vant_file_type");
                 if (savedJob && savedFileB64 && savedFileName && savedFileType) {
-                    console.log("[processing_premium] Restaurando do sessionStorage...");
+                    console.log("[processing_premium] Restaurando do localStorage...");
                     setIsRestoringData(true);
                     setJobDescription(savedJob);
                     fetch(savedFileB64)
@@ -694,7 +694,7 @@ export default function AppPage() {
                     }
                 }
 
-                const resp = await fetch("http://127.0.0.1:8000/api/analyze-premium-paid", {
+                const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analyze-premium-paid`, {
                     method: "POST",
                     body: form,
                 });
@@ -758,7 +758,7 @@ export default function AppPage() {
             form.append("job_description", jobDescription);
             form.append("file", file);
 
-            const resp = await fetch("http://127.0.0.1:8000/api/analyze-lite", {
+            const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analyze-lite`, {
                 method: "POST",
                 body: form,
             });

@@ -6,6 +6,7 @@ __pycache__/
 # Environment Variables (CRÍTICO - NÃO REMOVER)
 .env
 .env.*
+!.env.local.example
 
 # Streamlit Secrets (CRÍTICO - NÃO REMOVER)
 .streamlit/secrets.toml

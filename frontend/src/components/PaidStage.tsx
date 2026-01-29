@@ -71,7 +71,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
 
     const handleDownloadPdf = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/api/generate-pdf", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/generate-pdf`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ data: reportData, user_id: authUserId }),
@@ -93,7 +93,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
 
     const handleDownloadWord = async () => {
         try {
-            const response = await fetch("http://127.0.0.1:8000/api/generate-word", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/generate-word`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ data: reportData, user_id: authUserId }),
