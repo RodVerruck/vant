@@ -94,6 +94,43 @@ def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...))
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
+class GeneratePdfRequest(BaseModel):
+    data: dict[str, Any]
+    user_id: str | None = None
+
+
+@app.post("/api/generate-pdf")
+def generate_pdf(request: GeneratePdfRequest) -> StreamingResponse:
+    try:
+        pdf_bytes = gerar_pdf_candidato(request.data)
+        return StreamingResponse(
+            io.BytesIO(pdf_bytes),
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=Curriculo_VANT.pdf"}
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+class GenerateWordRequest(BaseModel):
+    data: dict[str, Any]
+    user_id: str | None = None
+
+
+@app.post("/api/generate-word")
+def generate_word(request: GenerateWordRequest) -> StreamingResponse:
+    try:
+        word_bytes_io = gerar_word_candidato(request.data)
+        word_bytes_io.seek(0)
+        return StreamingResponse(
+            word_bytes_io,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": "attachment; filename=Curriculo_VANT_Editavel.docx"}
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
 class EntitlementsStatusRequest(BaseModel):
     user_id: str
 

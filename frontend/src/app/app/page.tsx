@@ -2,37 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import type { JSX } from "react";
-
-type AppStage = "hero" | "analyzing" | "preview" | "checkout" | "processing_premium" | "paid";
-type PlanType = "basico" | "pro" | "premium_plus";
+import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap } from "@/types";
+import { PaidStage } from "@/components/PaidStage";
+import { calcPotencial } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
-type BillingType = "one_time" | "subscription";
-type PricePlan = { price: number; name: string; billing: BillingType };
-type PricesMap = Record<string, PricePlan>;
-
-type PilaresData = {
-    impacto?: number;
-    keywords?: number;
-    ats?: number;
-    setor_detectado?: string;
-    [key: string]: unknown;
-};
-
-interface PreviewData {
-    nota: number;
-    nota_ats: number;
-    veredito: string;
-    potencial: number;
-    pilares: PilaresData;
-    analise_por_pilares: PilaresData;
-}
-
-interface ReportData {
-    texto_destaque: string;
-    setor_detectado: string;
-}
 
 const HERO_INNER_HTML = `
     <div class="badge-live">
@@ -792,23 +766,12 @@ export default function AppPage() {
             setStage("hero");
         }
     }
-
     function openFileDialog() {
         uploaderInputRef.current?.click();
     }
 
     function openCompetitorFileDialog() {
         competitorUploaderInputRef.current?.click();
-    }
-
-    function calcPotencial(nota: number) {
-        if (nota < 50) {
-            return Math.min(nota + 25, 60);
-        }
-        if (nota < 80) {
-            return Math.min(nota + 35, 95);
-        }
-        return Math.min(nota + 10, 99);
     }
 
     function renderDashboardMetricsHtml(nota: number, veredito: string, potencial: number, pilares: PilaresData) {
@@ -1102,73 +1065,17 @@ export default function AppPage() {
                 )}
 
                 {stage === "paid" && (
-                    <div className="hero-container">
-                        <h2 style={{ color: "#F8FAFC", marginBottom: 20 }}>📄 CV OTIMIZADO - EM CONSTRUÇÃO</h2>
-                        <p style={{ color: "#94A3B8", marginBottom: 30 }}>
-                            Implementando visualização do CV, editor e downloads PDF/Word...
-                        </p>
-
-                        {/* Preview do CV */}
-                        <div style={{
-                            backgroundColor: "#ffffff",
-                            width: "100%",
-                            maxWidth: 820,
-                            margin: "0 auto",
-                            padding: "4rem 4.5rem",
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.02), 0 10px 40px -10px rgba(0,0,0,0.08)",
-                            borderRadius: 4,
-                            color: "#334155",
-                            fontFamily: "'Inter', sans-serif",
-                            borderTop: "6px solid #10B981",
-                            lineHeight: 1.6,
-                            marginBottom: 20
-                        }}>
-                            <h1 style={{ color: "#0f172a", fontSize: "2.5rem", fontWeight: 900, textAlign: "center", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "-0.02em" }}>
-                                JOÃO SILVA
-                            </h1>
-                            <p style={{ color: "#64748B", textAlign: "center", marginBottom: "3rem" }}>
-                                (11) 98765-4321 | linkedin.com/in/joaosilva
-                            </p>
-                            <h3 style={{ color: "#0f172a", fontSize: "0.85rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", borderBottom: "1px solid #e2e8f0", paddingBottom: "0.5rem", marginTop: "2rem", marginBottom: "1.5rem" }}>
-                                RESUMO
-                            </h3>
-                            <p style={{ marginBottom: "0.5rem", lineHeight: 1.6 }}>
-                                Engenheiro de Software com 5 anos de experiência em desenvolvimento de sistemas escaláveis e aplicações web modernas. Especializado em Node.js, React e Python, com foco em criar soluções eficientes e de alta qualidade.
-                            </p>
-                        </div>
-
-                        {/* Botões de download */}
-                        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                            <button
-                                onClick={() => alert("Download PDF em desenvolvimento")}
-                                style={{
-                                    background: "#10B981",
-                                    color: "white",
-                                    border: "none",
-                                    padding: "12px 20px",
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    cursor: "pointer"
-                                }}
-                            >
-                                📥 BAIXAR PDF (OFICIAL)
-                            </button>
-                            <button
-                                onClick={() => alert("Download Word em desenvolvimento")}
-                                style={{
-                                    background: "#38BDF8",
-                                    color: "#0F172A",
-                                    border: "none",
-                                    padding: "12px 20px",
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    cursor: "pointer"
-                                }}
-                            >
-                                📝 BAIXAR WORD (EDITÁVEL)
-                            </button>
-                        </div>
-                    </div>
+                    <PaidStage
+                        reportData={reportData}
+                        authUserId={authUserId}
+                        onNewOptimization={() => {
+                            setReportData(null);
+                            setFile(null);
+                            setCompetitorFiles([]);
+                            setStage("hero");
+                        }}
+                        onUpdateReport={(updated) => setReportData(updated)}
+                    />
                 )}
 
                 {stage === "analyzing" && (
@@ -1410,6 +1317,40 @@ export default function AppPage() {
                                                     </button>
                                                 </div>
                                             </div>
+
+                                            <div style={{ flex: "1 1 220px" }}>
+                                                <div
+                                                    dangerouslySetInnerHTML={{
+                                                        __html: `
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #F59E0B; font-size: 0.8rem; margin-bottom: 10px;">PREMIUM PLUS</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 49,90</div>
+                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 15px;">por mês (assinatura)</div>
+                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
+                    ✅ 30 CVs por mês<br>
+                    ✅ Tudo do Pro<br>
+                    ✅ Suporte prioritário<br>
+                    ✅ Acesso antecipado<br>
+                    💎 Melhor para quem aplica para várias vagas
+                </div>
+            </div>
+            `,
+                                                    }}
+                                                />
+                                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                    <button
+                                                        type="button"
+                                                        data-kind="secondary"
+                                                        onClick={() => {
+                                                            setSelectedPlan("premium_plus");
+                                                            setStage("checkout");
+                                                        }}
+                                                        style={{ width: "100%" }}
+                                                    >
+                                                        ESCOLHER PREMIUM PLUS
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div style={{ height: 16 }} />
@@ -1546,11 +1487,4 @@ export default function AppPage() {
             </main>
         );
     }
-
-    return renderDashboardMetrics(
-        typeof previewData?.nota_ats === "number" ? previewData.nota_ats : 0,
-        typeof previewData?.veredito === "string" ? previewData.veredito : "",
-        calcPotencial(typeof previewData?.nota_ats === "number" ? previewData.nota_ats : 0),
-        (previewData?.pilares || {}) as PilaresData
-    );
 }
