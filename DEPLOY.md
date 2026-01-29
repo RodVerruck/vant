@@ -16,9 +16,9 @@ Este guia descreve como fazer o deploy do projeto VANT em produção com arquite
 
 ### 1. Preparar o repositório
 
-Certifique-se de que os seguintes arquivos estão no repositório:
-- `requirements.txt` - Dependências Python
-- `start_server.py` - Script de inicialização
+Certifique-se de que os seguintes arquivos estão dentro da pasta `backend/`:
+- `backend/requirements.txt` - Dependências Python
+- `backend/start_server.py` - Script de inicialização
 - `backend/main.py` - Aplicação FastAPI
 
 ### 2. Criar Web Service no Render
@@ -30,7 +30,7 @@ Certifique-se de que os seguintes arquivos estão no repositório:
    - **Name**: `vant-backend` (ou nome de sua preferência)
    - **Region**: Escolha a região mais próxima
    - **Branch**: `main` (ou sua branch principal)
-   - **Root Directory**: deixe vazio (ou `.` se necessário)
+   - **Root Directory**: `backend`
    - **Runtime**: `Python 3`
    - **Build Command**: `pip install -r requirements.txt`
    - **Start Command**: `python start_server.py`
@@ -172,6 +172,8 @@ Para rodar localmente após essas mudanças:
 
 ### Backend
 ```bash
+cd backend
+
 # Criar .env baseado no .env.example
 cp .env.example .env
 # Editar .env com suas chaves
