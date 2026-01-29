@@ -4,6 +4,10 @@ import io
 import os
 import sys
 from typing import Any
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente do arquivo .env
+load_dotenv()
 
 import stripe
 from fastapi import FastAPI, File, Form, UploadFile
