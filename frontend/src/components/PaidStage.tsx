@@ -148,10 +148,10 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     if (parts.length >= 3) {
                         cargo = parts[0];
                         empresa = parts[1];
-                        data = parts[2].replace('*', '').replace('_', '').trim();
+                        data = parts[2].replace(/\*/g, '').replace('_', '').trim(); // Remove todos os asteriscos
                     } else if (parts.length === 2) {
                         cargo = parts[0];
-                        empresa = parts[1].replace('*', '').trim();
+                        empresa = parts[1].replace(/\*/g, '').trim(); // Remove todos os asteriscos
                     }
 
                     let job_html = `
