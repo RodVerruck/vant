@@ -1,13 +1,11 @@
 import json
 import logging
 import os
-import streamlit as st
 import re
 import concurrent.futures
 from google import genai
 from google.genai import types
 from groq import Groq
-from io import BytesIO
 
 # ============================================================
 # LOGGING & CONFIG
@@ -18,14 +16,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger("VANT_CORE")
 
-GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
-GROQ_API_KEY = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 if GOOGLE_API_KEY:
     genai_client = genai.Client(api_key=GOOGLE_API_KEY)
 else:
     genai_client = None
-    logger.error("❌ GOOGLE_API_KEY não configurada")
 
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
@@ -106,17 +103,15 @@ def clean_json_string(text: str) -> str:
 # ============================================================
 # CORE LLM CALL (COM FALLBACK DE RESILIÊNCIA)
 # ============================================================
-@st.cache_data(ttl=86400, show_spinner=False)
 def _call_google_cached(
     system_prompt: str,
     user_content: str,
     agent_name: str,
     model_name: str,
-    key_state: int = 0,
 ):
     global genai_client
     if not genai_client:
-        api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        api_key = os.getenv("GOOGLE_API_KEY")
         if api_key:
             try:
                 genai_client = genai.Client(api_key=api_key)
@@ -130,7 +125,7 @@ def _call_google_cached(
         else:
             logger.error("❌ genai_client indisponível (GOOGLE_API_KEY ausente)")
             return _vant_error(
-                "GOOGLE_API_KEY não configurada. No Streamlit Cloud, defina em App settings → Secrets (chave GOOGLE_API_KEY) e reinicie o app.",
+                "GOOGLE_API_KEY não configurada. Defina a variável de ambiente GOOGLE_API_KEY.",
                 agent_name=agent_name,
                 model_name=model_name,
             )
@@ -201,10 +196,9 @@ Apenas JSON válido.
         )
 
 def call_llm(system_prompt: str, payload: str, agent_name: str):
-    api_key = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    key_state = 1 if api_key else 0
+    api_key = os.getenv("GOOGLE_API_KEY")
     model = AGENT_MODEL_REGISTRY.get(agent_name, DEFAULT_MODEL)
-    return _call_google_cached(system_prompt, payload, agent_name, model, key_state)
+    return _call_google_cached(system_prompt, payload, agent_name, model)
 
 # ============================================================
 # PIPELINE CV (CORE PRODUCT)
@@ -361,7 +355,7 @@ def transcribe_audio_groq(audio_bytes):
     try:
         # Cria um arquivo em memória com nome (necessário para a API)
         audio_file = BytesIO(audio_bytes)
-        audio_file.name = "audio.webm"  # Streamlit grava em webm/wav
+        audio_file.name = "audio.webm"
         
         # Chamada à API Groq
         transcription = groq_client.audio.transcriptions.create(

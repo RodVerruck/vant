@@ -1,6 +1,8 @@
 # ============================================================
 # CSS V14: DESIGN SYSTEM (FLEXBOX BLINDADO + PDF MM)
+# Migrado de css_constants.py para o backend
 # ============================================================
+
 CSS_V13 = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 

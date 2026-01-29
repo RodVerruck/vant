@@ -1,4 +1,3 @@
-import streamlit as st
 import json
 import os
 import urllib.parse
@@ -115,16 +114,6 @@ from llm_core import run_llm_orchestrator
 # CONFIG
 # ============================================================
 # Configuração de logging já feita via setup_logger
-
-# ============================================================
-# CSS (EXIGIDO PELO app.py)
-# ============================================================
-def load_css(file_name):
-    try:
-        with open(file_name, encoding="utf-8") as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    except FileNotFoundError:
-        logger.warning(f"⚠️ CSS não encontrado: {file_name}")
 
 # ============================================================
 # PDF / TEXTO (COM LIMITE DE TOKENS)
@@ -545,7 +534,7 @@ import re
 import unicodedata
 
 # Importa constantes CSS centralizadas
-from css_constants import CSS_V13, CSS_PDF
+from backend.styles import CSS_V13, CSS_PDF
 # ==============================================================================
 # 1. PARSER ENGINE (Mantido para limpar seus dados brutos)
 # ==============================================================================
