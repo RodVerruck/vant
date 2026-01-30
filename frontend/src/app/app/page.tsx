@@ -299,6 +299,20 @@ export default function AppPage() {
                             setAuthEmail(user.email);
                         }
                         setCheckoutError("");
+
+                        // Restaurar o stage e plano após login com Google
+                        const returnStage = localStorage.getItem("vant_auth_return_stage");
+                        const returnPlan = localStorage.getItem("vant_auth_return_plan");
+
+                        if (returnStage) {
+                            setStage(returnStage as AppStage);
+                            localStorage.removeItem("vant_auth_return_stage");
+                        }
+
+                        if (returnPlan) {
+                            setSelectedPlan(returnPlan as PlanType);
+                            localStorage.removeItem("vant_auth_return_plan");
+                        }
                     }
                 } catch (e: unknown) {
                     setCheckoutError(getErrorMessage(e, "Falha no login"));
@@ -568,6 +582,14 @@ export default function AppPage() {
         setIsAuthenticating(true);
 
         try {
+            // Salvar o stage e plano atual para restaurar após o login
+            if (typeof window !== "undefined") {
+                localStorage.setItem("vant_auth_return_stage", stage);
+                if (selectedPlan) {
+                    localStorage.setItem("vant_auth_return_plan", selectedPlan);
+                }
+            }
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
