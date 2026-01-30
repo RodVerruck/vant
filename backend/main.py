@@ -22,8 +22,15 @@ if PROJECT_ROOT not in sys.path:
 
 from logic import analyze_cv_logic, analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato  # noqa: E402
 
+try:
+    from backend.mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
+except ImportError:
+    from mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
+
 app = FastAPI(title="Vant API", version="0.1.0")
 
+# Modo de desenvolvimento (true = usa mock, false = usa IA real)
+DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PRICE_ID_BASIC = os.getenv("STRIPE_PRICE_ID_BASIC")
@@ -88,6 +95,12 @@ def health() -> dict[str, str]:
 @app.post("/api/analyze-lite")
 def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...)) -> JSONResponse:
     try:
+        # Modo de desenvolvimento: retorna mock instantaneamente
+        if DEV_MODE:
+            print("🔧 [DEV MODE] Retornando mock de análise lite (sem processar IA)")
+            return JSONResponse(content=MOCK_PREVIEW_DATA)
+        
+        # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(_upload_to_bytes_io(file))
         data = analyze_preview_lite(cv_text, job_description)
         return JSONResponse(content=data)
@@ -186,6 +199,13 @@ def analyze_premium_paid(
 
         _consume_one_credit(user_id)
 
+        # Modo de desenvolvimento: retorna mock instantaneamente
+        if DEV_MODE:
+            print("🔧 [DEV MODE] Retornando mock de análise premium (sem processar IA)")
+            new_status = _entitlements_status(user_id)
+            return JSONResponse(content={"data": MOCK_PREMIUM_DATA, "entitlements": new_status})
+
+        # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(_upload_to_bytes_io(file))
         competitors = []
         if competitor_files:
