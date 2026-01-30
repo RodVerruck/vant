@@ -3,11 +3,13 @@ from __future__ import annotations
 import io
 import os
 import sys
+from pathlib import Path
 from typing import Any
 from dotenv import load_dotenv
 
-# Carrega variáveis de ambiente do arquivo .env
-load_dotenv()
+# Carrega variáveis de ambiente do arquivo .env na raiz do projeto
+PROJECT_ROOT = Path(__file__).parent.parent
+load_dotenv(PROJECT_ROOT / ".env")
 
 import stripe
 from fastapi import FastAPI, File, Form, UploadFile
@@ -31,6 +33,20 @@ app = FastAPI(title="Vant API", version="0.1.0")
 
 # Modo de desenvolvimento (true = usa mock, false = usa IA real)
 DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
+
+# Log de inicialização
+if DEV_MODE:
+    print("\n" + "="*60)
+    print("🔧 MODO DE DESENVOLVIMENTO ATIVADO")
+    print("   IA será substituída por mocks instantâneos")
+    print("   Nenhum token será gasto")
+    print("="*60 + "\n")
+else:
+    print("\n" + "="*60)
+    print("🤖 MODO DE PRODUÇÃO ATIVADO")
+    print("   IA real será processada")
+    print("   Tokens serão consumidos")
+    print("="*60 + "\n")
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PRICE_ID_BASIC = os.getenv("STRIPE_PRICE_ID_BASIC")
@@ -193,17 +209,22 @@ def analyze_premium_paid(
             content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
         )
     try:
+        # Modo de desenvolvimento: bypass de verificação de créditos
+        if DEV_MODE:
+            print("🔧 [DEV MODE] Retornando mock de análise premium (sem processar IA, sem verificar créditos)")
+            mock_status = {
+                "payment_verified": True,
+                "credits_remaining": 999,
+                "plan_id": "pro"
+            }
+            return JSONResponse(content={"data": MOCK_PREMIUM_DATA, "entitlements": mock_status})
+
+        # Modo produção: verifica créditos normalmente
         status = _entitlements_status(user_id)
         if not status.get("payment_verified") or int(status.get("credits_remaining") or 0) <= 0:
             return JSONResponse(status_code=400, content={"error": "Você não tem créditos disponíveis."})
 
         _consume_one_credit(user_id)
-
-        # Modo de desenvolvimento: retorna mock instantaneamente
-        if DEV_MODE:
-            print("🔧 [DEV MODE] Retornando mock de análise premium (sem processar IA)")
-            new_status = _entitlements_status(user_id)
-            return JSONResponse(content={"data": MOCK_PREMIUM_DATA, "entitlements": new_status})
 
         # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(_upload_to_bytes_io(file))

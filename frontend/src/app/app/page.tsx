@@ -8,6 +8,21 @@ import { calcPotencial } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
 
+// Detecta se está em desenvolvimento (localhost) e usa backend local
+// Chamada em cada requisição para garantir que window existe
+function getApiUrl(): string {
+    if (typeof window !== "undefined") {
+        const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        if (isLocalhost) {
+            console.log("[getApiUrl] Ambiente LOCAL detectado, usando http://127.0.0.1:8000");
+            return "http://127.0.0.1:8000";
+        }
+    }
+    const url = process.env.NEXT_PUBLIC_API_URL || "https://vant-vlgn.onrender.com";
+    console.log("[getApiUrl] Ambiente PRODUÇÃO, usando", url);
+    return url;
+}
+
 const HERO_INNER_HTML = `
     <div class="badge-live">
         <span class="vant-tooltip" 
@@ -324,7 +339,7 @@ export default function AppPage() {
         }
 
         const activateEntitlements = async (sid: string, uid: string) => {
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/entitlements/activate`, {
+            const resp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ session_id: sid, user_id: uid }),
@@ -360,7 +375,7 @@ export default function AppPage() {
 
             (async () => {
                 try {
-                    const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/verify-checkout-session`, {
+                    const resp = await fetch(`${getApiUrl()}/api/stripe/verify-checkout-session`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ session_id: sessionId }),
@@ -419,7 +434,7 @@ export default function AppPage() {
             setIsActivating(true);
             try {
                 console.log("[needsActivation] Chamando /api/entitlements/activate...");
-                const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/entitlements/activate`, {
+                const resp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ session_id: stripeSessionId, user_id: authUserId }),
@@ -466,7 +481,7 @@ export default function AppPage() {
                 body.client_reference_id = authUserId;
             }
 
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-checkout-session`, {
+            const resp = await fetch(`${getApiUrl()}/api/stripe/create-checkout-session`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
@@ -617,7 +632,7 @@ export default function AppPage() {
     }
 
     async function syncEntitlements(userId: string) {
-        const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/entitlements/status`, {
+        const resp = await fetch(`${getApiUrl()}/api/entitlements/status`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: userId }),
@@ -724,7 +739,7 @@ export default function AppPage() {
                     }
                 }
 
-                const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analyze-premium-paid`, {
+                const resp = await fetch(`${getApiUrl()}/api/analyze-premium-paid`, {
                     method: "POST",
                     body: form,
                 });
@@ -788,7 +803,9 @@ export default function AppPage() {
             form.append("job_description", jobDescription);
             form.append("file", file);
 
-            const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/analyze-lite`, {
+            console.log("[DEBUG] API_URL:", getApiUrl());
+
+            const resp = await fetch(`${getApiUrl()}/api/analyze-lite`, {
                 method: "POST",
                 body: form,
             });
