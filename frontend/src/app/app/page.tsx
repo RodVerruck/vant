@@ -1100,7 +1100,7 @@ Responsabilidades:
                                                     {pdfMetadata.pages && (
                                                         <div style={{ color: pdfMetadata.pages > 3 ? "#FBBF24" : "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
                                                             <strong>Páginas:</strong> {pdfMetadata.pages}
-                                                            {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6 }}>(Longo)</span>}
+                                                            {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6 }}>- Vamos otimizar para 1-2 páginas ideais ✓</span>}
                                                         </div>
                                                     )}
                                                 </div>
@@ -1214,7 +1214,14 @@ Responsabilidades:
                                             }}
                                         >
                                             {competitorFiles.length > 0 ? (
-                                                <>✓ ATIVADO</>
+                                                <span style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    animation: 'pulse-green 2s infinite'
+                                                }}>
+                                                    ✓ ATIVADO
+                                                </span>
                                             ) : (
                                                 <>+ ADICIONAR CV DE REFERÊNCIA</>
                                             )}
