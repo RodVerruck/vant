@@ -1285,57 +1285,68 @@ export default function AppPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (competitorFiles.length > 0) {
-                                                    setCompetitorFiles([]);
-                                                } else {
-                                                    openCompetitorFileDialog();
-                                                }
-                                            }}
-                                            style={{
-                                                background: competitorFiles.length > 0
-                                                    ? "linear-gradient(135deg, #10B981, #059669)"
-                                                    : "transparent",
-                                                color: competitorFiles.length > 0 ? "#fff" : "#94A3B8",
-                                                border: competitorFiles.length > 0
-                                                    ? "none"
-                                                    : "1px solid rgba(148, 163, 184, 0.4)",
-                                                borderRadius: 20,
-                                                padding: "8px 16px",
-                                                fontSize: "0.8rem",
-                                                fontWeight: 600,
-                                                cursor: "pointer",
+                                        {/* SUBSTITUA O CÓDIGO DO BOTÃO (button) POR ESTA LÓGICA CONDICIONAL: */}
+
+                                        {competitorFiles.length > 0 ? (
+                                            // ESTADO DE SUCESSO (Apenas visual/Label)
+                                            <div style={{
+                                                marginTop: 8,
                                                 display: "flex",
                                                 alignItems: "center",
-                                                gap: 6,
-                                                whiteSpace: "nowrap",
-                                                transition: "all 0.2s ease"
-                                            }}
-                                        >
-                                            {competitorFiles.length > 0 ? (
-                                                <span
-                                                    style={{
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '6px',
-                                                        background: 'linear-gradient(135deg, #10B981, #059669)',
-                                                        padding: '8px 16px',
-                                                        borderRadius: '6px',
-                                                        color: 'white',
-                                                        fontWeight: '600',
-                                                        fontSize: '0.9rem',
-                                                        boxShadow: '0 0 20px rgba(16, 185, 129, 0.5)',
-                                                        animation: 'subtle-pulse 2s infinite'
-                                                    }}
-                                                >
-                                                    ✓ PRONTO PARA ANÁLISE
-                                                </span>
-                                            ) : (
-                                                <>+ ADICIONAR CV DE REFERÊNCIA</>
-                                            )}
-                                        </button>
+                                                gap: 8,
+                                                color: "#10B981", // Verde sucesso
+                                                fontWeight: 700,
+                                                fontSize: "0.9rem",
+                                                padding: "8px 0" // Espaçamento leve
+                                            }}>
+                                                <div style={{
+                                                    width: 24,
+                                                    height: 24,
+                                                    borderRadius: "50%",
+                                                    background: "rgba(16, 185, 129, 0.2)", // Fundo circular sutil
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    fontSize: "0.8rem"
+                                                }}>
+                                                    ✓
+                                                </div>
+                                                Pronto para análise
+                                            </div>
+                                        ) : (
+                                            // ESTADO PADRÃO (Botão de Adicionar)
+                                            <button
+                                                type="button"
+                                                onClick={openCompetitorFileDialog}
+                                                style={{
+                                                    background: "transparent",
+                                                    color: "#94A3B8",
+                                                    border: "1px solid rgba(148, 163, 184, 0.4)",
+                                                    borderRadius: 20,
+                                                    padding: "8px 16px",
+                                                    fontSize: "0.8rem",
+                                                    fontWeight: 600,
+                                                    cursor: "pointer",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 6,
+                                                    whiteSpace: "nowrap",
+                                                    transition: "all 0.2s ease"
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.borderColor = "#10B981";
+                                                    e.currentTarget.style.color = "#10B981";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)";
+                                                    e.currentTarget.style.color = "#94A3B8";
+                                                }}
+                                            >
+                                                + ADICIONAR CV DE REFERÊNCIA
+                                            </button>
+                                        )}
+
+                                        {/* Input invisível continua aqui */}
                                         <input
                                             ref={competitorUploaderInputRef}
                                             type="file"
@@ -1419,15 +1430,24 @@ export default function AppPage() {
                                         style={{
                                             width: "100%",
                                             transition: "all 0.2s ease",
-                                            cursor: "pointer"
+                                            cursor: "pointer",
+                                            background: "linear-gradient(to bottom, #FFD54F 0%, #FF8F00 50%, #EF6C00 100%)",
+                                            boxShadow: "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)",
+                                            fontWeight: 600,
+                                            letterSpacing: "1px",
+                                            color: "#210B00",
+                                            border: "none",
+                                            borderRadius: "50px",
+                                            padding: "12px 20px",
+                                            fontSize: "1rem"
                                         }}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.transform = "translateY(-2px)";
-                                            e.currentTarget.style.boxShadow = "0 8px 24px rgba(255, 140, 66, 0.4)";
+                                            e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 8px 30px rgba(255, 143, 0, 0.7), 0 4px 10px rgba(255, 87, 34, 0.6)";
                                         }}
                                         onMouseLeave={(e) => {
                                             e.currentTarget.style.transform = "translateY(0)";
-                                            e.currentTarget.style.boxShadow = "";
+                                            e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)";
                                         }}
                                         onMouseDown={(e) => {
                                             e.currentTarget.style.transform = "scale(0.98)";
