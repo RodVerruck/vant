@@ -1870,7 +1870,7 @@ export default function AppPage() {
                                     price: 29.90,
                                     name: "VANT Pro Mensal",
                                     billing: "subscription",
-                                    desc: "Plano Ilimitado (Melhor Oferta)"
+                                    desc: "Plano Acelerador (30 Otimizações/mês)"
                                 },
                             };
 
