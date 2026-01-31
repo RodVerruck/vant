@@ -1188,18 +1188,20 @@ export default function AppPage() {
                                             {/* Exibir metadados extraídos */}
                                             {pdfMetadata && (
                                                 <div style={{
-                                                    background: "rgba(16, 185, 129, 0.05)",
-                                                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                                                    background: "rgba(245, 158, 11, 0.08)",
+                                                    border: "1px solid rgba(245, 158, 11, 0.25)",
                                                     borderRadius: 6,
-                                                    padding: 12,
+                                                    padding: 10,
                                                     marginTop: 8,
-                                                    textAlign: "left"
+                                                    borderLeft: "3px solid #F59E0B"
                                                 }}>
-                                                    <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginBottom: 4 }}>📊 DETALHES DETECTADOS:</div>
+                                                    <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
+                                                        📊 DETALHES DETECTADOS:
+                                                    </div>
                                                     {pdfMetadata.pages && (
-                                                        <div style={{ color: pdfMetadata.pages > 3 ? "#FBBF24" : "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
                                                             <strong>Páginas:</strong> {pdfMetadata.pages}
-                                                            {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6 }}>- Vamos otimizar para 1-2 páginas ideais ✓</span>}
+                                                            {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6, color: "#10B981" }}>- Vamos otimizar para 1-2 páginas ideais ✓</span>}
                                                         </div>
                                                     )}
                                                 </div>
