@@ -720,7 +720,7 @@ export default function AppPage() {
         const timer = setTimeout(initCarousel, 100);
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [stage]);
 
     async function startCheckout() {
         setCheckoutError("");
