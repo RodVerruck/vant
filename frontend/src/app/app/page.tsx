@@ -1170,7 +1170,7 @@ Responsabilidades:
                                                     fontWeight: 700,
                                                     letterSpacing: "0.3px"
                                                 }}>
-                                                    Calibração Top Performer
+                                                    Referência de Candidato Ideal
                                                 </div>
                                                 <div style={{
                                                     color: "#94A3B8",
