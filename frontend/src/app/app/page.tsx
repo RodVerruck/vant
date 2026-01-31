@@ -182,13 +182,72 @@ export default function AppPage() {
         return fallback;
     }
 
-    // Função para extrair metadados do PDF (implementação simplificada sem pdfjs-dist)
+    // Função para extrair metadados do PDF
     async function extractPdfMetadata(file: File): Promise<{ pages?: number; text?: string; candidateName?: string }> {
-        // Por enquanto, retorna metadados básicos do arquivo
-        // A extração real de páginas e nome requer biblioteca de PDF que está com problemas de build
-        return {
-            text: `Arquivo: ${file.name}`,
-        };
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+            const text = new TextDecoder('utf-8').decode(uint8Array);
+
+            // Extrair número de páginas procurando por /Type /Page no PDF
+            const pageMatches = text.match(/\/Type\s*\/Page[^s]/g);
+            const pages = pageMatches ? pageMatches.length : undefined;
+
+            // Extrair texto visível do PDF (entre streams)
+            // PDFs armazenam texto em streams BT...ET
+            const textStreams: string[] = [];
+            const btPattern = /BT\s+([\s\S]*?)\s+ET/g;
+            let match;
+            
+            while ((match = btPattern.exec(text)) !== null) {
+                const streamContent = match[1];
+                // Extrair strings entre parênteses ou colchetes
+                const strings = streamContent.match(/\((.*?)\)/g);
+                if (strings) {
+                    strings.forEach(str => {
+                        const cleaned = str.replace(/[()]/g, '').trim();
+                        if (cleaned.length > 0) {
+                            textStreams.push(cleaned);
+                        }
+                    });
+                }
+            }
+
+            const extractedText = textStreams.join(' ');
+
+            // Tentar extrair nome do candidato (primeiras palavras capitalizadas)
+            let candidateName: string | undefined;
+            if (extractedText) {
+                // Procurar por padrões de nome no início do texto
+                const namePatterns = [
+                    /^([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+(?:\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+){1,3})/,
+                    /([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+(?:\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+)?)/
+                ];
+
+                for (const pattern of namePatterns) {
+                    const nameMatch = extractedText.match(pattern);
+                    if (nameMatch && nameMatch[1]) {
+                        const potentialName = nameMatch[1].trim();
+                        // Validar que não é uma palavra comum
+                        if (potentialName.length >= 5 && potentialName.length <= 60 &&
+                            !potentialName.toLowerCase().includes('curriculum') &&
+                            !potentialName.toLowerCase().includes('vitae')) {
+                            candidateName = potentialName;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return {
+                pages,
+                text: extractedText.substring(0, 200),
+                candidateName
+            };
+        } catch (error) {
+            console.error("Erro ao extrair metadados do PDF:", error);
+            return {};
+        }
     }
 
     // Restaurar jobDescription e file do localStorage ao montar
