@@ -103,6 +103,27 @@ def _upload_to_bytes_io(upload: UploadFile) -> io.BytesIO:
     return io.BytesIO(b)
 
 
+def _save_to_cache(file_bytes: bytes, job_description: str) -> None:
+    """Salva CV e job description no cache para facilitar geração de mocks."""
+    try:
+        cache_dir = PROJECT_ROOT / ".cache"
+        cache_dir.mkdir(exist_ok=True)
+        
+        # Salva CV
+        cv_path = cache_dir / "last_cv.pdf"
+        with open(cv_path, 'wb') as f:
+            f.write(file_bytes)
+        
+        # Salva descrição da vaga
+        job_path = cache_dir / "last_job.txt"
+        with open(job_path, 'w', encoding='utf-8') as f:
+            f.write(job_description)
+        
+        print(f"💾 Cache atualizado: {cv_path.name} + job description")
+    except Exception as e:
+        print(f"⚠️  Erro ao salvar cache: {e}")
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -111,13 +132,17 @@ def health() -> dict[str, str]:
 @app.post("/api/analyze-lite")
 def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...)) -> JSONResponse:
     try:
+        # Salva no cache para facilitar geração de mocks
+        file_bytes = file.file.read()
+        _save_to_cache(file_bytes, job_description)
+        
         # Modo de desenvolvimento: retorna mock instantaneamente
         if DEV_MODE:
             print("🔧 [DEV MODE] Retornando mock de análise lite (sem processar IA)")
             return JSONResponse(content=MOCK_PREVIEW_DATA)
         
         # Modo produção: processa com IA real
-        cv_text = extrair_texto_pdf(_upload_to_bytes_io(file))
+        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
         data = analyze_preview_lite(cv_text, job_description)
         return JSONResponse(content=data)
     except Exception as e:
@@ -209,6 +234,10 @@ def analyze_premium_paid(
             content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
         )
     try:
+        # Salva no cache para facilitar geração de mocks
+        file_bytes = file.file.read()
+        _save_to_cache(file_bytes, job_description)
+        
         # Modo de desenvolvimento: bypass de verificação de créditos
         if DEV_MODE:
             print("🔧 [DEV MODE] Retornando mock de análise premium (sem processar IA, sem verificar créditos)")
@@ -227,7 +256,7 @@ def analyze_premium_paid(
         _consume_one_credit(user_id)
 
         # Modo produção: processa com IA real
-        cv_text = extrair_texto_pdf(_upload_to_bytes_io(file))
+        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
         competitors = []
         if competitor_files:
             for f in competitor_files:
