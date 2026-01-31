@@ -1694,7 +1694,6 @@ export default function AppPage() {
                                                         Ideal para ajustes pontuais ou se você já tem uma vaga específica em mente.
                                                     </p>
 
-                                                    {/* Opção 1: Tripwire */}
                                                     <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
@@ -1705,7 +1704,7 @@ export default function AppPage() {
                                                             onClick={() => {
                                                                 setSelectedPlan("basico"); // ID backend para 1 CV
                                                                 if (!authUserId) setShowAuthModal(true);
-                                                                else setStage("pricing");
+                                                                else setStage("checkout");
                                                             }}
                                                             style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
                                                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
@@ -1715,7 +1714,6 @@ export default function AppPage() {
                                                         </button>
                                                     </div>
 
-                                                    {/* Opção 2: O Decoy (Pacote Caro) */}
                                                     <div>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 5 CVs</span>
@@ -1726,7 +1724,7 @@ export default function AppPage() {
                                                             onClick={() => {
                                                                 setSelectedPlan("pro"); // ID backend para Pacote
                                                                 if (!authUserId) setShowAuthModal(true);
-                                                                else setStage("pricing");
+                                                                else setStage("checkout");
                                                             }}
                                                             style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
                                                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
@@ -1736,109 +1734,109 @@ export default function AppPage() {
                                                         </button>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            {/* CARD 2: HERO SAAS (O Foco da Venda) */}
-                                            <div style={{
-                                                flex: "1 1 300px",
-                                                background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
-                                                border: "2px solid #10B981",
-                                                borderRadius: 16,
-                                                padding: "24px",
-                                                position: "relative",
-                                                boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                justifyContent: "space-between"
-                                            }}>
-                                                <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
-                                                    🏆 RECOMENDADO PELA IA
-                                                </div>
-
-                                                <div>
-                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 4 }}>VANT PRO MENSAL</div>
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.4, marginBottom: 16 }}>
-                                                        Acelere sua recolocação aplicando para dezenas de vagas com qualidade máxima.
+                                                {/* CARD 2: HERO SAAS (O Foco da Venda) */}
+                                                <div style={{
+                                                    flex: "1 1 300px",
+                                                    background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
+                                                    border: "2px solid #10B981",
+                                                    borderRadius: 16,
+                                                    padding: "24px",
+                                                    position: "relative",
+                                                    boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    justifyContent: "space-between"
+                                                }}>
+                                                    <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
+                                                        🏆 RECOMENDADO PELA IA
                                                     </div>
 
-                                                    <div style={{ textAlign: "left", marginBottom: 20 }}>
-                                                        <div style={{ textDecoration: "line-through", color: "#64748B", fontSize: "0.9rem" }}>De R$ 49,90</div>
-                                                        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                                                            <div style={{ fontSize: "2.4rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>R$ 29,90</div>
-                                                            <div style={{ color: "#94A3B8", fontWeight: 500 }}>/mês</div>
+                                                    <div>
+                                                        <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 4 }}>VANT PRO MENSAL</div>
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.4, marginBottom: 16 }}>
+                                                            Acelere sua recolocação aplicando para dezenas de vagas com qualidade máxima.
                                                         </div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>CANCELE QUANDO QUISER</div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginTop: 8, background: "rgba(16, 185, 129, 0.15)", padding: "4px 8px", borderRadius: 4, display: "inline-block" }}>
-                                                            Custo por CV: Apenas R$ 0,99
-                                                        </div>
-                                                    </div>
 
-                                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "start", fontSize: "0.95rem", color: "#fff", fontWeight: 500 }}>
-                                                            <div style={{ background: "#10B981", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#064E3B", fontSize: "0.8rem", fontWeight: "bold", flexShrink: 0, marginTop: 2 }}>✓</div>
-                                                            <div>
-                                                                <span><strong>30 Otimizações</strong> por mês</span>
-                                                                <div style={{ fontSize: "0.75rem", color: "#94A3B8", fontWeight: 400, marginTop: 2 }}>Volume ideal para aplicar estrategicamente todo dia.</div>
+                                                        <div style={{ textAlign: "left", marginBottom: 20 }}>
+                                                            <div style={{ textDecoration: "line-through", color: "#64748B", fontSize: "0.9rem" }}>De R$ 49,90</div>
+                                                            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                                                                <div style={{ fontSize: "2.4rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>R$ 29,90</div>
+                                                                <div style={{ color: "#94A3B8", fontWeight: 500 }}>/mês</div>
+                                                            </div>
+                                                            <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>CANCELE QUANDO QUISER</div>
+                                                            <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginTop: 8, background: "rgba(16, 185, 129, 0.15)", padding: "4px 8px", borderRadius: 4, display: "inline-block" }}>
+                                                                Custo por CV: Apenas R$ 0,99
                                                             </div>
                                                         </div>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                            <div style={{ color: "#10B981" }}>✓</div>
-                                                            <span>Análise de Concorrência (Gap Analysis)</span>
-                                                        </div>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                            <div style={{ color: "#10B981" }}>✓</div>
-                                                            <span>Simulador de Entrevista com IA</span>
-                                                        </div>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                            <div style={{ color: "#10B981" }}>✓</div>
-                                                            <span>Acesso ao Radar de Vagas</span>
+
+                                                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
+                                                            <div style={{ display: "flex", gap: 10, alignItems: "start", fontSize: "0.95rem", color: "#fff", fontWeight: 500 }}>
+                                                                <div style={{ background: "#10B981", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#064E3B", fontSize: "0.8rem", fontWeight: "bold", flexShrink: 0, marginTop: 2 }}>✓</div>
+                                                                <div>
+                                                                    <span><strong>30 Otimizações</strong> por mês</span>
+                                                                    <div style={{ fontSize: "0.75rem", color: "#94A3B8", fontWeight: 400, marginTop: 2 }}>Volume ideal para aplicar estrategicamente todo dia.</div>
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                                <div style={{ color: "#10B981" }}>✓</div>
+                                                                <span>Análise de Concorrência (Gap Analysis)</span>
+                                                            </div>
+                                                            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                                <div style={{ color: "#10B981" }}>✓</div>
+                                                                <span>Simulador de Entrevista com IA</span>
+                                                            </div>
+                                                            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                                <div style={{ color: "#10B981" }}>✓</div>
+                                                                <span>Acesso ao Radar de Vagas</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setSelectedPlan("premium_plus"); // ID backend para Assinatura
-                                                            if (!authUserId) setShowAuthModal(true);
-                                                            else setStage("pricing");
-                                                        }}
-                                                        style={{ width: "100%", background: "#10B981", color: "#fff", border: "none", padding: "18px", borderRadius: 10, fontSize: "1.1rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.4)", transition: "transform 0.1s" }}
-                                                        onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                                        onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-                                                    >
-                                                        ATIVAR PLANO AGORA
-                                                    </button>
+                                                    <div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedPlan("premium_plus"); // ID backend para Assinatura
+                                                                if (!authUserId) setShowAuthModal(true);
+                                                                else setStage("checkout");
+                                                            }}
+                                                            style={{ width: "100%", background: "#10B981", color: "#fff", border: "none", padding: "18px", borderRadius: 10, fontSize: "1.1rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.4)", transition: "transform 0.1s" }}
+                                                            onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
+                                                            onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+                                                        >
+                                                            ATIVAR PLANO AGORA
+                                                        </button>
 
-                                                    <div style={{ textAlign: "center", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.8 }}>
-                                                        <span style={{ fontSize: "1rem" }}>🔒</span>
-                                                        <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Garantia de 7 dias • Acesso Imediato</span>
+                                                        <div style={{ textAlign: "center", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.8 }}>
+                                                            <span style={{ fontSize: "1rem" }}>🔒</span>
+                                                            <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Garantia de 7 dias • Acesso Imediato</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Botão Voltar Discreto */}
-                                        <div style={{ textAlign: "center", marginTop: 16 }}>
-                                            <button
-                                                type="button"
-                                                onClick={() => setStage("hero")}
-                                                style={{
-                                                    background: "none",
-                                                    border: "none",
-                                                    color: "#475569",
-                                                    fontSize: "0.85rem",
-                                                    cursor: "pointer",
-                                                    display: "inline-flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    gap: 6,
-                                                    padding: "10px"
-                                                }}
-                                            >
-                                                ← Voltar para edição
-                                            </button>
+                                            {/* Botão Voltar Discreto */}
+                                            <div style={{ textAlign: "center", marginTop: 16 }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setStage("hero")}
+                                                    style={{
+                                                        background: "none",
+                                                        border: "none",
+                                                        color: "#475569",
+                                                        fontSize: "0.85rem",
+                                                        cursor: "pointer",
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        gap: 6,
+                                                        padding: "10px"
+                                                    }}
+                                                >
+                                                    ← Voltar para edição
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1848,211 +1846,94 @@ export default function AppPage() {
                 </div>
             )}
 
-            {stage === "pricing" && (
-                <div className="hero-container">
-                    <div className="action-island-container">
-                        <div style={{ marginBottom: 16, padding: 16, background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8 }}>
-                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
-                                ✅ Logado como
-                            </div>
-                            <div style={{ color: "#E2E8F0", fontSize: "0.95rem" }}>{authEmail}</div>
-                        </div>
-
-                        <div style={{ color: "#E2E8F0", fontSize: "1.5rem", fontWeight: 800, marginBottom: 8, textAlign: "center" }}>
-                            💳 Escolha Seu Plano
-                        </div>
-                        <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 24, textAlign: "center" }}>
-                            Desbloqueie seu dossiê profissional completo
-                        </div>
-
-                        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-                            <div style={{ flex: "1 1 220px" }}>
-                                <div
-                                    dangerouslySetInnerHTML={{
-                                        __html: `
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center;">
-                <div style="color: #94A3B8; font-size: 0.8rem; margin-bottom: 10px;">BÁSICO</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 29,90</div>
-                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 15px;">Pagamento único</div>
-                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
-                    ✅ 1 CV otimizado<br>
-                    ✅ Análise ATS<br>
-                    ✅ Download PDF + DOCX<br>
-                    ✅ X-Ray Search
-                </div>
-            </div>
-            `,
-                                    }}
-                                />
-                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                    <button
-                                        type="button"
-                                        data-kind="secondary"
-                                        onClick={() => {
-                                            setSelectedPlan("basico");
-                                            setStage("checkout");
-                                        }}
-                                        style={{ width: "100%" }}
-                                    >
-                                        ESCOLHER BÁSICO
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div style={{ flex: "1 1 220px" }}>
-                                <div
-                                    dangerouslySetInnerHTML={{
-                                        __html: `
-            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1)); border: 2px solid #10B981; border-radius: 12px; padding: 20px; text-align: center; position: relative;">
-                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">
-                    🔥 MAIS VENDIDO
-                </div>
-                <div style="color: #10B981; font-size: 0.8rem; margin-bottom: 10px; margin-top: 8px;">PRO</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 69,90</div>
-                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 5px;">R$ 23,30/CV</div>
-                <div style="background: rgba(16, 185, 129, 0.2); color: #10B981; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; display: inline-block; margin-bottom: 10px;">
-                    Economize 20%
-                </div>
-                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
-                    ✅ 3 CVs otimizados<br>
-                    ✅ Análise comparativa<br>
-                    ✅ Templates premium<br>
-                    ✅ Simulador de entrevista<br>
-                    ✅ Biblioteca curada
-                </div>
-            </div>
-            `,
-                                    }}
-                                />
-                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                    <button
-                                        type="button"
-                                        data-kind="primary"
-                                        onClick={() => {
-                                            setSelectedPlan("pro");
-                                            setStage("checkout");
-                                        }}
-                                        style={{ width: "100%" }}
-                                    >
-                                        ESCOLHER PRO
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div style={{ flex: "1 1 220px" }}>
-                                <div
-                                    dangerouslySetInnerHTML={{
-                                        __html: `
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
-                <div style="color: #F59E0B; font-size: 0.8rem; margin-bottom: 10px;">PREMIUM PLUS</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 49,90</div>
-                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 15px;">por mês (assinatura)</div>
-                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
-                    ✅ 30 CVs por mês<br>
-                    ✅ Tudo do Pro<br>
-                    ✅ Suporte prioritário<br>
-                    ✅ Acesso antecipado<br>
-                    💎 Melhor para quem aplica para várias vagas
-                </div>
-            </div>
-            `,
-                                    }}
-                                />
-                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                    <button
-                                        type="button"
-                                        data-kind="secondary"
-                                        onClick={() => {
-                                            setSelectedPlan("premium_plus");
-                                            setStage("checkout");
-                                        }}
-                                        style={{ width: "100%" }}
-                                    >
-                                        ESCOLHER PREMIUM PLUS
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style={{ height: 16 }} />
-
-                        <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                            <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
-                                VOLTAR
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {stage === "checkout" && (
                 <div className="hero-container">
                     <div className="action-island-container">
                         {(() => {
-                            const planId = (selectedPlan || "basico").trim();
+                            const planId = (selectedPlan || "premium_plus").trim();
+
                             const prices: any = {
-                                basico: { price: 29.90, name: "1 Otimização", billing: "one_time" },
-                                pro: { price: 69.90, name: "Pacote 3 Vagas", billing: "one_time" },
-                                premium_plus: { price: 49.90, name: "VANT - Pacote Premium Plus", billing: "subscription" },
+                                basico: {
+                                    price: 9.90,
+                                    name: "1 Crédito Avulso",
+                                    billing: "one_time",
+                                    desc: "Otimização pontual"
+                                },
+                                pro: {
+                                    price: 39.90,
+                                    name: "Pacote 5 Créditos",
+                                    billing: "one_time",
+                                    desc: "Pacote de volume (Sem validade)"
+                                },
+                                premium_plus: {
+                                    price: 29.90,
+                                    name: "VANT Pro Mensal",
+                                    billing: "subscription",
+                                    desc: "Plano Ilimitado (Melhor Oferta)"
+                                },
                             };
-                            const plan = prices[planId] || prices.basico;
+
+                            const plan = prices[planId] || prices.premium_plus;
                             const isSubscription = plan.billing === "subscription";
-                            const billingLine = !isSubscription
-                                ? "✅ Pagamento único · ✅ Acesso imediato"
-                                : "✅ Assinatura mensal · ✅ 30 CVs/mês";
+
+                            const billingLine = isSubscription
+                                ? "✅ Assinatura mensal · Cancele quando quiser"
+                                : "✅ Pagamento único · Acesso vitalício aos créditos";
 
                             const boxHtml = `
-            <div style="background: rgba(15, 23, 42, 0.6); padding: 20px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
-                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
-                    <span style="color:#94A3B8;">Plano</span>
-                    <strong style="color:#F8FAFC;">${plan.name}</strong>
-                </div>
-                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px;">
-                    <span style="color:#94A3B8;">Valor</span>
-                    <strong style="color:#10B981; font-size: 1.4rem;">R$ ${plan.price.toFixed(2)}</strong>
-                </div>
-                <div style="color:#64748B; font-size: 0.8rem;">${billingLine}</div>
-            </div>
-            `;
+                            <div style="background: rgba(15, 23, 42, 0.6); padding: 24px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(56, 189, 248, 0.2);">
+                                <div style="display:flex; justify-content: space-between; align-items:start; margin-bottom: 12px;">
+                                    <div>
+                                        <div style="color:#94A3B8; font-size: 0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Resumo do Pedido</div>
+                                        <strong style="color:#F8FAFC; font-size: 1.1rem;">${plan.name}</strong>
+                                        <div style="color:#64748B; font-size: 0.85rem; margin-top:4px;">${plan.desc}</div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="color:#10B981; font-size: 1.5rem; font-weight:800;">R$ ${plan.price.toFixed(2).replace('.', ',')}</div>
+                                        ${isSubscription ? '<div style="color:#94A3B8; font-size:0.75rem;">/mês</div>' : ''}
+                                    </div>
+                                </div>
+                                <div style="height:1px; background:rgba(255,255,255,0.1); margin:16px 0;"></div>
+                                <div style="color:#E2E8F0; font-size: 0.85rem; display:flex; align-items:center; gap:8px;">
+                                    ${billingLine}
+                                </div>
+                            </div>
+                            `;
 
                             return (
                                 <>
-                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 12 }}>
-                                        Confirmar Compra: {planId.toUpperCase()}
+                                    <div style={{ textAlign: "center", marginBottom: 24 }}>
+                                        <div style={{ color: "#E2E8F0", fontSize: "1.5rem", fontWeight: 800 }}>
+                                            Finalizar Compra
+                                        </div>
+                                        <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 4 }}>
+                                            Ambiente seguro e criptografado
+                                        </div>
                                     </div>
 
                                     <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
 
                                     {!authUserId ? (
                                         <>
-                                            {/* CENÁRIO B - Usuário NÃO logado */}
-                                            <div style={{ marginBottom: 16, padding: 16, background: "rgba(56, 189, 248, 0.05)", border: "1px solid rgba(56, 189, 248, 0.2)", borderRadius: 8 }}>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.85rem", marginBottom: 8, textAlign: "center" }}>
-                                                    Para continuar, faça login com sua conta Google
+                                            <div style={{ marginBottom: 20, padding: 16, background: "rgba(56, 189, 248, 0.05)", border: "1px solid rgba(56, 189, 248, 0.2)", borderRadius: 8, textAlign: "center" }}>
+                                                <div style={{ color: "#38BDF8", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
+                                                    🔒 Identifique-se para salvar seu acesso
+                                                </div>
+                                                <div style={{ color: "#94A3B8", fontSize: "0.85rem" }}>
+                                                    Seus créditos ficarão vinculados à sua conta.
                                                 </div>
                                             </div>
 
-                                            {/* Botão Google OAuth - PRINCIPAL */}
                                             <div data-testid="stButton" className="stButton" style={{ width: "100%", marginBottom: 16 }}>
                                                 <button
                                                     type="button"
                                                     onClick={handleGoogleLogin}
                                                     disabled={isAuthenticating}
                                                     style={{
-                                                        width: "100%",
-                                                        height: 52,
-                                                        background: "#fff",
-                                                        color: "#1f2937",
-                                                        border: "1px solid rgba(255,255,255,0.2)",
-                                                        borderRadius: 8,
-                                                        fontSize: "1rem",
-                                                        fontWeight: 600,
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        gap: 12,
-                                                        cursor: isAuthenticating ? "not-allowed" : "pointer",
-                                                        opacity: isAuthenticating ? 0.6 : 1,
+                                                        width: "100%", height: 52, background: "#fff", color: "#1f2937",
+                                                        border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
+                                                        fontSize: "1rem", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                                                        cursor: isAuthenticating ? "not-allowed" : "pointer", opacity: isAuthenticating ? 0.6 : 1
                                                     }}
                                                 >
                                                     <svg width="20" height="20" viewBox="0 0 18 18">
@@ -2061,126 +1942,43 @@ export default function AppPage() {
                                                         <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
                                                         <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
                                                     </svg>
-                                                    {isAuthenticating ? "Autenticando..." : "🔵 Continuar com Google"}
+                                                    {isAuthenticating ? "Autenticando..." : "Continuar com Google"}
                                                 </button>
                                             </div>
 
-                                            {/* CENÁRIO C - Fallback discreto para email/senha */}
-                                            <details style={{ marginBottom: 16 }}>
-                                                <summary style={{
-                                                    color: "#64748B",
-                                                    fontSize: "0.85rem",
-                                                    cursor: "pointer",
-                                                    textAlign: "center",
-                                                    listStyle: "none",
-                                                    padding: "8px",
-                                                }}>
-                                                    Prefere usar email? Clique aqui
-                                                </summary>
-
-                                                <div style={{ marginTop: 16 }}>
-                                                    {/* Email */}
-                                                    <div style={{ marginBottom: 12 }}>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
-                                                            E-mail
-                                                        </div>
-                                                        <input
-                                                            type="email"
-                                                            value={authEmail}
-                                                            onChange={(e) => setAuthEmail(e.target.value)}
-                                                            placeholder="voce@exemplo.com"
-                                                            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "10px 12px" }}
-                                                        />
-                                                    </div>
-
-                                                    {/* Senha */}
-                                                    <div style={{ marginBottom: 16 }}>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
-                                                            Senha
-                                                        </div>
-                                                        <input
-                                                            type="password"
-                                                            value={authPassword}
-                                                            onChange={(e) => setAuthPassword(e.target.value)}
-                                                            placeholder="Mínimo 6 caracteres"
-                                                            style={{ width: "100%", boxSizing: "border-box", height: 44, padding: "10px 12px" }}
-                                                        />
-                                                    </div>
-
-                                                    {/* Botão Login/Cadastro */}
-                                                    <div data-testid="stButton" className="stButton" style={{ width: "100%", marginBottom: 12 }}>
-                                                        <button
-                                                            type="button"
-                                                            data-kind="primary"
-                                                            onClick={handleEmailPasswordAuth}
-                                                            disabled={isAuthenticating}
-                                                            style={{ width: "100%", opacity: isAuthenticating ? 0.6 : 1 }}
-                                                        >
-                                                            {isAuthenticating ? "Autenticando..." : (isLoginMode ? "ENTRAR" : "CRIAR CONTA")}
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Toggle Login/Cadastro */}
-                                                    <div style={{ textAlign: "center" }}>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setIsLoginMode(!isLoginMode)}
-                                                            style={{
-                                                                background: "none",
-                                                                border: "none",
-                                                                color: "#38BDF8",
-                                                                fontSize: "0.85rem",
-                                                                cursor: "pointer",
-                                                                textDecoration: "underline",
-                                                            }}
-                                                        >
-                                                            {isLoginMode ? "Não tem conta? Criar agora" : "Já tem conta? Fazer login"}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </details>
+                                            <div style={{ textAlign: "center" }}>
+                                                <button type="button" onClick={() => setShowAuthModal(true)} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", textDecoration: "underline", cursor: "pointer" }}>
+                                                    Prefiro usar e-mail e senha
+                                                </button>
+                                            </div>
                                         </>
                                     ) : (
                                         <>
-                                            {/* CENÁRIO A - Usuário JÁ logado */}
-                                            <div style={{ marginBottom: 16, padding: 16, background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8 }}>
-                                                <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
-                                                    ✅ Logado como
+                                            <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                                                <div style={{ fontSize: "1.2rem" }}>👤</div>
+                                                <div style={{ overflow: "hidden" }}>
+                                                    <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase" }}>Logado como</div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{authEmail}</div>
                                                 </div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", fontWeight: 500 }}>{authEmail}</div>
                                             </div>
 
                                             <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%", height: 52, fontSize: "1rem" }}>
-                                                    CONFIRMAR PAGAMENTO
+                                                <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%", height: 56, fontSize: "1.1rem", background: "#10B981", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)" }}>
+                                                    PAGAR AGORA
                                                 </button>
                                             </div>
                                         </>
                                     )}
 
-                                    {stripeSessionId && (
-                                        <div style={{ color: "#64748B", fontSize: "0.8rem", marginTop: 10 }}>
-                                            Session ID: {stripeSessionId}
-                                        </div>
-                                    )}
-
                                     {checkoutError && (
-                                        <div
-                                            style={{
-                                                marginTop: 12,
-                                                color: checkoutError.startsWith("✅") || checkoutError.startsWith("Link enviado") || checkoutError.startsWith("Pagamento confirmado") ? "#10B981" : "#EF4444",
-                                                fontSize: "0.85rem",
-                                            }}
-                                        >
+                                        <div style={{ marginTop: 16, padding: 12, background: checkoutError.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", border: `1px solid ${checkoutError.startsWith("✅") ? "#10B981" : "#EF4444"}`, borderRadius: 8, color: checkoutError.startsWith("✅") ? "#10B981" : "#EF4444", fontSize: "0.85rem", textAlign: "center" }}>
                                             {checkoutError}
                                         </div>
                                     )}
 
-                                    <div style={{ height: 16 }} />
-
-                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                        <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
-                                            VOLTAR
+                                    <div style={{ textAlign: "center", marginTop: 24 }}>
+                                        <button type="button" onClick={() => setStage("preview")} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                            ← Alterar plano
                                         </button>
                                     </div>
                                 </>
@@ -2190,14 +1988,13 @@ export default function AppPage() {
                 </div>
             )}
 
-            {/* Modal de Autenticação */}
             <AuthModal
                 isOpen={showAuthModal}
                 onSuccess={(userId, email) => {
                     setAuthUserId(userId);
                     setAuthEmail(email);
                     setShowAuthModal(false);
-                    setStage("pricing");
+                    setStage("checkout");
                 }}
                 onClose={() => setShowAuthModal(false)}
             />
