@@ -135,6 +135,18 @@ body,
     }
 }
 
+@keyframes subtle-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.8);
+    }
+}
+
 /* Logo Animado */
 .logo-text {
     font-weight: 900;
@@ -166,8 +178,8 @@ body,
 
 /* Headline Poderosa */
 .headline {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: 3.4rem;
+    font-weight: 800;
     line-height: 1.2;
     margin-bottom: 20px;
     color: var(--text-main);
@@ -203,8 +215,9 @@ body,
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin: 40px 0;
+    gap: 24px;
+    max-width: 900px;
+    margin: 40px auto;
 }
 
 .stat-card {

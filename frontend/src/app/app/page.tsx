@@ -85,11 +85,18 @@ const HERO_INNER_HTML = `
                     border-radius: 16px; 
                     padding: 30px; 
                     margin-bottom: 40px;">
-            <div style="font-size: 1.1rem; color: #E2E8F0; margin-bottom: 15px; font-style: italic;">
-                "Consegui 5 entrevistas em 1 semana após otimizar meu CV. Cheguei na final na Nubank!"
+            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                    ML
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
+                        "Consegui 5 entrevistas em 1 semana após otimizar meu CV. Cheguei na final na Nubank!"
+                    </div>
+                </div>
             </div>
-            <div style="color: #94A3B8; font-size: 0.9rem;">
-                <strong>Maria L.</strong> • Desenvolvedora Frontend • Contratada
+            <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                <strong>Maria L.</strong> • Desenvolvedora Frontend • Contratada @ Nubank
             </div>
         </div>
         
@@ -1241,13 +1248,22 @@ Responsabilidades:
                                             }}
                                         >
                                             {competitorFiles.length > 0 ? (
-                                                <span style={{
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    animation: 'pulse-green 2s infinite'
-                                                }}>
-                                                    ✓ ATIVADO
+                                                <span
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        background: 'linear-gradient(135deg, #10B981, #059669)',
+                                                        padding: '8px 16px',
+                                                        borderRadius: '6px',
+                                                        color: 'white',
+                                                        fontWeight: '600',
+                                                        fontSize: '0.9rem',
+                                                        boxShadow: '0 0 20px rgba(16, 185, 129, 0.5)',
+                                                        animation: 'subtle-pulse 2s infinite'
+                                                    }}
+                                                >
+                                                    ✓ PRONTO PARA ANÁLISE
                                                 </span>
                                             ) : (
                                                 <>+ ADICIONAR CV DE REFERÊNCIA</>
