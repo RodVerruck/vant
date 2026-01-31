@@ -42,8 +42,8 @@ const HERO_INNER_HTML = `
     </div>
 
     <div class="subheadline">
-        Não deixe um robô decidir seu futuro. Nossa IA faz engenharia reversa da vaga
-        e reescreve seu currículo para passar na triagem automática e chegar na mão do recrutador.
+        Nossa IA otimiza seu currículo para passar nos filtros automáticos 
+        e chegar direto no recrutador.
     </div>
 
     <div class="stats-grid">
