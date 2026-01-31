@@ -29,8 +29,8 @@ const HERO_INNER_HTML = `
         <span class="vant-tooltip" 
               tabindex="0" 
               style="border-bottom: none; cursor: help;" 
-              data-tooltip="Atualização V2: Nova arquitetura de leitura 100% compatível com Gupy, Greenhouse e Workday.">
-            VANT NEURAL ENGINE V2.0 LIVE
+              data-tooltip="Mais de 50.000 CVs otimizados. Taxa de sucesso comprovada em seleções de grandes empresas.">
+            50K+ Currículos Otimizados
         </span>
     </div>
 
