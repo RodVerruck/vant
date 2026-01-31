@@ -963,12 +963,14 @@ export default function AppPage() {
     }, [authUserId, competitorFiles, stage, jobDescription, file]);
 
     async function onStart() {
-        console.log("[onStart] Chamado. Estado atual:", { jobDescription: !!jobDescription, file: !!file, stage });
+        console.log("[onStart] Chamado. Iniciando Protocolo de 8s (Roteiro da Ansiedade).");
+
         if (!jobDescription.trim() || !file) {
             console.warn("[onStart] Retorno antecipado: jobDescription ou file vazios.");
             return;
         }
 
+        // 1. Resetar estados visuais
         setApiError("");
         setPreviewData(null);
         setReportData(null);
@@ -977,28 +979,49 @@ export default function AppPage() {
         setStatusText("");
         setStage("analyzing");
 
-        await sleep(120);
+        // 2. Preparar o FormData
+        const form = new FormData();
+        form.append("job_description", jobDescription);
+        form.append("file", file);
 
         try {
-            const updateStatus = async (text: string, percent: number) => {
-                setStatusText(text);
-                setProgress(percent);
-                await sleep(220);
-            };
-
-            await updateStatus("INICIANDO SCANNER BIOMÉTRICO DO CV...", 10);
-            await updateStatus("MAPEANDO DENSIDADE DE PALAVRAS-CHAVE...", 40);
-
-            const form = new FormData();
-            form.append("job_description", jobDescription);
-            form.append("file", file);
-
-            console.log("[DEBUG] API_URL:", getApiUrl());
-
-            const resp = await fetch(`${getApiUrl()}/api/analyze-lite`, {
+            // 3. Disparar a requisição em BACKGROUND (sem await imediato)
+            // A API trabalha enquanto rodamos o roteiro visual
+            const apiRequestPromise = fetch(`${getApiUrl()}/api/analyze-lite`, {
                 method: "POST",
                 body: form,
             });
+
+            // 4. Roteiro da Ansiedade (Total ~8000ms)
+            // Tempos variáveis para parecer orgânico
+
+            // 0s - 1.5s: Protocolo Inicial (Rápido)
+            setStatusText("INICIANDO PROTOCOLO DE SEGURANÇA VANT...");
+            setProgress(10);
+            await sleep(1500);
+
+            // 1.5s - 3.5s: Parsing (2s - Parece que está lendo o arquivo físico)
+            setStatusText("LENDO ESTRUTURA DO PDF (PARSING)...");
+            setProgress(30);
+            await sleep(2000);
+
+            // 3.5s - 5.0s: Extração (1.5s)
+            setStatusText("EXTRAINDO PALAVRAS-CHAVE DA VAGA...");
+            setProgress(55);
+            await sleep(1500);
+
+            // 5.0s - 7.0s: Cruzamento (2s - O momento "difícil/mágico")
+            setStatusText("CRUZANDO DADOS: EXPERIÊNCIA vs REQUISITOS...");
+            setProgress(80);
+            await sleep(2000);
+
+            // 7.0s - 8.0s: Score Final (Rápido para fechar)
+            setStatusText("GERANDO SCORE DE ADERÊNCIA...");
+            setProgress(95);
+            await sleep(1000);
+
+            // 5. Verificar resposta da API (Se já acabou, libera. Se não, espera o resto)
+            const resp = await apiRequestPromise;
 
             if (!resp.ok) {
                 const text = await resp.text();
@@ -1007,13 +1030,14 @@ export default function AppPage() {
 
             const data = (await resp.json()) as unknown;
 
-            await updateStatus("CALCULANDO SCORE DE ADERÊNCIA...", 80);
-            await sleep(450);
-            await updateStatus("RELATÓRIO PRELIMINAR PRONTO.", 100);
-            await sleep(350);
+            // 6. Transição final
+            setStatusText("RELATÓRIO PRONTO. CARREGANDO...");
+            setProgress(100);
+            await sleep(500); // Pequena pausa para ler a conclusão
 
             setPreviewData(data as PreviewData);
             setStage("preview");
+
         } catch (e: unknown) {
             const message = getErrorMessage(e, "Erro no Scanner Lite");
             setApiError(message);
