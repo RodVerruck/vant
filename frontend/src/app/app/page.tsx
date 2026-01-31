@@ -198,7 +198,7 @@ export default function AppPage() {
             const textStreams: string[] = [];
             const btPattern = /BT\s+([\s\S]*?)\s+ET/g;
             let match;
-            
+
             while ((match = btPattern.exec(text)) !== null) {
                 const streamContent = match[1];
                 // Extrair strings entre parênteses ou colchetes
@@ -218,23 +218,43 @@ export default function AppPage() {
             // Tentar extrair nome do candidato (primeiras palavras capitalizadas)
             let candidateName: string | undefined;
             if (extractedText) {
-                // Procurar por padrões de nome no início do texto
+                // Limpar o texto de caracteres especiais de PDF
+                const cleanText = extractedText
+                    .replace(/\\[0-9]{3}/g, ' ') // Remove códigos octais
+                    .replace(/[^\w\sÀ-ÿ]/g, ' ') // Mantém apenas letras, números e acentos
+                    .replace(/\s+/g, ' ') // Normaliza espaços
+                    .trim();
+
+                // Procurar por padrões de nome em todo o texto (não só no início)
                 const namePatterns = [
-                    /^([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+(?:\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+){1,3})/,
-                    /([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+(?:\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]+)?)/
+                    // Nome completo com 2-4 partes
+                    /\b([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,}(?:\s+(?:da|de|do|dos|das|e)\s+|\s+)[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,}(?:\s+(?:da|de|do|dos|das)\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,})?(?:\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,})?)\b/,
+                    // Nome simples (2 partes)
+                    /\b([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,}\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,})\b/
                 ];
 
+                // Palavras a ignorar
+                const ignoreWords = ['curriculum', 'vitae', 'resume', 'professional', 'profile',
+                    'objetivo', 'formacao', 'experiencia', 'habilidades', 'contato',
+                    'telefone', 'email', 'endereco', 'linkedin', 'github'];
+
                 for (const pattern of namePatterns) {
-                    const nameMatch = extractedText.match(pattern);
-                    if (nameMatch && nameMatch[1]) {
-                        const potentialName = nameMatch[1].trim();
-                        // Validar que não é uma palavra comum
-                        if (potentialName.length >= 5 && potentialName.length <= 60 &&
-                            !potentialName.toLowerCase().includes('curriculum') &&
-                            !potentialName.toLowerCase().includes('vitae')) {
-                            candidateName = potentialName;
-                            break;
+                    const matches = cleanText.match(pattern);
+                    if (matches) {
+                        // Pegar os primeiros matches e validar
+                        for (let i = 0; i < Math.min(matches.length, 5); i++) {
+                            const potentialName = matches[i]?.trim();
+                            if (potentialName && potentialName.length >= 5 && potentialName.length <= 60) {
+                                const lowerName = potentialName.toLowerCase();
+                                const hasIgnoredWord = ignoreWords.some(word => lowerName.includes(word));
+
+                                if (!hasIgnoredWord) {
+                                    candidateName = potentialName;
+                                    break;
+                                }
+                            }
                         }
+                        if (candidateName) break;
                     }
                 }
             }
