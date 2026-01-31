@@ -1025,8 +1025,55 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
 """
     
     try:
-        # Chama a IA para análise real
-        response = run_llm_orchestrator(prompt_preview, max_tokens=1000)
+        # ESTRATÉGIA: Tenta Groq (gratuito e rápido) primeiro, fallback para Gemini
+        response = None
+        
+        # TENTATIVA 1: GROQ (Gratuito + Rápido)
+        try:
+            from groq import Groq
+            GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+            
+            if GROQ_API_KEY:
+                logger.info("🚀 Tentando Groq (gratuito) para preview...")
+                groq_client = Groq(api_key=GROQ_API_KEY)
+                
+                response_obj = groq_client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",  # Modelo gratuito e rápido
+                    messages=[{"role": "user", "content": prompt_preview}],
+                    temperature=0.3,
+                    max_tokens=1000,
+                )
+                
+                response = response_obj.choices[0].message.content
+                logger.info("✅ Groq respondeu com sucesso!")
+            else:
+                raise Exception("GROQ_API_KEY não configurada")
+                
+        except Exception as groq_error:
+            # Se Groq falhar (rate limit ou erro), usa Gemini como fallback
+            logger.warning(f"⚠️ Groq falhou ({groq_error}), usando Gemini 1.5 Flash como fallback...")
+            
+            from google import genai
+            from google.genai import types
+            
+            GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+            if not GOOGLE_API_KEY:
+                raise Exception("GOOGLE_API_KEY não configurada")
+            
+            client = genai.Client(api_key=GOOGLE_API_KEY)
+            
+            # Usa gemini-1.5-flash como fallback
+            response_obj = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt_preview,
+                config=types.GenerateContentConfig(
+                    temperature=0.3,
+                    max_output_tokens=1000,
+                )
+            )
+            
+            response = response_obj.text
+            logger.info("✅ Gemini 1.5 Flash respondeu como fallback!")
         
         # Parse do JSON retornado pela IA
         # Remove markdown se houver
