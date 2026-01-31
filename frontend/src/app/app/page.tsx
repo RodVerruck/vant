@@ -97,11 +97,11 @@ const HERO_INNER_HTML = `
             Aprovado por candidatos contratados em:
         </div>
         <div style="display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; opacity: 0.7;">
-            <span style="font-size: 1.2rem; font-weight: 700; color: #94A3B8;">Google</span>
-            <span style="font-size: 1.2rem; font-weight: 900; font-style: italic; color: #94A3B8;">amazon</span>
-            <span style="font-size: 1.2rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8;">MICROSOFT</span>
-            <span style="font-size: 1.2rem; font-weight: 600; letter-spacing: -0.5px; color: #94A3B8;">Nubank</span>
-            <span style="font-size: 1.2rem; font-weight: 700; color: #94A3B8;">Itaú</span>
+            <span style="font-size: 1.4rem; font-weight: 700; color: #94A3B8;">Google</span>
+            <span style="font-size: 1.4rem; font-weight: 900; font-style: italic; color: #94A3B8;">amazon</span>
+            <span style="font-size: 1.4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8;">MICROSOFT</span>
+            <span style="font-size: 1.4rem; font-weight: 600; letter-spacing: -0.5px; color: #94A3B8;">Nubank</span>
+            <span style="font-size: 1.4rem; font-weight: 700; color: #94A3B8;">Itaú</span>
         </div>
     </div>
 `;
