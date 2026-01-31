@@ -50,8 +50,8 @@ const HERO_INNER_HTML = `
         <div class="stat-card">
             <div class="stat-number">+34%</div>
             <div class="stat-label">
-                de aprovação em ATS<br>
-                <span class="vant-tooltip" tabindex="0" data-tooltip="Aumento médio de pontuação comparado ao currículo original (Base: 50k+ processamentos).">
+                de aprovação em ATS
+                <span class="vant-tooltip" tabindex="0" data-tooltip="Aumento médio de pontuação comparado ao currículo original (Base: 50k+ processamentos)." style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem;">
                     ℹ️
                 </span>
             </div>
@@ -60,8 +60,8 @@ const HERO_INNER_HTML = `
         <div class="stat-card">
             <div class="stat-number">3x</div>
             <div class="stat-label">
-                mais entrevistas conseguidas<br>
-                <span class="vant-tooltip" tabindex="0" data-tooltip="Média de conversão de usuários ativos nos últimos 3 meses.">
+                mais entrevistas conseguidas
+                <span class="vant-tooltip" tabindex="0" data-tooltip="Média de conversão de usuários ativos nos últimos 3 meses." style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem;">
                     ℹ️
                 </span>
             </div>
@@ -70,8 +70,8 @@ const HERO_INNER_HTML = `
         <div class="stat-card">
             <div class="stat-number">100%</div>
             <div class="stat-label">
-                Privado - Dados anonimizados<br>
-                <span class="vant-tooltip" tabindex="0" data-tooltip="Processamento em memória volátil (RAM). Seus dados são destruídos após a sessão. Zero logs">
+                Privado - Dados anonimizados
+                <span class="vant-tooltip" tabindex="0" data-tooltip="Processamento em memória volátil (RAM). Seus dados são destruídos após a sessão. Zero logs" style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem;">
                     ℹ️
                 </span>
             </div>
