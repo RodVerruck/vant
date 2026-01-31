@@ -17,6 +17,17 @@ export interface PreviewData {
     potencial: number;
     pilares: PilaresData;
     analise_por_pilares: PilaresData;
+    gap_1?: {
+        titulo?: string;
+        explicacao?: string;
+        exemplo_atual?: string;
+        exemplo_otimizado?: string;
+    };
+    gap_2?: {
+        titulo?: string;
+        explicacao?: string;
+        termos_faltando?: string[];
+    };
 }
 
 export interface GapFatal {

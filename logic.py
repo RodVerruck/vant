@@ -975,56 +975,149 @@ def analyze_cv_logic(cv_text, job_description, competitor_files=None):
 # ============================================================
 def analyze_preview_lite(cv_text, job_description):
     """
-    Versão FREE: Mostra APENAS a nota + 1 gap + tease.
-    Objetivo: Criar urgência sem entregar valor completo.
+    Versão FREE com IA REAL: Mostra nota + 2 gaps REAIS específicos do CV.
+    Objetivo: Provar valor antes de pedir pagamento.
     """
     import string
     import re
+    import json
      
-    def normalize(text):
-        translator = str.maketrans('', '', string.punctuation)
-        return set(text.lower().translate(translator).split())
-     
-    cv_tokens = normalize(cv_text)
-    job_tokens = normalize(job_description)
-     
-    stopwords = {'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que'}
-    job_tokens = job_tokens - stopwords
-     
-    matches = cv_tokens.intersection(job_tokens)
-    match_count = len(matches)
-    total_relevant = len(job_tokens) if len(job_tokens) > 0 else 1
-     
-    raw_score = (match_count / total_relevant) * 100
-    length_bonus = min(len(cv_text) / 500, 10)
-     
-    final_score = min(int(raw_score + length_bonus - 10), 65)
-    final_score = max(final_score, 0)
-     
-    area_detected = detect_job_area(job_description)
-     
-    return {
-        "veredito": "ANÁLISE SUPERFICIAL (VERSÃO GRATUITA)",
-        "nota_ats": final_score,
-        "analise_por_pilares": {
-            "impacto": max(final_score - 5, 0),
-            "keywords": final_score,
-            "ats": min(final_score + 5, 100),
-            "setor_detectado": area_detected.upper()
-        },
-        "gaps_fatais": [
-            {
-                "erro": "Análise Completa Bloqueada",
-                "evidencia": "Você está vendo apenas 1 dos 4 gaps críticos identificados.",
-                "correcao_sugerida": "Desbloqueie o diagnóstico completo para ver todos os problemas que estão impedindo sua aprovação."
-            }
-        ],
-        "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
-        "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
-        "cv_otimizado_completo": "🔒",
-        "kit_hacker": {"boolean_string": "🔒"},
-        "biblioteca_tecnica": []
-    }
+    # Prompt específico para análise gratuita (2 gaps reais)
+    prompt_preview = f"""
+Você é um especialista em ATS e otimização de currículos.
+
+MISSÃO: Analisar este CV e identificar os 2 PROBLEMAS MAIS CRÍTICOS que estão impedindo aprovação no ATS.
+
+CV DO CANDIDATO:
+{cv_text[:3000]}
+
+VAGA ALVO:
+{job_description[:1500]}
+
+INSTRUÇÕES:
+1. Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV
+2. Use exemplos REAIS do texto do CV (não invente)
+3. Seja direto e objetivo
+4. Foque em: falta de números/resultados E palavras-chave ausentes
+
+OUTPUT JSON (OBRIGATÓRIO):
+{{
+  "nota_ats": 0,
+  "analise_por_pilares": {{
+    "impacto": 0,
+    "keywords": 0,
+    "ats": 0
+  }},
+  "gap_1": {{
+    "titulo": "Nome do problema",
+    "explicacao": "Por que isso é crítico",
+    "exemplo_atual": "Trecho real do CV que mostra o problema",
+    "exemplo_otimizado": "Como deveria ser (com números e palavras-chave)"
+  }},
+  "gap_2": {{
+    "titulo": "Nome do problema",
+    "explicacao": "Por que isso é crítico",
+    "termos_faltando": ["termo1", "termo2", "termo3", "termo4", "termo5"]
+  }}
+}}
+
+IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
+"""
+    
+    try:
+        # Chama a IA para análise real
+        response = run_llm_orchestrator(prompt_preview, max_tokens=1000)
+        
+        # Parse do JSON retornado pela IA
+        # Remove markdown se houver
+        response_clean = response.strip()
+        if response_clean.startswith("```"):
+            response_clean = response_clean.split("```")[1]
+            if response_clean.startswith("json"):
+                response_clean = response_clean[4:]
+        
+        data = json.loads(response_clean)
+        
+        # Extrai dados da IA
+        nota_ats = int(data.get("nota_ats", 45))
+        pilares = data.get("analise_por_pilares", {})
+        gap_1 = data.get("gap_1", {})
+        gap_2 = data.get("gap_2", {})
+        
+        # Detecta área
+        area_detected = detect_job_area(job_description)
+        
+        return {
+            "veredito": "ANÁLISE INICIAL CONCLUÍDA",
+            "nota_ats": nota_ats,
+            "analise_por_pilares": {
+                "impacto": int(pilares.get("impacto", nota_ats - 5)),
+                "keywords": int(pilares.get("keywords", nota_ats)),
+                "ats": int(pilares.get("ats", nota_ats + 5)),
+                "setor_detectado": area_detected.upper()
+            },
+            "gap_1": gap_1,
+            "gap_2": gap_2,
+            "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
+            "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
+            "cv_otimizado_completo": "🔒",
+            "kit_hacker": {"boolean_string": "🔒"},
+            "biblioteca_tecnica": []
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro na análise preview com IA: {e}")
+        
+        # Fallback para heurística se a IA falhar
+        def normalize(text):
+            translator = str.maketrans('', '', string.punctuation)
+            return set(text.lower().translate(translator).split())
+         
+        cv_tokens = normalize(cv_text)
+        job_tokens = normalize(job_description)
+         
+        stopwords = {'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que'}
+        job_tokens = job_tokens - stopwords
+         
+        matches = cv_tokens.intersection(job_tokens)
+        match_count = len(matches)
+        total_relevant = len(job_tokens) if len(job_tokens) > 0 else 1
+         
+        raw_score = (match_count / total_relevant) * 100
+        length_bonus = min(len(cv_text) / 500, 10)
+         
+        final_score = min(int(raw_score + length_bonus - 10), 65)
+        final_score = max(final_score, 0)
+         
+        area_detected = detect_job_area(job_description)
+        
+        # Gaps genéricos como fallback
+        return {
+            "veredito": "ANÁLISE INICIAL CONCLUÍDA",
+            "nota_ats": final_score,
+            "analise_por_pilares": {
+                "impacto": max(final_score - 5, 0),
+                "keywords": final_score,
+                "ats": min(final_score + 5, 100),
+                "setor_detectado": area_detected.upper()
+            },
+            "gap_1": {
+                "titulo": "Falta de Resultados Quantificáveis",
+                "explicacao": "Seu CV usa descrições genéricas sem números ou impacto mensurável",
+                "exemplo_atual": "Responsável por gerenciar projetos e melhorar processos",
+                "exemplo_otimizado": "Gerenciei 12 projetos com orçamento de R$ 2.5M, reduzindo custos em 28%"
+            },
+            "gap_2": {
+                "titulo": "Palavras-Chave da Vaga Ausentes",
+                "explicacao": "Termos críticos da vaga não aparecem no seu CV",
+                "termos_faltando": ["Agile/Scrum", "KPIs", "Stakeholders", "Data-driven", "OKRs"]
+            },
+            "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
+            "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
+            "cv_otimizado_completo": "🔒",
+            "kit_hacker": {"boolean_string": "🔒"},
+            "biblioteca_tecnica": []
+        }
  
 # ============================================================
 # GERADOR DE WORD V7 (DESIGN SYSTEM TRANSLATION)

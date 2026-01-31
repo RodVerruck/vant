@@ -1740,178 +1740,181 @@ export default function AppPage() {
                                 <div className="action-island-container" style={{ textAlign: "left", marginTop: 18 }}>
                                     <div dangerouslySetInnerHTML={{ __html: dashHtml }} />
 
-                                    {/* PRÉVIA DE VALOR - Sugestões Concretas Gratuitas */}
-                                    <div style={{ marginTop: 24, marginBottom: 32 }}>
-                                        <div style={{
-                                            textAlign: "center",
-                                            marginBottom: 20,
-                                            padding: "16px",
-                                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05))",
-                                            borderRadius: 12,
-                                            border: "1px solid rgba(16, 185, 129, 0.3)"
-                                        }}>
-                                            <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>✨</div>
-                                            <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 4 }}>
-                                                PRÉVIA GRATUITA
+                                    {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
+                                    {data.gap_1 && data.gap_2 && (
+                                        <div style={{ marginTop: 24, marginBottom: 32 }}>
+                                            <div style={{
+                                                textAlign: "center",
+                                                marginBottom: 20,
+                                                padding: "16px",
+                                                background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05))",
+                                                borderRadius: 12,
+                                                border: "1px solid rgba(16, 185, 129, 0.3)"
+                                            }}>
+                                                <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>✨</div>
+                                                <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 4 }}>
+                                                    PRÉVIA GRATUITA
+                                                </div>
+                                                <div style={{ color: "#E2E8F0", fontSize: "0.9rem" }}>
+                                                    Nossa IA analisou seu CV e identificou 2 problemas críticos
+                                                </div>
                                             </div>
-                                            <div style={{ color: "#E2E8F0", fontSize: "0.9rem" }}>
-                                                Veja 2 otimizações que nossa IA identificou no seu CV
-                                            </div>
-                                        </div>
 
-                                        {/* Sugestão 1 - Sempre baseada em impacto/números */}
-                                        <div style={{
-                                            background: "rgba(15, 23, 42, 0.6)",
-                                            border: "1px solid rgba(239, 68, 68, 0.3)",
-                                            borderLeft: "4px solid #EF4444",
-                                            borderRadius: 12,
-                                            padding: 20,
-                                            marginBottom: 16
-                                        }}>
-                                            <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
+                                            {/* Gap 1 - Dados reais da IA */}
+                                            <div style={{
+                                                background: "rgba(15, 23, 42, 0.6)",
+                                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                borderLeft: "4px solid #EF4444",
+                                                borderRadius: 12,
+                                                padding: 20,
+                                                marginBottom: 16
+                                            }}>
+                                                <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
+                                                    <div style={{
+                                                        background: "rgba(239, 68, 68, 0.2)",
+                                                        borderRadius: "50%",
+                                                        width: 32,
+                                                        height: 32,
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        fontSize: "1rem",
+                                                        flexShrink: 0
+                                                    }}>⚠️</div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ color: "#EF4444", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
+                                                            PROBLEMA #1: {data.gap_1.titulo || "Falta de Resultados Quantificáveis"}
+                                                        </div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                            {data.gap_1.explicacao || "Seu CV usa descrições genéricas sem números ou impacto mensurável."}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {data.gap_1.exemplo_atual && (
+                                                    <div style={{
+                                                        background: "rgba(0, 0, 0, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: 12,
+                                                        marginBottom: 12
+                                                    }}>
+                                                        <div style={{ color: "#EF4444", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
+                                                            ❌ VERSÃO ATUAL (Score: {nota}/100)
+                                                        </div>
+                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic", lineHeight: 1.5 }}>
+                                                            "{data.gap_1.exemplo_atual}"
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {data.gap_1.exemplo_otimizado && (
+                                                    <div style={{
+                                                        background: "rgba(16, 185, 129, 0.1)",
+                                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: 12
+                                                    }}>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
+                                                            ✅ VERSÃO OTIMIZADA (Score: {potencial}/100)
+                                                        </div>
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}
+                                                            dangerouslySetInnerHTML={{ __html: data.gap_1.exemplo_otimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                                    </div>
+                                                )}
+
                                                 <div style={{
-                                                    background: "rgba(239, 68, 68, 0.2)",
-                                                    borderRadius: "50%",
-                                                    width: 32,
-                                                    height: 32,
+                                                    marginTop: 12,
+                                                    padding: 10,
+                                                    background: "rgba(56, 189, 248, 0.1)",
+                                                    borderRadius: 6,
                                                     display: "flex",
                                                     alignItems: "center",
-                                                    justifyContent: "center",
-                                                    fontSize: "1rem",
-                                                    flexShrink: 0
-                                                }}>⚠️</div>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ color: "#EF4444", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
-                                                        PROBLEMA #1: Falta de Resultados Quantificáveis
+                                                    gap: 8
+                                                }}>
+                                                    <span style={{ fontSize: "1rem" }}>💡</span>
+                                                    <span style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600 }}>
+                                                        Impacto: +{Math.min(45, potencial - nota)} pontos no score ATS
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Gap 2 - Dados reais da IA */}
+                                            <div style={{
+                                                background: "rgba(15, 23, 42, 0.6)",
+                                                border: "1px solid rgba(245, 158, 11, 0.3)",
+                                                borderLeft: "4px solid #F59E0B",
+                                                borderRadius: 12,
+                                                padding: 20
+                                            }}>
+                                                <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
+                                                    <div style={{
+                                                        background: "rgba(245, 158, 11, 0.2)",
+                                                        borderRadius: "50%",
+                                                        width: 32,
+                                                        height: 32,
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        fontSize: "1rem",
+                                                        flexShrink: 0
+                                                    }}>🎯</div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ color: "#F59E0B", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
+                                                            PROBLEMA #2: {data.gap_2.titulo || "Palavras-Chave da Vaga Ausentes"}
+                                                        </div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                            {data.gap_2.explicacao || "Termos críticos da vaga não aparecem no seu CV."}
+                                                        </div>
                                                     </div>
-                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                        Seu CV usa descrições genéricas sem números ou impacto mensurável.
-                                                        ATS prioriza candidatos que mostram resultados concretos.
+                                                </div>
+
+                                                {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
+                                                    <div style={{
+                                                        background: "rgba(0, 0, 0, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: 12,
+                                                        marginBottom: 8
+                                                    }}>
+                                                        <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 8 }}>
+                                                            🔍 TERMOS FALTANDO NO SEU CV:
+                                                        </div>
+                                                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                                            {data.gap_2.termos_faltando.slice(0, 5).map((term: string, i: number) => (
+                                                                <span key={i} style={{
+                                                                    background: "rgba(239, 68, 68, 0.2)",
+                                                                    color: "#EF4444",
+                                                                    padding: "4px 10px",
+                                                                    borderRadius: 16,
+                                                                    fontSize: "0.75rem",
+                                                                    fontWeight: 600,
+                                                                    border: "1px solid rgba(239, 68, 68, 0.3)"
+                                                                }}>
+                                                                    {term}
+                                                                </span>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </div>
+                                                )}
 
-                                            <div style={{
-                                                background: "rgba(0, 0, 0, 0.3)",
-                                                borderRadius: 8,
-                                                padding: 12,
-                                                marginBottom: 12
-                                            }}>
-                                                <div style={{ color: "#EF4444", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
-                                                    ❌ VERSÃO ATUAL (Score: {nota}/100)
-                                                </div>
-                                                <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic", lineHeight: 1.5 }}>
-                                                    "Responsável por gerenciar projetos e melhorar processos da equipe"
-                                                </div>
-                                            </div>
-
-                                            <div style={{
-                                                background: "rgba(16, 185, 129, 0.1)",
-                                                border: "1px solid rgba(16, 185, 129, 0.3)",
-                                                borderRadius: 8,
-                                                padding: 12
-                                            }}>
-                                                <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
-                                                    ✅ VERSÃO OTIMIZADA (Score: {potencial}/100)
-                                                </div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                    "Gerenciei <strong>12 projetos simultâneos</strong> com orçamento total de <strong>R$ 2.5M</strong>,
-                                                    reduzindo tempo de entrega em <strong>28%</strong> e custos operacionais em <strong>R$ 180k/ano</strong>
-                                                    através de automação de processos."
-                                                </div>
-                                            </div>
-
-                                            <div style={{
-                                                marginTop: 12,
-                                                padding: 10,
-                                                background: "rgba(56, 189, 248, 0.1)",
-                                                borderRadius: 6,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 8
-                                            }}>
-                                                <span style={{ fontSize: "1rem" }}>💡</span>
-                                                <span style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600 }}>
-                                                    Impacto: +{Math.min(45, potencial - nota)} pontos no score ATS
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Sugestão 2 - Sempre baseada em palavras-chave */}
-                                        <div style={{
-                                            background: "rgba(15, 23, 42, 0.6)",
-                                            border: "1px solid rgba(245, 158, 11, 0.3)",
-                                            borderLeft: "4px solid #F59E0B",
-                                            borderRadius: 12,
-                                            padding: 20
-                                        }}>
-                                            <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                 <div style={{
-                                                    background: "rgba(245, 158, 11, 0.2)",
-                                                    borderRadius: "50%",
-                                                    width: 32,
-                                                    height: 32,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    fontSize: "1rem",
-                                                    flexShrink: 0
-                                                }}>🎯</div>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ color: "#F59E0B", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
-                                                        PROBLEMA #2: Palavras-Chave da Vaga Ausentes
+                                                    marginTop: 12,
+                                                    padding: 10,
+                                                    background: "rgba(16, 185, 129, 0.1)",
+                                                    borderRadius: 6,
+                                                    border: "1px dashed rgba(16, 185, 129, 0.3)"
+                                                }}>
+                                                    <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>
+                                                        💎 Na versão premium você recebe:
                                                     </div>
-                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                        Detectamos <strong>8 termos críticos</strong> na descrição da vaga que não aparecem no seu CV.
-                                                        O ATS vai ranquear você abaixo de candidatos que usam essas palavras.
+                                                    <div style={{ color: "#CBD5E1", fontSize: "0.75rem", lineHeight: 1.5 }}>
+                                                        • CV reescrito com <strong>todas as palavras-chave</strong> integradas naturalmente<br />
+                                                        • Análise de <strong>43 critérios ATS</strong> (não apenas 2)<br />
+                                                        • Headline do LinkedIn otimizada para recrutadores
                                                     </div>
-                                                </div>
-                                            </div>
-
-                                            <div style={{
-                                                background: "rgba(0, 0, 0, 0.3)",
-                                                borderRadius: 8,
-                                                padding: 12,
-                                                marginBottom: 8
-                                            }}>
-                                                <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 8 }}>
-                                                    🔍 TERMOS FALTANDO NO SEU CV:
-                                                </div>
-                                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                                                    {["Agile/Scrum", "KPIs", "Stakeholders", "Data-driven", "OKRs"].map((term, i) => (
-                                                        <span key={i} style={{
-                                                            background: "rgba(239, 68, 68, 0.2)",
-                                                            color: "#EF4444",
-                                                            padding: "4px 10px",
-                                                            borderRadius: 16,
-                                                            fontSize: "0.75rem",
-                                                            fontWeight: 600,
-                                                            border: "1px solid rgba(239, 68, 68, 0.3)"
-                                                        }}>
-                                                            {term}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div style={{
-                                                marginTop: 12,
-                                                padding: 10,
-                                                background: "rgba(16, 185, 129, 0.1)",
-                                                borderRadius: 6,
-                                                border: "1px dashed rgba(16, 185, 129, 0.3)"
-                                            }}>
-                                                <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>
-                                                    💎 Na versão premium você recebe:
-                                                </div>
-                                                <div style={{ color: "#CBD5E1", fontSize: "0.75rem", lineHeight: 1.5 }}>
-                                                    • CV reescrito com <strong>todas as palavras-chave</strong> integradas naturalmente<br />
-                                                    • Análise de <strong>43 critérios ATS</strong> (não apenas 2)<br />
-                                                    • Headline do LinkedIn otimizada para recrutadores
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 14, textAlign: "center" }}>
                                         🚀 Escolha Seu Plano
