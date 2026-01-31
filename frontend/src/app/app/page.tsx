@@ -37,8 +37,8 @@ const HERO_INNER_HTML = `
     <div class="logo-text">VANT</div>
 
     <div class="headline">
-        Chega de rejeições invisíveis.<br>
-        <span class="highlight">Vença o algoritmo.</span>
+        Vença o algoritmo ATS.<br>
+        <span class="highlight">Chegue na mão do recrutador.</span>
     </div>
 
     <div class="subheadline">
