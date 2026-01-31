@@ -15,10 +15,14 @@ IMPORTANTE: Só execute quando quiser atualizar os mocks com novos dados.
 import sys
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Adiciona o diretório raiz ao path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+# Carrega variáveis de ambiente do arquivo .env
+load_dotenv(PROJECT_ROOT / ".env")
 
 from logic import extrair_texto_pdf, analyze_preview_lite, analyze_cv_logic
 import json
