@@ -1,4 +1,4 @@
-export type AppStage = "hero" | "analyzing" | "preview" | "checkout" | "processing_premium" | "paid";
+export type AppStage = "hero" | "analyzing" | "preview" | "pricing" | "checkout" | "processing_premium" | "paid";
 export type PlanType = "basico" | "pro" | "premium_plus";
 export type BillingType = "one_time" | "subscription";
 

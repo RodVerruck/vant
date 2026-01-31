@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap } from "@/types";
 import { PaidStage } from "@/components/PaidStage";
+import { AuthModal } from "@/components/AuthModal";
 import { calcPotencial } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
@@ -146,6 +147,7 @@ export default function AppPage() {
     const [isActivating, setIsActivating] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(true);  // ← NOVO (true = login, false = cadastro)
     const [isAuthenticating, setIsAuthenticating] = useState(false);  // ← NOVO
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     // Estados de processamento
     const [progress, setProgress] = useState(0);
@@ -1238,8 +1240,11 @@ export default function AppPage() {
                                                     type="button"
                                                     data-kind="primary"
                                                     onClick={() => {
-                                                        setSelectedPlan("basico");
-                                                        setStage("checkout");
+                                                        if (!authUserId) {
+                                                            setShowAuthModal(true);
+                                                        } else {
+                                                            setStage("pricing");
+                                                        }
                                                     }}
                                                     style={{ width: "100%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
                                                 >
@@ -1398,6 +1403,143 @@ export default function AppPage() {
                             </>
                         );
                     })()}
+                </div>
+            )}
+
+            {stage === "pricing" && (
+                <div className="hero-container">
+                    <div className="action-island-container">
+                        <div style={{ marginBottom: 16, padding: 16, background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8 }}>
+                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
+                                ✅ Logado como
+                            </div>
+                            <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>{authEmail}</div>
+                        </div>
+
+                        <div style={{ color: "#E2E8F0", fontSize: "1.5rem", fontWeight: 800, marginBottom: 8, textAlign: "center" }}>
+                            💳 Escolha Seu Plano
+                        </div>
+                        <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 24, textAlign: "center" }}>
+                            Desbloqueie seu dossiê profissional completo
+                        </div>
+
+                        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                            <div style={{ flex: "1 1 220px" }}>
+                                <div
+                                    dangerouslySetInnerHTML={{
+                                        __html: `
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #94A3B8; font-size: 0.8rem; margin-bottom: 10px;">BÁSICO</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 29,90</div>
+                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 15px;">Pagamento único</div>
+                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
+                    ✅ 1 CV otimizado<br>
+                    ✅ Análise ATS<br>
+                    ✅ Download PDF + DOCX<br>
+                    ✅ X-Ray Search
+                </div>
+            </div>
+            `,
+                                    }}
+                                />
+                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                    <button
+                                        type="button"
+                                        data-kind="secondary"
+                                        onClick={() => {
+                                            setSelectedPlan("basico");
+                                            setStage("checkout");
+                                        }}
+                                        style={{ width: "100%" }}
+                                    >
+                                        ESCOLHER BÁSICO
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style={{ flex: "1 1 220px" }}>
+                                <div
+                                    dangerouslySetInnerHTML={{
+                                        __html: `
+            <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1)); border: 2px solid #10B981; border-radius: 12px; padding: 20px; text-align: center; position: relative;">
+                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;">
+                    🔥 MAIS VENDIDO
+                </div>
+                <div style="color: #10B981; font-size: 0.8rem; margin-bottom: 10px; margin-top: 8px;">PRO</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 69,90</div>
+                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 5px;">R$ 23,30/CV</div>
+                <div style="background: rgba(16, 185, 129, 0.2); color: #10B981; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; display: inline-block; margin-bottom: 10px;">
+                    Economize 20%
+                </div>
+                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
+                    ✅ 3 CVs otimizados<br>
+                    ✅ Análise comparativa<br>
+                    ✅ Templates premium<br>
+                    ✅ Simulador de entrevista<br>
+                    ✅ Biblioteca curada
+                </div>
+            </div>
+            `,
+                                    }}
+                                />
+                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                    <button
+                                        type="button"
+                                        data-kind="primary"
+                                        onClick={() => {
+                                            setSelectedPlan("pro");
+                                            setStage("checkout");
+                                        }}
+                                        style={{ width: "100%" }}
+                                    >
+                                        ESCOLHER PRO
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style={{ flex: "1 1 220px" }}>
+                                <div
+                                    dangerouslySetInnerHTML={{
+                                        __html: `
+            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="color: #F59E0B; font-size: 0.8rem; margin-bottom: 10px;">PREMIUM PLUS</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #F8FAFC; margin-bottom: 5px;">R$ 49,90</div>
+                <div style="color: #64748B; font-size: 0.75rem; margin-bottom: 15px;">por mês (assinatura)</div>
+                <div style="text-align: left; font-size: 0.85rem; color: #CBD5E1; margin-bottom: 15px;">
+                    ✅ 30 CVs por mês<br>
+                    ✅ Tudo do Pro<br>
+                    ✅ Suporte prioritário<br>
+                    ✅ Acesso antecipado<br>
+                    💎 Melhor para quem aplica para várias vagas
+                </div>
+            </div>
+            `,
+                                    }}
+                                />
+                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                    <button
+                                        type="button"
+                                        data-kind="secondary"
+                                        onClick={() => {
+                                            setSelectedPlan("premium_plus");
+                                            setStage("checkout");
+                                        }}
+                                        style={{ width: "100%" }}
+                                    >
+                                        ESCOLHER PREMIUM PLUS
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ height: 16 }} />
+
+                        <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                            <button type="button" data-kind="secondary" onClick={() => setStage("preview")} style={{ width: "100%" }}>
+                                VOLTAR
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -1605,6 +1747,16 @@ export default function AppPage() {
                     </div>
                 </div>
             )}
+
+            {/* Modal de Autenticação */}
+            <AuthModal
+                isOpen={showAuthModal}
+                onSuccess={() => {
+                    setShowAuthModal(false);
+                    setStage("pricing");
+                }}
+                onClose={() => setShowAuthModal(false)}
+            />
         </main>
     );
 }
