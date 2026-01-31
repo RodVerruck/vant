@@ -94,21 +94,33 @@ const HERO_INNER_HTML = `
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto;">
             <div style="background: rgba(74, 158, 255, 0.08); border: 1px solid rgba(74, 158, 255, 0.2); border-left: 3px solid #4A9EFF; border-radius: 12px; padding: 24px;">
-                <div style="font-size: 1.8rem; margin-bottom: 12px;">🤖</div>
-                <div style="color: #F8FAFC; font-size: 1rem; font-weight: 700; margin-bottom: 8px;">IA Treinada com 50K+ Vagas</div>
-                <div style="color: #94A3B8; font-size: 0.85rem; line-height: 1.5;">Analisamos milhares de descrições de vagas reais para identificar padrões de sucesso</div>
+                <div style="font-size: 2.2rem; margin-bottom: 16px;">🤖</div>
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; line-height: 1.3;">
+                    IA Treinada com <span style="color: #4A9EFF; font-size: 1.3rem;">50K+</span> Vagas
+                </div>
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6;">
+                    Analisamos milhares de descrições de vagas reais para identificar padrões de sucesso
+                </div>
             </div>
             
             <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-left: 3px solid #10B981; border-radius: 12px; padding: 24px;">
-                <div style="font-size: 1.8rem; margin-bottom: 12px;">🎯</div>
-                <div style="color: #F8FAFC; font-size: 1rem; font-weight: 700; margin-bottom: 8px;">43 Critérios ATS Detectados</div>
-                <div style="color: #94A3B8; font-size: 0.85rem; line-height: 1.5;">Verificamos todos os pontos que sistemas automáticos filtram antes do recrutador</div>
+                <div style="font-size: 2.2rem; margin-bottom: 16px;">🎯</div>
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; line-height: 1.3;">
+                    <span style="color: #10B981; font-size: 1.4rem;">43</span> Critérios ATS Detectados
+                </div>
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6;">
+                    Verificamos todos os pontos que sistemas automáticos filtram antes do recrutador
+                </div>
             </div>
             
             <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 3px solid #F59E0B; border-radius: 12px; padding: 24px;">
-                <div style="font-size: 1.8rem; margin-bottom: 12px;">📊</div>
-                <div style="color: #F8FAFC; font-size: 1rem; font-weight: 700; margin-bottom: 8px;">Padrões de Mercado</div>
-                <div style="color: #94A3B8; font-size: 0.85rem; line-height: 1.5;">Otimização baseada em CVs aprovados em processos seletivos reais</div>
+                <div style="font-size: 2.2rem; margin-bottom: 16px;">📊</div>
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; line-height: 1.3;">
+                    Padrões de <span style="color: #F59E0B;">Mercado</span>
+                </div>
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6;">
+                    Otimização baseada em CVs aprovados em processos seletivos reais
+                </div>
             </div>
         </div>
     </div>
