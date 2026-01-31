@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from dotenv import load_dotenv
@@ -407,19 +408,48 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
             cps = int(sub.get("current_period_start") or 0)
             cpe = int(sub.get("current_period_end") or 0)
 
-            supabase_admin.table("subscriptions").upsert(
-                {
-                    "user_id": payload.user_id,
-                    "subscription_plan": "premium_plus",
-                    "stripe_subscription_id": subscription_id,
-                    "subscription_status": sub.get("status"),
-                    "current_period_start": cps,
-                    "current_period_end": cpe,
-                }
-            ).execute()
+            # Converter timestamps Unix para ISO format para PostgreSQL TIMESTAMPTZ
+            # Stripe pode retornar em segundos ou milissegundos
+            if cps > 1000000000000:  # Se for milissegundos
+                cps = cps // 1000
+            if cpe > 1000000000000:  # Se for milissegundos
+                cpe = cpe // 1000
+            
+            period_start_iso = datetime.fromtimestamp(cps).isoformat()
+            period_end_iso = datetime.fromtimestamp(cpe).isoformat()
+            
+            print(f"[DEBUG] Timestamps: raw={cps},{cpe} iso={period_start_iso},{period_end_iso}")
+
+            # Verificar se já existe assinatura para este usuário/plano
+            existing = (
+                supabase_admin.table("subscriptions")
+                .select("id")
+                .eq("user_id", payload.user_id)
+                .eq("subscription_plan", "premium_plus")
+                .limit(1)
+                .execute()
+            )
+            
+            subscription_data = {
+                "user_id": payload.user_id,
+                "subscription_plan": "premium_plus",
+                "stripe_subscription_id": subscription_id,
+                "subscription_status": sub.get("status"),
+                "current_period_start": period_start_iso,
+                "current_period_end": period_end_iso,
+            }
+            
+            if existing.data:
+                # Update existing subscription
+                supabase_admin.table("subscriptions").update(subscription_data).eq(
+                    "user_id", payload.user_id
+                ).eq("subscription_plan", "premium_plus").execute()
+            else:
+                # Insert new subscription
+                supabase_admin.table("subscriptions").insert(subscription_data).execute()
 
             supabase_admin.table("usage").upsert(
-                {"user_id": payload.user_id, "period_start": cps, "used": 0, "usage_limit": int(plan.get("credits") or 30)}
+                {"user_id": payload.user_id, "period_start": period_start_iso, "used": 0, "usage_limit": int(plan.get("credits") or 30)}
             ).execute()
 
             credits_remaining = int(plan.get("credits") or 30)
@@ -447,6 +477,9 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
             }
         )
     except Exception as e:
+        print(f"[ERROR] activate_entitlements: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 

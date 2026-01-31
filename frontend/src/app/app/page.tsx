@@ -1548,6 +1548,13 @@ export default function AppPage() {
                             50% { background-position: 100% 50%; }
                             100% { background-position: 0% 50%; }
                         }
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: translateY(10px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        .edu-card {
+                            animation: fadeIn 0.5s ease-out;
+                        }
                     `}</style>
 
                     <div className="loading-logo logo-pulse">vant.core scanner</div>
@@ -1571,6 +1578,95 @@ export default function AppPage() {
                             <div className="terminal-log" style={{ color: "#38BDF8", fontFamily: "monospace", fontSize: "1.1rem", textShadow: "0 0 5px rgba(56, 189, 248, 0.3)" }}>
                                 &gt;&gt; {statusText}<span className="cursor-block"></span>
                             </div>
+                        </div>
+
+                        {/* Conteúdo Educativo sobre ATS */}
+                        <div className="edu-card" style={{
+                            marginTop: 40,
+                            background: "linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(129, 140, 248, 0.08))",
+                            border: "1px solid rgba(56, 189, 248, 0.2)",
+                            borderRadius: 16,
+                            padding: 24,
+                            backdropFilter: "blur(10px)"
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                                <div style={{ fontSize: "1.8rem" }}>💡</div>
+                                <div>
+                                    <div style={{ color: "#38BDF8", fontSize: "0.9rem", fontWeight: 700, letterSpacing: "0.5px" }}>
+                                        VOCÊ SABIA?
+                                    </div>
+                                    <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 2 }}>
+                                        Enquanto analisamos seu CV...
+                                    </div>
+                                </div>
+                            </div>
+
+                            {progress < 35 && (
+                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                    <strong style={{ color: "#F8FAFC" }}>75% dos CVs são rejeitados antes de chegar no recrutador.</strong>
+                                    <br /><br />
+                                    Sistemas ATS (Applicant Tracking System) filtram automaticamente currículos usando palavras-chave,
+                                    formatação e estrutura. Se seu CV não está otimizado, ele nunca chega aos olhos humanos.
+                                </div>
+                            )}
+
+                            {progress >= 35 && progress < 70 && (
+                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                    <div style={{
+                                        background: "rgba(239, 68, 68, 0.1)",
+                                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                                        borderRadius: 8,
+                                        padding: 12,
+                                        marginBottom: 12
+                                    }}>
+                                        <div style={{ color: "#EF4444", fontSize: "0.8rem", fontWeight: 700, marginBottom: 6 }}>
+                                            ❌ ANTES (Score: 42/100)
+                                        </div>
+                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic" }}>
+                                            "Trabalhei com vendas e atendimento ao cliente"
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        background: "rgba(16, 185, 129, 0.1)",
+                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                        borderRadius: 8,
+                                        padding: 12
+                                    }}>
+                                        <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 700, marginBottom: 6 }}>
+                                            ✅ DEPOIS (Score: 87/100)
+                                        </div>
+                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
+                                            "Especialista em <strong>Customer Success</strong> com <strong>+3 anos</strong> gerenciando
+                                            carteira de <strong>150+ clientes B2B</strong>. Aumentei retenção em <strong>34%</strong>
+                                            através de estratégias de <strong>upsell</strong> e <strong>onboarding estruturado</strong>."
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {progress >= 70 && (
+                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                    <strong style={{ color: "#F8FAFC" }}>O que o ATS procura:</strong>
+                                    <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                            <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
+                                            <span><strong>Palavras-chave</strong> da descrição da vaga</span>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                            <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
+                                            <span><strong>Números e resultados</strong> quantificáveis</span>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                            <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
+                                            <span><strong>Formatação limpa</strong> sem tabelas ou colunas</span>
+                                        </div>
+                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                            <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
+                                            <span><strong>Verbos de ação</strong> e linguagem técnica</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
