@@ -157,6 +157,7 @@ export default function AppPage() {
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [, setPremiumError] = useState("");
     const [isRestoringData, setIsRestoringData] = useState(false);
+    const [pdfMetadata, setPdfMetadata] = useState<{ pages?: number; text?: string; candidateName?: string } | null>(null);
 
     // Refs
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
@@ -179,6 +180,15 @@ export default function AppPage() {
             return e;
         }
         return fallback;
+    }
+
+    // Função para extrair metadados do PDF (implementação simplificada sem pdfjs-dist)
+    async function extractPdfMetadata(file: File): Promise<{ pages?: number; text?: string; candidateName?: string }> {
+        // Por enquanto, retorna metadados básicos do arquivo
+        // A extração real de páginas e nome requer biblioteca de PDF que está com problemas de build
+        return {
+            text: `Arquivo: ${file.name}`,
+        };
     }
 
     // Restaurar jobDescription e file do localStorage ao montar
@@ -223,10 +233,16 @@ export default function AppPage() {
                     localStorage.setItem("vant_file_type", file.type);
                 };
                 reader.readAsDataURL(file);
+
+                // Extrair metadados do PDF
+                extractPdfMetadata(file).then(metadata => {
+                    setPdfMetadata(metadata);
+                });
             } else {
                 localStorage.removeItem("vant_file_b64");
                 localStorage.removeItem("vant_file_name");
                 localStorage.removeItem("vant_file_type");
+                setPdfMetadata(null);
             }
         }
     }, [file]);
@@ -996,7 +1012,35 @@ export default function AppPage() {
                                         <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center" }}>
                                             <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ Arquivo carregado</div>
                                             <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>{file.name}</div>
-                                            <button type="button" onClick={() => setFile(null)} style={{ marginTop: 8, fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+
+                                            {/* Exibir metadados extraídos */}
+                                            {pdfMetadata && (
+                                                <div style={{
+                                                    background: "rgba(16, 185, 129, 0.05)",
+                                                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                                                    borderRadius: 6,
+                                                    padding: 12,
+                                                    marginTop: 8,
+                                                    textAlign: "left"
+                                                }}>
+                                                    <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginBottom: 4 }}>📊 DETALHES DETECTADOS:</div>
+                                                    {pdfMetadata.candidateName && (
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
+                                                            <strong>Nome:</strong> {pdfMetadata.candidateName}
+                                                        </div>
+                                                    )}
+                                                    {pdfMetadata.pages && (
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
+                                                            <strong>Páginas:</strong> {pdfMetadata.pages}
+                                                        </div>
+                                                    )}
+                                                    <div style={{ color: "#10B981", fontSize: "0.8rem", marginTop: 6, fontStyle: "italic" }}>
+                                                        💡 Pronto para análise inteligente
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <button type="button" onClick={() => setFile(null)} style={{ marginTop: 12, fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
                                                 Remover
                                             </button>
                                         </div>
