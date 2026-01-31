@@ -85,8 +85,9 @@ const HERO_INNER_HTML = `
     <!-- Social Proof Section -->
     <div class="hero-section" style="text-align: center; margin-top: 80px;">
         <div id="testimonials-carousel" style="position: relative; overflow: hidden; border-radius: 16px;">
-            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(16, 185, 129, 0.05)); 
-                        border: 1px solid rgba(56, 189, 248, 0.2); 
+            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
+                        border: 1px solid rgba(74, 158, 255, 0.3); 
+                        border-left: 4px solid #4A9EFF;
                         border-radius: 16px; 
                         padding: 30px; 
                         display: block;
@@ -107,15 +108,16 @@ const HERO_INNER_HTML = `
                 </div>
             </div>
             
-            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.05)); 
-                        border: 1px solid rgba(239, 68, 68, 0.2); 
+            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
+                        border: 1px solid rgba(74, 158, 255, 0.3); 
+                        border-left: 4px solid #4A9EFF;
                         border-radius: 16px; 
                         padding: 30px; 
                         display: none;
                         position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(239, 68, 68, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
                 <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #f59e0b); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
                         JS
                     </div>
                     <div style="flex: 1;">
@@ -129,15 +131,16 @@ const HERO_INNER_HTML = `
                 </div>
             </div>
             
-            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.05)); 
-                        border: 1px solid rgba(16, 185, 129, 0.2); 
+            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
+                        border: 1px solid rgba(74, 158, 255, 0.3); 
+                        border-left: 4px solid #4A9EFF;
                         border-radius: 16px; 
                         padding: 30px; 
                         display: none;
                         position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(16, 185, 129, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
                 <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
                         AS
                     </div>
                     <div style="flex: 1;">
@@ -151,15 +154,16 @@ const HERO_INNER_HTML = `
                 </div>
             </div>
             
-            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.05)); 
-                        border: 1px solid rgba(168, 85, 247, 0.2); 
+            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
+                        border: 1px solid rgba(74, 158, 255, 0.3); 
+                        border-left: 4px solid #4A9EFF;
                         border-radius: 16px; 
                         padding: 30px; 
                         display: none;
                         position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(168, 85, 247, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
                 <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
                         RC
                     </div>
                     <div style="flex: 1;">
@@ -173,15 +177,16 @@ const HERO_INNER_HTML = `
                 </div>
             </div>
             
-            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(250, 204, 21, 0.05)); 
-                        border: 1px solid rgba(251, 146, 60, 0.2); 
+            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
+                        border: 1px solid rgba(74, 158, 255, 0.3); 
+                        border-left: 4px solid #4A9EFF;
                         border-radius: 16px; 
                         padding: 30px; 
                         display: none;
                         position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(251, 146, 60, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
                 <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #facc15); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(251, 146, 60, 0.3);">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
                         PF
                     </div>
                     <div style="flex: 1;">
