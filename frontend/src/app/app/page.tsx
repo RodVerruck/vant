@@ -80,23 +80,119 @@ const HERO_INNER_HTML = `
 
     <!-- Social Proof Section -->
     <div style="margin: 60px 0; text-align: center;">
-        <div style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(16, 185, 129, 0.05)); 
-                    border: 1px solid rgba(56, 189, 248, 0.2); 
-                    border-radius: 16px; 
-                    padding: 30px; 
-                    margin-bottom: 40px;">
-            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
-                <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
-                    ML
-                </div>
-                <div style="flex: 1;">
-                    <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
-                        "Consegui 5 entrevistas em 1 semana após otimizar meu CV. Cheguei na final na Nubank!"
+        <div id="testimonials-carousel" style="position: relative; overflow: hidden; border-radius: 16px;">
+            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(16, 185, 129, 0.05)); 
+                        border: 1px solid rgba(56, 189, 248, 0.2); 
+                        border-radius: 16px; 
+                        padding: 30px; 
+                        margin-bottom: 40px;
+                        display: block;">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        ML
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
+                            "Consegui 5 entrevistas em 1 semana após otimizar meu CV. Cheguei na final na Nubank!"
+                        </div>
                     </div>
                 </div>
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                    <strong>Maria L.</strong> • Desenvolvedora Frontend • Contratada @ Nubank
+                </div>
             </div>
-            <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
-                <strong>Maria L.</strong> • Desenvolvedora Frontend • Contratada @ Nubank
+            
+            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.05)); 
+                        border: 1px solid rgba(239, 68, 68, 0.2); 
+                        border-radius: 16px; 
+                        padding: 30px; 
+                        margin-bottom: 40px;
+                        display: none;">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #f59e0b); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        JS
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
+                            "Meu CV passou de 20% para 85% no score ATS. Recebi proposta da Google em 2 semanas!"
+                        </div>
+                    </div>
+                </div>
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                    <strong>João S.</strong> • Engenheiro de Software • Contratado @ Google
+                </div>
+            </div>
+            
+            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.05)); 
+                        border: 1px solid rgba(16, 185, 129, 0.2); 
+                        border-radius: 16px; 
+                        padding: 30px; 
+                        margin-bottom: 40px;
+                        display: none;">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        AS
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
+                            "A IA identificou palavras-chave que eu nunca imaginei. Hoje sou Product Manager na Microsoft."
+                        </div>
+                    </div>
+                </div>
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                    <strong>Ana S.</strong> • Product Manager • Contratada @ Microsoft
+                </div>
+            </div>
+            
+            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.05)); 
+                        border: 1px solid rgba(168, 85, 247, 0.2); 
+                        border-radius: 16px; 
+                        padding: 30px; 
+                        margin-bottom: 40px;
+                        display: none;">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        RC
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
+                            "Investir R$ 49 no Vant foi o melhor negócio da minha carreira. Salário triplicou!"
+                        </div>
+                    </div>
+                </div>
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                    <strong>Roberto C.</strong> • Data Scientist • Contratado @ Itaú Unibanco
+                </div>
+            </div>
+            
+            <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(250, 204, 21, 0.05)); 
+                        border: 1px solid rgba(251, 146, 60, 0.2); 
+                        border-radius: 16px; 
+                        padding: 30px; 
+                        margin-bottom: 40px;
+                        display: none;">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #facc15); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        PF
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
+                            "Estava desempregada há 6 meses. Com o CV otimizado, consegui 3 ofertas em 1 mês!"
+                        </div>
+                    </div>
+                </div>
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                    <strong>Patrícia F.</strong> • UX Designer • Contratada @ Amazon
+                </div>
+            </div>
+            
+            <!-- Indicadores do carrossel -->
+            <div style="display: flex; justify-content: center; gap: 8px; margin-top: 20px;">
+                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; cursor: pointer;" data-slide="0"></span>
+                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3); cursor: pointer;" data-slide="1"></span>
+                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3); cursor: pointer;" data-slide="2"></span>
+                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3); cursor: pointer;" data-slide="3"></span>
+                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3); cursor: pointer;" data-slide="4"></span>
             </div>
         </div>
         
@@ -571,6 +667,50 @@ export default function AppPage() {
             }
         })();
     }, [authUserId, needsActivation, stripeSessionId, isActivating]);
+
+    // Carrossel automático de depoimentos
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const initCarousel = () => {
+            const slides = document.querySelectorAll('.testimonial-slide');
+            const dots = document.querySelectorAll('.carousel-dot');
+            let currentSlide = 0;
+
+            const showSlide = (index: number) => {
+                slides.forEach((slide, i) => {
+                    (slide as HTMLElement).style.display = i === index ? 'block' : 'none';
+                });
+                dots.forEach((dot, i) => {
+                    (dot as HTMLElement).style.background = i === index ? '#3b82f6' : 'rgba(148, 163, 184, 0.3)';
+                });
+            };
+
+            const nextSlide = () => {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            };
+
+            // Configurar cliques nos dots
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    currentSlide = index;
+                    showSlide(currentSlide);
+                });
+            });
+
+            // Iniciar o carrossel automático
+            const interval = setInterval(nextSlide, 4000); // Muda a cada 4 segundos
+
+            // Limpar o interval quando o componente for desmontado
+            return () => clearInterval(interval);
+        };
+
+        // Pequeno delay para garantir que o DOM foi renderizado
+        const timer = setTimeout(initCarousel, 100);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     async function startCheckout() {
         setCheckoutError("");
