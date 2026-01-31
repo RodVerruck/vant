@@ -82,143 +82,54 @@ const HERO_INNER_HTML = `
         </div>
     </div>
 
-    <!-- Social Proof Section -->
-    <div class="hero-section" style="text-align: center; margin-top: 80px;">
-        <div id="testimonials-carousel" style="position: relative; overflow: hidden; border-radius: 16px;">
-            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
-                        border: 1px solid rgba(74, 158, 255, 0.3); 
-                        border-left: 4px solid #4A9EFF;
-                        border-radius: 16px; 
-                        padding: 30px; 
-                        display: block;
-                        position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                        ML
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
-                            "Consegui 5 entrevistas em 1 semana após otimizar meu CV. Cheguei na final na Nubank!"
-                        </div>
-                    </div>
-                </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
-                    <strong>Maria L.</strong> • Desenvolvedora Frontend • Contratada @ Nubank
-                </div>
-            </div>
-            
-            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
-                        border: 1px solid rgba(74, 158, 255, 0.3); 
-                        border-left: 4px solid #4A9EFF;
-                        border-radius: 16px; 
-                        padding: 30px; 
-                        display: none;
-                        position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                        JS
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
-                            "Meu CV passou de 20% para 85% no score ATS. Recebi proposta da Google em 2 semanas!"
-                        </div>
-                    </div>
-                </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
-                    <strong>João S.</strong> • Engenheiro de Software • Contratado @ Google
-                </div>
-            </div>
-            
-            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
-                        border: 1px solid rgba(74, 158, 255, 0.3); 
-                        border-left: 4px solid #4A9EFF;
-                        border-radius: 16px; 
-                        padding: 30px; 
-                        display: none;
-                        position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                        AS
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
-                            "A IA identificou palavras-chave que eu nunca imaginei. Hoje sou Product Manager na Microsoft."
-                        </div>
-                    </div>
-                </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
-                    <strong>Ana S.</strong> • Product Manager • Contratada @ Microsoft
-                </div>
-            </div>
-            
-            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
-                        border: 1px solid rgba(74, 158, 255, 0.3); 
-                        border-left: 4px solid #4A9EFF;
-                        border-radius: 16px; 
-                        padding: 30px; 
-                        display: none;
-                        position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                        RC
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
-                            "Investir R$ 49 no Vant foi o melhor negócio da minha carreira. Salário triplicou!"
-                        </div>
-                    </div>
-                </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
-                    <strong>Roberto C.</strong> • Data Scientist • Contratado @ Itaú Unibanco
-                </div>
-            </div>
-            
-            <div class="testimonial-slide" style="background: rgba(74, 158, 255, 0.1); 
-                        border: 1px solid rgba(74, 158, 255, 0.3); 
-                        border-left: 4px solid #4A9EFF;
-                        border-radius: 16px; 
-                        padding: 30px; 
-                        display: none;
-                        position: relative;">
-                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                        PF
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-size: 1.1rem; color: #E2E8F0; font-style: italic; line-height: 1.4;">
-                            "Estava desempregada há 6 meses. Com o CV otimizado, consegui 3 ofertas em 1 mês!"
-                        </div>
-                    </div>
-                </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
-                    <strong>Patrícia F.</strong> • UX Designer • Contratada @ Amazon
-                </div>
-            </div>
-            
-            <!-- Indicadores do carrossel -->
-            <div style="display: flex; justify-content: center; gap: 8px; margin-top: 20px;">
-                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; cursor: pointer;" data-slide="0"></span>
-                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3); cursor: pointer;" data-slide="1"></span>
-                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3); cursor: pointer;" data-slide="2"></span>
-                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3); cursor: pointer;" data-slide="3"></span>
-                <span class="carousel-dot" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(148, 163, 184, 0.3); cursor: pointer;" data-slide="4"></span>
-            </div>
+    <!-- Por que funciona -->
+    <div class="hero-section" style="margin-top: 80px;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <h3 style="color: #F8FAFC; font-size: 1.5rem; font-weight: 700; margin: 0 0 8px 0;">Por que funciona</h3>
+            <p style="color: #94A3B8; font-size: 0.9rem; margin: 0;">Tecnologia baseada em dados reais de mercado</p>
         </div>
         
-        <div style="color: #64748B; font-size: 0.85rem; margin-top: 24px; margin-bottom: 20px;">
-            Aprovado por candidatos contratados em:
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto;">
+            <div style="background: rgba(74, 158, 255, 0.08); border: 1px solid rgba(74, 158, 255, 0.2); border-left: 3px solid #4A9EFF; border-radius: 12px; padding: 24px;">
+                <div style="font-size: 1.8rem; margin-bottom: 12px;">🤖</div>
+                <div style="color: #F8FAFC; font-size: 1rem; font-weight: 700; margin-bottom: 8px;">IA Treinada com 50K+ Vagas</div>
+                <div style="color: #94A3B8; font-size: 0.85rem; line-height: 1.5;">Analisamos milhares de descrições de vagas reais para identificar padrões de sucesso</div>
+            </div>
+            
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-left: 3px solid #10B981; border-radius: 12px; padding: 24px;">
+                <div style="font-size: 1.8rem; margin-bottom: 12px;">🎯</div>
+                <div style="color: #F8FAFC; font-size: 1rem; font-weight: 700; margin-bottom: 8px;">43 Critérios ATS Detectados</div>
+                <div style="color: #94A3B8; font-size: 0.85rem; line-height: 1.5;">Verificamos todos os pontos que sistemas automáticos filtram antes do recrutador</div>
+            </div>
+            
+            <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2); border-left: 3px solid #F59E0B; border-radius: 12px; padding: 24px;">
+                <div style="font-size: 1.8rem; margin-bottom: 12px;">📊</div>
+                <div style="color: #F8FAFC; font-size: 1rem; font-weight: 700; margin-bottom: 8px;">Padrões de Mercado</div>
+                <div style="color: #94A3B8; font-size: 0.85rem; line-height: 1.5;">Otimização baseada em CVs aprovados em processos seletivos reais</div>
+            </div>
         </div>
-        <div style="display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; opacity: 0.7;">
-            <span style="font-size: 1.4rem; font-weight: 700; color: #94A3B8;">Google</span>
-            <span style="font-size: 1.4rem; font-weight: 900; font-style: italic; color: #94A3B8;">amazon</span>
-            <span style="font-size: 1.4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8;">MICROSOFT</span>
-            <span style="font-size: 1.4rem; font-weight: 600; letter-spacing: -0.5px; color: #94A3B8;">Nubank</span>
-            <span style="font-size: 1.4rem; font-weight: 700; color: #94A3B8;">Itaú</span>
+    </div>
+    
+    <!-- Garantia e Transparência -->
+    <div class="hero-section" style="margin-top: 80px;">
+        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(74, 158, 255, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 32px; text-align: center; max-width: 700px; margin: 0 auto;">
+            <div style="font-size: 2rem; margin-bottom: 16px;">🎯</div>
+            <h3 style="color: #F8FAFC; font-size: 1.3rem; font-weight: 700; margin: 0 0 12px 0;">Análise Gratuita</h3>
+            <p style="color: #E2E8F0; font-size: 1rem; line-height: 1.6; margin: 0 0 20px 0;">
+                Veja seu score ATS e descubra exatamente o que precisa melhorar no seu CV.<br>
+                <strong>Sem compromisso. Sem cartão de crédito.</strong>
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 24px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
+                    <span style="color: #10B981;">✓</span> Processamento 100% privado e anônimo
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
+                    <span style="color: #10B981;">✓</span> Seus dados são destruídos após a análise
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
+                    <span style="color: #10B981;">✓</span> Relatório detalhado em segundos
+                </div>
+            </div>
         </div>
     </div>
 `;
