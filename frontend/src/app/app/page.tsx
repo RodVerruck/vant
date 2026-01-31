@@ -1965,8 +1965,18 @@ export default function AppPage() {
 
                                             <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
                                                 <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%", height: 56, fontSize: "1.1rem", background: "#10B981", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)" }}>
-                                                    PAGAR AGORA
+                                                    IR PARA PAGAMENTO SEGURO
                                                 </button>
+                                            </div>
+
+                                            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", opacity: 0.6 }}>
+                                                <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                                <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                                <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>📍</div>
+                                                <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                            </div>
+                                            <div style={{ textAlign: "center", marginTop: "4px", color: "#64748B", fontSize: "0.75rem" }}>
+                                                Aceitamos Visa, Mastercard, PIX e Amex
                                             </div>
                                         </>
                                     )}
