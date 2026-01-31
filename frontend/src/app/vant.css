@@ -1272,10 +1272,50 @@ img {
     border: 1px solid rgba(56, 189, 248, 0.1);
     /* Borda Glass */
     border-radius: 24px;
-    padding: 40px;
+    padding: 24px;
     margin-top: 20px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
     /* Profundidade */
+}
+
+/* Layout Lado a Lado para Planos */
+.pricing-grid-side-by-side {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 24px !important;
+    width: 100% !important;
+    align-items: stretch !important;
+}
+
+.pricing-grid-side-by-side>div:first-child {
+    display: contents !important;
+}
+
+.pricing-grid-side-by-side>div:first-child>div:first-child {
+    flex: 1 1 45% !important;
+    min-width: 280px !important;
+}
+
+.pricing-grid-side-by-side>div:first-child>div:last-child {
+    flex: 1 1 45% !important;
+    min-width: 280px !important;
+}
+
+.pricing-grid-side-by-side>div:last-child {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .pricing-grid-side-by-side {
+        flex-direction: column !important;
+        flex-wrap: wrap !important;
+    }
+
+    .pricing-grid-side-by-side>div:first-child>div {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
 }
 
 /* 2. Micro-CTA "Como Funciona" (Link discreto) */

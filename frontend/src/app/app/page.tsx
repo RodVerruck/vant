@@ -1735,108 +1735,109 @@ export default function AppPage() {
                                                     </div>
                                                 </div>
 
-                                                {/* CARD 2: HERO SAAS (O Foco da Venda) */}
-                                                <div style={{
-                                                    flex: "1 1 300px",
-                                                    background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
-                                                    border: "2px solid #10B981",
-                                                    borderRadius: 16,
-                                                    padding: "24px",
-                                                    position: "relative",
-                                                    boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
-                                                    display: "flex",
-                                                    flexDirection: "column",
-                                                    justifyContent: "space-between"
-                                                }}>
-                                                    <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
-                                                        🏆 RECOMENDADO PELA IA
+                                            </div>
+
+                                            {/* CARD 2: HERO SAAS (O Foco da Venda) */}
+                                            <div style={{
+                                                flex: "1 1 300px",
+                                                background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
+                                                border: "2px solid #10B981",
+                                                borderRadius: 16,
+                                                padding: "24px",
+                                                position: "relative",
+                                                boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                justifyContent: "space-between"
+                                            }}>
+                                                <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
+                                                    🏆 RECOMENDADO PELA IA
+                                                </div>
+
+                                                <div>
+                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 4 }}>VANT PRO MENSAL</div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.4, marginBottom: 16 }}>
+                                                        Acelere sua recolocação aplicando para dezenas de vagas com qualidade máxima.
                                                     </div>
 
-                                                    <div>
-                                                        <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 4 }}>VANT PRO MENSAL</div>
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.4, marginBottom: 16 }}>
-                                                            Acelere sua recolocação aplicando para dezenas de vagas com qualidade máxima.
+                                                    <div style={{ textAlign: "left", marginBottom: 20 }}>
+                                                        <div style={{ textDecoration: "line-through", color: "#64748B", fontSize: "0.9rem" }}>De R$ 49,90</div>
+                                                        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                                                            <div style={{ fontSize: "2.4rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>R$ 29,90</div>
+                                                            <div style={{ color: "#94A3B8", fontWeight: 500 }}>/mês</div>
                                                         </div>
-
-                                                        <div style={{ textAlign: "left", marginBottom: 20 }}>
-                                                            <div style={{ textDecoration: "line-through", color: "#64748B", fontSize: "0.9rem" }}>De R$ 49,90</div>
-                                                            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                                                                <div style={{ fontSize: "2.4rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>R$ 29,90</div>
-                                                                <div style={{ color: "#94A3B8", fontWeight: 500 }}>/mês</div>
-                                                            </div>
-                                                            <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>CANCELE QUANDO QUISER</div>
-                                                            <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginTop: 8, background: "rgba(16, 185, 129, 0.15)", padding: "4px 8px", borderRadius: 4, display: "inline-block" }}>
-                                                                Custo por CV: Apenas R$ 0,99
-                                                            </div>
-                                                        </div>
-
-                                                        <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
-                                                            <div style={{ display: "flex", gap: 10, alignItems: "start", fontSize: "0.95rem", color: "#fff", fontWeight: 500 }}>
-                                                                <div style={{ background: "#10B981", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#064E3B", fontSize: "0.8rem", fontWeight: "bold", flexShrink: 0, marginTop: 2 }}>✓</div>
-                                                                <div>
-                                                                    <span><strong>30 Otimizações</strong> por mês</span>
-                                                                    <div style={{ fontSize: "0.75rem", color: "#94A3B8", fontWeight: 400, marginTop: 2 }}>Volume ideal para aplicar estrategicamente todo dia.</div>
-                                                                </div>
-                                                            </div>
-                                                            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                                <div style={{ color: "#10B981" }}>✓</div>
-                                                                <span>Análise de Concorrência (Gap Analysis)</span>
-                                                            </div>
-                                                            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                                <div style={{ color: "#10B981" }}>✓</div>
-                                                                <span>Simulador de Entrevista com IA</span>
-                                                            </div>
-                                                            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                                <div style={{ color: "#10B981" }}>✓</div>
-                                                                <span>Acesso ao Radar de Vagas</span>
-                                                            </div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>CANCELE QUANDO QUISER</div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginTop: 8, background: "rgba(16, 185, 129, 0.15)", padding: "4px 8px", borderRadius: 4, display: "inline-block" }}>
+                                                            Custo por CV: Apenas R$ 0,99
                                                         </div>
                                                     </div>
 
-                                                    <div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedPlan("premium_plus"); // ID backend para Assinatura
-                                                                if (!authUserId) setShowAuthModal(true);
-                                                                else setStage("checkout");
-                                                            }}
-                                                            style={{ width: "100%", background: "#10B981", color: "#fff", border: "none", padding: "18px", borderRadius: 10, fontSize: "1.1rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.4)", transition: "transform 0.1s" }}
-                                                            onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                                            onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
-                                                        >
-                                                            ATIVAR PLANO AGORA
-                                                        </button>
-
-                                                        <div style={{ textAlign: "center", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.8 }}>
-                                                            <span style={{ fontSize: "1rem" }}>🔒</span>
-                                                            <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Garantia de 7 dias • Acesso Imediato</span>
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "start", fontSize: "0.95rem", color: "#fff", fontWeight: 500 }}>
+                                                            <div style={{ background: "#10B981", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#064E3B", fontSize: "0.8rem", fontWeight: "bold", flexShrink: 0, marginTop: 2 }}>✓</div>
+                                                            <div>
+                                                                <span><strong>30 Otimizações</strong> por mês</span>
+                                                                <div style={{ fontSize: "0.75rem", color: "#94A3B8", fontWeight: 400, marginTop: 2 }}>Volume ideal para aplicar estrategicamente todo dia.</div>
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981" }}>✓</div>
+                                                            <span>Análise de Concorrência (Gap Analysis)</span>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981" }}>✓</div>
+                                                            <span>Simulador de Entrevista com IA</span>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981" }}>✓</div>
+                                                            <span>Acesso ao Radar de Vagas</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            {/* Botão Voltar Discreto */}
-                                            <div style={{ textAlign: "center", marginTop: 16 }}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setStage("hero")}
-                                                    style={{
-                                                        background: "none",
-                                                        border: "none",
-                                                        color: "#475569",
-                                                        fontSize: "0.85rem",
-                                                        cursor: "pointer",
-                                                        display: "inline-flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        gap: 6,
-                                                        padding: "10px"
-                                                    }}
-                                                >
-                                                    ← Voltar para edição
-                                                </button>
+                                                <div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedPlan("premium_plus"); // ID backend para Assinatura
+                                                            if (!authUserId) setShowAuthModal(true);
+                                                            else setStage("checkout");
+                                                        }}
+                                                        style={{ width: "100%", background: "#10B981", color: "#fff", border: "none", padding: "18px", borderRadius: 10, fontSize: "1.1rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.4)", transition: "transform 0.1s" }}
+                                                        onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
+                                                        onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+                                                    >
+                                                        ATIVAR PLANO AGORA
+                                                    </button>
+
+                                                    <div style={{ textAlign: "center", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.8 }}>
+                                                        <span style={{ fontSize: "1rem" }}>🔒</span>
+                                                        <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Garantia de 7 dias • Acesso Imediato</span>
+                                                    </div>
+                                                </div>
                                             </div>
+                                        </div>
+
+                                        {/* Botão Voltar Discreto */}
+                                        <div style={{ textAlign: "center", marginTop: 16 }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setStage("hero")}
+                                                style={{
+                                                    background: "none",
+                                                    border: "none",
+                                                    color: "#475569",
+                                                    fontSize: "0.85rem",
+                                                    cursor: "pointer",
+                                                    display: "inline-flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    gap: 6,
+                                                    padding: "10px"
+                                                }}
+                                            >
+                                                ← Voltar para edição
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
