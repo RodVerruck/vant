@@ -1763,7 +1763,9 @@ export default function AppPage() {
             {/* Modal de Autenticação */}
             <AuthModal
                 isOpen={showAuthModal}
-                onSuccess={() => {
+                onSuccess={(userId, email) => {
+                    setAuthUserId(userId);
+                    setAuthEmail(email);
                     setShowAuthModal(false);
                     setStage("pricing");
                 }}

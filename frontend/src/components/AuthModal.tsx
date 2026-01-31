@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 
 interface AuthModalProps {
     isOpen: boolean;
-    onSuccess: () => void;
+    onSuccess: (userId: string, email: string) => void;
     onClose: () => void;
 }
 
@@ -17,7 +17,7 @@ export function AuthModal({ isOpen, onSuccess, onClose }: AuthModalProps) {
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [error, setError] = useState("");
 
-    const supabase = typeof window !== "undefined" 
+    const supabase = typeof window !== "undefined"
         ? createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL || "",
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
@@ -87,7 +87,7 @@ export function AuthModal({ isOpen, onSuccess, onClose }: AuthModalProps) {
                 if (error) throw error;
 
                 if (data.user) {
-                    onSuccess();
+                    onSuccess(data.user.id, data.user.email || "");
                 }
             } else {
                 const { data, error } = await supabase.auth.signUp({
@@ -98,7 +98,7 @@ export function AuthModal({ isOpen, onSuccess, onClose }: AuthModalProps) {
                 if (error) throw error;
 
                 if (data.user) {
-                    onSuccess();
+                    onSuccess(data.user.id, data.user.email || "");
                 }
             }
         } catch (e: unknown) {
@@ -208,10 +208,10 @@ export function AuthModal({ isOpen, onSuccess, onClose }: AuthModalProps) {
                                 value={authEmail}
                                 onChange={(e) => setAuthEmail(e.target.value)}
                                 placeholder="voce@exemplo.com"
-                                style={{ 
-                                    width: "100%", 
-                                    boxSizing: "border-box", 
-                                    height: 44, 
+                                style={{
+                                    width: "100%",
+                                    boxSizing: "border-box",
+                                    height: 44,
                                     padding: "10px 12px",
                                     background: "rgba(15, 23, 42, 0.6)",
                                     border: "1px solid rgba(255,255,255,0.1)",
@@ -230,10 +230,10 @@ export function AuthModal({ isOpen, onSuccess, onClose }: AuthModalProps) {
                                 value={authPassword}
                                 onChange={(e) => setAuthPassword(e.target.value)}
                                 placeholder="Mínimo 6 caracteres"
-                                style={{ 
-                                    width: "100%", 
-                                    boxSizing: "border-box", 
-                                    height: 44, 
+                                style={{
+                                    width: "100%",
+                                    boxSizing: "border-box",
+                                    height: 44,
                                     padding: "10px 12px",
                                     background: "rgba(15, 23, 42, 0.6)",
                                     border: "1px solid rgba(255,255,255,0.1)",
