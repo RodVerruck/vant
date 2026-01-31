@@ -1059,22 +1059,40 @@ export default function AppPage() {
         const ats = getNum(pilares.ats);
 
         const row = (label: string, value: number) => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                <span style="color:#94A3B8; font-size:0.75rem; font-weight:700; letter-spacing:0.8px;">${label.toUpperCase()}</span>
-                <span style="color:#F8FAFC; font-size:0.8rem; font-weight:800; font-family:monospace;">${value}%</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
+                <span style="color:#94A3B8; font-size:0.75rem; font-weight:600; letter-spacing:0.5px;">${label.toUpperCase()}</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:60px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
+                        <div style="width:${value}%; height:100%; background:${value > 70 ? '#10B981' : value > 40 ? '#F59E0B' : '#EF4444'};"></div>
+                    </div>
+                    <span style="color:#F8FAFC; font-size:0.8rem; font-weight:700; font-family:monospace; width:28px; text-align:right;">${value}%</span>
+                </div>
             </div>
         `;
 
         return `
             <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 12px; padding: 16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 12px;">
-                    <div style="color:#E2E8F0; font-weight:900; font-size: 1.0rem;">SCORE ATS: ${nota}%</div>
-                    <div style="color:#94A3B8; font-size:0.85rem; font-weight:700;">${veredito || ""}</div>
+                <div style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #64748B; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
+                    <span style="background: rgba(56, 189, 248, 0.1); color: #38BDF8; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">VERSÃO LITE</span>
                 </div>
-                ${row("Impacto", impacto)}
-                ${row("Keywords", keywords)}
-                ${row("ATS", ats)}
-                <div style="margin-top:10px; color:#64748B; font-size:0.8rem;">Potencial estimado: <strong style=\"color:#10B981;\">${potencial}%</strong></div>
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 16px;">
+                    <div>
+                        <div style="color:#94A3B8; font-size:0.75rem; font-weight:600;">SCORE ATS ATUAL</div>
+                        <div style="color:#E2E8F0; font-weight:900; font-size: 2rem; line-height: 1;">${nota}<span style="font-size:1rem; color:#64748B;">/100</span></div>
+                    </div>
+                    <div style="text-align:right;">
+                         <div style="color:#94A3B8; font-size:0.75rem; font-weight:600;">POTENCIAL</div>
+                         <div style="color:#10B981; font-weight:900; font-size: 2rem; line-height: 1;">${potencial}<span style="font-size:1rem; color:#10B981;">%</span></div>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                    ${row("Impacto", impacto)}
+                    ${row("Palavras-chave", keywords)}
+                    ${row("Format. ATS", ats)}
+                </div>
             </div>
         `;
     }
