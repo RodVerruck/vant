@@ -1171,7 +1171,7 @@ export default function AppPage() {
                                         color: jobDescription && jobDescription.length >= 500 ? "#10B981" : "#64748B",
                                         fontSize: "0.8rem"
                                     }}>
-                                        <span>Caracteres: {jobDescription ? jobDescription.length : 0}/500</span>
+                                        <span>Caracteres: {jobDescription ? jobDescription.length : 0}/5000</span>
                                         <span style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
                                             💡 Cole a descrição completa para melhores resultados
                                         </span>
