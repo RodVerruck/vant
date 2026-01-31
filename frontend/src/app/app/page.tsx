@@ -25,67 +25,70 @@ function getApiUrl(): string {
 }
 
 const HERO_INNER_HTML = `
-    <div class="badge-live">
-        <span class="vant-tooltip" 
-              tabindex="0" 
-              style="border-bottom: none; cursor: help;" 
-              data-tooltip="Mais de 50.000 CVs otimizados. Taxa de sucesso comprovada em seleções de grandes empresas.">
-            50K+ Currículos Otimizados
-        </span>
-    </div>
-
-    <div class="logo-text">VANT</div>
-
-    <div class="headline">
-        Vença o algoritmo ATS.<br>
-        <span class="highlight">Chegue na mão do recrutador.</span>
-    </div>
-
-    <div class="subheadline">
-        Nossa IA otimiza seu currículo para passar nos filtros automáticos 
-        e chegar direto no recrutador.
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-number">+34%</div>
-            <div class="stat-label">
-                de aprovação em ATS
-                <span class="vant-tooltip" tabindex="0" data-tooltip="Aumento médio de pontuação comparado ao currículo original (Base: 50k+ processamentos)." style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
-                    
-                </span>
-            </div>
+    <div class="hero-section">
+        <div class="badge-live">
+            <span class="vant-tooltip" 
+                  tabindex="0" 
+                  style="border-bottom: none; cursor: help;" 
+                  data-tooltip="Mais de 50.000 CVs otimizados. Taxa de sucesso comprovada em seleções de grandes empresas.">
+                50K+ Currículos Otimizados
+            </span>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-number">3x</div>
-            <div class="stat-label">
-                mais entrevistas conseguidas
-                <span class="vant-tooltip" tabindex="0" data-tooltip="Média de conversão de usuários ativos nos últimos 3 meses." style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
-                    
-                </span>
-            </div>
+
+        <div class="logo-text">VANT</div>
+
+        <div class="headline">
+            Vença o algoritmo ATS.<br>
+            <span class="highlight">Chegue na mão do recrutador.</span>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-number">100%</div>
-            <div class="stat-label">
-                Privado - Dados anonimizados
-                <span class="vant-tooltip" tabindex="0" data-tooltip="Processamento em memória volátil (RAM). Seus dados são destruídos após a sessão. Zero logs" style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
-                    
-                </span>
+
+        <div class="subheadline">
+            Nossa IA otimiza seu currículo para passar nos filtros automáticos 
+            e chegar direto no recrutador.
+        </div>
+    </div>
+
+    <div class="hero-section" style="margin-top: 80px;">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">+34%</div>
+                <div class="stat-label">
+                    de aprovação em ATS
+                    <span class="vant-tooltip" tabindex="0" data-tooltip="Aumento médio de pontuação comparado ao currículo original (Base: 50k+ processamentos)." style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
+                        
+                    </span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-number">3x</div>
+                <div class="stat-label">
+                    mais entrevistas conseguidas
+                    <span class="vant-tooltip" tabindex="0" data-tooltip="Média de conversão de usuários ativos nos últimos 3 meses." style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
+                        
+                    </span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">
+                    Privado - Dados anonimizados
+                    <span class="vant-tooltip" tabindex="0" data-tooltip="Processamento em memória volátil (RAM). Seus dados são destruídos após a sessão. Zero logs" style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
+                        
+                    </span>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Social Proof Section -->
-    <div style="margin: 60px 0; text-align: center;">
+    <div class="hero-section" style="text-align: center; margin-top: 80px;">
         <div id="testimonials-carousel" style="position: relative; overflow: hidden; border-radius: 16px;">
             <div class="testimonial-slide" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(16, 185, 129, 0.05)); 
                         border: 1px solid rgba(56, 189, 248, 0.2); 
                         border-radius: 16px; 
                         padding: 30px; 
-                        margin-bottom: 40px;
                         display: block;
                         position: relative;">
                 <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
@@ -108,7 +111,6 @@ const HERO_INNER_HTML = `
                         border: 1px solid rgba(239, 68, 68, 0.2); 
                         border-radius: 16px; 
                         padding: 30px; 
-                        margin-bottom: 40px;
                         display: none;
                         position: relative;">
                 <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(239, 68, 68, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
@@ -131,7 +133,6 @@ const HERO_INNER_HTML = `
                         border: 1px solid rgba(16, 185, 129, 0.2); 
                         border-radius: 16px; 
                         padding: 30px; 
-                        margin-bottom: 40px;
                         display: none;
                         position: relative;">
                 <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(16, 185, 129, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
@@ -154,7 +155,6 @@ const HERO_INNER_HTML = `
                         border: 1px solid rgba(168, 85, 247, 0.2); 
                         border-radius: 16px; 
                         padding: 30px; 
-                        margin-bottom: 40px;
                         display: none;
                         position: relative;">
                 <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(168, 85, 247, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
@@ -177,7 +177,6 @@ const HERO_INNER_HTML = `
                         border: 1px solid rgba(251, 146, 60, 0.2); 
                         border-radius: 16px; 
                         padding: 30px; 
-                        margin-bottom: 40px;
                         display: none;
                         position: relative;">
                 <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(251, 146, 60, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
@@ -206,7 +205,7 @@ const HERO_INNER_HTML = `
             </div>
         </div>
         
-        <div style="color: #64748B; font-size: 0.85rem; margin-bottom: 20px;">
+        <div style="color: #64748B; font-size: 0.85rem; margin-top: 24px; margin-bottom: 20px;">
             Aprovado por candidatos contratados em:
         </div>
         <div style="display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; opacity: 0.7;">
