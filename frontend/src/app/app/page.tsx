@@ -80,6 +80,9 @@ const HERO_INNER_HTML = `
                 </div>
             </div>
         </div>
+        <div style="text-align: center; margin-top: 20px; color: #64748B; font-size: 0.8rem; font-style: italic;">
+            Baseado em dados de 50.000+ processamentos reais
+        </div>
     </div>
 
     <!-- Por que funciona -->
