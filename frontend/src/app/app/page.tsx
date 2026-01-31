@@ -276,7 +276,7 @@ export default function AppPage() {
                 // Procurar por padrões de nome em todo o texto (não só no início)
                 const namePatterns = [
                     // Nome completo com 2-4 partes
-                    /\b([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,}(?:\s+(?:da|de|do|dos|das|e)\s+|\s+)[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,}(?:\s+(?:da|de|do|dos|das)\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,})?(?:\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,})?)\b/,
+                    /\b([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,}(?:\s+(?:da|de|do|dos|das|e)\s+|\s+)[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,}(?:\s+(?:da|de|do|dos)\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,})?)\b/,
                     // Nome simples (2 partes)
                     /\b([A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,}\s+[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜ][a-zàáâãäåçèéêëìíîïñòóôõöùúûü]{2,})\b/
                 ];
@@ -1655,127 +1655,166 @@ export default function AppPage() {
 
                                     <div style={{ height: 12 }} />
 
-                                    {/* ARQUITETURA DE PREÇOS V3 - Conversão Otimizada */}
+                                    {/* ARQUITETURA SAAS - "COMPARATIVO DESLEAL" */}
                                     <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: 24 }}>
 
-                                        {/* 1. PLANO HERO (PRO - VITALÍCIO) - O Foco Total */}
-                                        <div style={{
-                                            background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
-                                            border: "2px solid #10B981",
-                                            borderRadius: 16,
-                                            padding: "24px",
-                                            position: "relative",
-                                            boxShadow: "0 0 30px rgba(16, 185, 129, 0.15)"
-                                        }}>
-                                            {/* Badge de Ancoragem */}
-                                            <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
-                                                🔥 SEM MENSALIDADE • RECOMENDADO
-                                            </div>
+                                        {/* 1. HEADLINE DE CONVERSÃO - Foco na Dor do Volume */}
+                                        <div style={{ textAlign: "center", marginBottom: 8 }}>
+                                            <h3 style={{ color: "#E2E8F0", fontSize: "1.2rem", fontWeight: 700, margin: "0 0 8px 0" }}>
+                                                Não aposte seu futuro em uma única vaga.
+                                            </h3>
+                                            <p style={{ color: "#94A3B8", fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>
+                                                Candidatos que aplicam para <strong>10+ vagas</strong> aumentam em 5x as chances de entrevista.<br />
+                                                Jogue o jogo dos números.
+                                            </p>
+                                        </div>
 
-                                            {/* Header do Card */}
-                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
+                                        {/* CONTAINER DOS CARDS - Grid Responsivo */}
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "stretch" }}>
+
+                                            {/* CARD 1: SOLUÇÃO RÁPIDA (Âncora & Tripwire) */}
+                                            <div style={{
+                                                flex: "1 1 300px",
+                                                background: "rgba(15, 23, 42, 0.4)",
+                                                border: "1px solid rgba(148, 163, 184, 0.2)",
+                                                borderRadius: 16,
+                                                padding: "24px",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                justifyContent: "space-between"
+                                            }}>
                                                 <div>
-                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.2rem", marginBottom: 4 }}>PACOTE PRO</div>
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", fontWeight: 500 }}>Acesso Vitalício</div>
-                                                </div>
-                                                <div style={{ textAlign: "right" }}>
-                                                    <div style={{ textDecoration: "line-through", color: "#64748B", fontSize: "0.85rem" }}>R$ 99,90</div>
-                                                    <div style={{ fontSize: "2.2rem", fontWeight: 800, color: "#fff", lineHeight: 0.9 }}>R$ 69,90</div>
-                                                    <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 800, marginTop: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>PAGAMENTO ÚNICO</div>
+                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
+                                                        CRÉDITOS AVULSOS
+                                                    </div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "1.4rem", fontWeight: 700, marginBottom: 8 }}>
+                                                        A partir de R$ 9,90
+                                                    </div>
+                                                    <p style={{ color: "#64748B", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 24 }}>
+                                                        Ideal para ajustes pontuais ou se você já tem uma vaga específica em mente.
+                                                    </p>
+
+                                                    {/* Opção 1: Tripwire */}
+                                                    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
+                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 9,90</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedPlan("basico"); // ID backend para 1 CV
+                                                                if (!authUserId) setShowAuthModal(true);
+                                                                else setStage("pricing");
+                                                            }}
+                                                            style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                                                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
+                                                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                        >
+                                                            Comprar 1 Crédito
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Opção 2: O Decoy (Pacote Caro) */}
+                                                    <div>
+                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 5 CVs</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 39,90</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedPlan("pro"); // ID backend para Pacote
+                                                                if (!authUserId) setShowAuthModal(true);
+                                                                else setStage("pricing");
+                                                            }}
+                                                            style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                                                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
+                                                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                        >
+                                                            Comprar Pacote
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div style={{ height: 1, background: "rgba(16, 185, 129, 0.3)", margin: "0 0 20px 0" }}></div>
+                                            {/* CARD 2: HERO SAAS (O Foco da Venda) */}
+                                            <div style={{
+                                                flex: "1 1 300px",
+                                                background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
+                                                border: "2px solid #10B981",
+                                                borderRadius: 16,
+                                                padding: "24px",
+                                                position: "relative",
+                                                boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                justifyContent: "space-between"
+                                            }}>
+                                                <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
+                                                    🏆 RECOMENDADO PELA IA
+                                                </div>
 
-                                            {/* Lista de Benefícios - Melhor Legibilidade */}
-                                            <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: 24 }}>
-                                                <div style={{ display: "flex", gap: 12, alignItems: "start", fontSize: "0.95rem", color: "#E2E8F0", lineHeight: 1.4 }}>
-                                                    <div style={{ color: "#10B981", fontWeight: "bold", marginTop: 2 }}>✓</div>
-                                                    <span>Correção de até <strong>3 Vagas/Currículos</strong></span>
-                                                </div>
-                                                <div style={{ display: "flex", gap: 12, alignItems: "start", fontSize: "0.95rem", color: "#E2E8F0", lineHeight: 1.4 }}>
-                                                    <div style={{ color: "#10B981", fontWeight: "bold", marginTop: 2 }}>✓</div>
-                                                    <span><strong>Análise de Concorrência</strong> (Compare-se com quem foi contratado)</span>
-                                                </div>
-                                                <div style={{ display: "flex", gap: 12, alignItems: "start", fontSize: "0.95rem", color: "#E2E8F0", lineHeight: 1.4 }}>
-                                                    <div style={{ color: "#10B981", fontWeight: "bold", marginTop: 2 }}>✓</div>
-                                                    <span><strong>Simulador de Entrevista</strong> com IA</span>
-                                                </div>
-                                                <div style={{ display: "flex", gap: 12, alignItems: "start", fontSize: "0.95rem", color: "#E2E8F0", lineHeight: 1.4 }}>
-                                                    <div style={{ color: "#10B981", fontWeight: "bold", marginTop: 2 }}>✓</div>
-                                                    <span>Acesso à Biblioteca de Templates Premium</span>
-                                                </div>
-                                            </div>
+                                                <div>
+                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 4 }}>VANT PRO ILIMITADO</div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.4, marginBottom: 16 }}>
+                                                        Acelere sua recolocação aplicando para dezenas de vagas com qualidade máxima.
+                                                    </div>
 
-                                            {/* CTA Principal */}
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedPlan("pro");
-                                                    if (!authUserId) setShowAuthModal(true);
-                                                    else setStage("pricing");
-                                                }}
-                                                style={{ width: "100%", background: "#10B981", color: "#fff", border: "none", padding: "18px", borderRadius: 10, fontSize: "1.1rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)", transition: "all 0.2s" }}
-                                                onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                                                onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
-                                            >
-                                                DESBLOQUEAR PACOTE PRO
-                                            </button>
+                                                    <div style={{ textAlign: "left", marginBottom: 20 }}>
+                                                        <div style={{ textDecoration: "line-through", color: "#64748B", fontSize: "0.9rem" }}>De R$ 49,90</div>
+                                                        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                                                            <div style={{ fontSize: "2.4rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>R$ 29,90</div>
+                                                            <div style={{ color: "#94A3B8", fontWeight: 500 }}>/mês</div>
+                                                        </div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>CANCELE QUANDO QUISER</div>
+                                                    </div>
 
-                                            {/* HOOK DE CONFIANÇA (Garantia) */}
-                                            <div style={{ textAlign: "center", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.9 }}>
-                                                <span style={{ fontSize: "1rem" }}>🔒</span>
-                                                <span style={{ color: "#A7F3D0", fontSize: "0.8rem", fontWeight: 500 }}>Garantia de 7 dias • Acesso Imediato</span>
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#fff", fontWeight: 500 }}>
+                                                            <div style={{ background: "#10B981", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#064E3B", fontSize: "0.8rem", fontWeight: "bold" }}>✓</div>
+                                                            <span>Otimizações <strong>ILIMITADAS</strong></span>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981" }}>✓</div>
+                                                            <span>Análise de Concorrência (Gap Analysis)</span>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981" }}>✓</div>
+                                                            <span>Simulador de Entrevista com IA</span>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981" }}>✓</div>
+                                                            <span>Acesso ao Radar de Vagas</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedPlan("premium_plus"); // ID backend para Assinatura
+                                                            if (!authUserId) setShowAuthModal(true);
+                                                            else setStage("pricing");
+                                                        }}
+                                                        style={{ width: "100%", background: "#10B981", color: "#fff", border: "none", padding: "18px", borderRadius: 10, fontSize: "1.1rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.4)", transition: "transform 0.1s" }}
+                                                        onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
+                                                        onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+                                                    >
+                                                        COMEÇAR TESTE ILIMITADO
+                                                    </button>
+
+                                                    <div style={{ textAlign: "center", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.8 }}>
+                                                        <span style={{ fontSize: "1rem" }}>🔒</span>
+                                                        <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Garantia de 7 dias • Risco Zero</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* 2. OPÇÃO DE ASSINATURA (Diferenciada Visualmente) */}
-                                        <div style={{
-                                            background: "rgba(15, 23, 42, 0.4)",
-                                            border: "1px dashed rgba(56, 189, 248, 0.4)",
-                                            borderRadius: 12,
-                                            padding: "16px 20px",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            gap: 12
-                                        }}>
-                                            <div>
-                                                <div style={{ color: "#38BDF8", fontWeight: 700, fontSize: "0.9rem" }}>Precisa aplicar para muitas vagas?</div>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>Assinatura Mensal (30 CVs)</div>
-                                            </div>
-                                            <div style={{ textAlign: "right" }}>
-                                                <div style={{ color: "#fff", fontWeight: 700, fontSize: "1.1rem" }}>R$ 49,90<span style={{ fontSize: "0.8rem", color: "#94A3B8", fontWeight: 400 }}>/mês</span></div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setSelectedPlan("premium_plus");
-                                                        if (!authUserId) setShowAuthModal(true);
-                                                        else setStage("pricing");
-                                                    }}
-                                                    style={{ marginTop: 4, background: "transparent", color: "#38BDF8", border: "none", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", textDecoration: "underline", padding: 0 }}
-                                                >
-                                                    Escolher Assinatura
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* 3. RODAPÉ E NAVEGAÇÃO */}
-                                        <div style={{ textAlign: "center", marginTop: 12, display: "flex", flexDirection: "column", gap: 16 }}>
-                                            {/* Básico (Texto simples - Anchor Price) */}
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedPlan("basico");
-                                                    if (!authUserId) setShowAuthModal(true);
-                                                    else setStage("pricing");
-                                                }}
-                                                style={{ background: "transparent", border: "none", color: "#64748B", fontSize: "0.8rem", cursor: "pointer" }}
-                                            >
-                                                Não, obrigado. Quero apenas 1 otimização básica (R$ 29,90)
-                                            </button>
-
-                                            {/* Botão Voltar (Link Discreto) */}
+                                        {/* Botão Voltar Discreto */}
+                                        <div style={{ textAlign: "center", marginTop: 16 }}>
                                             <button
                                                 type="button"
                                                 onClick={() => setStage("hero")}
@@ -1810,7 +1849,7 @@ export default function AppPage() {
                             <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
                                 ✅ Logado como
                             </div>
-                            <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>{authEmail}</div>
+                            <div style={{ color: "#E2E8F0", fontSize: "0.95rem" }}>{authEmail}</div>
                         </div>
 
                         <div style={{ color: "#E2E8F0", fontSize: "1.5rem", fontWeight: 800, marginBottom: 8, textAlign: "center" }}>
