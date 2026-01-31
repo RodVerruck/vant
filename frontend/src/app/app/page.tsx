@@ -50,7 +50,7 @@ const HERO_INNER_HTML = `
         <div class="stat-card">
             <div class="stat-number">+34%</div>
             <div class="stat-label">
-                Score Médio<br>
+                de aprovação em ATS<br>
                 <span class="vant-tooltip" tabindex="0" data-tooltip="Aumento médio de pontuação comparado ao currículo original (Base: 50k+ processamentos).">
                     Otimização ℹ️
                 </span>
@@ -60,7 +60,7 @@ const HERO_INNER_HTML = `
         <div class="stat-card">
             <div class="stat-number">3x</div>
             <div class="stat-label">
-                Mais Entrevistas<br>
+                mais entrevistas conseguidas<br>
                 <span class="vant-tooltip" tabindex="0" data-tooltip="Média de conversão de usuários ativos nos últimos 3 meses.">
                     Performance ℹ️
                 </span>
@@ -70,9 +70,9 @@ const HERO_INNER_HTML = `
         <div class="stat-card">
             <div class="stat-number">100%</div>
             <div class="stat-label">
-                Privacidade<br>
+                Privado - Dados anonimizados<br>
                 <span class="vant-tooltip" tabindex="0" data-tooltip="Processamento em memória volátil (RAM). Seus dados são destruídos após a sessão. Zero logs">
-                    Dados Anônimos ℹ️
+                    Segurança ℹ️
                 </span>
             </div>
         </div>
