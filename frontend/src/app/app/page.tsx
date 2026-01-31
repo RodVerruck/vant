@@ -80,44 +80,22 @@ const HERO_INNER_HTML = `
 `;
 
 const LINKEDIN_INSTRUCTIONS_HTML = `
-    <div style="background: rgba(56, 189, 248, 0.05); 
-                border-left: 3px solid #38BDF8; 
+    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05)); 
+                border-left: 3px solid #10B981; 
                 padding: 16px; 
                 margin-bottom: 12px;
                 border-radius: 4px;">
+        <p style="color: #E2E8F0; font-size: 0.9rem; margin: 0 0 12px 0; line-height: 1.5; font-weight: 500;">
+            Quer descobrir os segredos de quem já foi contratado?
+        </p>
         <p style="color: #94A3B8; font-size: 0.85rem; margin: 0; line-height: 1.6;">
-            <strong>Quer descobrir os segredos de quem já foi contratado?</strong><br>
-            Anexe o CV de um profissional da área e a IA fará a engenharia reversa para aplicar os acertos no seu perfil.<br>
-            <br>
-            <span style="color: #E2E8F0;">⚡ Não tem arquivo? Fique tranquilo.</span><br>
-            
-            <span style="color: #FFFFFF; font-weight: 500; letter-spacing: 0.3px;">
-                O sistema usará automaticamente nosso padrão "Top Performer" para essa vaga.
+            Anexe o CV de um profissional da área e a IA fará engenharia reversa para aplicar os acertos no seu perfil.
+            <br><br>
+            <span style="color: #64748B; font-size: 0.8rem;">
+                Dica: Baixe um perfil do LinkedIn em PDF (botão "Mais" → "Salvar como PDF")
             </span>
         </p>
     </div>
-
-    <details style="
-        background: rgba(15, 23, 42, 0.4); 
-        border: 1px solid rgba(255,255,255,0.05);
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin-bottom: 16px;
-        cursor: pointer;
-        color: #94A3B8; 
-        font-size: 0.8rem;">
-        
-        <summary style="font-weight: 600; outline: none; list-style: none;">
-            💡 Como baixar um perfil do LinkedIn em PDF? (Clique aqui)
-        </summary>
-        
-        <ol style="margin-top: 12px; margin-bottom: 4px; padding-left: 20px; color: #cbd5e1; line-height: 1.6;">
-            <li>Acesse o perfil da pessoa no <strong>LinkedIn</strong> (pelo computador).</li>
-            <li>Clique no botão <strong>"Mais"</strong> (abaixo da foto/cargo).</li>
-            <li>Selecione a opção <strong>"Salvar como PDF"</strong>.</li>
-            <li>Anexe o arquivo baixado no campo abaixo 👇.</li>
-        </ol>
-    </details>
 `;
 
 function calculateDynamicCvCount(): number {
@@ -1148,45 +1126,163 @@ export default function AppPage() {
 
                             <div style={{ height: 16 }} />
 
-                            <details data-testid="stExpander">
-                                <summary>📂 Comparar com Referência de Mercado (Opcional)</summary>
-                                <div>
-                                    <div dangerouslySetInnerHTML={{ __html: LINKEDIN_INSTRUCTIONS_HTML }} />
-                                    {competitorFiles.length > 0 ? (
-                                        <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center", marginTop: 12 }}>
-                                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ {competitorFiles.length} arquivo(s) carregado(s)</div>
-                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", marginBottom: 8 }}>
-                                                {competitorFiles.map((f, i) => (
-                                                    <div key={i} style={{ marginBottom: 2 }}>{f.name}</div>
-                                                ))}
+                            {/* Toggle Top Performer - Agora visível como vantagem */}
+                            <div style={{
+                                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(16, 185, 129, 0.05))",
+                                border: "1px solid rgba(245, 158, 11, 0.25)",
+                                borderRadius: 12,
+                                padding: "16px 20px",
+                                marginBottom: 16
+                            }}>
+                                <div style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: 12,
+                                    marginBottom: competitorFiles.length > 0 ? 16 : 0
+                                }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                                        <div style={{
+                                            width: 40,
+                                            height: 40,
+                                            background: "linear-gradient(135deg, #F59E0B, #10B981)",
+                                            borderRadius: 10,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            fontSize: "1.3rem",
+                                            flexShrink: 0
+                                        }}>
+                                            🎯
+                                        </div>
+                                        <div>
+                                            <div style={{
+                                                color: "#F8FAFC",
+                                                fontSize: "0.95rem",
+                                                fontWeight: 700,
+                                                letterSpacing: "0.3px"
+                                            }}>
+                                                Calibração Top Performer
                                             </div>
-                                            <button type="button" onClick={() => setCompetitorFiles([])} style={{ fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                                                Remover todos
-                                            </button>
+                                            <div style={{
+                                                color: "#94A3B8",
+                                                fontSize: "0.8rem",
+                                                marginTop: 2
+                                            }}>
+                                                {competitorFiles.length > 0
+                                                    ? `Usando ${competitorFiles.length} arquivo(s) de referência`
+                                                    : "Use nosso padrão de mercado automaticamente"
+                                                }
+                                            </div>
                                         </div>
-                                    ) : (
-                                        <div data-testid="stFileUploader">
-                                            <section>
-                                                <div>
-                                                    <div>
-                                                        <span>Drag and drop file here</span>
-                                                    </div>
-                                                    <small>Limit: 10MB • PDF</small>
-                                                    <button type="button" onClick={openCompetitorFileDialog}>Browse files</button>
-                                                    <input
-                                                        ref={competitorUploaderInputRef}
-                                                        type="file"
-                                                        accept="application/pdf"
-                                                        multiple
-                                                        style={{ display: "none" }}
-                                                        onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
-                                                    />
-                                                </div>
-                                            </section>
-                                        </div>
-                                    )}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (competitorFiles.length > 0) {
+                                                setCompetitorFiles([]);
+                                            } else {
+                                                openCompetitorFileDialog();
+                                            }
+                                        }}
+                                        style={{
+                                            background: competitorFiles.length > 0
+                                                ? "linear-gradient(135deg, #10B981, #059669)"
+                                                : "linear-gradient(135deg, #F59E0B, #D97706)",
+                                            color: "#fff",
+                                            border: "none",
+                                            borderRadius: 20,
+                                            padding: "8px 16px",
+                                            fontSize: "0.8rem",
+                                            fontWeight: 700,
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 6,
+                                            whiteSpace: "nowrap"
+                                        }}
+                                    >
+                                        {competitorFiles.length > 0 ? (
+                                            <>✓ ATIVADO</>
+                                        ) : (
+                                            <>+ ADICIONAR CV DE REFERÊNCIA</>
+                                        )}
+                                    </button>
+                                    <input
+                                        ref={competitorUploaderInputRef}
+                                        type="file"
+                                        accept="application/pdf"
+                                        multiple
+                                        style={{ display: "none" }}
+                                        onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
+                                    />
                                 </div>
-                            </details>
+
+                                {competitorFiles.length > 0 && (
+                                    <div style={{
+                                        background: "rgba(16, 185, 129, 0.1)",
+                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                        borderRadius: 8,
+                                        padding: 12,
+                                        marginTop: 12
+                                    }}>
+                                        <div style={{
+                                            color: "#10B981",
+                                            fontSize: "0.85rem",
+                                            fontWeight: 600,
+                                            marginBottom: 8,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 6
+                                        }}>
+                                            ✅ Referência carregada
+                                        </div>
+                                        <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>
+                                            {competitorFiles.map((f, i) => (
+                                                <div key={i} style={{ marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                                                    <span style={{ color: "#64748B" }}>📄</span>
+                                                    {f.name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCompetitorFiles([])}
+                                            style={{
+                                                marginTop: 8,
+                                                fontSize: "0.75rem",
+                                                color: "#94A3B8",
+                                                background: "none",
+                                                border: "none",
+                                                cursor: "pointer",
+                                                textDecoration: "underline"
+                                            }}
+                                        >
+                                            Remover e usar padrão automático
+                                        </button>
+                                    </div>
+                                )}
+
+                                {competitorFiles.length === 0 && (
+                                    <div style={{
+                                        marginTop: 12,
+                                        padding: "10px 12px",
+                                        background: "rgba(15, 23, 42, 0.4)",
+                                        borderRadius: 6,
+                                        border: "1px dashed rgba(148, 163, 184, 0.2)"
+                                    }}>
+                                        <p style={{
+                                            color: "#94A3B8",
+                                            fontSize: "0.8rem",
+                                            margin: 0,
+                                            lineHeight: 1.5
+                                        }}>
+                                            💡 <strong style={{ color: "#E2E8F0" }}>Bônus incluído:</strong> Nossa IA aplicará automaticamente os padrões de quem foi contratado nessa área.
+                                            Quer calibrar com um perfil específico? Clique no botão acima.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
 
                             <div style={{ height: 8 }} />
 
