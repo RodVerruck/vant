@@ -1082,19 +1082,12 @@ export default function AppPage() {
                                                     textAlign: "left"
                                                 }}>
                                                     <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginBottom: 4 }}>📊 DETALHES DETECTADOS:</div>
-                                                    {pdfMetadata.candidateName && (
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
-                                                            <strong>Nome:</strong> {pdfMetadata.candidateName}
-                                                        </div>
-                                                    )}
                                                     {pdfMetadata.pages && (
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
+                                                        <div style={{ color: pdfMetadata.pages > 3 ? "#FBBF24" : "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
                                                             <strong>Páginas:</strong> {pdfMetadata.pages}
+                                                            {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6 }}>(Longo)</span>}
                                                         </div>
                                                     )}
-                                                    <div style={{ color: "#10B981", fontSize: "0.8rem", marginTop: 6, fontStyle: "italic" }}>
-                                                        💡 Pronto para análise inteligente
-                                                    </div>
                                                 </div>
                                             )}
 
@@ -1123,217 +1116,176 @@ export default function AppPage() {
                                         </div>
                                     )}
                                 </div>
-                            </div>
 
-                            <div style={{ height: 16 }} />
+                                <div style={{ height: 16 }} />
 
-                            {/* Toggle Top Performer - Agora visível como vantagem */}
-                            <div style={{
-                                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(16, 185, 129, 0.05))",
-                                border: "1px solid rgba(245, 158, 11, 0.25)",
-                                borderRadius: 12,
-                                padding: "16px 20px",
-                                marginBottom: 16
-                            }}>
+                                {/* Toggle Top Performer - Agora visível como vantagem */}
                                 <div style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                    gap: 12,
-                                    marginBottom: competitorFiles.length > 0 ? 16 : 0
+                                    background: "linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(16, 185, 129, 0.05))",
+                                    border: "1px solid rgba(245, 158, 11, 0.25)",
+                                    borderRadius: 12,
+                                    padding: "16px 20px",
+                                    marginBottom: 16
                                 }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
-                                        <div style={{
-                                            width: 40,
-                                            height: 40,
-                                            background: "linear-gradient(135deg, #F59E0B, #10B981)",
-                                            borderRadius: 10,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            fontSize: "1.3rem",
-                                            flexShrink: 0
-                                        }}>
-                                            🎯
-                                        </div>
-                                        <div>
-                                            <div style={{
-                                                color: "#F8FAFC",
-                                                fontSize: "0.95rem",
-                                                fontWeight: 700,
-                                                letterSpacing: "0.3px"
-                                            }}>
-                                                Calibração Top Performer
-                                            </div>
-                                            <div style={{
-                                                color: "#94A3B8",
-                                                fontSize: "0.8rem",
-                                                marginTop: 2
-                                            }}>
-                                                {competitorFiles.length > 0
-                                                    ? `Usando ${competitorFiles.length} arquivo(s) de referência`
-                                                    : "Use nosso padrão de mercado automaticamente"
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (competitorFiles.length > 0) {
-                                                setCompetitorFiles([]);
-                                            } else {
-                                                openCompetitorFileDialog();
-                                            }
-                                        }}
-                                        style={{
-                                            background: competitorFiles.length > 0
-                                                ? "linear-gradient(135deg, #10B981, #059669)"
-                                                : "transparent",
-                                            color: competitorFiles.length > 0 ? "#fff" : "#94A3B8",
-                                            border: competitorFiles.length > 0
-                                                ? "none"
-                                                : "1px solid rgba(148, 163, 184, 0.4)",
-                                            borderRadius: 20,
-                                            padding: "8px 16px",
-                                            fontSize: "0.8rem",
-                                            fontWeight: 600,
-                                            cursor: "pointer",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 6,
-                                            whiteSpace: "nowrap",
-                                            transition: "all 0.2s ease"
-                                        }}
-                                    >
-                                        {competitorFiles.length > 0 ? (
-                                            <>✓ ATIVADO</>
-                                        ) : (
-                                            <>+ ADICIONAR CV DE REFERÊNCIA</>
-                                        )}
-                                    </button>
-                                    <input
-                                        ref={competitorUploaderInputRef}
-                                        type="file"
-                                        accept="application/pdf"
-                                        multiple
-                                        style={{ display: "none" }}
-                                        onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
-                                    />
-                                </div>
-
-                                {competitorFiles.length > 0 && (
                                     <div style={{
-                                        background: "rgba(16, 185, 129, 0.1)",
-                                        border: "1px solid rgba(16, 185, 129, 0.3)",
-                                        borderRadius: 8,
-                                        padding: 12,
-                                        marginTop: 12
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        gap: 12,
+                                        marginBottom: competitorFiles.length > 0 ? 16 : 0
                                     }}>
-                                        <div style={{
-                                            color: "#10B981",
-                                            fontSize: "0.85rem",
-                                            fontWeight: 600,
-                                            marginBottom: 8,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 6
-                                        }}>
-                                            ✅ Referência carregada
-                                        </div>
-                                        <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>
-                                            {competitorFiles.map((f, i) => (
-                                                <div key={i} style={{ marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
-                                                    <span style={{ color: "#64748B" }}>📄</span>
-                                                    {f.name}
+                                        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                                            <div style={{
+                                                width: 40,
+                                                height: 40,
+                                                background: "linear-gradient(135deg, #F59E0B, #10B981)",
+                                                borderRadius: 10,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                fontSize: "1.3rem",
+                                                flexShrink: 0
+                                            }}>
+                                                🎯
+                                            </div>
+                                            <div>
+                                                <div style={{
+                                                    color: "#F8FAFC",
+                                                    fontSize: "0.95rem",
+                                                    fontWeight: 700,
+                                                    letterSpacing: "0.3px"
+                                                }}>
+                                                    Calibração Top Performer
                                                 </div>
-                                            ))}
+                                                <div style={{
+                                                    color: "#94A3B8",
+                                                    fontSize: "0.8rem",
+                                                    marginTop: 2
+                                                }}>
+                                                    {competitorFiles.length > 0
+                                                        ? `Usando ${competitorFiles.length} arquivo(s) de referência`
+                                                        : "Use nosso padrão de mercado automaticamente"
+                                                    }
+                                                </div>
+                                            </div>
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => setCompetitorFiles([])}
+                                            onClick={() => {
+                                                if (competitorFiles.length > 0) {
+                                                    setCompetitorFiles([]);
+                                                } else {
+                                                    openCompetitorFileDialog();
+                                                }
+                                            }}
                                             style={{
-                                                marginTop: 8,
-                                                fontSize: "0.75rem",
-                                                color: "#94A3B8",
-                                                background: "none",
-                                                border: "none",
+                                                background: competitorFiles.length > 0
+                                                    ? "linear-gradient(135deg, #10B981, #059669)"
+                                                    : "transparent",
+                                                color: competitorFiles.length > 0 ? "#fff" : "#94A3B8",
+                                                border: competitorFiles.length > 0
+                                                    ? "none"
+                                                    : "1px solid rgba(148, 163, 184, 0.4)",
+                                                borderRadius: 20,
+                                                padding: "8px 16px",
+                                                fontSize: "0.8rem",
+                                                fontWeight: 600,
                                                 cursor: "pointer",
-                                                textDecoration: "underline"
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 6,
+                                                whiteSpace: "nowrap",
+                                                transition: "all 0.2s ease"
                                             }}
                                         >
-                                            Remover e usar padrão automático
+                                            {competitorFiles.length > 0 ? (
+                                                <>✓ ATIVADO</>
+                                            ) : (
+                                                <>+ ADICIONAR CV DE REFERÊNCIA</>
+                                            )}
                                         </button>
+                                        <input
+                                            ref={competitorUploaderInputRef}
+                                            type="file"
+                                            accept="application/pdf"
+                                            multiple
+                                            style={{ display: "none" }}
+                                            onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
+                                        />
                                     </div>
-                                )}
 
-                                {competitorFiles.length === 0 && (
-                                    <div style={{
-                                        marginTop: 12,
-                                        padding: "10px 12px",
-                                        background: "rgba(15, 23, 42, 0.4)",
-                                        borderRadius: 6,
-                                        border: "1px dashed rgba(148, 163, 184, 0.2)"
-                                    }}>
-                                        <p style={{
-                                            color: "#94A3B8",
-                                            fontSize: "0.8rem",
-                                            margin: 0,
-                                            lineHeight: 1.5
+                                    {competitorFiles.length > 0 && (
+                                        <div style={{
+                                            background: "rgba(16, 185, 129, 0.1)",
+                                            border: "1px solid rgba(16, 185, 129, 0.3)",
+                                            borderRadius: 8,
+                                            padding: 12,
+                                            marginTop: 12
                                         }}>
-                                            💡 <strong style={{ color: "#E2E8F0" }}>Bônus incluído:</strong> Nossa IA aplicará automaticamente os padrões de quem foi contratado nessa área.
-                                            Quer calibrar com um perfil específico? Clique no botão acima.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
+                                            <div style={{
+                                                color: "#10B981",
+                                                fontSize: "0.85rem",
+                                                fontWeight: 600,
+                                                marginBottom: 8,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 6
+                                            }}>
+                                                ✅ Referência carregada
+                                            </div>
+                                            <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>
+                                                {competitorFiles.map((f, i) => (
+                                                    <div key={i} style={{ marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                                                        <span style={{ color: "#64748B" }}>📄</span>
+                                                        {f.name}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setCompetitorFiles([])}
+                                                style={{
+                                                    marginTop: 8,
+                                                    fontSize: "0.75rem",
+                                                    color: "#94A3B8",
+                                                    background: "none",
+                                                    border: "none",
+                                                    cursor: "pointer",
+                                                    textDecoration: "underline"
+                                                }}
+                                            >
+                                                Remover e usar padrão automático
+                                            </button>
+                                        </div>
+                                    )}
 
-                            <div style={{ height: 8 }} />
-
-                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                    {competitorFiles.length === 0 && (
+                                        <div style={{
+                                            marginTop: 12,
+                                            padding: "10px 12px",
+                                            background: "rgba(15, 23, 42, 0.4)",
+                                            borderRadius: 6,
+                                            border: "1px dashed rgba(148, 163, 184, 0.2)"
+                                        }}>
+                                            <p style={{
+                                                color: "#94A3B8",
+                                                fontSize: "0.8rem",
+                                                margin: 0,
+                                                lineHeight: 1.5
+                                            }}>
+                                                💡 <strong style={{ color: "#E2E8F0" }}>Bônus incluído:</strong> Nossa IA aplicará automaticamente os padrões de quem foi contratado nessa área.
+                                                Quer calibrar com um perfil específico? Clique no botão acima.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
                                 <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
-                                    ANALISAR COMPATIBILIDADE 🔍
+                                    ANALISAR COMPATIBILIDADE
                                 </button>
                             </div>
-
-                            {apiError && (
-                                <div style={{ marginTop: 12, color: "#EF4444", fontSize: "0.85rem" }}>{apiError}</div>
-                            )}
-
-                            <p className="cta-trust-line" style={{ textAlign: "center", color: "#64748B", fontSize: "0.8rem", marginTop: 15 }}>
-                                🛡️ <strong>1ª análise 100% gratuita e segura.</strong>
-                                <br />
-                                Seus dados são processados em RAM volátil e deletados após a sessão.
-                            </p>
                         </div>
                     </div>
-
-                    <div style={{ marginTop: 20 }} dangerouslySetInnerHTML={{ __html: trustFooterHtml }} />
                 </>
-            )}
-
-            {stage === "processing_premium" && (
-                <div className="hero-container">
-                    <div className="loading-logo">vant.neural engine</div>
-                    <div style={{ maxWidth: 680, margin: "0 auto" }}>
-                        <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
-                            <div
-                                style={{
-                                    width: `${Math.max(0, Math.min(100, progress))}%`,
-                                    height: "100%",
-                                    background: "linear-gradient(90deg, #10B981, #38BDF8)",
-                                    transition: "width 0.25s ease",
-                                }}
-                            />
-                        </div>
-
-                        <div style={{ marginTop: 18 }}>
-                            <div className="terminal-log" style={{ color: "#10B981" }}>
-                                &gt;&gt; {statusText || "Processando..."}
-                            </div>
-                        </div>
-                    </div>
-                </div>
             )}
 
             {stage === "paid" && (
