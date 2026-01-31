@@ -1978,6 +1978,52 @@ export default function AppPage() {
                                             <div style={{ textAlign: "center", marginTop: "4px", color: "#64748B", fontSize: "0.75rem" }}>
                                                 Aceitamos Visa, Mastercard, PIX e Amex
                                             </div>
+
+                                            {/* TRUST SIGNALS - SVGs OFICIAIS & BLINDAGEM */}
+                                            <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+
+                                                {/* Ícones de Pagamento (Grayscale -> Color on Hover) */}
+                                                <div
+                                                    style={{ display: "flex", alignItems: "center", gap: 20, opacity: 0.7, filter: "grayscale(100%)", transition: "all 0.3s ease" }}
+                                                    onMouseEnter={(e) => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.opacity = "1"; }}
+                                                    onMouseLeave={(e) => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.opacity = "0.7"; }}
+                                                >
+                                                    {/* PIX (Logo Oficial) */}
+                                                    <svg height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M16.19 2H7.81C4.17 2 2 4.17 2 7.81V16.18C2 19.83 4.17 22 7.81 22H16.18C19.82 22 21.99 19.83 21.99 16.19V7.81C22 4.17 19.83 2 16.19 2ZM17.29 13.73L13.68 17.34C13.29 17.73 12.65 17.73 12.26 17.34L10.97 16.05L9.69 17.34C9.3 17.73 8.66 17.73 8.27 17.34C7.88 16.95 7.88 16.31 8.27 15.92L9.56 14.63L8.27 13.34C7.88 12.95 7.88 12.31 8.27 11.92C8.66 11.53 9.3 11.53 9.69 11.92L10.98 13.21L12.27 11.92C12.66 11.53 13.3 11.53 13.69 11.92L14.98 13.21L16.27 11.92C16.66 11.53 17.3 11.53 17.69 11.92C18.08 12.31 18.08 12.95 17.69 13.34L17.29 13.73Z" fill="#32BCAD" />
+                                                    </svg>
+
+                                                    {/* VISA (Logo Oficial) */}
+                                                    <svg height="16" viewBox="0 0 48 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M19.78 0.400024H24.72L21.64 15.6H16.7L19.78 0.400024Z" fill="#1A1F71" />
+                                                        <path d="M12.9 0.400024C11.66 0.400024 10.64 1.04002 10.14 2.22002L3.53998 15.6H8.69998L9.75998 12.76H16.28L16.88 15.6H21.46L16.62 0.400024H12.9ZM11.08 9.16002L12.58 4.96002L14.7 9.16002H11.08Z" fill="#1A1F71" />
+                                                        <path d="M37.94 2.76002C37.3 2.50002 36.4 2.28002 35.26 2.28002C32.18 2.28002 30 3.90002 29.98 6.22002C29.96 7.92002 31.52 8.86002 32.7 9.42002C33.9 9.98002 34.32 10.36 34.32 10.92C34.32 11.78 33.28 12.16 32.28 12.16C31.3 12.16 30.64 11.92 29.84 11.56L29.1 14.88C29.94 15.26 31.42 15.6 32.96 15.6C36.26 15.6 38.42 14 38.44 11.56C38.44 9.68002 36.68 8.82002 35.6 8.30002C34.42 7.74002 34.02 7.34002 34.02 6.80002C34.02 6.02002 34.92 5.68002 35.8 5.68002C36.56 5.68002 37.26 5.86002 37.8 6.10002L37.94 2.76002Z" fill="#F7B600" />
+                                                        <path d="M47.76 0.400024H43.92C42.84 0.400024 42 0.980024 41.58 2.02002L35.54 15.6H40.54L41.54 12.76L44.22 2.58002L45.06 6.74002C45.24 7.74002 45.4 8.78002 45.54 9.80002L47.76 0.400024Z" fill="#1A1F71" />
+                                                        <path d="M5.56002 0.400024H0.22002L0.0200195 1.34002C4.34002 2.38002 7.64002 5.54002 9.70002 9.16002L8.34002 2.58002C8.04002 1.20002 6.84002 0.400024 5.56002 0.400024Z" fill="#1A1F71" />
+                                                    </svg>
+
+                                                    {/* MASTERCARD (Logo Oficial) */}
+                                                    <svg height="24" viewBox="0 0 38 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <circle cx="12" cy="12" r="12" fill="#EB001B" />
+                                                        <circle cx="26" cy="12" r="12" fill="#F79E1B" />
+                                                        <path d="M19 15.93C20.65 14.93 21.76 13.14 21.76 11.08C21.76 9.02 20.65 7.23 19 6.23C17.35 7.23 16.24 9.02 16.24 11.08C16.24 13.14 17.35 14.93 19 15.93Z" fill="#FF5F00" />
+                                                    </svg>
+
+                                                    {/* AMEX (Logo Oficial) */}
+                                                    <svg height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <rect width="32" height="32" rx="4" fill="#006FCF" />
+                                                        <path d="M22.5 14H24.5V18H22.5V14ZM10 14H8V18H10C10.5 18 11 17.5 11 17V15C11 14.5 10.5 14 10 14ZM26 13H21.5V19H26V13ZM12 13H7V19H12V13Z" fill="white" />
+                                                        <path d="M19.5 19H18L16.5 16L15 19H13.5L15.75 14.5L13.5 10H15L16.5 13L18 10H19.5L17.25 14.5L19.5 19Z" fill="white" />
+                                                    </svg>
+                                                </div>
+
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                    <span style={{ fontSize: "0.9rem" }}>🔒</span>
+                                                    <span style={{ color: "#64748B", fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.3px" }}>
+                                                        Pagamento processado via Stripe • Dados Criptografados
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </>
                                     )}
 
