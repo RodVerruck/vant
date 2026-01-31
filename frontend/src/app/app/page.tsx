@@ -77,6 +77,33 @@ const HERO_INNER_HTML = `
             </div>
         </div>
     </div>
+
+    <!-- Social Proof Section -->
+    <div style="margin: 60px 0; text-align: center;">
+        <div style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(16, 185, 129, 0.05)); 
+                    border: 1px solid rgba(56, 189, 248, 0.2); 
+                    border-radius: 16px; 
+                    padding: 30px; 
+                    margin-bottom: 40px;">
+            <div style="font-size: 1.1rem; color: #E2E8F0; margin-bottom: 15px; font-style: italic;">
+                "Consegui 5 entrevistas em 1 semana após otimizar meu CV. Cheguei na final na Nubank!"
+            </div>
+            <div style="color: #94A3B8; font-size: 0.9rem;">
+                <strong>Maria L.</strong> • Desenvolvedora Frontend • Contratada
+            </div>
+        </div>
+        
+        <div style="color: #64748B; font-size: 0.85rem; margin-bottom: 20px;">
+            Aprovado por candidatos contratados em:
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; opacity: 0.7;">
+            <span style="font-size: 1.2rem; font-weight: 700; color: #94A3B8;">Google</span>
+            <span style="font-size: 1.2rem; font-weight: 900; font-style: italic; color: #94A3B8;">amazon</span>
+            <span style="font-size: 1.2rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #94A3B8;">MICROSOFT</span>
+            <span style="font-size: 1.2rem; font-weight: 600; letter-spacing: -0.5px; color: #94A3B8;">Nubank</span>
+            <span style="font-size: 1.2rem; font-weight: 700; color: #94A3B8;">Itaú</span>
+        </div>
+    </div>
 `;
 
 const LINKEDIN_INSTRUCTIONS_HTML = `
