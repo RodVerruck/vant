@@ -1308,7 +1308,11 @@ export default function AppPage() {
                                                     data-kind="secondary"
                                                     onClick={() => {
                                                         setSelectedPlan("basico");
-                                                        setStage("checkout");
+                                                        if (!authUserId) {
+                                                            setShowAuthModal(true);
+                                                        } else {
+                                                            setStage("pricing");
+                                                        }
                                                     }}
                                                     style={{ width: "100%" }}
                                                 >
@@ -1348,7 +1352,11 @@ export default function AppPage() {
                                                     data-kind="secondary"
                                                     onClick={() => {
                                                         setSelectedPlan("pro");
-                                                        setStage("checkout");
+                                                        if (!authUserId) {
+                                                            setShowAuthModal(true);
+                                                        } else {
+                                                            setStage("pricing");
+                                                        }
                                                     }}
                                                     style={{ width: "100%" }}
                                                 >
@@ -1382,7 +1390,11 @@ export default function AppPage() {
                                                     data-kind="secondary"
                                                     onClick={() => {
                                                         setSelectedPlan("premium_plus");
-                                                        setStage("checkout");
+                                                        if (!authUserId) {
+                                                            setShowAuthModal(true);
+                                                        } else {
+                                                            setStage("pricing");
+                                                        }
                                                     }}
                                                     style={{ width: "100%" }}
                                                 >
