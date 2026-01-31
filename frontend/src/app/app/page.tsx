@@ -1159,22 +1159,7 @@ export default function AppPage() {
                                         <textarea
                                             value={jobDescription}
                                             onChange={(e) => setJobDescription(e.target.value)}
-                                            placeholder="Cole aqui a descrição completa da vaga...
-
-Exemplo:
-📌 Cargo: Desenvolvedor Frontend Pleno
-📍 Local: São Paulo/SP (Híbrido)
-💰 Salário: R$ 8.000 - R$ 12.000
-
-Requisitos:
-• React, TypeScript e Next.js
-• 3+ anos de experiência
-• Inglês intermediário
-
-Responsabilidades:
-• Desenvolver novas funcionalidades
-• Manter e otimizar aplicações existentes
-• Colaborar com equipe de UX/UI"
+                                            placeholder="Cole aqui a descrição da vaga (Título, Requisitos e Responsabilidades)..."
                                             style={{ height: 185, width: "100%", boxSizing: "border-box" }}
                                         />
                                     </div>
