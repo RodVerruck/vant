@@ -86,9 +86,11 @@ const HERO_INNER_HTML = `
                         border-radius: 16px; 
                         padding: 30px; 
                         margin-bottom: 40px;
-                        display: block;">
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        display: block;
+                        position: relative;">
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(56, 189, 248, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
                         ML
                     </div>
                     <div style="flex: 1;">
@@ -97,7 +99,7 @@ const HERO_INNER_HTML = `
                         </div>
                     </div>
                 </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
                     <strong>Maria L.</strong> • Desenvolvedora Frontend • Contratada @ Nubank
                 </div>
             </div>
@@ -107,9 +109,11 @@ const HERO_INNER_HTML = `
                         border-radius: 16px; 
                         padding: 30px; 
                         margin-bottom: 40px;
-                        display: none;">
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #f59e0b); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        display: none;
+                        position: relative;">
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(239, 68, 68, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #f59e0b); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
                         JS
                     </div>
                     <div style="flex: 1;">
@@ -118,7 +122,7 @@ const HERO_INNER_HTML = `
                         </div>
                     </div>
                 </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
                     <strong>João S.</strong> • Engenheiro de Software • Contratado @ Google
                 </div>
             </div>
@@ -128,9 +132,11 @@ const HERO_INNER_HTML = `
                         border-radius: 16px; 
                         padding: 30px; 
                         margin-bottom: 40px;
-                        display: none;">
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        display: none;
+                        position: relative;">
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(16, 185, 129, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
                         AS
                     </div>
                     <div style="flex: 1;">
@@ -139,7 +145,7 @@ const HERO_INNER_HTML = `
                         </div>
                     </div>
                 </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
                     <strong>Ana S.</strong> • Product Manager • Contratada @ Microsoft
                 </div>
             </div>
@@ -149,9 +155,11 @@ const HERO_INNER_HTML = `
                         border-radius: 16px; 
                         padding: 30px; 
                         margin-bottom: 40px;
-                        display: none;">
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        display: none;
+                        position: relative;">
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(168, 85, 247, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);">
                         RC
                     </div>
                     <div style="flex: 1;">
@@ -160,7 +168,7 @@ const HERO_INNER_HTML = `
                         </div>
                     </div>
                 </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
                     <strong>Roberto C.</strong> • Data Scientist • Contratado @ Itaú Unibanco
                 </div>
             </div>
@@ -170,9 +178,11 @@ const HERO_INNER_HTML = `
                         border-radius: 16px; 
                         padding: 30px; 
                         margin-bottom: 40px;
-                        display: none;">
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px;">
-                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #facc15); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0;">
+                        display: none;
+                        position: relative;">
+                <div style="position: absolute; top: 20px; left: 20px; font-size: 3rem; color: rgba(251, 146, 60, 0.2); font-family: Georgia, serif; line-height: 1;">"</div>
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 15px; padding-left: 40px;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #fb923c, #facc15); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(251, 146, 60, 0.3);">
                         PF
                     </div>
                     <div style="flex: 1;">
@@ -181,7 +191,7 @@ const HERO_INNER_HTML = `
                         </div>
                     </div>
                 </div>
-                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left;">
+                <div style="color: #94A3B8; font-size: 0.9rem; text-align: left; padding-left: 40px;">
                     <strong>Patrícia F.</strong> • UX Designer • Contratada @ Amazon
                 </div>
             </div>
