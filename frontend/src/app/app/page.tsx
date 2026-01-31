@@ -1616,26 +1616,22 @@ export default function AppPage() {
                             "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
 
                         const xrayHtml = `
-        <div style='background: rgba(15, 23, 42, 0.6); border: 1px solid #38BDF8; padding: 20px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 25px;'>
-            <div style="position: absolute; top: -10px; right: -10px; background: #38BDF8; width: 50px; height: 50px; filter: blur(30px); opacity: 0.2;"></div>
+        <div style='background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(56, 189, 248, 0.2); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;'>
+            <div style="position: absolute; top: -20px; right: -20px; background: #38BDF8; width: 60px; height: 60px; filter: blur(40px); opacity: 0.1;"></div>
             
-            <h3 style='color: #38BDF8; margin-top: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;'>
-                🎯 Radar de Recrutadores Ativo
-            </h3>
-            
-            <p style='color: #94A3B8; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.4;'>
-                Nossa varredura X-Ray já configurou os algoritmos para localizar <strong>${texto_destaque}</strong> no LinkedIn (Mercado Oculto).
-            </p>
-            
-            <div style='background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 2px solid #38BDF8; font-family: monospace; font-size: 0.75rem; color: #10B981; overflow-x: hidden; white-space: nowrap;'>
-                site:linkedin.com/in/ "talent acquisition" "hiring" ...
-            </div>
-            
-            <div style='text-align: center;'>
-                <div style='background: rgba(245,158,11,0.1); padding: 8px 12px; border-radius: 6px; border: 1px dashed #F59E0B; display: inline-block;'>
-                    <p style='color: #F59E0B; font-weight: 700; margin: 0; font-size: 0.75rem;'>
-                        🔒 Lista pronta para acesso no Dossiê
+            <div style="display: flex; gap: 12px; align-items: start;">
+                <div style="font-size: 1.2rem; background: rgba(56, 189, 248, 0.1); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">🕵️</div>
+                <div style="flex: 1;">
+                    <h3 style='color: #E2E8F0; margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600;'>
+                        Radar de Recrutadores Ativo
+                    </h3>
+                    <p style='color: #94A3B8; font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.4;'>
+                        Detectamos padrões para localizar <strong>${texto_destaque}</strong>.
                     </p>
+                    
+                    <div style='background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 4px; border-left: 2px solid #38BDF8; font-family: monospace; font-size: 0.7rem; color: #38BDF8; overflow-x: hidden; white-space: nowrap; opacity: 0.8;'>
+                        site:linkedin.com/in/ "hiring" "${jobText.split(' ')[0]}..."
+                    </div>
                 </div>
             </div>
         </div>
