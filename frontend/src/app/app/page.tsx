@@ -1269,7 +1269,7 @@ export default function AppPage() {
                                                     fontWeight: 700,
                                                     letterSpacing: "0.3px"
                                                 }}>
-                                                    Referência de Candidato Ideal
+                                                    Referência de Candidato Ideal <span style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 400 }}>(Opcional)</span>
                                                 </div>
                                                 <div style={{
                                                     color: "#94A3B8",
