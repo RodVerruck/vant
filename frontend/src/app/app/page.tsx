@@ -1149,10 +1149,10 @@ Responsabilidades:
                                             <section>
                                                 <div>
                                                     <div>
-                                                        <span>Drag and drop file here</span>
+                                                        <span>Arraste aqui ou clique para selecionar</span>
                                                     </div>
-                                                    <small>Limit: 10MB • PDF</small>
-                                                    <button type="button" onClick={openFileDialog}>Browse files</button>
+                                                    <small>✓ PDF ou DOCX • Máx. 10MB</small>
+                                                    <button type="button" onClick={openFileDialog}>Selecionar Arquivo</button>
                                                     <input
                                                         ref={uploaderInputRef}
                                                         type="file"
@@ -1345,7 +1345,30 @@ Responsabilidades:
                                     )}
                                 </div>
                                 <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                    <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
+                                    <button
+                                        type="button"
+                                        data-kind="primary"
+                                        onClick={onStart}
+                                        style={{
+                                            width: "100%",
+                                            transition: "all 0.2s ease",
+                                            cursor: "pointer"
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = "translateY(-2px)";
+                                            e.currentTarget.style.boxShadow = "0 8px 24px rgba(255, 140, 66, 0.4)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = "translateY(0)";
+                                            e.currentTarget.style.boxShadow = "";
+                                        }}
+                                        onMouseDown={(e) => {
+                                            e.currentTarget.style.transform = "scale(0.98)";
+                                        }}
+                                        onMouseUp={(e) => {
+                                            e.currentTarget.style.transform = "translateY(-2px)";
+                                        }}
+                                    >
                                         ANALISAR COMPATIBILIDADE
                                     </button>
                                 </div>
