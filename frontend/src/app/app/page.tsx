@@ -1434,7 +1434,7 @@ export default function AppPage() {
                                             e.currentTarget.style.transform = "translateY(-2px)";
                                         }}
                                     >
-                                        ANALISAR COMPATIBILIDADE
+                                        VER MEU SCORE ATS GRÁTIS
                                     </button>
                                 </div>
                             </div>
