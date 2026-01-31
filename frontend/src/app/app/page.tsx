@@ -1163,19 +1163,19 @@ export default function AppPage() {
                                             style={{ height: 185, width: "100%", boxSizing: "border-box" }}
                                         />
                                     </div>
-                                    {jobDescription && jobDescription.length < 50 && (
-                                        <div style={{
-                                            marginTop: 8,
-                                            color: "#F59E0B",
-                                            fontSize: "0.8rem",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 6
-                                        }}>
-                                            <span>⚠️</span>
-                                            <span>Para um resultado preciso, recomendamos colar a descrição inteira da vaga, não apenas o título.</span>
-                                        </div>
-                                    )}
+                                    <div style={{
+                                        marginTop: 8,
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        color: jobDescription && jobDescription.length >= 500 ? "#10B981" : "#64748B",
+                                        fontSize: "0.8rem"
+                                    }}>
+                                        <span>Caracteres: {jobDescription ? jobDescription.length : 0}/500</span>
+                                        <span style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
+                                            💡 Cole a descrição completa para melhores resultados
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div style={{ flex: "1 1 380px" }}>
