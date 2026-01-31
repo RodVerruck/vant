@@ -22,6 +22,14 @@
     --text-muted: #CBD5E1;
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-bg: rgba(255, 255, 255, 0.03);
+
+    /* Escala Tipográfica Padronizada */
+    --font-light: 300;
+    /* Corpo/texto corrido */
+    --font-regular: 400;
+    /* Secundário/subtítulos */
+    --font-bold: 700;
+    /* Destaque/headlines */
 }
 
 /* ============================================================
@@ -169,7 +177,8 @@ body,
 /* Headline Poderosa */
 .headline {
     font-size: 2.5rem;
-    font-weight: 700;
+    font-weight: var(--font-bold);
+    /* Bold para destaque */
     line-height: 1.2;
     margin-bottom: 20px;
     color: var(--text-main);
@@ -198,7 +207,8 @@ body,
     font-size: 1.3rem;
     /* Aumentado de 1.2rem para melhor legibilidade (~21px) */
     color: var(--text-muted);
-    font-weight: 300;
+    font-weight: var(--font-light);
+    /* Light para corpo */
     max-width: 700px;
     margin: 0 auto 40px;
     line-height: 1.6;
@@ -229,7 +239,8 @@ body,
 
 .stat-number {
     font-size: 2rem;
-    font-weight: 900;
+    font-weight: var(--font-bold);
+    /* Bold para destaque */
     margin-bottom: 5px;
     background: linear-gradient(135deg, var(--primary-blue), #818CF8);
     -webkit-background-clip: text;
@@ -239,7 +250,8 @@ body,
 .stat-label {
     font-size: 0.85rem;
     color: var(--text-muted);
-    font-weight: 500;
+    font-weight: var(--font-regular);
+    /* Regular para secundário */
     line-height: 1.3;
 }
 
