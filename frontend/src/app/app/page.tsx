@@ -971,10 +971,23 @@ export default function AppPage() {
                                         <textarea
                                             value={jobDescription}
                                             onChange={(e) => setJobDescription(e.target.value)}
-                                            placeholder="Dê um Ctrl+V sem medo..."
+                                            placeholder="Cole aqui a descrição completa da vaga (título, requisitos e responsabilidades)..."
                                             style={{ height: 185, width: "100%", boxSizing: "border-box" }}
                                         />
                                     </div>
+                                    {jobDescription && jobDescription.length < 50 && (
+                                        <div style={{
+                                            marginTop: 8,
+                                            color: "#F59E0B",
+                                            fontSize: "0.8rem",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 6
+                                        }}>
+                                            <span>⚠️</span>
+                                            <span>Para um resultado preciso, recomendamos colar a descrição inteira da vaga, não apenas o título.</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div style={{ flex: "1 1 380px" }}>
