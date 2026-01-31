@@ -1177,21 +1177,6 @@ export default function AppPage() {
                             "liderança em projetos de alta complexidade. Otimizou o budget operacional em 22%..." +
                             "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
 
-                        const lockedHtml = renderLockedBlur(
-                            "Ghostwriter V2 (Amostra)",
-                            "IA reescrevendo seu CV com keywords de elite:",
-                            (exemploMelhoria + exemploMelhoria)
-                        );
-
-                        const offerChecklist = [
-                            "<b>Ghostwriter V2:</b> Seu CV 100% Otimizado (ATS)",
-                            "<b>Radar X-Ray:</b> <span style='color:#FCD34D'>Recrutadores</span> buscando você",
-                            "<b>Análise de Gap:</b> O que falta para o nível Sênior",
-                            "<b>Bônus:</b> Script de Entrevista Comportamental",
-                        ];
-
-                        const offerHtml = renderOfferCard(offerChecklist);
-
                         const xrayHtml = `
         <div style='background: rgba(15, 23, 42, 0.6); border: 1px solid #38BDF8; padding: 20px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 25px;'>
             <div style="position: absolute; top: -10px; right: -10px; background: #38BDF8; width: 50px; height: 50px; filter: blur(30px); opacity: 0.2;"></div>
@@ -1225,63 +1210,16 @@ export default function AppPage() {
                                 <div className="action-island-container" style={{ textAlign: "left", marginTop: 18 }}>
                                     <div dangerouslySetInnerHTML={{ __html: dashHtml }} />
 
-                                    <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-                                        <div style={{ flex: "1.3 1 420px" }}>
-                                            <div style={{ color: "#94A3B8", fontSize: "0.8rem", marginBottom: 10 }}>
-                                                👁️ PREVIEW DO GHOSTWRITER (BLOQUEADO)
-                                            </div>
-                                            <div dangerouslySetInnerHTML={{ __html: lockedHtml }} />
-                                        </div>
-
-                                        <div style={{ flex: "1 1 320px" }}>
-                                            <div dangerouslySetInnerHTML={{ __html: offerHtml }} />
-                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                <button
-                                                    type="button"
-                                                    data-kind="primary"
-                                                    onClick={() => {
-                                                        if (!authUserId) {
-                                                            setShowAuthModal(true);
-                                                        } else {
-                                                            setStage("pricing");
-                                                        }
-                                                    }}
-                                                    style={{ width: "100%", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
-                                                >
-                                                    DESBLOQUEAR AGORA
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 14, textAlign: "center" }}>
+                                        � Escolha Seu Plano
+                                    </div>
+                                    <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 24, textAlign: "center" }}>
+                                        Desbloqueie análises completas e otimize múltiplos CVs
                                     </div>
 
                                     <div dangerouslySetInnerHTML={{ __html: xrayHtml }} />
 
                                     <div style={{ height: 12 }} />
-
-                                    <details data-testid="stExpander">
-                                        <summary>❓ Por que não apenas buscar no LinkedIn?</summary>
-                                        <div>
-                                            <div
-                                                dangerouslySetInnerHTML={{
-                                                    __html: `
-            <div style="font-size: 0.85rem; color: #CBD5E1;">
-                <p>A busca comum do LinkedIn tem travas. O <strong>X-Ray Search</strong> usa o Google para:</p>
-                <ul style="padding-left: 15px; margin-bottom: 0;">
-                    <li>🔓 <strong>Furar Bloqueios:</strong> Encontrar perfis fora da sua rede (3º grau).</li>
-                    <li>🎯 <strong>Precisão Cirúrgica:</strong> Strings booleanas complexas já prontas.</li>
-                </ul>
-            </div>
-            `,
-                                                }}
-                                            />
-                                        </div>
-                                    </details>
-
-                                    <div style={{ marginTop: 22, marginBottom: 18, borderTop: "1px solid rgba(255,255,255,0.08)" }} />
-
-                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 14 }}>
-                                        💳 Escolha Seu Plano
-                                    </div>
 
                                     <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                                         <div style={{ flex: "1 1 220px" }}>
