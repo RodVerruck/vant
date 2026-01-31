@@ -1756,7 +1756,7 @@ export default function AppPage() {
                                                 </div>
 
                                                 <div>
-                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 4 }}>VANT PRO ILIMITADO</div>
+                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 4 }}>VANT PRO MENSAL</div>
                                                     <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.4, marginBottom: 16 }}>
                                                         Acelere sua recolocação aplicando para dezenas de vagas com qualidade máxima.
                                                     </div>
@@ -1768,12 +1768,18 @@ export default function AppPage() {
                                                             <div style={{ color: "#94A3B8", fontWeight: 500 }}>/mês</div>
                                                         </div>
                                                         <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>CANCELE QUANDO QUISER</div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginTop: 8, background: "rgba(16, 185, 129, 0.15)", padding: "4px 8px", borderRadius: 4, display: "inline-block" }}>
+                                                            Custo por CV: Apenas R$ 0,99
+                                                        </div>
                                                     </div>
 
                                                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#fff", fontWeight: 500 }}>
-                                                            <div style={{ background: "#10B981", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#064E3B", fontSize: "0.8rem", fontWeight: "bold" }}>✓</div>
-                                                            <span>Otimizações <strong>ILIMITADAS</strong></span>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "start", fontSize: "0.95rem", color: "#fff", fontWeight: 500 }}>
+                                                            <div style={{ background: "#10B981", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#064E3B", fontSize: "0.8rem", fontWeight: "bold", flexShrink: 0, marginTop: 2 }}>✓</div>
+                                                            <div>
+                                                                <span><strong>30 Otimizações</strong> por mês</span>
+                                                                <div style={{ fontSize: "0.75rem", color: "#94A3B8", fontWeight: 400, marginTop: 2 }}>Volume ideal para aplicar estrategicamente todo dia.</div>
+                                                            </div>
                                                         </div>
                                                         <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
                                                             <div style={{ color: "#10B981" }}>✓</div>
@@ -1802,12 +1808,12 @@ export default function AppPage() {
                                                         onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
                                                         onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
                                                     >
-                                                        COMEÇAR TESTE ILIMITADO
+                                                        ATIVAR PLANO AGORA
                                                     </button>
 
                                                     <div style={{ textAlign: "center", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.8 }}>
                                                         <span style={{ fontSize: "1rem" }}>🔒</span>
-                                                        <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Garantia de 7 dias • Risco Zero</span>
+                                                        <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Garantia de 7 dias • Acesso Imediato</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2075,7 +2081,7 @@ export default function AppPage() {
                                                 <div style={{ marginTop: 16 }}>
                                                     {/* Email */}
                                                     <div style={{ marginBottom: 12 }}>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
                                                             E-mail
                                                         </div>
                                                         <input
@@ -2089,7 +2095,7 @@ export default function AppPage() {
 
                                                     {/* Senha */}
                                                     <div style={{ marginBottom: 16 }}>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
                                                             Senha
                                                         </div>
                                                         <input
