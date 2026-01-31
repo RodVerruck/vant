@@ -1279,9 +1279,11 @@ export default function AppPage() {
                                         </div>
                                     )}
                                 </div>
-                                <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
-                                    ANALISAR COMPATIBILIDADE
-                                </button>
+                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                    <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
+                                        ANALISAR COMPATIBILIDADE
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
