@@ -1288,7 +1288,7 @@ export default function AppPage() {
 
                             <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
                                 <button type="button" data-kind="primary" onClick={onStart} style={{ width: "100%" }}>
-                                    OTIMIZAR PARA ESSA VAGA 🚀
+                                    ANALISAR COMPATIBILIDADE 🔍
                                 </button>
                             </div>
 
