@@ -255,7 +255,8 @@ export default function AppPage() {
             const savedFileName = localStorage.getItem("vant_file_name");
             const savedFileType = localStorage.getItem("vant_file_type");
             const savedFileB64 = localStorage.getItem("vant_file_b64");
-            if (savedJob && !jobDescription) {
+            // Só restaurar se for a primeira montagem (estado ainda vazio)
+            if (savedJob && jobDescription === "") {
                 setJobDescription(savedJob);
             }
             if (savedFileName && savedFileType && savedFileB64 && !file) {
@@ -267,7 +268,7 @@ export default function AppPage() {
                     });
             }
         }
-    }, [jobDescription, file]);
+    }, []); // Removido jobDescription e file das dependências
 
     // Salvar jobDescription e file em localStorage quando mudarem
     useEffect(() => {
