@@ -1189,18 +1189,21 @@ export default function AppPage() {
                                         style={{
                                             background: competitorFiles.length > 0
                                                 ? "linear-gradient(135deg, #10B981, #059669)"
-                                                : "linear-gradient(135deg, #F59E0B, #D97706)",
-                                            color: "#fff",
-                                            border: "none",
+                                                : "transparent",
+                                            color: competitorFiles.length > 0 ? "#fff" : "#94A3B8",
+                                            border: competitorFiles.length > 0
+                                                ? "none"
+                                                : "1px solid rgba(148, 163, 184, 0.4)",
                                             borderRadius: 20,
                                             padding: "8px 16px",
                                             fontSize: "0.8rem",
-                                            fontWeight: 700,
+                                            fontWeight: 600,
                                             cursor: "pointer",
                                             display: "flex",
                                             alignItems: "center",
                                             gap: 6,
-                                            whiteSpace: "nowrap"
+                                            whiteSpace: "nowrap",
+                                            transition: "all 0.2s ease"
                                         }}
                                     >
                                         {competitorFiles.length > 0 ? (
