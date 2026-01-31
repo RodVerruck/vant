@@ -82,7 +82,7 @@ def main():
         with open(cv_path, 'rb') as f:
             cv_text = extrair_texto_pdf(f)
         
-        premium_data = analyze_cv_logic(cv_text, job_description, competitors=[])
+        premium_data = analyze_cv_logic(cv_text, job_description, competitor_files=[])
         print("   ✅ Premium gerado com sucesso!")
     except Exception as e:
         print(f"   ❌ Erro ao gerar premium: {e}")
@@ -93,14 +93,14 @@ def main():
     
     mock_file = PROJECT_ROOT / "backend" / "mock_data.py"
     
-    # Cria o conteúdo do arquivo
+    # Cria o conteúdo do arquivo usando repr() para sintaxe Python válida
     content = f'''# Mock data para modo de desenvolvimento
 # Gerado automaticamente a partir de processamento real da IA
 # Para atualizar: python backend/generate_mock_from_real.py
 
-MOCK_PREVIEW_DATA = {json.dumps(preview_data, indent=4, ensure_ascii=False)}
+MOCK_PREVIEW_DATA = {repr(preview_data)}
 
-MOCK_PREMIUM_DATA = {json.dumps(premium_data, indent=4, ensure_ascii=False)}
+MOCK_PREMIUM_DATA = {repr(premium_data)}
 '''
     
     with open(mock_file, 'w', encoding='utf-8') as f:
