@@ -53,6 +53,8 @@ STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PRICE_ID_BASIC = os.getenv("STRIPE_PRICE_ID_BASIC")
 STRIPE_PRICE_ID_PRO = os.getenv("STRIPE_PRICE_ID_PRO")
 STRIPE_PRICE_ID_PREMIUM_PLUS = os.getenv("STRIPE_PRICE_ID_PREMIUM_PLUS")
+STRIPE_PRICE_ID_PREMIUM = os.getenv("STRIPE_PRICE_ID_PREMIUM")
+STRIPE_PRICE_ID_ULTIMATE = os.getenv("STRIPE_PRICE_ID_ULTIMATE")
 
 FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
 
@@ -64,26 +66,76 @@ if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 PRICING: dict[str, dict[str, Any]] = {
+    "free": {
+        "price": 0,
+        "name": "Gratuito",
+        "stripe_price_id": None,
+        "credits": 1,
+        "billing": "free",
+        "features": [
+            "1 análise gratuita",
+            "Diagnóstico básico",
+            "2 sugestões de melhoria",
+            "Score ATS"
+        ]
+    },
+    "premium": {
+        "price": 27.00,
+        "name": "Premium",
+        "stripe_price_id": STRIPE_PRICE_ID_PREMIUM,
+        "credits": 999,
+        "billing": "subscription",
+        "features": [
+            "Análises ilimitadas",
+            "Otimizações completas",
+            "CV otimizado para download",
+            "Biblioteca de conteúdos",
+            "Suporte prioritário"
+        ]
+    },
+    "pro": {
+        "price": 47.00,
+        "name": "Pro",
+        "stripe_price_id": STRIPE_PRICE_ID_PRO,
+        "credits": 999,
+        "billing": "subscription",
+        "features": [
+            "Tudo do Premium",
+            "Simulador de entrevista com IA",
+            "Radar de vagas compatíveis",
+            "Análise de concorrência",
+            "Relatórios avançados"
+        ]
+    },
+    "ultimate": {
+        "price": 97.00,
+        "name": "Ultimate",
+        "stripe_price_id": STRIPE_PRICE_ID_ULTIMATE,
+        "credits": 999,
+        "billing": "subscription",
+        "features": [
+            "Tudo do Pro",
+            "Revisão humana por especialista",
+            "Otimização de perfil LinkedIn",
+            "Consultoria de carreira 1:1",
+            "Acesso vitalício a atualizações"
+        ]
+    },
     "basico": {
         "price": 29.90,
         "name": "1 Otimização",
         "stripe_price_id": STRIPE_PRICE_ID_BASIC,
         "credits": 1,
         "billing": "one_time",
-    },
-    "pro": {
-        "price": 69.90,
-        "name": "Pacote 3 Vagas",
-        "stripe_price_id": STRIPE_PRICE_ID_PRO,
-        "credits": 3,
-        "billing": "one_time",
+        "features": ["1 análise completa", "CV otimizado"]
     },
     "premium_plus": {
         "price": 49.90,
-        "name": "VANT - Pacote Premium Plus",
+        "name": "VANT - Pacote Premium Plus (Legacy)",
         "stripe_price_id": STRIPE_PRICE_ID_PREMIUM_PLUS,
         "credits": 30,
         "billing": "subscription",
+        "features": ["30 análises/mês", "Plano legado"]
     },
 }
 
@@ -130,6 +182,21 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/api/pricing")
+def get_pricing() -> JSONResponse:
+    """Retorna informações de pricing para o frontend."""
+    pricing_info = {}
+    for plan_id, plan_data in PRICING.items():
+        pricing_info[plan_id] = {
+            "id": plan_id,
+            "name": plan_data.get("name"),
+            "price": plan_data.get("price"),
+            "billing": plan_data.get("billing"),
+            "features": plan_data.get("features", []),
+        }
+    return JSONResponse(content=pricing_info)
+
+
 @app.post("/api/analyze-lite")
 def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...)) -> JSONResponse:
     try:
@@ -145,6 +212,59 @@ def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...))
         # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
         data = analyze_preview_lite(cv_text, job_description)
+        return JSONResponse(content=data)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+@app.post("/api/analyze-free")
+def analyze_free(
+    file: UploadFile = File(...), 
+    job_description: str = Form(...),
+    user_id: str = Form(None)
+) -> JSONResponse:
+    """
+    Análise gratuita (primeira análise sem paywall).
+    Retorna diagnóstico básico com problemas identificados e 2 sugestões.
+    """
+    try:
+        # Salva no cache para facilitar geração de mocks
+        file_bytes = file.file.read()
+        _save_to_cache(file_bytes, job_description)
+        
+        # Verifica se usuário já usou análise gratuita (se tiver user_id)
+        if user_id and supabase_admin:
+            try:
+                usage = supabase_admin.table("free_usage").select("used_at").eq("user_id", user_id).limit(1).execute()
+                if usage.data:
+                    return JSONResponse(
+                        status_code=403, 
+                        content={"error": "Você já usou sua análise gratuita. Faça upgrade para continuar."}
+                    )
+            except Exception as e:
+                print(f"⚠️ Erro ao verificar uso gratuito: {e}")
+        
+        # Modo de desenvolvimento: retorna mock instantaneamente
+        if DEV_MODE:
+            print("🔧 [DEV MODE] Retornando mock de análise gratuita (sem processar IA)")
+            # Retorna versão limitada do mock (apenas 2 sugestões)
+            limited_data = MOCK_PREVIEW_DATA.copy()
+            return JSONResponse(content=limited_data)
+        
+        # Modo produção: processa com IA real
+        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
+        data = analyze_preview_lite(cv_text, job_description)
+        
+        # Registra uso gratuito
+        if user_id and supabase_admin:
+            try:
+                supabase_admin.table("free_usage").insert({
+                    "user_id": user_id,
+                    "used_at": datetime.now().isoformat()
+                }).execute()
+            except Exception as e:
+                print(f"⚠️ Erro ao registrar uso gratuito: {e}")
+        
         return JSONResponse(content=data)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})

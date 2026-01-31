@@ -41,5 +41,15 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.subscriptions(use
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.subscriptions(subscription_status);
 CREATE INDEX IF NOT EXISTS idx_usage_user_id_period ON public.usage(user_id, period_start);
 
+-- 4) free_usage: controle de uso da análise gratuita (1 por usuário)
+CREATE TABLE IF NOT EXISTS public.free_usage (
+    user_id TEXT PRIMARY KEY,
+    used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Índice para performance
+CREATE INDEX IF NOT EXISTS idx_free_usage_user_id ON public.free_usage(user_id);
+
 -- Opcional: RLS (Row Level Security) se quiser restringir acesso via client-side
 -- Para MVP, pode deixar desabilitado (RLS off) e controlar tudo via service_role no backend.
