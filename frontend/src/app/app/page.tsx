@@ -410,7 +410,7 @@ export default function AppPage() {
             <div class="live-dot"></div>
             <span><strong>${cvCount}</strong> CVs Otimizados Hoje</span>
         </div>
-        
+
         <div style="width: 1px; height: 15px; background: rgba(255,255,255,0.1); display: inline-block;"></div>
 
         <div class="footer-stat">
@@ -1102,7 +1102,7 @@ export default function AppPage() {
                     <span style="color: #64748B; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
                     <span style="background: rgba(56, 189, 248, 0.1); color: #38BDF8; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">VERSÃO LITE</span>
                 </div>
-                
+
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 16px;">
                     <div>
                         <div style="color:#94A3B8; font-size:0.75rem; font-weight:600;">SCORE ATS ATUAL</div>
@@ -1113,7 +1113,7 @@ export default function AppPage() {
                          <div style="color:#10B981; font-weight:900; font-size: 2rem; line-height: 1;">${potencial}<span style="font-size:1rem; color:#10B981;">%</span></div>
                     </div>
                 </div>
-                
+
                 <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
                     ${row("Impacto", impacto)}
                     ${row("Palavras-chave", keywords)}
@@ -1174,7 +1174,7 @@ export default function AppPage() {
         return `
     <div style="
         background: rgba(15, 23, 42, 0.8);
-        background-image: linear-gradient(160deg, rgba(56, 189, 248, 0.05), rgba(16, 185, 129, 0.05));
+        background-image: linear-gradient(160deg, rgba(56, 189, 248, 0.05), rgba(129, 140, 248, 0.05));
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-bottom: none; 
         border-top-left-radius: 16px;
@@ -1315,8 +1315,7 @@ export default function AppPage() {
                                                     border: "1px solid rgba(245, 158, 11, 0.25)",
                                                     borderRadius: 6,
                                                     padding: 10,
-                                                    marginTop: 8,
-                                                    borderLeft: "3px solid #F59E0B"
+                                                    marginTop: 8
                                                 }}>
                                                     <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
                                                         📊 DETALHES DETECTADOS:
@@ -1374,33 +1373,12 @@ export default function AppPage() {
                                         marginBottom: competitorFiles.length > 0 ? 16 : 0
                                     }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
-                                            <div style={{
-                                                width: 40,
-                                                height: 40,
-                                                background: "linear-gradient(135deg, #F59E0B, #10B981)",
-                                                borderRadius: 10,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                fontSize: "1.3rem",
-                                                flexShrink: 0
-                                            }}>
-                                                🎯
-                                            </div>
+                                            <div style={{ fontSize: "1.8rem" }}>🎯</div>
                                             <div>
-                                                <div style={{
-                                                    color: "#F8FAFC",
-                                                    fontSize: "0.95rem",
-                                                    fontWeight: 700,
-                                                    letterSpacing: "0.3px"
-                                                }}>
+                                                <div style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 700, letterSpacing: "0.3px" }}>
                                                     Referência de Candidato Ideal <span style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 400 }}>(Opcional)</span>
                                                 </div>
-                                                <div style={{
-                                                    color: "#94A3B8",
-                                                    fontSize: "0.8rem",
-                                                    marginTop: 2
-                                                }}>
+                                                <div style={{ color: "#94A3B8", fontSize: "0.8rem", marginTop: 2 }}>
                                                     {competitorFiles.length > 0
                                                         ? `Usando ${competitorFiles.length} arquivo(s) de referência`
                                                         : "Use nosso padrão de mercado automaticamente"
@@ -1452,6 +1430,7 @@ export default function AppPage() {
                                                     cursor: "pointer",
                                                     display: "flex",
                                                     alignItems: "center",
+                                                    justifyContent: "center",
                                                     gap: 6,
                                                     whiteSpace: "nowrap",
                                                     transition: "all 0.2s ease"
@@ -1488,15 +1467,7 @@ export default function AppPage() {
                                             padding: 12,
                                             marginTop: 12
                                         }}>
-                                            <div style={{
-                                                color: "#10B981",
-                                                fontSize: "0.85rem",
-                                                fontWeight: 600,
-                                                marginBottom: 8,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 6
-                                            }}>
+                                            <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginBottom: 8 }}>
                                                 ✅ Referência carregada
                                             </div>
                                             <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>
@@ -1824,14 +1795,7 @@ export default function AppPage() {
                                     {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
                                     {data.gap_1 && data.gap_2 && (
                                         <div style={{ marginTop: 24, marginBottom: 32 }}>
-                                            <div style={{
-                                                textAlign: "center",
-                                                marginBottom: 20,
-                                                padding: "16px",
-                                                background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05))",
-                                                borderRadius: 12,
-                                                border: "1px solid rgba(16, 185, 129, 0.3)"
-                                            }}>
+                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "16px", background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05))", borderRadius: 12, border: "1px solid rgba(16, 185, 129, 0.3)" }}>
                                                 <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>✨</div>
                                                 <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 4 }}>
                                                     PRÉVIA GRATUITA
@@ -2004,14 +1968,10 @@ export default function AppPage() {
                                         Desbloqueie análises completas e otimize múltiplos CVs
                                     </div>
 
-                                    <div dangerouslySetInnerHTML={{ __html: xrayHtml }} />
-
-                                    <div style={{ height: 12 }} />
-
-                                    {/* ARQUITETURA SAAS - "COMPARATIVO DESLEAL" */}
+                                    {/* ARQUITETURA SAAS - "COMPARATIVO DESLEAL" (Growth Hacking Version) */}
                                     <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: 24 }}>
 
-                                        {/* 1. HEADLINE DE CONVERSÃO - Foco na Dor do Volume */}
+                                        {/* 1. HEADLINE DE CONVERSÃO */}
                                         <div style={{ textAlign: "center", marginBottom: 8 }}>
                                             <h3 style={{ color: "#E2E8F0", fontSize: "1.2rem", fontWeight: 700, margin: "0 0 8px 0" }}>
                                                 Não aposte seu futuro em uma única vaga.
@@ -2041,8 +2001,9 @@ export default function AppPage() {
                                                         CRÉDITOS AVULSOS
                                                     </div>
                                                     <div style={{ color: "#E2E8F0", fontSize: "1.4rem", fontWeight: 700, marginBottom: 8 }}>
-                                                        A partir de R$ 12,90
+                                                        A partir de R$ 19,90
                                                     </div>
+
                                                     <p style={{ color: "#64748B", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 24 }}>
                                                         Ideal para ajustes pontuais ou se você já tem uma vaga específica em mente.
                                                     </p>
@@ -2050,7 +2011,7 @@ export default function AppPage() {
                                                     <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 29,90</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 19,90</span>
                                                         </div>
                                                         <button
                                                             type="button"
@@ -2072,7 +2033,7 @@ export default function AppPage() {
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 3 CVs</span>
                                                             <span style={{ color: "#fff", fontWeight: 700 }}>R$ 39,90</span>
                                                         </div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 13,30/cada • economize 55%</div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 13,30/cada • economize 33%</div>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
@@ -2088,33 +2049,11 @@ export default function AppPage() {
                                                         </button>
                                                     </div>
 
-                                                    <div>
-                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 5 CVs</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 49,90</span>
-                                                        </div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 9,98/cada • economize 67%</div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedPlan("credit_5");
-                                                                if (!authUserId) setShowAuthModal(true);
-                                                                else setStage("checkout");
-                                                            }}
-                                                            style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                                                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
-                                                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
-                                                        >
-                                                            Comprar Pacote 5
-                                                        </button>
-                                                    </div>
-
                                                     <div style={{ marginTop: 16, padding: 12, background: "rgba(56, 189, 248, 0.1)", borderRadius: 8, border: "1px solid rgba(56, 189, 248, 0.2)" }}>
                                                         <div style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>💡 Quer otimizar mais de 5 CVs?</div>
                                                         <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>Trial por R$ 1,99 é melhor negócio!</div>
                                                     </div>
                                                 </div>
-
                                             </div>
 
                                             {/* CARD 2: HERO SAAS (O Foco da Venda) */}
@@ -2153,7 +2092,7 @@ export default function AppPage() {
                                                             7 DIAS POR R$ 1,99
                                                         </div>
                                                         <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 12 }}>
-                                                            depois R$ 27,90/mês
+                                                            Renova por apenas R$ 19,90/mês
                                                         </div>
 
                                                         <div style={{
@@ -2205,7 +2144,7 @@ export default function AppPage() {
                                                         ` }} />
                                                     </div>
 
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 20, textAlign: "center", fontWeight: 600 }}>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 20, textAlign: "center" }}>
                                                         O que você ganha:
                                                     </div>
 
@@ -2324,22 +2263,16 @@ export default function AppPage() {
 
                             const prices: any = {
                                 credit_1: {
-                                    price: 12.90,
+                                    price: 19.90,
                                     name: "1 Crédito Avulso",
                                     billing: "one_time",
                                     desc: "Otimização pontual"
                                 },
                                 credit_3: {
-                                    price: 29.90,
+                                    price: 39.90,
                                     name: "Pacote 3 Créditos",
                                     billing: "one_time",
                                     desc: "3 otimizações completas"
-                                },
-                                credit_5: {
-                                    price: 39.90,
-                                    name: "Pacote 5 Créditos",
-                                    billing: "one_time",
-                                    desc: "5 otimizações completas"
                                 },
                                 pro_monthly: {
                                     price: 27.90,
@@ -2474,7 +2407,7 @@ export default function AppPage() {
                                                 <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>📍</div>
                                                 <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
                                             </div>
-                                            <div style={{ textAlign: "center", marginTop: "4px", color: "#64748B", fontSize: "0.75rem" }}>
+                                            <div style={{ textAlign: "center", marginTop: 4, color: "#64748B", fontSize: "0.75rem" }}>
                                                 Aceitamos Visa, Mastercard, PIX e Amex
                                             </div>
 
