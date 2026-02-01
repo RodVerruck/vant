@@ -2308,11 +2308,16 @@ export default function AppPage() {
                             };
 
                             const plan = prices[planId] || prices.premium_plus;
-                            const isSubscription = plan.billing === "subscription";
+                            // CORREÇÃO: Trial também é um fluxo de assinatura/recorrência
+                            const isSubscription = plan.billing === "subscription" || plan.billing === "trial";
 
-                            const billingLine = isSubscription
-                                ? "✅ Assinatura mensal · Cancele quando quiser"
-                                : "✅ Pagamento único · Acesso vitalício aos créditos";
+                            let billingLine = "✅ Pagamento único · Acesso vitalício aos créditos";
+                            // CORREÇÃO: Melhorar o texto de billing para trial
+                            if (plan.billing === "trial") {
+                                billingLine = "✅ 7 dias de teste por R$ 1,99, depois assinatura mensal";
+                            } else if (plan.billing === "subscription") {
+                                billingLine = "✅ Assinatura mensal · Cancele quando quiser";
+                            }
 
                             const boxHtml = `
                             <div style="background: rgba(15, 23, 42, 0.6); padding: 24px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(56, 189, 248, 0.2);">
