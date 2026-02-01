@@ -574,6 +574,24 @@ export default function AppPage() {
                     const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
                     throw new Error(err);
                 }
+                if (typeof payload.plan_id === "string") {
+                    setSelectedPlan(payload.plan_id as PlanType);
+                }
+                if (typeof payload.credits_remaining === "number") {
+                    setCreditsRemaining(payload.credits_remaining);
+                }
+
+                // Limpar sessão pendente após ativação bem-sucedida
+                window.localStorage.removeItem("vant_pending_stripe_session_id");
+
+                setNeedsActivation(false);
+                setCheckoutError("");
+                // Em vez de ir direto para paid, vai para processing_premium para processar o arquivo
+                setStage("processing_premium");
+            } catch (e: unknown) {
+                setCheckoutError(getErrorMessage(e, "Falha ao ativar plano"));
+            } finally {
+                setIsActivating(false);
             }
         })();
     }, [authUserId, needsActivation, stripeSessionId, isActivating]);
