@@ -796,7 +796,7 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
     if not price_id:
         return JSONResponse(
             status_code=500,
-            content={"error": "Stripe não configurado. Defina STRIPE_PRICE_ID_BASIC/PRO/PREMIUM_PLUS."},
+            content={"error": f"Stripe Price ID não configurado para o plano '{plan_id}'. Verifique as variáveis de ambiente no Render."},
         )
 
     billing = (PRICING[plan_id].get("billing") or "one_time").strip().lower()
