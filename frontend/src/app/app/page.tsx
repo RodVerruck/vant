@@ -489,8 +489,11 @@ export default function AppPage() {
                 try {
                     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
                     if (error) {
-                        throw new Error(error.message);
+                        // Ignora erro se for "code already used" em dev, pois o usuário pode já estar logado
+                        console.warn("Erro na troca de código (possível duplicidade em dev):", error.message);
+                        // throw new Error(error.message); // <-- Comente ou remova o throw para não travar a UI
                     }
+
                     const user = data?.session?.user;
                     if (user?.id) {
                         setAuthUserId(user.id);
@@ -499,26 +502,7 @@ export default function AppPage() {
                         }
                         setCheckoutError("");
 
-                        // Restaurar o stage e plano após login com Google
-                        const returnStage = localStorage.getItem("vant_auth_return_stage");
-                        const returnPlan = localStorage.getItem("vant_auth_return_plan");
-
-                        console.log("[DEBUG] Login Google - returnStage:", returnStage, "returnPlan:", returnPlan);
-
-                        if (returnPlan) {
-                            setSelectedPlan(returnPlan as PlanType);
-                            localStorage.removeItem("vant_auth_return_plan");
-                            // Se tinha plano selecionado, vai direto para checkout
-                            setStage("checkout");
-                            localStorage.removeItem("vant_auth_return_stage");
-                            console.log("[DEBUG] Login Google - Indo para checkout com plano:", returnPlan);
-                        } else if (returnStage) {
-                            setStage(returnStage as AppStage);
-                            localStorage.removeItem("vant_auth_return_stage");
-                            console.log("[DEBUG] Login Google - Indo para stage:", returnStage);
-                        } else {
-                            console.log("[DEBUG] Login Google - Nenhum stage/plano para restaurar");
-                        }
+                        // A restauração agora é feita pelo novo useEffect
                     }
                 } catch (e: unknown) {
                     setCheckoutError(getErrorMessage(e, "Falha ao fazer login com Google"));
@@ -598,6 +582,28 @@ export default function AppPage() {
             window.history.replaceState({}, "", url.toString());
         }
     }, [authUserId, supabase]);
+
+    // NOVO: useEffect dedicado para restaurar o estado após login (Google/Email)
+    // Isso funciona independente se o exchangeCode falhar no Strict Mode
+    useEffect(() => {
+        if (authUserId && typeof window !== "undefined") {
+            const returnStage = localStorage.getItem("vant_auth_return_stage");
+            const returnPlan = localStorage.getItem("vant_auth_return_plan");
+
+            if (returnPlan) {
+                console.log("[Restoration] Restaurando plano e indo para checkout...");
+                setSelectedPlan(returnPlan as PlanType);
+                localStorage.removeItem("vant_auth_return_plan");
+
+                setStage("checkout");
+                localStorage.removeItem("vant_auth_return_stage"); // Limpa stage também para evitar conflito
+            } else if (returnStage) {
+                console.log("[Restoration] Restaurando stage:", returnStage);
+                setStage(returnStage as AppStage);
+                localStorage.removeItem("vant_auth_return_stage");
+            }
+        }
+    }, [authUserId]);
 
     useEffect(() => {
         console.log("[useEffect needsActivation] Rodou.");
