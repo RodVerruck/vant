@@ -196,8 +196,16 @@ export default function AppPage() {
     const [isLoginMode, setIsLoginMode] = useState(true);  // ← NOVO (true = login, false = cadastro)
     const [isAuthenticating, setIsAuthenticating] = useState(false);  // ← NOVO
     const [showAuthModal, setShowAuthModal] = useState(false);
-    const [remainingSpots, setRemainingSpots] = useState(73);
     const [timeRemaining, setTimeRemaining] = useState({ hours: 23, minutes: 45, seconds: 12 });
+
+    // Contador dinâmico de vagas baseado em tempo
+    const remainingSpots = useMemo(() => {
+        const baseVagas = 100;
+        const now = new Date();
+        const minutosDesdeInicio = now.getHours() * 60 + now.getMinutes();
+        const vagasVendidas = Math.floor(minutosDesdeInicio / 20); // 1 vaga a cada 20 minutos
+        return Math.max(10, baseVagas - vagasVendidas); // Mínimo de 10 vagas
+    }, []);
 
     // Estados de processamento
     const [progress, setProgress] = useState(0);
@@ -2042,12 +2050,12 @@ export default function AppPage() {
                                                     <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 12,90</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 29,90</span>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                setSelectedPlan("credit_1"); // ID backend para 1 CV
+                                                                setSelectedPlan("credit_1");
                                                                 if (!authUserId) setShowAuthModal(true);
                                                                 else setStage("checkout");
                                                             }}
@@ -2059,15 +2067,16 @@ export default function AppPage() {
                                                         </button>
                                                     </div>
 
-                                                    <div>
-                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 5 CVs</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 49,90</span>
+                                                    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
+                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 3 CVs</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 39,90</span>
                                                         </div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 13,30/cada • economize 55%</div>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                setSelectedPlan("credit_5"); // ID backend para Pacote
+                                                                setSelectedPlan("credit_3");
                                                                 if (!authUserId) setShowAuthModal(true);
                                                                 else setStage("checkout");
                                                             }}
@@ -2075,8 +2084,34 @@ export default function AppPage() {
                                                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
                                                             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
                                                         >
-                                                            Comprar Pacote
+                                                            Comprar Pacote 3
                                                         </button>
+                                                    </div>
+
+                                                    <div>
+                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 5 CVs</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 49,90</span>
+                                                        </div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 9,98/cada • economize 67%</div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedPlan("credit_5");
+                                                                if (!authUserId) setShowAuthModal(true);
+                                                                else setStage("checkout");
+                                                            }}
+                                                            style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                                                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
+                                                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                        >
+                                                            Comprar Pacote 5
+                                                        </button>
+                                                    </div>
+
+                                                    <div style={{ marginTop: 16, padding: 12, background: "rgba(56, 189, 248, 0.1)", borderRadius: 8, border: "1px solid rgba(56, 189, 248, 0.2)" }}>
+                                                        <div style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>💡 Quer otimizar mais de 5 CVs?</div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>Trial por R$ 1,99 é melhor negócio!</div>
                                                     </div>
                                                 </div>
 
@@ -2146,55 +2181,57 @@ export default function AppPage() {
                                                             </div>
                                                             <div style={{ width: "1px", background: "rgba(148, 163, 184, 0.3)" }} />
                                                             <div>
-                                                                <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2 }}>⏱️ EXPIRA EM</div>
-                                                                <div style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 900, fontFamily: "monospace" }}>
+                                                                <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                                                                    <span style={{ animation: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "pulse 1.5s infinite" : "none" }}>🔥</span>
+                                                                    EXPIRA EM
+                                                                </div>
+                                                                <div style={{
+                                                                    color: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "#EF4444" : "#fff",
+                                                                    fontSize: "1.3rem",
+                                                                    fontWeight: 900,
+                                                                    fontFamily: "monospace",
+                                                                    animation: timeRemaining.hours === 0 && timeRemaining.minutes < 10 ? "pulse 1.5s infinite" : "none"
+                                                                }}>
                                                                     {String(timeRemaining.hours).padStart(2, '0')}:{String(timeRemaining.minutes).padStart(2, '0')}:{String(timeRemaining.seconds).padStart(2, '0')}
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        <style dangerouslySetInnerHTML={{
+                                                            __html: `
+                                                            @keyframes pulse {
+                                                                0%, 100% { opacity: 1; transform: scale(1); }
+                                                                50% { opacity: 0.8; transform: scale(1.05); }
+                                                            }
+                                                        ` }} />
                                                     </div>
 
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 20, textAlign: "center" }}>
-                                                        Durante seus 7 dias de teste, você tem:
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 20, textAlign: "center", fontWeight: 600 }}>
+                                                        O que você ganha:
                                                     </div>
 
-                                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "start", fontSize: "0.95rem", color: "#fff", fontWeight: 500 }}>
-                                                            <div style={{ background: "#10B981", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#064E3B", fontSize: "0.8rem", fontWeight: "bold", flexShrink: 0, marginTop: 2 }}>✓</div>
-                                                            <div>
-                                                                <span><strong>30 Otimizações</strong> por mês</span>
-                                                                <div style={{ fontSize: "0.75rem", color: "#94A3B8", fontWeight: 400, marginTop: 2 }}>Volume ideal para aplicar estrategicamente todo dia.</div>
-                                                            </div>
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: 24 }}>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                                            <span><strong>30 Otimizações/mês</strong></span>
                                                         </div>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                            <div style={{ color: "#10B981" }}>✓</div>
-                                                            <span>Análise de Concorrência (Gap Analysis)</span>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                                            <span><strong>Simulador de Entrevista IA</strong></span>
                                                         </div>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                            <div style={{ color: "#10B981" }}>✓</div>
-                                                            <span>Simulador de Entrevista com IA</span>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                                            <span><strong>Radar de Vagas Inteligente</strong></span>
                                                         </div>
-                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.95rem", color: "#E2E8F0" }}>
-                                                            <div style={{ color: "#10B981" }}>✓</div>
-                                                            <span>Acesso ao Radar de Vagas</span>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                                            💰 Custo por CV: <strong>Apenas R$ 0,93</strong>
                                                         </div>
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <div style={{
-                                                        background: "rgba(56, 189, 248, 0.1)",
-                                                        border: "1px solid rgba(56, 189, 248, 0.3)",
-                                                        borderRadius: 8,
-                                                        padding: "12px",
-                                                        marginBottom: 16,
-                                                        textAlign: "center"
-                                                    }}>
-                                                        <div style={{ color: "#38BDF8", fontSize: "0.85rem", fontWeight: 600 }}>
-                                                            💰 Custo real: <strong>R$ 0,93 por CV otimizado</strong>
-                                                        </div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 4 }}>
-                                                            (vs R$ 9,90 avulso = 90% de economia)
+                                                        <div style={{
+                                                            color: "#94A3B8",
+                                                            fontSize: "0.75rem",
+                                                            marginTop: 4
+                                                        }}>
+                                                            (93% mais barato que créditos avulsos)
                                                         </div>
                                                     </div>
 
@@ -2292,8 +2329,14 @@ export default function AppPage() {
                                     billing: "one_time",
                                     desc: "Otimização pontual"
                                 },
+                                credit_3: {
+                                    price: 29.90,
+                                    name: "Pacote 3 Créditos",
+                                    billing: "one_time",
+                                    desc: "3 otimizações completas"
+                                },
                                 credit_5: {
-                                    price: 49.90,
+                                    price: 39.90,
                                     name: "Pacote 5 Créditos",
                                     billing: "one_time",
                                     desc: "5 otimizações completas"
