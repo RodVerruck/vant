@@ -190,7 +190,7 @@ export default function AppPage() {
     const [authUserId, setAuthUserId] = useState<string | null>(null);
     const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
-    const [, setCreditsRemaining] = useState(0);
+    const [creditsRemaining, setCreditsRemaining] = useState(0);
     const [needsActivation, setNeedsActivation] = useState(false);
     const [isActivating, setIsActivating] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(true);  // ← NOVO (true = login, false = cadastro)
@@ -1174,8 +1174,63 @@ export default function AppPage() {
     `;
     }
 
+    // Componente visual de créditos
+    const renderCreditsIndicator = () => {
+        if (!authUserId) return null;
+
+        const isUnlimited = creditsRemaining >= 999;
+        const isLow = creditsRemaining > 0 && creditsRemaining < 3;
+
+        return (
+            <div style={{
+                position: 'fixed',
+                top: 20,
+                right: 20,
+                zIndex: 1000,
+                background: 'rgba(15, 23, 42, 0.95)',
+                border: `2px solid ${isUnlimited ? '#10B981' : isLow ? '#F59E0B' : '#38BDF8'}`,
+                borderRadius: 12,
+                padding: '12px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)'
+            }}>
+                <div style={{
+                    fontSize: '1.5rem',
+                    filter: 'drop-shadow(0 0 8px currentColor)'
+                }}>
+                    {isUnlimited ? '∞' : '💎'}
+                </div>
+                <div>
+                    <div style={{
+                        color: '#94A3B8',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.5px',
+                        textTransform: 'uppercase',
+                        marginBottom: 2
+                    }}>
+                        Créditos
+                    </div>
+                    <div style={{
+                        color: isUnlimited ? '#10B981' : isLow ? '#F59E0B' : '#F8FAFC',
+                        fontSize: '1.2rem',
+                        fontWeight: 900,
+                        lineHeight: 1,
+                        fontFamily: 'monospace'
+                    }}>
+                        {isUnlimited ? 'ILIMITADO' : creditsRemaining}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <main>
+            {renderCreditsIndicator()}
             {stage === "hero" && (
                 <>
                     <div className="hero-container">
