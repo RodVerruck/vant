@@ -60,11 +60,6 @@ STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,
 STRIPE_PRICE_ID_CREDIT_3 = os.getenv("STRIPE_PRICE_ID_CREDIT_3")        # R$ 29,90 (3 CVs)
 STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")        # R$ 49,90 (5 CVs)
 
-# Legacy Price IDs (manter para usuários existentes)
-STRIPE_PRICE_ID_BASIC = os.getenv("STRIPE_PRICE_ID_BASIC")
-STRIPE_PRICE_ID_PRO = os.getenv("STRIPE_PRICE_ID_PRO")
-STRIPE_PRICE_ID_PREMIUM_PLUS = os.getenv("STRIPE_PRICE_ID_PREMIUM_PLUS")
-
 FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -209,26 +204,6 @@ PRICING: dict[str, dict[str, Any]] = {
             "Economize 22% vs crédito único",
             "Válido por 6 meses"
         ]
-    },
-    
-    # LEGACY - Manter para usuários existentes
-    "basico": {
-        "price": 29.90,
-        "name": "1 Otimização (Legacy)",
-        "stripe_price_id": STRIPE_PRICE_ID_BASIC,
-        "credits": 1,
-        "billing": "one_time",
-        "features": ["1 análise completa", "CV otimizado"],
-        "hidden": True
-    },
-    "premium_plus": {
-        "price": 49.90,
-        "name": "Premium Plus (Legacy)",
-        "stripe_price_id": STRIPE_PRICE_ID_PREMIUM_PLUS,
-        "credits": 30,
-        "billing": "subscription",
-        "features": ["30 análises/mês"],
-        "hidden": True
     },
 }
 
