@@ -196,6 +196,8 @@ export default function AppPage() {
     const [isLoginMode, setIsLoginMode] = useState(true);  // ← NOVO (true = login, false = cadastro)
     const [isAuthenticating, setIsAuthenticating] = useState(false);  // ← NOVO
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const [remainingSpots, setRemainingSpots] = useState(73);
+    const [timeRemaining, setTimeRemaining] = useState({ hours: 23, minutes: 45, seconds: 12 });
 
     // Estados de processamento
     const [progress, setProgress] = useState(0);
@@ -416,6 +418,34 @@ export default function AppPage() {
         </div>
     </div>
     `;
+    }, []);
+
+    // Timer de urgência
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeRemaining(prev => {
+                let { hours, minutes, seconds } = prev;
+
+                if (seconds > 0) {
+                    seconds--;
+                } else if (minutes > 0) {
+                    minutes--;
+                    seconds = 59;
+                } else if (hours > 0) {
+                    hours--;
+                    minutes = 59;
+                    seconds = 59;
+                } else {
+                    hours = 23;
+                    minutes = 59;
+                    seconds = 59;
+                }
+
+                return { hours, minutes, seconds };
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
     }, []);
 
     useEffect(() => {
@@ -2070,29 +2100,62 @@ export default function AppPage() {
                                                 </div>
 
                                                 <div>
-                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 20 }}>VANT PRO MENSAL</div>
+                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.4rem", marginBottom: 20, textAlign: "center" }}>🎯 VANT PRO MENSAL</div>
 
                                                     <div style={{
-                                                        background: "rgba(56, 189, 248, 0.15)",
-                                                        border: "2px solid #38BDF8",
-                                                        borderRadius: 8,
-                                                        padding: "14px",
-                                                        marginBottom: 16,
-                                                        textAlign: "center"
+                                                        background: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))",
+                                                        border: "2px solid #EF4444",
+                                                        borderRadius: 12,
+                                                        padding: "18px",
+                                                        marginBottom: 20,
+                                                        textAlign: "center",
+                                                        boxShadow: "0 0 20px rgba(239, 68, 68, 0.3)"
                                                     }}>
-                                                        <div style={{ color: "#38BDF8", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>
-                                                            🎯 OFERTA ESPECIAL DE TESTE
+                                                        <div style={{ color: "#EF4444", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
+                                                            🔥 OFERTA RELÂMPAGO DE LANÇAMENTO
                                                         </div>
-                                                        <div style={{ fontSize: "2rem", fontWeight: 800, color: "#fff", lineHeight: 1, marginBottom: 4 }}>
+                                                        <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6 }}>
                                                             7 DIAS POR R$ 1,99
                                                         </div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.8rem", lineHeight: 1.3 }}>
-                                                            Depois apenas R$ 27,90/mês • Cancele quando quiser
+                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 12 }}>
+                                                            depois R$ 27,90/mês
+                                                        </div>
+
+                                                        <div style={{
+                                                            background: "rgba(245, 158, 11, 0.2)",
+                                                            border: "1px solid rgba(245, 158, 11, 0.4)",
+                                                            borderRadius: 8,
+                                                            padding: "10px",
+                                                            marginBottom: 12
+                                                        }}>
+                                                            <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
+                                                                🔥 PRIMEIROS 100 CLIENTES GARANTEM:
+                                                            </div>
+                                                            <div style={{ color: "#FDE68A", fontSize: "0.9rem", fontWeight: 700 }}>
+                                                                Preço vitalício de R$ 19,90/mês
+                                                            </div>
+                                                            <div style={{ color: "#94A3B8", fontSize: "0.7rem", marginTop: 2 }}>
+                                                                (em vez de R$ 27,90)
+                                                            </div>
+                                                        </div>
+
+                                                        <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 12 }}>
+                                                            <div>
+                                                                <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2 }}>⏰ RESTAM</div>
+                                                                <div style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 900 }}>{remainingSpots} vagas</div>
+                                                            </div>
+                                                            <div style={{ width: "1px", background: "rgba(148, 163, 184, 0.3)" }} />
+                                                            <div>
+                                                                <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2 }}>⏱️ EXPIRA EM</div>
+                                                                <div style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 900, fontFamily: "monospace" }}>
+                                                                    {String(timeRemaining.hours).padStart(2, '0')}:{String(timeRemaining.minutes).padStart(2, '0')}:{String(timeRemaining.seconds).padStart(2, '0')}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
 
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 20, textAlign: "center" }}>
-                                                        Teste <strong>todas as funcionalidades PRO</strong> por 7 dias.
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 20, textAlign: "center" }}>
+                                                        Durante seus 7 dias de teste, você tem:
                                                     </div>
 
                                                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
@@ -2119,6 +2182,22 @@ export default function AppPage() {
                                                 </div>
 
                                                 <div>
+                                                    <div style={{
+                                                        background: "rgba(56, 189, 248, 0.1)",
+                                                        border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: "12px",
+                                                        marginBottom: 16,
+                                                        textAlign: "center"
+                                                    }}>
+                                                        <div style={{ color: "#38BDF8", fontSize: "0.85rem", fontWeight: 600 }}>
+                                                            💰 Custo real: <strong>R$ 0,93 por CV otimizado</strong>
+                                                        </div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 4 }}>
+                                                            (vs R$ 9,90 avulso = 90% de economia)
+                                                        </div>
+                                                    </div>
+
                                                     <button
                                                         type="button"
                                                         onClick={() => {
@@ -2126,20 +2205,45 @@ export default function AppPage() {
                                                             if (!authUserId) setShowAuthModal(true);
                                                             else setStage("checkout");
                                                         }}
-                                                        style={{ width: "100%", background: "#10B981", color: "#fff", border: "none", padding: "18px", borderRadius: 10, fontSize: "1.1rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 15px rgba(16, 185, 129, 0.4)", transition: "transform 0.1s" }}
+                                                        style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.transform = "translateY(-2px)";
+                                                            e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.transform = "translateY(0)";
+                                                            e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
+                                                        }}
                                                         onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                                        onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
+                                                        onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
                                                     >
-                                                        COMEÇAR TRIAL POR R$ 1,99
+                                                        GARANTIR MINHA VAGA - R$ 1,99 🚀
                                                     </button>
 
-                                                    <div style={{ textAlign: "center", marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
-                                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                                                            <span style={{ fontSize: "1rem" }}>🔒</span>
-                                                            <span style={{ color: "#D1FAE5", fontSize: "0.8rem", fontWeight: 600 }}>Cancele online em 1 clique</span>
+                                                    <div style={{
+                                                        background: "rgba(16, 185, 129, 0.1)",
+                                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: "14px",
+                                                        marginTop: 16
+                                                    }}>
+                                                        <div style={{ display: "flex", alignItems: "start", gap: 10, marginBottom: 10 }}>
+                                                            <span style={{ fontSize: "1.3rem" }}>🔒</span>
+                                                            <div>
+                                                                <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
+                                                                    GARANTIA TOTAL DE 7 DIAS
+                                                                </div>
+                                                                <div style={{ color: "#CBD5E1", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                                                                    Teste sem risco. Não gostou? Devolvemos 100%<br />
+                                                                    Sem perguntas, sem burocracia.
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.72rem", fontWeight: 500 }}>
-                                                            Sem renovação automática • Reembolso em 48h
+                                                        <div style={{ borderTop: "1px dashed rgba(16, 185, 129, 0.3)", paddingTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                                                            <span style={{ fontSize: "1rem" }}>🔐</span>
+                                                            <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
+                                                                <strong style={{ color: "#D1FAE5" }}>Cancele online em 1 clique</strong> • Sem renovação automática forçada • Sem taxas escondidas
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
