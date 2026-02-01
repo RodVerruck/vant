@@ -19,6 +19,20 @@ services:
         sync: false
       - key: STRIPE_PRICE_ID_PREMIUM_PLUS
         sync: false
+      - key: STRIPE_PRICE_ID_PRO_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO_ANNUAL
+        sync: false
+      - key: STRIPE_PRICE_ID_TRIAL
+        sync: false
+      - key: STRIPE_PRICE_ID_CREDIT_1
+        sync: false
+      - key: STRIPE_PRICE_ID_CREDIT_3
+        sync: false
+      - key: STRIPE_PRICE_ID_CREDIT_5
+        sync: false
       - key: FRONTEND_CHECKOUT_RETURN_URL
         sync: false
       - key: SUPABASE_URL
