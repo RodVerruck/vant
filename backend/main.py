@@ -130,13 +130,13 @@ PRICING: dict[str, dict[str, Any]] = {
         "price": 1.99,
         "name": "Trial 7 Dias",
         "stripe_price_id": STRIPE_PRICE_ID_TRIAL,
-        "credits": 30,
+        "credits": 3,
         "billing": "trial",
         "trial_days": 7,
         "converts_to": "pro_monthly",
         "features": [
             "Teste PRO por 7 dias - apenas R$ 1,99",
-            "30 otimizações durante o trial",
+            "3 otimizações para testar",
             "Reembolso automático se cancelar em 48h",
             "Após 7 dias: R$ 27,90/mês"
         ]

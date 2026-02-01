@@ -2070,22 +2070,29 @@ export default function AppPage() {
                                                 </div>
 
                                                 <div>
-                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 4 }}>VANT PRO MENSAL</div>
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.4, marginBottom: 16 }}>
-                                                        Acelere sua recolocação aplicando para dezenas de vagas com qualidade máxima.
+                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 12 }}>VANT PRO MENSAL</div>
+
+                                                    <div style={{
+                                                        background: "rgba(56, 189, 248, 0.15)",
+                                                        border: "2px solid #38BDF8",
+                                                        borderRadius: 8,
+                                                        padding: "14px",
+                                                        marginBottom: 16,
+                                                        textAlign: "center"
+                                                    }}>
+                                                        <div style={{ color: "#38BDF8", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>
+                                                            🎯 OFERTA ESPECIAL DE TESTE
+                                                        </div>
+                                                        <div style={{ fontSize: "2rem", fontWeight: 800, color: "#fff", lineHeight: 1, marginBottom: 4 }}>
+                                                            7 DIAS POR R$ 1,99
+                                                        </div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.8rem", lineHeight: 1.3 }}>
+                                                            Depois apenas R$ 27,90/mês • Cancele quando quiser
+                                                        </div>
                                                     </div>
 
-                                                    <div style={{ textAlign: "left", marginBottom: 20 }}>
-                                                        <div style={{ textDecoration: "line-through", color: "#64748B", fontSize: "0.9rem" }}>De R$ 49,90</div>
-                                                        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                                                            <div style={{ fontSize: "2.4rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>R$ 27,90</div>
-                                                            <div style={{ color: "#94A3B8", fontWeight: 500 }}>/mês</div>
-                                                        </div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>ou R$ 239/ano (economize 29%)</div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>CANCELE QUANDO QUISER</div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginTop: 8, background: "rgba(16, 185, 129, 0.15)", padding: "4px 8px", borderRadius: 4, display: "inline-block" }}>
-                                                            Custo por CV: Apenas R$ 0,99
-                                                        </div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 20, textAlign: "center" }}>
+                                                        Teste <strong>todas as funcionalidades PRO</strong> por apenas R$ 1,99. Se gostar, continue por R$ 27,90/mês.
                                                     </div>
 
                                                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
@@ -2115,7 +2122,7 @@ export default function AppPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => {
-                                                            setSelectedPlan("pro_monthly"); // ID backend para PRO Mensal
+                                                            setSelectedPlan("trial");
                                                             if (!authUserId) setShowAuthModal(true);
                                                             else setStage("checkout");
                                                         }}
@@ -2123,12 +2130,17 @@ export default function AppPage() {
                                                         onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
                                                         onMouseUp={(e) => e.currentTarget.style.transform = "scale(1)"}
                                                     >
-                                                        ATIVAR PLANO AGORA
+                                                        COMEÇAR TRIAL POR R$ 1,99
                                                     </button>
 
-                                                    <div style={{ textAlign: "center", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, opacity: 0.8 }}>
-                                                        <span style={{ fontSize: "1rem" }}>🔒</span>
-                                                        <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Garantia de 7 dias • Acesso Imediato</span>
+                                                    <div style={{ textAlign: "center", marginTop: 12, display: "flex", flexDirection: "column", gap: 4, opacity: 0.9 }}>
+                                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                                                            <span style={{ fontSize: "0.9rem" }}>🔒</span>
+                                                            <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Cancele online em 1 clique</span>
+                                                        </div>
+                                                        <div style={{ color: "#64748B", fontSize: "0.7rem" }}>
+                                                            Sem renovação automática • Reembolso em 48h
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
