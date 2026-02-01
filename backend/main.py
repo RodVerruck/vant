@@ -414,22 +414,19 @@ def analyze_premium_paid(
         file_bytes = file.file.read()
         _save_to_cache(file_bytes, job_description)
         
-        # Modo de desenvolvimento: bypass de verificação de créditos
-        if DEV_MODE:
-            print("🔧 [DEV MODE] Retornando mock de análise premium (sem processar IA, sem verificar créditos)")
-            mock_status = {
-                "payment_verified": True,
-                "credits_remaining": 999,
-                "plan_id": "pro"
-            }
-            return JSONResponse(content={"data": MOCK_PREMIUM_DATA, "entitlements": mock_status})
-
-        # Modo produção: verifica créditos normalmente
+        # Verificar créditos (tanto em DEV quanto em produção)
         status = _entitlements_status(user_id)
         if not status.get("payment_verified") or int(status.get("credits_remaining") or 0) <= 0:
             return JSONResponse(status_code=400, content={"error": "Você não tem créditos disponíveis."})
 
+        # Consumir crédito
         _consume_one_credit(user_id)
+
+        # Modo de desenvolvimento: retorna mock sem processar IA
+        if DEV_MODE:
+            print("🔧 [DEV MODE] Retornando mock de análise premium (sem processar IA)")
+            new_status = _entitlements_status(user_id)
+            return JSONResponse(content={"data": MOCK_PREMIUM_DATA, "entitlements": new_status})
 
         # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
