@@ -41,6 +41,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModa
             if (typeof window !== "undefined" && selectedPlan) {
                 localStorage.setItem("vant_auth_return_plan", selectedPlan);
                 localStorage.setItem("vant_auth_return_stage", "checkout");
+                console.log("[DEBUG] AuthModal Google - Salvando plano:", selectedPlan, "stage: checkout");
             }
 
             const { error } = await supabase.auth.signInWithOAuth({

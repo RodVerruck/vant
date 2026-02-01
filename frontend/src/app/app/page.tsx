@@ -503,19 +503,25 @@ export default function AppPage() {
                         const returnStage = localStorage.getItem("vant_auth_return_stage");
                         const returnPlan = localStorage.getItem("vant_auth_return_plan");
 
+                        console.log("[DEBUG] Login Google - returnStage:", returnStage, "returnPlan:", returnPlan);
+
                         if (returnPlan) {
                             setSelectedPlan(returnPlan as PlanType);
                             localStorage.removeItem("vant_auth_return_plan");
                             // Se tinha plano selecionado, vai direto para checkout
                             setStage("checkout");
                             localStorage.removeItem("vant_auth_return_stage");
+                            console.log("[DEBUG] Login Google - Indo para checkout com plano:", returnPlan);
                         } else if (returnStage) {
                             setStage(returnStage as AppStage);
                             localStorage.removeItem("vant_auth_return_stage");
+                            console.log("[DEBUG] Login Google - Indo para stage:", returnStage);
+                        } else {
+                            console.log("[DEBUG] Login Google - Nenhum stage/plano para restaurar");
                         }
                     }
                 } catch (e: unknown) {
-                    setCheckoutError(getErrorMessage(e, "Falha no login"));
+                    setCheckoutError(getErrorMessage(e, "Falha ao fazer login com Google"));
                 }
             })();
             url.searchParams.delete("code");
@@ -542,7 +548,7 @@ export default function AppPage() {
 
             (async () => {
                 try {
-                    const resp = await fetch(`${getApiUrl()}/api/stripe/verify-checkout-session`, {
+                    const resp = await fetch(`${getApiUrl()} /api/stripe / verify - checkout - session`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ session_id: sessionId }),
@@ -550,7 +556,7 @@ export default function AppPage() {
 
                     const payload = (await resp.json()) as JsonObject;
                     if (!resp.ok) {
-                        const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
+                        const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status} `;
                         throw new Error(err);
                     }
 
@@ -603,14 +609,14 @@ export default function AppPage() {
             setIsActivating(true);
             try {
                 console.log("[needsActivation] Chamando /api/entitlements/activate...");
-                const resp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
+                const resp = await fetch(`${getApiUrl()} /api/entitlements / activate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ session_id: stripeSessionId, user_id: authUserId }),
                 });
                 const payload = (await resp.json()) as JsonObject;
                 if (!resp.ok) {
-                    const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
+                    const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status} `;
                     throw new Error(err);
                 }
                 if (typeof payload.plan_id === "string") {
@@ -698,14 +704,14 @@ export default function AppPage() {
                 body.client_reference_id = authUserId;
             }
 
-            const resp = await fetch(`${getApiUrl()}/api/stripe/create-checkout-session`, {
+            const resp = await fetch(`${getApiUrl()} /api/stripe / create - checkout - session`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
             });
             const payload = (await resp.json()) as JsonObject;
             if (!resp.ok) {
-                const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
+                const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status} `;
                 throw new Error(err);
             }
             if (typeof payload.id === "string") {
@@ -820,6 +826,7 @@ export default function AppPage() {
                 if (selectedPlan) {
                     localStorage.setItem("vant_auth_return_plan", selectedPlan);
                 }
+                console.log("[DEBUG] handleGoogleLogin page.tsx - Salvando stage:", stage, "plano:", selectedPlan);
             }
 
             const { error } = await supabase.auth.signInWithOAuth({
