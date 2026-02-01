@@ -2,7 +2,7 @@
 
 ## 🎯 Produtos a Criar
 
-Você precisa criar **5 produtos** no Stripe Dashboard.
+Você precisa criar **6 produtos** no Stripe Dashboard.
 
 ---
 
@@ -34,7 +34,29 @@ Você precisa criar **5 produtos** no Stripe Dashboard.
 
 ---
 
-### 3. Criar Produto: PRO Anual
+### 3. Criar Produto: PRO Mensal Early Bird (Desconto Vitalício)
+
+**Informações do Produto:**
+- **Name:** Vant PRO Mensal (Early Bird)
+- **Description:** Otimizações ilimitadas com desconto vitalício - Exclusivo para primeiros 100 clientes
+
+**Pricing:**
+- **Price:** R$ 19,90
+- **Billing period:** Monthly (Mensal)
+- **Currency:** BRL (Real Brasileiro)
+
+**Configuração Especial:**
+- Este é o plano com desconto vitalício prometido na oferta relâmpago
+- Clientes que entrarem pelo Trial de R$ 1,99 serão convertidos para este plano
+- Preço fixo de R$ 19,90/mês para sempre (em vez de R$ 27,90)
+
+**Após criar:**
+- Copie o **Price ID** (formato: `price_xxxxxxxxxxxxx`)
+- Cole no `.env`: `STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD=price_1Sw6712VONQto1dcAyvBbAJI`
+
+---
+
+### 4. Criar Produto: PRO Anual
 
 **Informações do Produto:**
 - **Name:** Vant PRO Anual
@@ -51,7 +73,7 @@ Você precisa criar **5 produtos** no Stripe Dashboard.
 
 ---
 
-### 4. Criar Produto: Trial 7 Dias
+### 5. Criar Produto: Trial 7 Dias
 
 **Informações do Produto:**
 - **Name:** Vant PRO Trial 7 Dias
@@ -64,7 +86,7 @@ Você precisa criar **5 produtos** no Stripe Dashboard.
 
 **Configuração Especial:**
 - Este produto será usado como "trial pago"
-- Após 7 dias, o backend converterá automaticamente para PRO Mensal
+- Após 7 dias, o backend converterá automaticamente para PRO Mensal Early Bird (R$ 19,90/mês)
 - Reembolso automático se cancelar em 48h (configurar via webhook)
 
 **Após criar:**
@@ -73,7 +95,7 @@ Você precisa criar **5 produtos** no Stripe Dashboard.
 
 ---
 
-### 5. Criar Produto: Crédito Único
+### 6. Criar Produto: Crédito Único
 
 **Informações do Produto:**
 - **Name:** Vant Crédito Único
@@ -90,7 +112,7 @@ Você precisa criar **5 produtos** no Stripe Dashboard.
 
 ---
 
-### 6. Criar Produto: Pacote 5 CVs
+### 7. Criar Produto: Pacote 5 CVs
 
 **Informações do Produto:**
 - **Name:** Vant Pacote 5 CVs
@@ -117,6 +139,7 @@ STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxx  # ou sk_live_xxxxxxxxxxxxx
 
 # Novos Price IDs
 STRIPE_PRICE_ID_PRO_MONTHLY=price_xxxxxxxxxxxxx
+STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD=price_1Sw6712VONQto1dcAyvBbAJI
 STRIPE_PRICE_ID_PRO_ANNUAL=price_xxxxxxxxxxxxx
 STRIPE_PRICE_ID_TRIAL=price_xxxxxxxxxxxxx
 STRIPE_PRICE_ID_CREDIT_1=price_xxxxxxxxxxxxx
@@ -136,7 +159,7 @@ FRONTEND_CHECKOUT_RETURN_URL=http://localhost:3000/app
 
 Antes de testar, verifique:
 
-- [ ] 5 produtos criados no Stripe
+- [ ] 6 produtos criados no Stripe (incluindo Early Bird)
 - [ ] Todos os Price IDs copiados
 - [ ] Arquivo `.env` atualizado
 - [ ] Backend reiniciado (`python start_server.py`)

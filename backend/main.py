@@ -53,6 +53,7 @@ STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 
 # Novos Price IDs - Modelo Simplificado
 STRIPE_PRICE_ID_PRO_MONTHLY = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")  # R$ 27,90/mês
+STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD")  # R$ 19,90/mês (desconto vitalício)
 STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")    # R$ 239/ano
 STRIPE_PRICE_ID_TRIAL = os.getenv("STRIPE_PRICE_ID_TRIAL")              # R$ 1,99 trial 7 dias
 STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,90 (1 CV)
@@ -105,6 +106,25 @@ PRICING: dict[str, dict[str, Any]] = {
         ]
     },
     
+    # TIER PRO - MENSAL EARLY BIRD (Desconto Vitalício)
+    "pro_monthly_early_bird": {
+        "price": 19.90,
+        "name": "PRO Mensal (Early Bird)",
+        "stripe_price_id": STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD,
+        "credits": 30,
+        "billing": "subscription",
+        "period": "monthly",
+        "discount": "Desconto Vitalício",
+        "features": [
+            "30 Otimizações por mês",
+            "Download de CV Otimizado (PDF + Word)",
+            "Simulador de Entrevista com IA",
+            "X-Ray Search - Encontre Recrutadores",
+            "Biblioteca Recomendada",
+            "🔥 Preço vitalício de R$ 19,90/mês"
+        ]
+    },
+    
     # TIER PRO - ANUAL (29% OFF)
     "pro_annual": {
         "price": 239.00,
@@ -133,12 +153,12 @@ PRICING: dict[str, dict[str, Any]] = {
         "credits": 3,
         "billing": "trial",
         "trial_days": 7,
-        "converts_to": "pro_monthly",
+        "converts_to": "pro_monthly_early_bird",
         "features": [
             "Teste PRO por 7 dias - apenas R$ 1,99",
             "3 otimizações para testar",
             "Reembolso automático se cancelar em 48h",
-            "Após 7 dias: R$ 27,90/mês"
+            "Após 7 dias: R$ 19,90/mês (desconto vitalício)"
         ]
     },
     
