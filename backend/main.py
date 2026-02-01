@@ -50,11 +50,18 @@ else:
     print("="*60 + "\n")
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+
+# Novos Price IDs - Modelo Simplificado
+STRIPE_PRICE_ID_PRO_MONTHLY = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")  # R$ 27,90/mês
+STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")    # R$ 239/ano
+STRIPE_PRICE_ID_TRIAL = os.getenv("STRIPE_PRICE_ID_TRIAL")              # R$ 1,99 trial 7 dias
+STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,90 (1 CV)
+STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")        # R$ 49,90 (5 CVs)
+
+# Legacy Price IDs (manter para usuários existentes)
 STRIPE_PRICE_ID_BASIC = os.getenv("STRIPE_PRICE_ID_BASIC")
 STRIPE_PRICE_ID_PRO = os.getenv("STRIPE_PRICE_ID_PRO")
 STRIPE_PRICE_ID_PREMIUM_PLUS = os.getenv("STRIPE_PRICE_ID_PREMIUM_PLUS")
-STRIPE_PRICE_ID_PREMIUM = os.getenv("STRIPE_PRICE_ID_PREMIUM")
-STRIPE_PRICE_ID_ULTIMATE = os.getenv("STRIPE_PRICE_ID_ULTIMATE")
 
 FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
 
@@ -66,6 +73,7 @@ if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 PRICING: dict[str, dict[str, Any]] = {
+    # TIER GRATUITO
     "free": {
         "price": 0,
         "name": "Gratuito",
@@ -73,69 +81,116 @@ PRICING: dict[str, dict[str, Any]] = {
         "credits": 1,
         "billing": "free",
         "features": [
-            "1 análise gratuita",
-            "Diagnóstico básico",
-            "2 sugestões de melhoria",
-            "Score ATS"
+            "1 Análise Completa",
+            "Score ATS Detalhado",
+            "43 Critérios Avaliados",
+            "3 Sugestões de Melhoria"
         ]
     },
-    "premium": {
-        "price": 27.00,
-        "name": "Premium",
-        "stripe_price_id": STRIPE_PRICE_ID_PREMIUM,
+    
+    # TIER PRO - MENSAL
+    "pro_monthly": {
+        "price": 27.90,
+        "name": "PRO Mensal",
+        "stripe_price_id": STRIPE_PRICE_ID_PRO_MONTHLY,
         "credits": 999,
         "billing": "subscription",
+        "period": "monthly",
         "features": [
-            "Análises ilimitadas",
-            "Otimizações completas",
-            "CV otimizado para download",
-            "Biblioteca de conteúdos",
-            "Suporte prioritário"
+            "Otimizações ILIMITADAS",
+            "Download de CV Otimizado (PDF + Word)",
+            "Simulador de Entrevista com IA",
+            "X-Ray Search - Encontre Recrutadores",
+            "Biblioteca Recomendada"
         ]
     },
-    "pro": {
-        "price": 47.00,
-        "name": "Pro",
-        "stripe_price_id": STRIPE_PRICE_ID_PRO,
+    
+    # TIER PRO - ANUAL (29% OFF)
+    "pro_annual": {
+        "price": 239.00,
+        "price_monthly": 19.92,
+        "name": "PRO Anual",
+        "stripe_price_id": STRIPE_PRICE_ID_PRO_ANNUAL,
         "credits": 999,
         "billing": "subscription",
+        "period": "annual",
+        "discount": "29% OFF",
         "features": [
-            "Tudo do Premium",
-            "Simulador de entrevista com IA",
-            "Radar de vagas compatíveis",
-            "Análise de concorrência",
-            "Relatórios avançados"
+            "Otimizações ILIMITADAS",
+            "Download de CV Otimizado (PDF + Word)",
+            "Simulador de Entrevista com IA",
+            "X-Ray Search - Encontre Recrutadores",
+            "Biblioteca Recomendada",
+            "Economize 29% vs mensal"
         ]
     },
-    "ultimate": {
-        "price": 97.00,
-        "name": "Ultimate",
-        "stripe_price_id": STRIPE_PRICE_ID_ULTIMATE,
+    
+    # TRIAL DE 7 DIAS - R$ 1,99
+    "trial": {
+        "price": 1.99,
+        "name": "Trial 7 Dias",
+        "stripe_price_id": STRIPE_PRICE_ID_TRIAL,
         "credits": 999,
-        "billing": "subscription",
+        "billing": "trial",
+        "trial_days": 7,
+        "converts_to": "pro_monthly",
         "features": [
-            "Tudo do Pro",
-            "Revisão humana por especialista",
-            "Otimização de perfil LinkedIn",
-            "Consultoria de carreira 1:1",
-            "Acesso vitalício a atualizações"
+            "Teste PRO por 7 dias - apenas R$ 1,99",
+            "Acesso completo a todos os recursos",
+            "Reembolso automático se cancelar em 48h",
+            "Após 7 dias: R$ 27,90/mês"
         ]
     },
+    
+    # CRÉDITOS AVULSOS - 1 CV
+    "credit_1": {
+        "price": 12.90,
+        "name": "Crédito Único",
+        "stripe_price_id": STRIPE_PRICE_ID_CREDIT_1,
+        "credits": 1,
+        "billing": "one_time",
+        "features": [
+            "1 otimização completa",
+            "Download de CV Otimizado",
+            "Uso único, sem recorrência"
+        ]
+    },
+    
+    # CRÉDITOS AVULSOS - 5 CVs (22% OFF)
+    "credit_5": {
+        "price": 49.90,
+        "price_per_cv": 9.98,
+        "name": "Pacote 5 CVs",
+        "stripe_price_id": STRIPE_PRICE_ID_CREDIT_5,
+        "credits": 5,
+        "billing": "one_time",
+        "discount": "22% OFF",
+        "features": [
+            "5 otimizações completas",
+            "Download de CV Otimizado",
+            "Economize 22% vs crédito único",
+            "Válido por 6 meses"
+        ]
+    },
+    
+    # LEGACY - Manter para usuários existentes
     "basico": {
         "price": 29.90,
-        "name": "1 Otimização",
+        "name": "1 Otimização (Legacy)",
         "stripe_price_id": STRIPE_PRICE_ID_BASIC,
         "credits": 1,
         "billing": "one_time",
-        "features": ["1 análise completa", "CV otimizado"]
+        "features": ["1 análise completa", "CV otimizado"],
+        "hidden": True
     },
     "premium_plus": {
         "price": 49.90,
-        "name": "VANT - Pacote Premium Plus (Legacy)",
+        "name": "Premium Plus (Legacy)",
         "stripe_price_id": STRIPE_PRICE_ID_PREMIUM_PLUS,
         "credits": 30,
         "billing": "subscription",
-        "features": ["30 análises/mês", "Plano legado"]
+        "features": ["30 análises/mês"],
+        "hidden": True
     },
 }
 
@@ -408,25 +463,38 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
     )
     sub = (subs.data or [None])[0]
 
-    if sub and (sub.get("subscription_plan") == "premium_plus") and (sub.get("subscription_status") == "active"):
+    # Verificar se tem assinatura ativa (qualquer plano)
+    if sub and sub.get("subscription_status") == "active":
+        plan_name = sub.get("subscription_plan")
         period_start = sub.get("current_period_start")
-        usage = (
-            supabase_admin.table("usage")
-            .select("used,usage_limit")
-            .eq("user_id", user_id)
-            .eq("period_start", period_start)
-            .limit(1)
-            .execute()
-        )
-        row = (usage.data or [None])[0]
-        used = int((row or {}).get("used") or 0)
-        limit_val = int((row or {}).get("usage_limit") or 30)
-        credits_remaining = max(0, limit_val - used)
-        return {
-            "payment_verified": credits_remaining > 0,
-            "credits_remaining": credits_remaining,
-            "plan": "premium_plus",
-        }
+        
+        # Planos PRO têm créditos ilimitados (999 = flag para ilimitado)
+        if plan_name in ["pro_monthly", "pro_annual", "trial"]:
+            return {
+                "payment_verified": True,
+                "credits_remaining": 999,
+                "plan": plan_name,
+            }
+        
+        # Plano legacy premium_plus usa sistema de usage com limite mensal
+        if plan_name == "premium_plus":
+            usage = (
+                supabase_admin.table("usage")
+                .select("used,usage_limit")
+                .eq("user_id", user_id)
+                .eq("period_start", period_start)
+                .limit(1)
+                .execute()
+            )
+            row = (usage.data or [None])[0]
+            used = int((row or {}).get("used") or 0)
+            limit_val = int((row or {}).get("usage_limit") or 30)
+            credits_remaining = max(0, limit_val - used)
+            return {
+                "payment_verified": credits_remaining > 0,
+                "credits_remaining": credits_remaining,
+                "plan": "premium_plus",
+            }
 
     credits = (
         supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
@@ -453,6 +521,14 @@ def _consume_one_credit(user_id: str) -> None:
         .execute()
     )
     sub = (subs.data or [None])[0]
+    
+    # Planos PRO não consomem créditos (ilimitado)
+    if sub and sub.get("subscription_status") == "active":
+        plan_name = sub.get("subscription_plan")
+        if plan_name in ["pro_monthly", "pro_annual", "trial"]:
+            return  # Não consome crédito, é ilimitado
+    
+    # Plano legacy premium_plus consome do sistema de usage
     if sub and (sub.get("subscription_plan") == "premium_plus") and (sub.get("subscription_status") == "active"):
         period_start = sub.get("current_period_start")
         usage = (
@@ -540,19 +616,18 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
             
             print(f"[DEBUG] Timestamps: raw={cps},{cpe} iso={period_start_iso},{period_end_iso}")
 
-            # Verificar se já existe assinatura para este usuário/plano
+            # Verificar se já existe assinatura para este usuário
             existing = (
                 supabase_admin.table("subscriptions")
                 .select("id")
                 .eq("user_id", payload.user_id)
-                .eq("subscription_plan", "premium_plus")
                 .limit(1)
                 .execute()
             )
             
             subscription_data = {
                 "user_id": payload.user_id,
-                "subscription_plan": "premium_plus",
+                "subscription_plan": plan_id,  # Usar plan_id dinâmico, não hardcoded
                 "stripe_subscription_id": subscription_id,
                 "subscription_status": sub.get("status"),
                 "current_period_start": period_start_iso,
@@ -563,16 +638,19 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
                 # Update existing subscription
                 supabase_admin.table("subscriptions").update(subscription_data).eq(
                     "user_id", payload.user_id
-                ).eq("subscription_plan", "premium_plus").execute()
+                ).execute()
             else:
                 # Insert new subscription
                 supabase_admin.table("subscriptions").insert(subscription_data).execute()
 
-            supabase_admin.table("usage").upsert(
-                {"user_id": payload.user_id, "period_start": period_start_iso, "used": 0, "usage_limit": int(plan.get("credits") or 30)}
-            ).execute()
+            # Apenas criar registro de usage para planos com limite (legacy premium_plus)
+            if plan_id == "premium_plus":
+                supabase_admin.table("usage").upsert(
+                    {"user_id": payload.user_id, "period_start": period_start_iso, "used": 0, "usage_limit": int(plan.get("credits") or 30)}
+                ).execute()
 
-            credits_remaining = int(plan.get("credits") or 30)
+            # Para planos PRO, retornar 999 (ilimitado)
+            credits_remaining = 999 if plan_id in ["pro_monthly", "pro_annual", "trial"] else int(plan.get("credits") or 30)
         else:
             purchased_credits = int(plan.get("credits") or 1)
             existing = (
@@ -600,6 +678,18 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
         print(f"[ERROR] activate_entitlements: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Salvar sessão para retry posterior
+        try:
+            supabase_admin.table("failed_activations").insert({
+                "user_id": payload.user_id,
+                "session_id": payload.session_id,
+                "error_message": str(e),
+                "created_at": datetime.now().isoformat()
+            }).execute()
+        except:
+            pass  # Se falhar ao salvar, não quebrar o fluxo
+        
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 

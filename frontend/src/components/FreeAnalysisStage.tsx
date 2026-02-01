@@ -289,7 +289,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         <h2 className="section-title">
           🚨 Problemas Identificados ({problems.length})
         </h2>
-        
+
         {visibleProblems.map((problem: any, idx: number) => (
           <div key={idx} className="problem-card">
             <div className="problem-title">{problem.titulo || "Problema Detectado"}</div>
@@ -316,7 +316,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 Veja todos os {hiddenCount} problemas restantes + sugestões de correção
               </div>
               <button className="unlock-button" onClick={onUpgrade}>
-                Ver Planos Premium
+                Ver Planos PRO
               </button>
             </div>
           </div>
@@ -325,21 +325,24 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
       <div className="cta-section">
         <h2 className="cta-title">
-          Pronto para otimizar seu currículo?
+          🚀 Desbloqueie Tudo com o Plano PRO
         </h2>
-        <p style={{ color: "#94A3B8", fontSize: "1.1rem" }}>
-          Com o plano Premium você recebe:
+        <p style={{ color: "#94A3B8", fontSize: "1.1rem", marginBottom: "24px" }}>
+          A partir de <strong style={{ color: "#4A9EFF" }}>R$ 27,90/mês</strong> ou <strong style={{ color: "#10B981" }}>R$ 239/ano</strong> (economize 29%)
         </p>
         <ul className="cta-benefits">
-          <li>Análises ilimitadas para todas as vagas</li>
-          <li>Todas as sugestões de otimização</li>
-          <li>CV otimizado pronto para download</li>
-          <li>Biblioteca de conteúdos exclusivos</li>
-          <li>Suporte prioritário</li>
+          <li>Otimizações ILIMITADAS</li>
+          <li>Download de CV Otimizado (PDF + Word)</li>
+          <li>Simulador de Entrevista com IA</li>
+          <li>X-Ray Search - Encontre Recrutadores</li>
+          <li>Biblioteca Recomendada</li>
         </ul>
         <button className="cta-button" onClick={onUpgrade}>
-          Ver Planos a partir de R$ 27/mês
+          COMEÇAR TRIAL R$ 1,99 POR 7 DIAS
         </button>
+        <div style={{ textAlign: "center", marginTop: "12px", fontSize: "0.85rem", color: "#64748B" }}>
+          Ou escolha o plano mensal/anual
+        </div>
         <div className="guarantee-text">
           <span>🛡️</span>
           <span>Garantia de 7 dias ou seu dinheiro de volta</span>

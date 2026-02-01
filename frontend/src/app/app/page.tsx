@@ -479,43 +479,25 @@ export default function AppPage() {
                     setCheckoutError(getErrorMessage(e, "Falha no login"));
                 }
             })();
-
             url.searchParams.delete("code");
             window.history.replaceState({}, "", url.toString());
         }
 
-        const activateEntitlements = async (sid: string, uid: string) => {
-            const resp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ session_id: sid, user_id: uid }),
-            });
-            const payload = (await resp.json()) as JsonObject;
-            if (!resp.ok) {
-                const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
-                throw new Error(err);
-            }
-            if (typeof payload.plan_id === "string") {
-                setSelectedPlan(payload.plan_id as PlanType);
-            }
-            if (typeof payload.credits_remaining === "number") {
-                setCreditsRemaining(payload.credits_remaining);
-            }
-        };
-
+        // Verificar se há sessão pendente de ativação
         const pendingSid = window.localStorage.getItem("vant_pending_stripe_session_id") || "";
-        if (pendingSid) {
+        if (pendingSid && authUserId) {
+            // Se tem sessão pendente E usuário logado, ativar via useEffect needsActivation
             setStripeSessionId(pendingSid);
             setNeedsActivation(true);
-
-            if (!authUserId) {
-                setStage("checkout");
-                setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
-            }
+        } else if (pendingSid && !authUserId) {
+            // Se tem sessão pendente mas SEM usuário, pedir login
+            setStripeSessionId(pendingSid);
+            setStage("checkout");
+            setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
         }
 
+        // Retorno do Stripe após pagamento
         if (payment === "success" && sessionId) {
-            setStripeSessionId(sessionId);
             setStage("checkout");
             setCheckoutError("");
 
@@ -537,18 +519,20 @@ export default function AppPage() {
                         if (typeof payload.plan_id === "string") {
                             setSelectedPlan(payload.plan_id as PlanType);
                         }
+
+                        // Salvar sessão e delegar ativação para useEffect needsActivation
+                        setStripeSessionId(sessionId);
+
                         if (!authUserId) {
-                            setNeedsActivation(true);
+                            // Sem usuário: salvar e pedir login
                             window.localStorage.setItem("vant_pending_stripe_session_id", sessionId);
+                            setNeedsActivation(true);
                             setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
                             setStage("checkout");
-                            return;
+                        } else {
+                            // Com usuário: ativar imediatamente via useEffect
+                            setNeedsActivation(true);
                         }
-                        await activateEntitlements(sessionId, authUserId);
-                        window.localStorage.removeItem("vant_pending_stripe_session_id");
-                        setNeedsActivation(false);
-                        // Em vez de ir direto para paid, vai para processing_premium para processar o arquivo
-                        setStage("processing_premium");
                     } else {
                         setCheckoutError("Pagamento não confirmado ainda. Tente novamente em alguns segundos.");
                     }
@@ -590,20 +574,6 @@ export default function AppPage() {
                     const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
                     throw new Error(err);
                 }
-                if (typeof payload.plan_id === "string") {
-                    setSelectedPlan(payload.plan_id as PlanType);
-                }
-                if (typeof payload.credits_remaining === "number") {
-                    setCreditsRemaining(payload.credits_remaining);
-                }
-                setNeedsActivation(false);
-                setCheckoutError("");
-                // Em vez de ir direto para paid, vai para processing_premium para processar o arquivo
-                setStage("processing_premium");
-            } catch (e: unknown) {
-                setCheckoutError(getErrorMessage(e, "Falha ao ativar plano"));
-            } finally {
-                setIsActivating(false);
             }
         })();
     }, [authUserId, needsActivation, stripeSessionId, isActivating]);
@@ -1960,7 +1930,7 @@ export default function AppPage() {
                                                         CRÉDITOS AVULSOS
                                                     </div>
                                                     <div style={{ color: "#E2E8F0", fontSize: "1.4rem", fontWeight: 700, marginBottom: 8 }}>
-                                                        A partir de R$ 9,90
+                                                        A partir de R$ 12,90
                                                     </div>
                                                     <p style={{ color: "#64748B", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 24 }}>
                                                         Ideal para ajustes pontuais ou se você já tem uma vaga específica em mente.
@@ -1969,12 +1939,12 @@ export default function AppPage() {
                                                     <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 9,90</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 12,90</span>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                setSelectedPlan("basico"); // ID backend para 1 CV
+                                                                setSelectedPlan("credit_1"); // ID backend para 1 CV
                                                                 if (!authUserId) setShowAuthModal(true);
                                                                 else setStage("checkout");
                                                             }}
@@ -1989,12 +1959,12 @@ export default function AppPage() {
                                                     <div>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 5 CVs</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 39,90</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 49,90</span>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                setSelectedPlan("pro"); // ID backend para Pacote
+                                                                setSelectedPlan("credit_5"); // ID backend para Pacote
                                                                 if (!authUserId) setShowAuthModal(true);
                                                                 else setStage("checkout");
                                                             }}
@@ -2035,9 +2005,10 @@ export default function AppPage() {
                                                     <div style={{ textAlign: "left", marginBottom: 20 }}>
                                                         <div style={{ textDecoration: "line-through", color: "#64748B", fontSize: "0.9rem" }}>De R$ 49,90</div>
                                                         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                                                            <div style={{ fontSize: "2.4rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>R$ 29,90</div>
+                                                            <div style={{ fontSize: "2.4rem", fontWeight: 800, color: "#fff", lineHeight: 1 }}>R$ 27,90</div>
                                                             <div style={{ color: "#94A3B8", fontWeight: 500 }}>/mês</div>
                                                         </div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>ou R$ 239/ano (economize 29%)</div>
                                                         <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginTop: 4 }}>CANCELE QUANDO QUISER</div>
                                                         <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginTop: 8, background: "rgba(16, 185, 129, 0.15)", padding: "4px 8px", borderRadius: 4, display: "inline-block" }}>
                                                             Custo por CV: Apenas R$ 0,99
@@ -2071,7 +2042,7 @@ export default function AppPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => {
-                                                            setSelectedPlan("premium_plus"); // ID backend para Assinatura
+                                                            setSelectedPlan("pro_monthly"); // ID backend para PRO Mensal
                                                             if (!authUserId) setShowAuthModal(true);
                                                             else setStage("checkout");
                                                         }}
@@ -2126,23 +2097,47 @@ export default function AppPage() {
                             const planId = (selectedPlan || "premium_plus").trim();
 
                             const prices: any = {
-                                basico: {
-                                    price: 9.90,
+                                credit_1: {
+                                    price: 12.90,
                                     name: "1 Crédito Avulso",
                                     billing: "one_time",
                                     desc: "Otimização pontual"
                                 },
-                                pro: {
-                                    price: 39.90,
+                                credit_5: {
+                                    price: 49.90,
                                     name: "Pacote 5 Créditos",
                                     billing: "one_time",
-                                    desc: "Pacote de volume (Sem validade)"
+                                    desc: "5 otimizações completas"
+                                },
+                                pro_monthly: {
+                                    price: 27.90,
+                                    name: "VANT Pro Mensal",
+                                    billing: "subscription",
+                                    desc: "Otimizações ilimitadas"
+                                },
+                                pro_annual: {
+                                    price: 239.00,
+                                    name: "VANT Pro Anual",
+                                    billing: "subscription",
+                                    desc: "Economize 29% vs mensal"
+                                },
+                                trial: {
+                                    price: 1.99,
+                                    name: "Trial 7 Dias",
+                                    billing: "trial",
+                                    desc: "Teste PRO por 7 dias"
                                 },
                                 premium_plus: {
                                     price: 29.90,
-                                    name: "VANT Pro Mensal",
+                                    name: "VANT Pro Mensal (Legacy)",
                                     billing: "subscription",
-                                    desc: "Plano Acelerador (30 Otimizações/mês)"
+                                    desc: "Plano legado"
+                                },
+                                basico: {
+                                    price: 9.90,
+                                    name: "1 Crédito (Legacy)",
+                                    billing: "one_time",
+                                    desc: "Plano legado"
                                 },
                             };
 
