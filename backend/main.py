@@ -93,11 +93,11 @@ PRICING: dict[str, dict[str, Any]] = {
         "price": 27.90,
         "name": "PRO Mensal",
         "stripe_price_id": STRIPE_PRICE_ID_PRO_MONTHLY,
-        "credits": 999,
+        "credits": 30,
         "billing": "subscription",
         "period": "monthly",
         "features": [
-            "Otimizações ILIMITADAS",
+            "30 Otimizações por mês",
             "Download de CV Otimizado (PDF + Word)",
             "Simulador de Entrevista com IA",
             "X-Ray Search - Encontre Recrutadores",
@@ -111,12 +111,12 @@ PRICING: dict[str, dict[str, Any]] = {
         "price_monthly": 19.92,
         "name": "PRO Anual",
         "stripe_price_id": STRIPE_PRICE_ID_PRO_ANNUAL,
-        "credits": 999,
+        "credits": 30,
         "billing": "subscription",
         "period": "annual",
         "discount": "29% OFF",
         "features": [
-            "Otimizações ILIMITADAS",
+            "30 Otimizações por mês",
             "Download de CV Otimizado (PDF + Word)",
             "Simulador de Entrevista com IA",
             "X-Ray Search - Encontre Recrutadores",
@@ -130,13 +130,13 @@ PRICING: dict[str, dict[str, Any]] = {
         "price": 1.99,
         "name": "Trial 7 Dias",
         "stripe_price_id": STRIPE_PRICE_ID_TRIAL,
-        "credits": 999,
+        "credits": 30,
         "billing": "trial",
         "trial_days": 7,
         "converts_to": "pro_monthly",
         "features": [
             "Teste PRO por 7 dias - apenas R$ 1,99",
-            "Acesso completo a todos os recursos",
+            "30 otimizações durante o trial",
             "Reembolso automático se cancelar em 48h",
             "Após 7 dias: R$ 27,90/mês"
         ]
@@ -469,17 +469,8 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
         
         print(f"[DEBUG] Assinatura ativa encontrada: plan={plan_name}, status={sub.get('subscription_status')}")
         
-        # Planos PRO têm créditos ilimitados (999 = flag para ilimitado)
-        if plan_name in ["pro_monthly", "pro_annual", "trial"]:
-            print(f"[DEBUG] Retornando 999 créditos (ilimitado) para plano {plan_name}")
-            return {
-                "payment_verified": True,
-                "credits_remaining": 999,
-                "plan": plan_name,
-            }
-        
-        # Plano legacy premium_plus usa sistema de usage com limite mensal
-        if plan_name == "premium_plus":
+        # Todos os planos de assinatura (PRO, Trial, premium_plus) usam sistema de usage com limite mensal
+        if plan_name in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
             usage = (
                 supabase_admin.table("usage")
                 .select("used,usage_limit")
@@ -528,38 +519,34 @@ def _consume_one_credit(user_id: str) -> None:
     )
     sub = (subs.data or [None])[0]
     
-    # Planos PRO não consomem créditos (ilimitado)
+    # Todos os planos de assinatura (PRO, Trial, premium_plus) consomem do sistema de usage
     if sub and sub.get("subscription_status") == "active":
         plan_name = sub.get("subscription_plan")
-        if plan_name in ["pro_monthly", "pro_annual", "trial"]:
-            return  # Não consome crédito, é ilimitado
-    
-    # Plano legacy premium_plus consome do sistema de usage
-    if sub and (sub.get("subscription_plan") == "premium_plus") and (sub.get("subscription_status") == "active"):
-        period_start = sub.get("current_period_start")
-        usage = (
-            supabase_admin.table("usage")
-            .select("used,usage_limit")
-            .eq("user_id", user_id)
-            .eq("period_start", period_start)
-            .limit(1)
-            .execute()
-        )
-        row = (usage.data or [None])[0]
-        used = int((row or {}).get("used") or 0)
-        limit_val = int((row or {}).get("usage_limit") or 30)
-        if used >= limit_val:
-            raise RuntimeError("Limite mensal atingido")
+        if plan_name in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
+            period_start = sub.get("current_period_start")
+            usage = (
+                supabase_admin.table("usage")
+                .select("used,usage_limit")
+                .eq("user_id", user_id)
+                .eq("period_start", period_start)
+                .limit(1)
+                .execute()
+            )
+            row = (usage.data or [None])[0]
+            used = int((row or {}).get("used") or 0)
+            limit_val = int((row or {}).get("usage_limit") or 30)
+            if used >= limit_val:
+                raise RuntimeError("Limite mensal atingido")
 
-        if row is None:
-            supabase_admin.table("usage").insert(
-                {"user_id": user_id, "period_start": period_start, "used": 1, "usage_limit": limit_val}
-            ).execute()
-        else:
-            supabase_admin.table("usage").update({"used": used + 1}).eq("user_id", user_id).eq(
-                "period_start", period_start
-            ).execute()
-        return
+            if row is None:
+                supabase_admin.table("usage").insert(
+                    {"user_id": user_id, "period_start": period_start, "used": 1, "usage_limit": limit_val}
+                ).execute()
+            else:
+                supabase_admin.table("usage").update({"used": used + 1}).eq("user_id", user_id).eq(
+                    "period_start", period_start
+                ).execute()
+            return
 
     credits = (
         supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
@@ -649,14 +636,14 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
                 # Insert new subscription
                 supabase_admin.table("subscriptions").insert(subscription_data).execute()
 
-            # Apenas criar registro de usage para planos com limite (legacy premium_plus)
-            if plan_id == "premium_plus":
+            # Criar registro de usage para todos os planos de assinatura (limite de 30 créditos/mês)
+            if plan_id in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
                 supabase_admin.table("usage").upsert(
                     {"user_id": payload.user_id, "period_start": period_start_iso, "used": 0, "usage_limit": int(plan.get("credits") or 30)}
                 ).execute()
 
-            # Para planos PRO, retornar 999 (ilimitado)
-            credits_remaining = 999 if plan_id in ["pro_monthly", "pro_annual", "trial"] else int(plan.get("credits") or 30)
+            # Todos os planos de assinatura têm 30 créditos mensais
+            credits_remaining = int(plan.get("credits") or 30)
         else:
             purchased_credits = int(plan.get("credits") or 1)
             existing = (

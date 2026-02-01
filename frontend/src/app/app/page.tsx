@@ -1178,8 +1178,8 @@ export default function AppPage() {
     const renderCreditsIndicator = () => {
         if (!authUserId) return null;
 
-        const isUnlimited = creditsRemaining >= 999;
         const isLow = creditsRemaining > 0 && creditsRemaining < 3;
+        const isHigh = creditsRemaining >= 20;
 
         return (
             <div style={{
@@ -1188,7 +1188,7 @@ export default function AppPage() {
                 right: 20,
                 zIndex: 1000,
                 background: 'rgba(15, 23, 42, 0.95)',
-                border: `2px solid ${isUnlimited ? '#10B981' : isLow ? '#F59E0B' : '#38BDF8'}`,
+                border: `2px solid ${isHigh ? '#10B981' : isLow ? '#F59E0B' : '#38BDF8'}`,
                 borderRadius: 12,
                 padding: '12px 20px',
                 display: 'flex',
@@ -1201,7 +1201,7 @@ export default function AppPage() {
                     fontSize: '1.5rem',
                     filter: 'drop-shadow(0 0 8px currentColor)'
                 }}>
-                    {isUnlimited ? '∞' : '💎'}
+                    💎
                 </div>
                 <div>
                     <div style={{
@@ -1215,13 +1215,13 @@ export default function AppPage() {
                         Créditos
                     </div>
                     <div style={{
-                        color: isUnlimited ? '#10B981' : isLow ? '#F59E0B' : '#F8FAFC',
+                        color: isHigh ? '#10B981' : isLow ? '#F59E0B' : '#F8FAFC',
                         fontSize: '1.2rem',
                         fontWeight: 900,
                         lineHeight: 1,
                         fontFamily: 'monospace'
                     }}>
-                        {isUnlimited ? 'ILIMITADO' : creditsRemaining}
+                        {creditsRemaining}
                     </div>
                 </div>
             </div>
