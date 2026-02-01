@@ -2092,7 +2092,9 @@ export default function AppPage() {
                                                     </div>
 
                                                     <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 20, textAlign: "center" }}>
-                                                        Teste <strong>todas as funcionalidades PRO</strong> por apenas R$ 1,99. Se gostar, continue por R$ 27,90/mês.
+                                                        <strong>7 DIAS DE ACESSO TOTAL POR R$ 1,99</strong><br />
+                                                        Depois cobra R$ 27,90/mês automaticamente.<br />
+                                                        Cancele online quando quiser - sem multa.
                                                     </div>
 
                                                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: 24 }}>
