@@ -2070,7 +2070,7 @@ export default function AppPage() {
                                                 </div>
 
                                                 <div>
-                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 12 }}>VANT PRO MENSAL</div>
+                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.3rem", marginBottom: 20 }}>VANT PRO MENSAL</div>
 
                                                     <div style={{
                                                         background: "rgba(56, 189, 248, 0.15)",
@@ -2133,12 +2133,12 @@ export default function AppPage() {
                                                         COMEÇAR TRIAL POR R$ 1,99
                                                     </button>
 
-                                                    <div style={{ textAlign: "center", marginTop: 12, display: "flex", flexDirection: "column", gap: 4, opacity: 0.9 }}>
+                                                    <div style={{ textAlign: "center", marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
                                                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                                                            <span style={{ fontSize: "0.9rem" }}>🔒</span>
-                                                            <span style={{ color: "#A7F3D0", fontSize: "0.75rem", fontWeight: 500 }}>Cancele online em 1 clique</span>
+                                                            <span style={{ fontSize: "1rem" }}>🔒</span>
+                                                            <span style={{ color: "#D1FAE5", fontSize: "0.8rem", fontWeight: 600 }}>Cancele online em 1 clique</span>
                                                         </div>
-                                                        <div style={{ color: "#64748B", fontSize: "0.7rem" }}>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.72rem", fontWeight: 500 }}>
                                                             Sem renovação automática • Reembolso em 48h
                                                         </div>
                                                     </div>
