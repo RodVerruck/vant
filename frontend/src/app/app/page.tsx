@@ -1003,12 +1003,28 @@ export default function AppPage() {
     }, [authUserId, competitorFiles, stage, jobDescription, file]);
 
     async function onStart() {
-        console.log("[onStart] Chamado. Iniciando Protocolo de 8s (Roteiro da Ansiedade).");
+        console.log("[onStart] Chamado. Verificando créditos disponíveis...");
 
         if (!jobDescription.trim() || !file) {
             console.warn("[onStart] Retorno antecipado: jobDescription ou file vazios.");
             return;
         }
+
+        // Verificar se usuário tem créditos premium
+        if (authUserId && creditsRemaining > 0) {
+            console.log("[onStart] Usuário tem créditos, iniciando processamento premium...");
+            // Resetar estados
+            setApiError("");
+            setPreviewData(null);
+            setReportData(null);
+            setPremiumError("");
+            setProgress(0);
+            setStatusText("");
+            setStage("processing_premium");
+            return;
+        }
+
+        console.log("[onStart] Usuário sem créditos, iniciando análise gratuita...");
 
         // 1. Resetar estados visuais
         setApiError("");
