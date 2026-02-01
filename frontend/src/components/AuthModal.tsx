@@ -7,9 +7,10 @@ interface AuthModalProps {
     isOpen: boolean;
     onSuccess: (userId: string, email: string) => void;
     onClose: () => void;
+    selectedPlan?: string;
 }
 
-export function AuthModal({ isOpen, onSuccess, onClose }: AuthModalProps) {
+export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModalProps) {
     const [showEmailForm, setShowEmailForm] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [authEmail, setAuthEmail] = useState("");
@@ -36,6 +37,12 @@ export function AuthModal({ isOpen, onSuccess, onClose }: AuthModalProps) {
         setIsAuthenticating(true);
 
         try {
+            // Salvar plano selecionado para restaurar após login
+            if (typeof window !== "undefined" && selectedPlan) {
+                localStorage.setItem("vant_auth_return_plan", selectedPlan);
+                localStorage.setItem("vant_auth_return_stage", "preview");
+            }
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
