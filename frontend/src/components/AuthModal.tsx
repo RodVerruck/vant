@@ -40,7 +40,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModa
             // Salvar plano selecionado para restaurar após login
             if (typeof window !== "undefined" && selectedPlan) {
                 localStorage.setItem("vant_auth_return_plan", selectedPlan);
-                localStorage.setItem("vant_auth_return_stage", "preview");
+                localStorage.setItem("vant_auth_return_stage", "checkout");
             }
 
             const { error } = await supabase.auth.signInWithOAuth({
