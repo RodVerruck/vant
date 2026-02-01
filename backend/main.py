@@ -459,14 +459,19 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
         .execute()
     )
     sub = (subs.data or [None])[0]
+    
+    print(f"[DEBUG] _entitlements_status: user_id={user_id}, subscription={sub}")
 
     # Verificar se tem assinatura ativa (qualquer plano)
     if sub and sub.get("subscription_status") == "active":
         plan_name = sub.get("subscription_plan")
         period_start = sub.get("current_period_start")
         
+        print(f"[DEBUG] Assinatura ativa encontrada: plan={plan_name}, status={sub.get('subscription_status')}")
+        
         # Planos PRO têm créditos ilimitados (999 = flag para ilimitado)
         if plan_name in ["pro_monthly", "pro_annual", "trial"]:
+            print(f"[DEBUG] Retornando 999 créditos (ilimitado) para plano {plan_name}")
             return {
                 "payment_verified": True,
                 "credits_remaining": 999,
@@ -493,11 +498,15 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
                 "plan": "premium_plus",
             }
 
+    # Sem assinatura ativa, verificar créditos avulsos
     credits = (
         supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
     )
     row = (credits.data or [None])[0]
     balance = int((row or {}).get("balance") or 0)
+    
+    print(f"[DEBUG] Sem assinatura ativa. Créditos avulsos: balance={balance}")
+    
     return {
         "payment_verified": balance > 0,
         "credits_remaining": max(0, balance),
