@@ -2001,7 +2001,7 @@ export default function AppPage() {
                                                         CRÉDITOS AVULSOS
                                                     </div>
                                                     <div style={{ color: "#E2E8F0", fontSize: "1.4rem", fontWeight: 700, marginBottom: 8 }}>
-                                                        A partir de R$ 19,90
+                                                        A partir de R$ 12,90
                                                     </div>
 
                                                     <p style={{ color: "#64748B", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 24 }}>
@@ -2011,7 +2011,7 @@ export default function AppPage() {
                                                     <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 19,90</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 12,90</span>
                                                         </div>
                                                         <button
                                                             type="button"
@@ -2263,7 +2263,7 @@ export default function AppPage() {
 
                             const prices: any = {
                                 credit_1: {
-                                    price: 19.90,
+                                    price: 12.90,
                                     name: "1 Crédito Avulso",
                                     billing: "one_time",
                                     desc: "Otimização pontual"
