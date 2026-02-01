@@ -2031,9 +2031,9 @@ export default function AppPage() {
                                                     <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                                                             <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 3 CVs</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 39,90</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 29,90</span>
                                                         </div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 13,30/cada • economize 33%</div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 9,97/cada • economize 23%</div>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
@@ -2269,7 +2269,7 @@ export default function AppPage() {
                                     desc: "Otimização pontual"
                                 },
                                 credit_3: {
-                                    price: 39.90,
+                                    price: 29.90,
                                     name: "Pacote 3 Créditos",
                                     billing: "one_time",
                                     desc: "3 otimizações completas"

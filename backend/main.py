@@ -57,6 +57,7 @@ STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY_
 STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")    # R$ 239/ano
 STRIPE_PRICE_ID_TRIAL = os.getenv("STRIPE_PRICE_ID_TRIAL")              # R$ 1,99 trial 7 dias
 STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,90 (1 CV)
+STRIPE_PRICE_ID_CREDIT_3 = os.getenv("STRIPE_PRICE_ID_CREDIT_3")        # R$ 29,90 (3 CVs)
 STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")        # R$ 49,90 (5 CVs)
 
 # Legacy Price IDs (manter para usuários existentes)
@@ -173,6 +174,23 @@ PRICING: dict[str, dict[str, Any]] = {
             "1 otimização completa",
             "Download de CV Otimizado",
             "Uso único, sem recorrência"
+        ]
+    },
+    
+    # CRÉDITOS AVULSOS - 3 CVs (23% OFF)
+    "credit_3": {
+        "price": 29.90,
+        "price_per_cv": 9.97,
+        "name": "Pacote 3 CVs",
+        "stripe_price_id": STRIPE_PRICE_ID_CREDIT_3,
+        "credits": 3,
+        "billing": "one_time",
+        "discount": "23% OFF",
+        "features": [
+            "3 otimizações completas",
+            "Download de CV Otimizado",
+            "Economize 23% vs crédito único",
+            "Válido por 6 meses"
         ]
     },
     
