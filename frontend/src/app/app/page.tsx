@@ -220,6 +220,7 @@ export default function AppPage() {
     const [pdfMetadata, setPdfMetadata] = useState<{ pages?: number; text?: string; candidateName?: string } | null>(null);
     const [processingStartTime] = useState(Date.now());
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
+    const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(60); // segundos
 
     // Mensagens dinâmicas para o processamento premium
     const premiumMessages = [
@@ -235,6 +236,41 @@ export default function AppPage() {
         "Finalizando dossiê profissional...",
         "Preparando entrega dos resultados..."
     ];
+
+    // Simular progressão gradual enquanto aguarda resposta do backend
+    useEffect(() => {
+        if (stage !== "processing_premium") return;
+
+        const progressInterval = setInterval(() => {
+            setProgress(prev => {
+                // Se já atingiu 35%, manter estável até backend responder
+                if (prev >= 35 && prev < 90) {
+                    // Pequenas variações para mostrar atividade
+                    return prev + (Math.random() > 0.7 ? 0.5 : 0);
+                }
+                // Se ainda não chegou em 35%, progredir gradualmente
+                if (prev < 35) {
+                    return Math.min(35, prev + 2);
+                }
+                return prev;
+            });
+
+            // Atualizar tempo estimado baseado no progresso
+            setEstimatedTimeRemaining(prev => {
+                const elapsed = (Date.now() - processingStartTime) / 1000; // segundos
+                const avgRate = progress / Math.max(elapsed, 1); // % por segundo
+                const remaining = (100 - progress) / Math.max(avgRate, 0.5); // segundos restantes
+
+                // Não deixar ficar abaixo de 15 segundos até backend responder
+                if (progress < 90) {
+                    return Math.max(15, Math.min(120, Math.ceil(remaining)));
+                }
+                return Math.max(5, Math.ceil(remaining));
+            });
+        }, 800); // Atualizar a cada 800ms
+
+        return () => clearInterval(progressInterval);
+    }, [stage, progress, processingStartTime]);
 
     // Atualizar mensagens conforme o progresso
     useEffect(() => {
@@ -1026,6 +1062,10 @@ export default function AppPage() {
                 const updateStatus = async (text: string, percent: number) => {
                     setStatusText(text);
                     setProgress(percent);
+                    // Quando backend atualiza, zera o timer estimado
+                    if (percent >= 90) {
+                        setEstimatedTimeRemaining(5);
+                    }
                     await sleep(220);
                 };
 
@@ -1928,8 +1968,13 @@ export default function AppPage() {
                                             progress < 80 ? "Gerando relatórios..." :
                                                 progress < 95 ? "Finalizando dossiê..." : "Concluindo processo"}
                             </div>
-                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600 }}>
-                                {Math.round(progress)}%
+                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                <div style={{ color: "#64748B", fontSize: "0.75rem" }}>
+                                    ~{Math.ceil(estimatedTimeRemaining / 60)}:{String(estimatedTimeRemaining % 60).padStart(2, '0')}
+                                </div>
+                                <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600 }}>
+                                    {Math.round(progress)}%
+                                </div>
                             </div>
                         </div>
 
