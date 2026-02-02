@@ -116,6 +116,21 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
     const formatTextToHtml = (text: string) => {
         if (!text) return "";
 
+        // Garantir decoding correto de UTF-8
+        try {
+            // Se o texto estiver mal-decodificado, tentar corrigir
+            if (text.includes('Ã£') || text.includes('Ã§') || text.includes('Ã©')) {
+                // Corrigir encoding problemático
+                const decoder = new TextDecoder('utf-8');
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                text = decoder.decode(bytes);
+            }
+        } catch (e) {
+            // Se falhar, manter o texto original
+            console.warn('Erro ao corrigir encoding:', e);
+        }
+
         text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
         let html_output: string[] = [];
         let lines = text.split('\n');
@@ -181,6 +196,16 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     </div>`;
                     html_output.push(row);
                 }
+            }
+            // Descrições de experiências (começam com ** mas não têm -)
+            else if (line.startsWith('**') && line.includes(':')) {
+                let clean = line.replace(/\*\*(.*?)\*\*/g, '<span class="vant-bold">$1</span>');
+                let row = `
+                <div class="vant-cv-grid-row">
+                    <div class="vant-cv-bullet-col"></div>
+                    <div class="vant-cv-text-col">${clean}</div>
+                </div>`;
+                html_output.push(row);
             }
             // Contato (linha com | ou @)
             else if ((line.includes('|') || line.includes('@')) && line.length < 300) {

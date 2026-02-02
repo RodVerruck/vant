@@ -23,15 +23,30 @@ export function CopyableSection({ title, content, isHeadline = false }: Copyable
 
     const formatTextToHtml = (text: string) => {
         if (!text) return "";
-        
+
+        // Garantir decoding correto de UTF-8
+        try {
+            // Se o texto estiver mal-decodificado, tentar corrigir
+            if (text.includes('Ã£') || text.includes('Ã§') || text.includes('Ã©')) {
+                // Corrigir encoding problemático
+                const decoder = new TextDecoder('utf-8');
+                const encoder = new TextEncoder();
+                const bytes = encoder.encode(text);
+                text = decoder.decode(bytes);
+            }
+        } catch (e) {
+            // Se falhar, manter o texto original
+            console.warn('Erro ao corrigir encoding:', e);
+        }
+
         let html = text
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
-        
+
         html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #38BDF8; font-weight: 700;">$1</strong>');
         html = html.replace(/\n/g, '<br>');
-        
+
         return html;
     };
 
@@ -83,7 +98,7 @@ export function CopyableSection({ title, content, isHeadline = false }: Copyable
                     lineHeight: 1.7,
                     fontSize: "1rem",
                     borderRadius: "0 0 8px 8px",
-                    ...( isHeadline ? { textAlign: "center", fontWeight: 700 } : {})
+                    ...(isHeadline ? { textAlign: "center", fontWeight: 700 } : {})
                 }}
                 dangerouslySetInnerHTML={{ __html: formatTextToHtml(content) }}
             />
