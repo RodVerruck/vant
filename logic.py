@@ -994,11 +994,16 @@ CV DO CANDIDATO:
 VAGA ALVO:
 {job_description[:1500]}
 
-INSTRUÇÕES:
+INSTRUÇÕES ESPECÍFICAS:
 1. Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV
 2. Use exemplos REAIS do texto do CV (não invente)
 3. Seja direto e objetivo
 4. Foque em: falta de números/resultados E palavras-chave ausentes
+5. DETECTE A ÁREA ESPECÍFICA: Se a vaga menciona "suporte", "suporte técnico", "analista de suporte", etc, o setor é "SUPORTE TI"
+6. Para "vendas", "comercial", "sales" = VENDAS
+7. Para "marketing", "mkt" = MARKETING
+8. Para "rh", "recursos humanos", "people" = RH
+9. Para tech/dev = TECNOLOGIA
 
 OUTPUT JSON (OBRIGATÓRIO):
 {{
@@ -1006,7 +1011,8 @@ OUTPUT JSON (OBRIGATÓRIO):
   "analise_por_pilares": {{
     "impacto": 0,
     "keywords": 0,
-    "ats": 0
+    "ats": 0,
+    "setor_detectado": "TECNOLOGIA"
   }},
   "gap_1": {{
     "titulo": "Nome do problema",
@@ -1021,7 +1027,10 @@ OUTPUT JSON (OBRIGATÓRIO):
   }}
 }}
 
-IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
+IMPORTANTE: 
+- Retorne APENAS o JSON, sem texto adicional
+- nota_ats: 0-100 baseado no matching REAL
+- setor_detectado: área exata (SUPORTE TI, VENDAS, MARKETING, RH, TECNOLOGIA, etc)
 """
     
     try:
@@ -1083,6 +1092,9 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
             if response_clean.startswith("json"):
                 response_clean = response_clean[4:]
         
+        # DEBUG: Log da resposta da IA
+        logger.info(f"[DEBUG] Resposta IA: {response_clean}")
+        
         data = json.loads(response_clean)
         
         # Extrai dados da IA
@@ -1091,8 +1103,13 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
         gap_1 = data.get("gap_1", {})
         gap_2 = data.get("gap_2", {})
         
-        # Detecta área
-        area_detected = detect_job_area(job_description)
+        # DEBUG: Log dos dados extraídos
+        logger.info(f"[DEBUG] nota_ats: {nota_ats}")
+        logger.info(f"[DEBUG] pilares: {pilares}")
+        logger.info(f"[DEBUG] setor_detectado da IA: {pilares.get('setor_detectado', 'NÃO ENVIADO')}")
+        
+        # Usar setor detectado pela IA, não a função antiga
+        setor_detectado = pilares.get("setor_detectado", "TECNOLOGIA")
         
         return {
             "veredito": "ANÁLISE INICIAL CONCLUÍDA",
@@ -1101,7 +1118,7 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
                 "impacto": int(pilares.get("impacto", nota_ats - 5)),
                 "keywords": int(pilares.get("keywords", nota_ats)),
                 "ats": int(pilares.get("ats", nota_ats + 5)),
-                "setor_detectado": area_detected.upper()
+                "setor_detectado": str(setor_detectado).upper()
             },
             "gap_1": gap_1,
             "gap_2": gap_2,
