@@ -1426,13 +1426,27 @@ export default function AppPage() {
                                         </div>
                                     ) : (
                                         <div data-testid="stFileUploader">
-                                            <section onClick={openFileDialog} style={{ cursor: "pointer" }}>
+                                            <section
+                                                onClick={openFileDialog}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        openFileDialog();
+                                                    }
+                                                }}
+                                                style={{ cursor: "pointer" }}
+                                                tabIndex={0}
+                                            >
                                                 <div>
                                                     <div>
                                                         <span>Arraste aqui ou clique para selecionar</span>
                                                     </div>
                                                     <small>✓ PDF ou DOCX • Máx. 10MB</small>
-                                                    <button type="button" onClick={openFileDialog} style={{ marginTop: "8px", fontSize: "0.8rem", opacity: 0.7 }}>Selecionar Arquivo</button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={openFileDialog}
+                                                        style={{ marginTop: "8px", fontSize: "0.8rem", opacity: 0.7 }}
+                                                    >Selecionar Arquivo</button>
                                                     <input
                                                         ref={uploaderInputRef}
                                                         type="file"
