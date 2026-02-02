@@ -62,7 +62,7 @@ DEFAULT_MODEL = "gemini-2.0-flash"
 # IMPORT PROMPTS
 # ============================================================
 try:
-    from prompts import (
+    from backend.prompts import (
         SYSTEM_AGENT_DIAGNOSIS,
         SYSTEM_AGENT_CV_WRITER_SEMANTIC,
         SYSTEM_AGENT_CV_FORMATTER,
@@ -71,9 +71,20 @@ try:
         SYSTEM_AGENT_COMPETITOR_ANALYSIS,
         SYSTEM_AGENT_INTERVIEW_EVALUATOR,
     )
-except ImportError as e:
-    logger.critical(f"❌ Erro ao importar prompts: {e}")
-    raise e
+except ImportError:
+    try:
+        from prompts import (
+            SYSTEM_AGENT_DIAGNOSIS,
+            SYSTEM_AGENT_CV_WRITER_SEMANTIC,
+            SYSTEM_AGENT_CV_FORMATTER,
+            SYSTEM_AGENT_COMBO_TACTICAL,
+            SYSTEM_AGENT_LIBRARY_CURATOR,
+            SYSTEM_AGENT_COMPETITOR_ANALYSIS,
+            SYSTEM_AGENT_INTERVIEW_EVALUATOR,
+        )
+    except ImportError as e:
+        logger.critical(f"❌ Erro ao importar prompts: {e}")
+        raise e
 
 # ============================================================
 # JSON CLEANER (REFORÇADO)

@@ -13,7 +13,10 @@ from docx.oxml import OxmlElement
 from weasyprint import HTML, CSS
 
 # Sistema de logging unificado
-from logging_config import setup_logger
+try:
+    from backend.logging_config import setup_logger
+except ImportError:
+    from logging_config import setup_logger
 logger = setup_logger("VANT_LOGIC")
 
 # ==============================================================================
@@ -108,7 +111,10 @@ def extract_date(text):
 # ============================================================
 # IMPORTA A INTELIGÊNCIA
 # ============================================================
-from llm_core import run_llm_orchestrator
+try:
+    from backend.llm_core import run_llm_orchestrator
+except ImportError:
+    from llm_core import run_llm_orchestrator
 
 # ============================================================
 # CONFIG

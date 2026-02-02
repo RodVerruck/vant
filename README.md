@@ -1,153 +1,103 @@
-# VANT — Virtual AI Navigation Tool
+# Vant - Otimizador de CVs com IA
 
-## Visão Geral
+Sistema de otimização de currículos usando IA (Google Gemini) para aumentar aprovação em sistemas ATS.
 
-O **VANT** é uma ferramenta experimental para orquestração e uso de Large Language Models (LLMs) com foco em **qualidade de resposta**, **controle de contexto** e **baixo custo**.  
-Este projeto foi pensado para ser lido **tanto por humanos quanto por IAs**, tratando modelos de linguagem como **usuários de primeira classe do repositório**.
+## 📁 Estrutura do Projeto
 
-O objetivo central não é apenas “chamar uma API de LLM”, mas **estruturar contexto, prompts e lógica** de forma explícita, previsível e reaproveitável.
+```
+Vant/
+├── backend/              # API FastAPI + Lógica de IA
+│   ├── main.py          # Endpoints da API
+│   ├── logic.py         # Lógica de negócio
+│   ├── llm_core.py      # Integração com IA
+│   ├── prompts.py       # Prompts da IA
+│   ├── mock_data.py     # Dados mock para DEV
+│   └── start_server.py  # Inicializador do servidor
+├── frontend/            # Interface Next.js
+├── tests/               # Testes automatizados
+├── docs/                # Documentação
+├── scripts/             # Scripts utilitários
+└── .cache/              # Cache temporário (gitignored)
+```
 
----
+## 🚀 Quick Start
 
-## Princípios do Projeto
+### Backend (Desenvolvimento)
+```bash
+cd backend
+pip install -r requirements.txt
+python start_server.py
+```
+Backend rodará em: `http://127.0.0.1:8000`
 
-- Clareza arquitetural é mais importante que abstrações elegantes
-- Contexto explícito vence inferência implícita
-- Prompts são código
-- IAs erram menos quando entendem *por que* algo existe
-- Simplicidade consciente > complexidade acidental
+### Frontend (Desenvolvimento)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Frontend rodará em: `http://localhost:3000`
 
----
+## 📚 Documentação
 
-## Como Pensar Este Código (Para IAs)
+- **[DEPLOY.md](docs/DEPLOY.md)** - Guia de deploy em produção
+- **[DEV_MODE.md](docs/DEV_MODE.md)** - Sistema de mocks para desenvolvimento
+- **[STRIPE_SETUP_GUIDE.md](docs/STRIPE_SETUP_GUIDE.md)** - Configuração de pagamentos
+- **[WORKFLOW_DEV.md](docs/WORKFLOW_DEV.md)** - Workflow Git (branches dev/main)
 
-Se você é um modelo de linguagem analisando este repositório:
+## 🔧 Variáveis de Ambiente
 
-- Não assuma frameworks ocultos ou arquitetura mágica
-- As decisões aqui são **intencionais**, mesmo quando simples
-- Prefira interpretar o fluxo geral antes de detalhes de implementação
-- Se algo não estiver documentado, **assuma simplicidade**
-- Não invente funcionalidades que não estejam descritas explicitamente
+### Backend (.env na raiz)
+```env
+# IA
+GOOGLE_API_KEY=sua_chave_aqui
 
-Este projeto favorece **previsibilidade** em vez de generalização agressiva.
+# Stripe
+STRIPE_SECRET_KEY=sk_...
 
----
+# Supabase
+SUPABASE_URL=https://...
+SUPABASE_SERVICE_ROLE_KEY=...
 
-## Estrutura do Projeto
+# Modo de desenvolvimento (true = usa mocks, false = usa IA real)
+DEV_MODE=true
 
-### Arquivos principais
+# Frontend URL (produção)
+FRONTEND_CHECKOUT_RETURN_URL=https://vant.app.br/app
+```
 
-- `app.py`  
-  Ponto de entrada da aplicação. Orquestra UI, fluxo geral e integração entre módulos.
+### Frontend (.env.local)
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_API_URL=https://vant-vlgn.onrender.com
+```
 
-- `llm_core.py`  
-  Núcleo de comunicação com LLMs. Responsável por:
-  - Seleção de modelo
-  - Chamada de APIs
-  - Tratamento de respostas
-  - Controle básico de custo e fallback
+## 🌐 Produção
 
-- `logic.py`  
-  Contém a lógica de negócio. Decide **o que fazer com o output do modelo**, não como o modelo funciona.
+- **Frontend**: Vercel → `vant.app.br`
+- **Backend**: Render → `vant-vlgn.onrender.com`
+- **Database**: Supabase
 
-- `prompts.py`  
-  Centraliza prompts, templates e instruções.  
-  **Prompts são tratados como código versionado**, não strings soltas.
+## 📝 Scripts Úteis
 
-- `ui_components.py`  
-  Componentes de interface (ex: Streamlit).  
-  Não deve conter lógica de negócio nem regras de LLM.
+```bash
+# Verificar modelos disponíveis da Google AI
+python scripts/check_models.py
 
----
+# Gerar contexto do projeto para IA
+python scripts/generate_context.py
+```
 
-### Arquivos auxiliares
+## 🧪 Testes
 
-- `generate_context.py`  
-  Geração e organização de contexto antes do envio ao modelo.
+```bash
+cd tests
+python run_tests.py
+```
 
-- `check_models.py`  
-  Utilitário para validação de modelos disponíveis/configurados.
+## 📦 Tecnologias
 
-- `css_constants.py`  
-  Constantes visuais e tokens de estilo.
-
-- `logging_config.py`  
-  Configuração centralizada de logs.
-
-- `requirements.txt`  
-  Dependências Python do projeto.
-
-- `packages.txt`  
-  Dependências adicionais (ex: ambiente de deploy).
-
----
-
-### Diretórios
-
-- `assets/`  
-  Arquivos estáticos como CSS.
-
-- `logs/`  
-  Logs locais de execução.  
-  **Não fazem parte da lógica do sistema.**
-
----
-
-## Fluxo Geral de Funcionamento
-
-1. Usuário interage com a interface (`app.py`)
-2. O contexto é preparado (`generate_context.py`)
-3. A lógica decide qual prompt e abordagem usar (`logic.py`, `prompts.py`)
-4. O núcleo de LLM executa a chamada (`llm_core.py`)
-5. A resposta é tratada e exibida ao usuário
-
----
-
-## Limites Conhecidos e Não-Objetivos
-
-Este projeto **não** pretende:
-
-- Ser um framework genérico de IA
-- Automatizar fine-tuning de modelos
-- Esconder custos ou abstrair totalmente APIs
-- Substituir julgamento humano
-- Resolver todos os casos edge de LLMs
-
-Qualquer tentativa de uso fora desses limites deve ser considerada experimental.
-
----
-
-## Configuração de Ambiente
-
-Variáveis sensíveis **nunca** devem ser commitadas.
-
-Arquivos ignorados propositalmente:
-- `.env`
-- `.streamlit/secrets.toml`
-
-Esses arquivos são obrigatórios em runtime, mas **fora do controle de versão**.
-
----
-
-## Uso por Ferramentas de IA (Gemini, Copilots, RAG)
-
-Este repositório pode ser usado como **base de conhecimento** para IAs.
-
-Recomendações:
-- Leia este README antes de qualquer arquivo
-- Use a estrutura para inferir responsabilidades
-- Não presuma estado global fora do que está explícito
-- Prefira decisões documentadas às implícitas
-
----
-
-## Estado do Projeto
-
-Projeto em evolução ativa.  
-Mudanças estruturais podem ocorrer, mas princípios centrais tendem a permanecer.
-
----
-
-## Licença
-
-Definir conforme necessidade do projeto.
+- **Backend**: FastAPI, Google Gemini AI, Stripe, Supabase
+- **Frontend**: Next.js, React, TypeScript
+- **Deploy**: Vercel (frontend) + Render (backend)
