@@ -1289,25 +1289,39 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
         area_detected = detect_job_area(job_description)
         
         # Gaps genéricos como fallback
+        # Calcular pilares baseados nos componentes do algoritmo ATS real
+        impacto_score = min(experience_score + density_score, 100)  # Experiência + densidade
+        keywords_score = min(keyword_score + skills_score, 100)      # Keywords + skills
+        ats_score = min(format_score + education_score, 100)         # Formatação + educação
+        
+        # Ajustar para área de suporte especificamente
+        if 'suporte' in job_description.lower() or 'support' in job_description.lower():
+            # Para área de suporte, dar mais peso a skills de atendimento
+            support_keywords = ['atendimento', 'cliente', 'customer', 'service', 'help', 'desk', 'nível', 'n1', 'n2', 'n3']
+            support_matches = cv_tokens.intersection(set(support_keywords))
+            if support_matches:
+                keywords_score = min(keywords_score + 10, 100)
+                area_detected = 'SUPORTE TI'
+        
         return {
             "veredito": "ANÁLISE INICIAL CONCLUÍDA",
             "nota_ats": final_score,
             "analise_por_pilares": {
-                "impacto": max(final_score - 5, 0),
-                "keywords": final_score,
-                "ats": min(final_score + 5, 100),
+                "impacto": int(impacto_score),
+                "keywords": int(keywords_score), 
+                "ats": int(ats_score),
                 "setor_detectado": area_detected.upper()
             },
             "gap_1": {
-                "titulo": "Falta de Resultados Quantificáveis",
-                "explicacao": "Seu CV usa descrições genéricas sem números ou impacto mensurável",
+                "titulo": "Falta de Resultados Quantificáveis" if final_score < 50 else "Métricas de Impacto Podem Ser Melhoradas",
+                "explicacao": "Seu CV usa descrições genéricas sem números ou impacto mensurável" if final_score < 50 else "Adicione métricas específicas para aumentar seu score ATS",
                 "exemplo_atual": "Responsável por gerenciar projetos e melhorar processos",
                 "exemplo_otimizado": "Gerenciei 12 projetos com orçamento de R$ 2.5M, reduzindo custos em 28%"
             },
             "gap_2": {
                 "titulo": "Palavras-Chave da Vaga Ausentes",
-                "explicacao": "Termos críticos da vaga não aparecem no seu CV",
-                "termos_faltando": ["Agile/Scrum", "KPIs", "Stakeholders", "Data-driven", "OKRs"]
+                "explicacao": f"Termos críticos da vaga de {area_detected} não aparecem no seu CV",
+                "termos_faltando": list(job_tokens - cv_tokens)[:5] if (job_tokens - cv_tokens) else ["Atendimento ao cliente", "SLA", "KPIs", "Metodologias ágeis", "Documentação"]
             },
             "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
             "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
