@@ -1123,19 +1123,30 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
         cv_tokens = normalize(cv_text)
         job_tokens = normalize(job_description)
          
-        stopwords = {'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que'}
+        stopwords = {'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que', 'um', 'uma', 'os', 'as', 'no', 'na', 'por', 'com', 'sem', 'ao'}
         job_tokens = job_tokens - stopwords
          
         matches = cv_tokens.intersection(job_tokens)
         match_count = len(matches)
         total_relevant = len(job_tokens) if len(job_tokens) > 0 else 1
-         
-        raw_score = (match_count / total_relevant) * 100
-        length_bonus = min(len(cv_text) / 500, 10)
-         
-        final_score = min(int(raw_score + length_bonus - 10), 65)
-        final_score = max(final_score, 0)
-         
+        
+        # Cálculo mais realista para poucos dados
+        raw_score = (match_count / total_relevant) * 100 if total_relevant > 0 else 0
+        
+        # Bônus por relevância do CV (tamanho e conteúdo)
+        length_bonus = min(len(cv_text) / 1000, 15)  # Aumentado para até 15 pontos
+        
+        # Bônus por palavras-chave relevantes encontradas
+        keyword_bonus = min(match_count * 5, 25)  # Até 25 pontos por matches
+        
+        # Score base mínimo mesmo com poucos dados (não pode ser 0)
+        base_score = 15  # Score mínimo realista
+        
+        # Cálculo final com limites realistas
+        final_score = base_score + raw_score + length_bonus + keyword_bonus
+        final_score = min(int(final_score), 75)  # Máximo 75 no fallback (versão lite)
+        final_score = max(final_score, 10)  # Mínimo 10 para não ser 0
+        
         area_detected = detect_job_area(job_description)
         
         # Gaps genéricos como fallback
