@@ -912,11 +912,17 @@ export default function AppPage() {
         (async () => {
             try {
                 await syncEntitlements(authUserId);
+
+                // Se usuário tem créditos e está na página de planos (preview), mover para paid
+                if (creditsRemaining > 0 && stage === "preview") {
+                    console.log("[syncEntitlements] Usuário tem créditos, movendo para stage 'paid'");
+                    setStage("paid");
+                }
             } catch {
                 return;
             }
         })();
-    }, [authUserId]);
+    }, [authUserId, creditsRemaining, stage]);
 
     useEffect(() => {
         console.log("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
@@ -1319,6 +1325,34 @@ export default function AppPage() {
                         {creditsRemaining}
                     </div>
                 </div>
+                {creditsRemaining > 0 && (
+                    <button
+                        onClick={() => setStage("preview")}
+                        style={{
+                            background: 'rgba(59, 130, 246, 0.2)',
+                            border: '1px solid #3B82F6',
+                            borderRadius: 6,
+                            padding: '6px 12px',
+                            color: '#3B82F6',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                        title="Comprar mais créditos"
+                    >
+                        + Comprar
+                    </button>
+                )}
             </div>
         );
     };
