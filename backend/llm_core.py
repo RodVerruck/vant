@@ -6,6 +6,7 @@ import concurrent.futures
 from google import genai
 from google.genai import types
 from groq import Groq
+from backend.cache_manager import CacheManager
 
 # ============================================================
 # LOGGING & CONFIG
@@ -312,7 +313,7 @@ def agent_competitor_analysis(cv, job, competitors):
     return res if res else {}
 
 # ============================================================
-# ORQUESTRADOR FINAL
+# ORQUESTRADOR FINAL COM CACHE INTELIGENTE
 # ============================================================
 def run_llm_orchestrator(
     cv_text,
@@ -320,8 +321,26 @@ def run_llm_orchestrator(
     books_catalog,
     area,
     competitors_text=None,
+    user_id=None,
 ):
     logger.info(f"🚀 Iniciando VANT | Área: {area}")
+    
+    # Inicializa o cache manager
+    cache_manager = CacheManager()
+    
+    # NÍVEL 1: Cache de Hash (Deduplicação Imediata)
+    # Gera hash dos dados de entrada para verificar se já foi processado
+    input_hash = cache_manager.generate_input_hash(cv_text, job_description)
+    
+    # Verifica se resultado já existe no cache
+    cached_result = cache_manager.check_cache(input_hash)
+    if cached_result:
+        logger.info(f"⚡ CACHE HIT! Retornando resultado processado anteriormente")
+        return cached_result
+    
+    logger.info(f"🔄 CACHE MISS: Processando com IA...")
+    
+    # Cache miss - processa normalmente com IA
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_diag = executor.submit(agent_diagnosis, cv_text, job_description)
@@ -398,6 +417,19 @@ def run_llm_orchestrator(
             logger.info(f"[DEBUG] Competitor result keys: {list(comp_result.keys()) if comp_result else 'None'}")
             result.update(comp_result)
         
+    # NÍVEL 2: Persistência de Sessão (Histórico)
+    # Salva o resultado no cache para futuras consultas
+    if user_id and result:
+        cache_saved = cache_manager.save_to_cache(
+            input_hash=input_hash,
+            user_id=user_id,
+            cv_text=cv_text,
+            job_description=job_description,
+            result_json=result
+        )
+        if cache_saved:
+            logger.info(f"💾 Resultado salvo no cache para usuário {user_id}")
+    
     logger.info("🏁 Orquestração concluída")
     logger.info(f"[DEBUG] Final result keys: {list(result.keys())}")
     return result

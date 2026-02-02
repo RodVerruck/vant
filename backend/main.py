@@ -447,7 +447,7 @@ def analyze_premium_paid(
         if competitor_files:
             for f in competitor_files:
                 competitors.append(_upload_to_bytes_io(f))
-        data = analyze_cv_logic(cv_text, job_description, competitors)
+        data = analyze_cv_logic(cv_text, job_description, competitors, user_id=user_id)
         new_status = _entitlements_status(user_id)
         return JSONResponse(content={"data": data, "entitlements": new_status})
     except Exception as e:
@@ -723,7 +723,7 @@ def analyze_premium(
         if competitor_files:
             for f in competitor_files:
                 competitors.append(_upload_to_bytes_io(f))
-        data = analyze_cv_logic(cv_text, job_description, competitors)
+        data = analyze_cv_logic(cv_text, job_description, competitors, user_id=user_id)
         return JSONResponse(content=data)
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
@@ -831,5 +831,34 @@ def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) 
                 "customer_email": session.get("customer_details", {}).get("email"),
             }
         )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+@app.get("/api/user/history")
+def get_user_history(user_id: str) -> JSONResponse:
+    """Retorna histórico de análises do usuário com cache inteligente."""
+    try:
+        from backend.cache_manager import CacheManager
+        
+        cache_manager = CacheManager()
+        history = cache_manager.get_user_history(user_id, limit=10)
+        
+        # Formata os dados para o frontend
+        formatted_history = []
+        for item in history:
+            formatted_history.append({
+                "id": item["id"],
+                "created_at": item["created_at"],
+                "job_description": item["job_description"][:100] + "..." if len(item["job_description"]) > 100 else item["job_description"],
+                "result_preview": {
+                    "veredito": item["result_json"].get("veredito", "N/A"),
+                    "score_ats": item["result_json"].get("score_ats", 0),
+                    "gaps_count": len(item["result_json"].get("gaps_fatais", []))
+                }
+            })
+        
+        return JSONResponse(content={"history": formatted_history})
+        
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})

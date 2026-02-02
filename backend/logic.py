@@ -898,7 +898,7 @@ def _curate_books(area_detected):
 # ============================================================
 # ORQUESTRADOR BLINDADO (ATUALIZADO)
 # ============================================================
-def analyze_cv_logic(cv_text, job_description, competitor_files=None):
+def analyze_cv_logic(cv_text, job_description, competitor_files=None, user_id=None):
     
     # [DEV MODE - INICIO] -----------------------------------------
     DEV_MODE = os.getenv("VANT_DEV_MODE", "0") == "1"  # Toggle para testes rápidos sem gastar tokens
@@ -961,7 +961,9 @@ def analyze_cv_logic(cv_text, job_description, competitor_files=None):
             books_catalog=catalog_payload,
             area=area_detected,
             # PASSANDO OS CONCORRENTES PARA O LLM
-            competitors_text=competitors_text if competitors_text else None
+            competitors_text=competitors_text if competitors_text else None,
+            # PASSANDO USER_ID PARA O CACHE
+            user_id=user_id
         )
         return data
     except Exception as e:
