@@ -1055,6 +1055,7 @@ IMPORTANTE:
                 
                 response = response_obj.choices[0].message.content
                 logger.info("✅ Groq respondeu com sucesso!")
+                logger.info(f"[DEBUG GROQ] Resposta bruta: {response}")
             else:
                 raise Exception("GROQ_API_KEY não configurada")
                 
