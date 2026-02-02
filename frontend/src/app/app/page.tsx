@@ -129,20 +129,20 @@ const HERO_INNER_HTML = `
     <div class="hero-section" style="margin-top: 80px;">
         <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(74, 158, 255, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 32px; text-align: center; max-width: 700px; margin: 0 auto;">
             <div style="font-size: 2rem; margin-bottom: 16px;">🎯</div>
-            <h3 style="color: #F8FAFC; font-size: 1.3rem; font-weight: 700; margin: 0 0 12px 0;">Análise Gratuita</h3>
+            <h3 style="color: #F8FAFC; font-size: 1.3rem; font-weight: 700; margin: 0 0 12px 0;">Preview Gratuito</h3>
             <p style="color: #E2E8F0; font-size: 1rem; line-height: 1.6; margin: 0 0 20px 0;">
-                Veja seu score ATS e descubra exatamente o que precisa melhorar no seu CV.<br>
+                Descubra seu score ATS e os 2 maiores erros que estão te eliminando.<br>
                 <strong>Sem compromisso. Sem cartão de crédito.</strong>
             </p>
             <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 24px;">
                 <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
-                    <span style="color: #10B981;">✓</span> Processamento 100% privado e anônimo
+                    <span style="color: #10B981;">✓</span> Score ATS instantâneo
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
-                    <span style="color: #10B981;">✓</span> Seus dados são destruídos após a análise
+                    <span style="color: #10B981;">✓</span> Top 2 problemas detectados
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
-                    <span style="color: #10B981;">✓</span> Relatório detalhado em segundos
+                    <span style="color: #10B981;">✓</span> Dados destruídos após análise
                 </div>
             </div>
         </div>
