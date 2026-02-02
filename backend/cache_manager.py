@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class CacheManager:
     def __init__(self):
         self.supabase_url = os.getenv("SUPABASE_URL")
-        self.supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+        self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # Corrigido nome da variável
         self.supabase = create_client(self.supabase_url, self.supabase_key)
         
     def generate_input_hash(self, cv_text: str, job_description: str, model_version: str = "gemini-2.0-flash") -> str:

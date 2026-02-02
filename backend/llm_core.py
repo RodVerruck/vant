@@ -169,10 +169,10 @@ Apenas JSON válido.
         }
 
         # [TRUQUE] Forçar "High Reasoning" apenas para o CV Writer no Gemini 3
-        # Isso elimina a "preguiça" de seguir instruções longas (Zoom In/Out)
+        # thinking_level foi removido da API - usando apenas temperatura mais alta
         if is_writer and "gemini-3" in model_to_use:
-             # Níveis: "low", "medium", "high" (High é o comportamento "Thinking" antigo)
-             generation_config["thinking_level"] = "high" 
+            # Aumentamos um pouco a temperatura para simular "thinking"
+            generation_config["temperature"] = 0.6 
 
         response = genai_client.models.generate_content(
             model=model_to_use,
