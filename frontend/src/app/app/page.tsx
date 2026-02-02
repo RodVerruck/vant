@@ -216,8 +216,35 @@ export default function AppPage() {
     const [, setPremiumError] = useState("");
     const [isRestoringData, setIsRestoringData] = useState(false);
     const [pdfMetadata, setPdfMetadata] = useState<{ pages?: number; text?: string; candidateName?: string } | null>(null);
+    const [processingStartTime] = useState(Date.now());
+    const [currentStepIndex, setCurrentStepIndex] = useState(0);
 
-    // Refs
+    // Mensagens dinâmicas para o processamento premium
+    const premiumMessages = [
+        "Conectando aos servidores de IA...",
+        "Analisando estrutura do CV...",
+        "Identificando palavras-chave da vaga...",
+        "Comparando com padrões de mercado...",
+        "Otimizando semântica e impacto...",
+        "Reestruturando experiências profissionais...",
+        "Gerando headline para LinkedIn...",
+        "Criando biblioteca técnica personalizada...",
+        "Desenvolvendo projeto prático de diferencial...",
+        "Finalizando dossiê profissional...",
+        "Preparando entrega dos resultados..."
+    ];
+
+    // Atualizar mensagens conforme o progresso
+    useEffect(() => {
+        if (stage === "processing_premium") {
+            const messageIndex = Math.min(
+                Math.floor((progress / 100) * premiumMessages.length),
+                premiumMessages.length - 1
+            );
+            setStatusText(premiumMessages[messageIndex]);
+        }
+    }, [progress, stage]);
+
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -1587,6 +1614,7 @@ export default function AppPage() {
                         </div>
                     </div>
                 </>
+
             )}
 
             {stage === "paid" && (
@@ -1788,28 +1816,33 @@ export default function AppPage() {
                     <div style={{ maxWidth: 680, margin: "0 auto" }}>
                         <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden", boxShadow: "0 0 10px rgba(0,0,0,0.3) inset" }}>
                             <div
+                                className="progress-bar-glow"
                                 style={{
                                     width: `${Math.max(0, Math.min(100, progress))}%`,
                                     height: "100%",
                                     background: "linear-gradient(90deg, #10B981, #34D399, #10B981)",
                                     backgroundSize: "200% 100%",
-                                    animation: "gradient-move 2s linear infinite",
-                                    transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                    animation: "gradient-move 2s linear infinite, progress-pulse 2s ease-in-out infinite",
+                                    transition: "width 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
                                     boxShadow: "0 0 15px rgba(16, 185, 129, 0.6)"
                                 }}
-                            />
-                        </div>
+                            /></div>
 
-                        <div style={{ marginTop: 24, minHeight: "40px" }}>
-                            <div className="terminal-log" style={{ color: "#10B981", fontFamily: "monospace", fontSize: "1.1rem", textShadow: "0 0 5px rgba(16, 185, 129, 0.3)" }}>
-                                &gt;&gt; {statusText}<span className="cursor-block"></span>
+                        <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
+                                {progress < 20 ? "Iniciando análise..." :
+                                    progress < 40 ? "Analisando estrutura..." :
+                                        progress < 60 ? "Otimizando conteúdo..." :
+                                            progress < 80 ? "Gerando relatórios..." :
+                                                progress < 95 ? "Finalizando dossiê..." : "Concluindo processo"}
+                            </div>
+                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600 }}>
+                                {Math.round(progress)}%
                             </div>
                         </div>
 
-                        {/* Conteúdo Educativo sobre Processamento Premium */}
                         <div style={{
-                            marginTop: 40,
-                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(56, 189, 248, 0.08))",
+                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
                             border: "1px solid rgba(16, 185, 129, 0.2)",
                             borderRadius: 16,
                             padding: 24,
