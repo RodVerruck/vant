@@ -337,17 +337,54 @@ def run_llm_orchestrator(
         future_tactical = executor.submit(agent_tactical, job_description, gaps)
         future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
 
-        result = {
-            **diag_result,
-            **cv_result,
-            **future_tactical.result(),
-            **future_library.result(),
-        }
+        tactical_result = future_tactical.result()
+        library_result = future_library.result()
+        
+        # DEBUG: Log dos resultados
+        logger.info(f"[DEBUG] Tactical result keys: {list(tactical_result.keys()) if tactical_result else 'None'}")
+        logger.info(f"[DEBUG] Library result keys: {list(library_result.keys()) if library_result else 'None'}")
+        logger.info(f"[DEBUG] Diag result keys: {list(diag_result.keys()) if diag_result else 'None'}")
+        
+        # Merge explícito para garantir que todos os campos sejam preservados
+        result = {}
+        
+        # Adicionar diagnóstico
+        if diag_result:
+            result.update(diag_result)
+            logger.info(f"[DEBUG] Added diag_result: {list(diag_result.keys())}")
+        
+        # Adicionar CV otimizado
+        if cv_result:
+            result.update(cv_result)
+            logger.info(f"[DEBUG] Added cv_result: {list(cv_result.keys())}")
+        
+        # Adicionar tático (ação)
+        if tactical_result:
+            result.update(tactical_result)
+            logger.info(f"[DEBUG] Added tactical_result: {list(tactical_result.keys())}")
+        
+        # Adicionar biblioteca
+        if library_result:
+            result.update(library_result)
+            logger.info(f"[DEBUG] Added library_result: {list(library_result.keys())}")
+        
+        # Garantir campos mínimos
+        if "perguntas_entrevista" not in result:
+            result["perguntas_entrevista"] = []
+        if "biblioteca_tecnica" not in result:
+            result["biblioteca_tecnica"] = []
+        if "projeto_pratico" not in result:
+            result["projeto_pratico"] = {}
+        if "kit_hacker" not in result:
+            result["kit_hacker"] = {}
 
         if future_comp:
-            result.update(future_comp.result())
-
+            comp_result = future_comp.result()
+            logger.info(f"[DEBUG] Competitor result keys: {list(comp_result.keys()) if comp_result else 'None'}")
+            result.update(comp_result)
+        
     logger.info("🏁 Orquestração concluída")
+    logger.info(f"[DEBUG] Final result keys: {list(result.keys())}")
     return result
 
 # ============================================================

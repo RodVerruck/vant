@@ -208,8 +208,8 @@ Se algum dado estiver faltando no input original, não insira placeholder. Apena
 (Parágrafo único do resumo reescrito)
 
 ### SKILLS TÉCNICAS
-(REGRA: Agrupe as skills em um único bloco de texto, separando os itens por " | ". Não use bullets verticais aqui.)
-{Skill 1} | {Skill 2} | {Skill 3}...
+(REGRA: Use bullets • para separar as skills em uma única linha.)
+• {Skill 1} • {Skill 2} • {Skill 3}
 
 ### EXPERIÊNCIA PROFISSIONAL
 (ITERAR POR TODAS AS EMPRESAS DO INPUT. NÃO PULAR NENHUMA):
@@ -259,23 +259,10 @@ Gere 5 perguntas que um entrevistador sênior faria para derrubar um candidato d
 - Mix Obrigatório: 3 Técnicas (Hard Skills da vaga) + 2 Comportamentais (Culture Fit/Soft Skills).
 - CRÍTICO: No campo "expectativa_recrutador", explique a INTENÇÃO OCULTA da pergunta (o que eles realmente querem saber? Ex: "Querem testar se você assume culpa ou culpa terceiros").
 
-# 2. PROJETO PRÁTICO (PROVA DE COMPETÊNCIA)
-Crie um escopo de projeto que possa ser executado em 48 horas, mas que pareça ter levado semanas.
-- O objetivo é gerar um portfólio instantâneo.
-- O campo "como_apresentar" deve ser um PITCH de vendas de 30 segundos para usar na entrevista.
-
-# 3. KIT HACKER (X-RAY SEARCH - MODO SNIPER)
-Gere uma string booleana (Google Dork) EXTREMAMENTE ESPECÍFICA para encontrar quem tem poder de caneta.
-- BASE: site:linkedin.com/in
-- KEYWORDS: Palavras-chave principais da vaga.
-- ALVOS (OR): Head OR Manager OR Director OR Lead OR VP OR "Talent Acquisition" OR "Tech Recruiter".
-- EXCLUSÕES (OBRIGATÓRIO - USE SINAL DE MENOS): -intitle:assistant -intitle:assistente -intitle:intern -intitle:estagiário -intitle:trainee -jobs -vagas.
-
-OUTPUT JSON (ESTRITAMENTE ESTE FORMATO):
-{{
-  "perguntas_entrevista": [
     {{ 
-      "pergunta": "Texto da pergunta difícil...", 
+      "erro": "Nome do Gap",
+      "evidencia": "O que falta no CV",
+      "correcao_sugerida": "Ação com **ferramentas** e **termos** em negrito."
       "tipo": "Técnica ou Comportamental",
       "expectativa_recrutador": "A intenção oculta por trás da pergunta...", 
       "dica_resposta": "Use o método STAR (Situação, Tarefa, Ação, Resultado)..." 
