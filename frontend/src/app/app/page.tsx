@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap } from "@/types";
+import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap, HistoryItem } from "@/types";
 import { PaidStage } from "@/components/PaidStage";
 import { AuthModal } from "@/components/AuthModal";
+import { HistoryStage } from "@/components/HistoryStage";
 import { calcPotencial } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
@@ -213,6 +214,7 @@ export default function AppPage() {
     const [apiError, setApiError] = useState("");
     const [previewData, setPreviewData] = useState<PreviewData | null>(null);
     const [reportData, setReportData] = useState<ReportData | null>(null);
+    const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null);
     const [, setPremiumError] = useState("");
     const [isRestoringData, setIsRestoringData] = useState(false);
     const [pdfMetadata, setPdfMetadata] = useState<{ pages?: number; text?: string; candidateName?: string } | null>(null);
@@ -923,6 +925,44 @@ export default function AppPage() {
             }
         })();
     }, [authUserId, creditsRemaining, stage]);
+
+    // Função para lidar com seleção de item do histórico
+    const handleSelectHistory = async (item: HistoryItem) => {
+        try {
+            // Se já temos o resultado completo, apenas definimos
+            if (item.full_result) {
+                setReportData(item.full_result);
+                setSelectedHistoryItem(item);
+                setStage("paid");
+                return;
+            }
+
+            // Caso contrário, precisamos buscar o resultado completo
+            setApiError("");
+
+            const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${item.id}`);
+
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: ${response.statusText}`);
+            }
+
+            const fullResult = await response.json();
+
+            // Atualiza o item com o resultado completo
+            const updatedItem = { ...item, full_result: fullResult.data };
+            setSelectedHistoryItem(updatedItem);
+            setReportData(fullResult.data);
+            setStage("paid");
+        } catch (err) {
+            console.error("Erro ao carregar detalhe do histórico:", err);
+            setApiError(err instanceof Error ? err.message : "Erro ao carregar análise");
+        }
+    };
+
+    const handleBackFromHistory = () => {
+        setSelectedHistoryItem(null);
+        setStage("hero");
+    };
 
     useEffect(() => {
         console.log("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
@@ -1669,13 +1709,17 @@ export default function AppPage() {
                 <PaidStage
                     reportData={reportData}
                     authUserId={authUserId}
-                    onNewOptimization={() => {
-                        setReportData(null);
-                        setFile(null);
-                        setCompetitorFiles([]);
-                        setStage("hero");
-                    }}
+                    onNewOptimization={() => setStage("hero")}
                     onUpdateReport={(updated) => setReportData(updated)}
+                    onViewHistory={() => setStage("history")}
+                />
+            )}
+
+            {stage === "history" && (
+                <HistoryStage
+                    authUserId={authUserId}
+                    onSelectHistory={handleSelectHistory}
+                    onBack={handleBackFromHistory}
                 />
             )}
 

@@ -835,9 +835,30 @@ def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) 
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
+@app.get("/api/user/history/detail")
+def get_history_detail(id: str) -> JSONResponse:
+    """Retorna detalhes completos de uma análise específica."""
+    try:
+        from backend.cache_manager import CacheManager
+        
+        cache_manager = CacheManager()
+        
+        # Busca o item completo pelo ID
+        response = cache_manager.supabase.table("cached_analyses").select("*").eq("id", id).execute()
+        
+        if not response.data or len(response.data) == 0:
+            return JSONResponse(status_code=404, content={"error": "Análise não encontrada"})
+        
+        item = response.data[0]
+        
+        return JSONResponse(content={"data": item["result_json"]})
+        
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
 @app.get("/api/user/history")
 def get_user_history(user_id: str) -> JSONResponse:
-    """Retorna histórico de análises do usuário com cache inteligente."""
     try:
         from backend.cache_manager import CacheManager
         

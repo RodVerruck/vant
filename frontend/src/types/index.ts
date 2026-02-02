@@ -1,4 +1,4 @@
-export type AppStage = "hero" | "analyzing" | "preview" | "pricing" | "checkout" | "processing_premium" | "paid";
+export type AppStage = "hero" | "analyzing" | "preview" | "pricing" | "checkout" | "processing_premium" | "paid" | "history";
 export type PlanType = "free" | "pro_monthly" | "pro_annual" | "trial" | "credit_1" | "credit_3" | "credit_5" | "basico" | "premium_plus";
 export type BillingType = "one_time" | "subscription";
 
@@ -107,3 +107,15 @@ export interface PricePlan {
 }
 
 export type PricesMap = Record<PlanType, PricePlan>;
+
+export interface HistoryItem {
+    id: string;
+    created_at: string;
+    job_description: string;
+    result_preview: {
+        veredito: string;
+        score_ats: number;
+        gaps_count: number;
+    };
+    full_result?: ReportData;
+}

@@ -11,9 +11,10 @@ interface PaidStageProps {
     authUserId: string | null;
     onNewOptimization: () => void;
     onUpdateReport: (updated: ReportData) => void;
+    onViewHistory?: () => void;
 }
 
-export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateReport }: PaidStageProps) {
+export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateReport, onViewHistory }: PaidStageProps) {
     const [activeTab, setActiveTab] = useState<"diagnostico" | "cv" | "biblioteca">("diagnostico");
     const [editedCvText, setEditedCvText] = useState("");
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -567,24 +568,44 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                 )}
             </div>
 
-            {/* Botão Nova Otimização */}
+            {/* Botões de Ação */}
             <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                <button
-                    onClick={onNewOptimization}
-                    style={{
-                        background: "transparent",
-                        border: "2px solid #F59E0B",
-                        color: "#F59E0B",
-                        padding: "12px 24px",
-                        borderRadius: 50,
-                        fontWeight: 800,
-                        textTransform: "uppercase",
-                        cursor: "pointer",
-                        width: "100%"
-                    }}
-                >
-                    Analisar outro perfil
-                </button>
+                <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+                    {onViewHistory && (
+                        <button
+                            onClick={onViewHistory}
+                            style={{
+                                background: "transparent",
+                                border: "2px solid #6B7280",
+                                color: "#6B7280",
+                                padding: "12px 24px",
+                                borderRadius: 50,
+                                fontWeight: 800,
+                                textTransform: "uppercase",
+                                cursor: "pointer",
+                                flex: 1
+                            }}
+                        >
+                            📋 Meu Histórico
+                        </button>
+                    )}
+                    <button
+                        onClick={onNewOptimization}
+                        style={{
+                            background: "transparent",
+                            border: "2px solid #F59E0B",
+                            color: "#F59E0B",
+                            padding: "12px 24px",
+                            borderRadius: 50,
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                            cursor: "pointer",
+                            flex: onViewHistory ? 1 : "100%"
+                        }}
+                    >
+                        Analisar outro perfil
+                    </button>
+                </div>
             </div>
         </div>
     );
