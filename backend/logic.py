@@ -1005,13 +1005,26 @@ INSTRUÇÕES ESPECÍFICAS:
 2. Use exemplos REAIS do texto do CV (não invente)
 3. Seja direto e objetivo
 4. Foque em: falta de números/resultados E palavras-chave ausentes
-5. DETECTE A ÁREA ESPECÍFICA: 
-   - Se a vaga menciona "suporte", "suporte técnico", "analista de suporte", "help desk", "atendimento", etc → "SUPORTE TI"
-   - Se menciona "vendas", "comercial", "sales" → "VENDAS"
-   - Se menciona "marketing", "mkt" → "MARKETING"
-   - Se menciona "rh", "recursos humanos", "people" → "RH"
-   - Se menciona "compras", "suprimentos", "logística" → "COMPRAS"
-   - Se menciona tech/dev/programação → "TECNOLOGIA"
+5. DETECTE A ÁREA ESPECÍFICA (Prioridade 1 - Mapeamento Exato):
+   - "suporte", "suporte técnico", "analista de suporte", "help desk", "atendimento", "service desk", "suporte ao cliente" → "SUPORTE TI"
+   - "compras", "suprimentos", "logística", "almoxarifado", "cadeia de suprimentos" → "COMPRAS"
+   - "vendas", "comercial", "sales", "vendedor", "negócios", "business" → "VENDAS"
+   - "marketing", "mkt", "comunicação", "social media", "publicidade" → "MARKETING"
+   - "rh", "recursos humanos", "people", "gestão de pessoas", "recrutamento" → "RH"
+   - "financeiro", "contábil", "fiscal", "contabilidade", "tesouraria", "orçamento" → "FINANCEIRO"
+   - "jurídico", "advogado", "legal", "contratos", "legislação", "advocacia" → "JURÍDICO"
+   - "engenharia", "engenheiro", "civil", "mecânica", "elétrica", "produção" → "ENGENHARIA"
+   - "arquitetura", "arquiteto", "design", "designer", "criação", "visual" → "ARQUITETURA"
+   - "saúde", "médico", "enfermagem", "hospital", "clínica", "farmácia" → "SAÚDE"
+   - "educação", "professor", "pedagogia", "escola", "universidade", "ensino" → "EDUCAÇÃO"
+   - "logística", "transporte", "distribuição", "frota", "entrega" → "LOGÍSTICA"
+   - "produção", "fábrica", "indústria", "manufatura", "operação" → "PRODUÇÃO"
+   - "agro", "agronegócio", "agricultura", "pecuária", "rural" → "AGRO"
+   
+   Se não encontrar nenhuma das áreas acima (Prioridade 2 - Fallback Livre):
+   - Use seu conhecimento para detectar a área mais adequada baseada no contexto da vaga
+   - Exemplos: "RECURSOS HUMANOS", "ADMINISTRAÇÃO", "QUALIDADE", "PESQUISA", etc.
+   - Seja específico e profissional na nomeação
 
 OUTPUT JSON (OBRIGATÓRIO - COPIE EXATAMENTE):
 {{
