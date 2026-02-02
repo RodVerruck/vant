@@ -38,25 +38,27 @@ def _vant_error(message: str, agent_name=None, model_name=None):
     return payload
 
 # ============================================================
-# AGENT → MODEL REGISTRY
+# AGENT → MODEL REGISTRY (ATUALIZADO FEV/2026)
 # ============================================================
 AGENT_MODEL_REGISTRY = {
-    "diagnosis": "gemini-2.0-flash",
+    # ESCRITOR DE CV (Critical Path):
+    # O Gemini 3.0 Flash tem "Thinking" nativo. Ele não tem preguiça.
+    # Custo: ~$0.50/1M input (apenas um pouco mais que o 2.5 Flash, mas muito mais barato que Pro)
+    "cv_writer_semantic": "gemini-3.0-flash-preview", 
 
-    # Escrita de CV - Mantendo o 2.5 mas com fallback de código
-    "cv_writer_semantic": "gemini-2.5-flash", 
-    "cv_formatter": "gemini-2.0-flash",
-
-    # Estratégia
-    "tactical": "gemini-2.0-flash",
-    "library": "gemini-2.0-flash",
-
-    # Inteligência
-    "competitor_analysis": "gemini-2.0-flash",
-    "interview_evaluator": "gemini-2.0-flash",
+    # TAREFAS RÁPIDAS (Velocidade/Custo):
+    # Migrado de 2.0 para 2.5 Flash (O 2.0 morre em março/26)
+    "diagnosis": "gemini-2.5-flash", 
+    "cv_formatter": "gemini-2.5-flash",
+    "tactical": "gemini-2.5-flash",
+    "library": "gemini-2.5-flash",
+    
+    # INTELIGENCE:
+    "competitor_analysis": "gemini-2.5-flash",
+    "interview_evaluator": "gemini-2.5-flash",
 }
 
-DEFAULT_MODEL = "gemini-2.0-flash"
+DEFAULT_MODEL = "gemini-2.5-flash"
 
 # ============================================================
 # IMPORT PROMPTS
@@ -154,14 +156,27 @@ SAÍDA OBRIGATÓRIA:
 Apenas JSON válido.
 """
 
+        # Configuração Dinâmica para Gemini 3.0
+        # O modelo 3.0 Flash permite definir o nível de raciocínio.
+        is_writer = agent_name == "cv_writer_semantic"
+        
+        # Parâmetros de configuração (Atualizado SDK v2026)
+        generation_config = {
+            "response_mime_type": "application/json",
+            "temperature": 0.4 if is_writer else 0.2,
+            "max_output_tokens": 15000 if is_writer else 8192,
+        }
+
+        # [TRUQUE] Forçar "High Reasoning" apenas para o CV Writer no Gemini 3
+        # Isso elimina a "preguiça" de seguir instruções longas (Zoom In/Out)
+        if is_writer and "gemini-3" in model_to_use:
+             # Níveis: "low", "medium", "high" (High é o comportamento "Thinking" antigo)
+             generation_config["thinking_level"] = "high" 
+
         response = genai_client.models.generate_content(
             model=model_to_use,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.2,
-                max_output_tokens=8192,
-            ),
+            config=types.GenerateContentConfig(**generation_config),
         )
 
         cleaned_text = clean_json_string(response.text)
