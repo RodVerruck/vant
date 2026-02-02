@@ -1005,13 +1005,15 @@ INSTRUÇÕES ESPECÍFICAS:
 2. Use exemplos REAIS do texto do CV (não invente)
 3. Seja direto e objetivo
 4. Foque em: falta de números/resultados E palavras-chave ausentes
-5. DETECTE A ÁREA ESPECÍFICA: Se a vaga menciona "suporte", "suporte técnico", "analista de suporte", etc, o setor é "SUPORTE TI"
-6. Para "vendas", "comercial", "sales" = VENDAS
-7. Para "marketing", "mkt" = MARKETING
-8. Para "rh", "recursos humanos", "people" = RH
-9. Para tech/dev = TECNOLOGIA
+5. DETECTE A ÁREA ESPECÍFICA: 
+   - Se a vaga menciona "suporte", "suporte técnico", "analista de suporte", "help desk", "atendimento", etc → "SUPORTE TI"
+   - Se menciona "vendas", "comercial", "sales" → "VENDAS"
+   - Se menciona "marketing", "mkt" → "MARKETING"
+   - Se menciona "rh", "recursos humanos", "people" → "RH"
+   - Se menciona "compras", "suprimentos", "logística" → "COMPRAS"
+   - Se menciona tech/dev/programação → "TECNOLOGIA"
 
-OUTPUT JSON (OBRIGATÓRIO):
+OUTPUT JSON (OBRIGATÓRIO - COPIE EXATAMENTE):
 {{
   "nota_ats": 0,
   "analise_por_pilares": {{
@@ -1034,9 +1036,11 @@ OUTPUT JSON (OBRIGATÓRIO):
 }}
 
 IMPORTANTE: 
-- Retorne APENAS o JSON, sem texto adicional
+- Retorne APENAS o JSON válido, sem texto adicional
 - nota_ats: 0-100 baseado no matching REAL
-- setor_detectado: área exata (SUPORTE TI, VENDAS, MARKETING, RH, TECNOLOGIA, etc)
+- pilares: 0-100 baseados em análise específica
+- setor_detectado: área exata detectada acima
+- NÃO ADICIONE setores fora do lugar
 """
     
     try:
