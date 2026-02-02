@@ -1115,221 +1115,182 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
     except Exception as e:
         logger.error(f"Erro na análise preview com IA: {e}")
         
-        # Fallback para heurística se a IA falhar
-        # ALGORITMO ATS REALISTA (Baseado em sistemas como Taleo, Workday, Greenhouse)
-        
-        def normalize(text):
-            translator = str.maketrans('', '', string.punctuation)
-            return set(text.lower().translate(translator).split())
-        
-        def extract_skills(text):
-            """Extrai skills e competências técnicas"""
-            # Padrões comuns de skills em português/inglês
-            skill_patterns = [
-                r'\b(python|java|javascript|react|node\.?js|angular|vue|php|ruby|go|rust|swift|kotlin)\b',
-                r'\b(sql|mongodb|postgresql|mysql|oracle|redis|elasticsearch|firebase)\b',
-                r'\b(aws|azure|gcp|docker|kubernetes|terraform|jenkins|git|github|gitlab)\b',
-                r'\b(agile|scrum|kanban|safe|lean|itil|pmp|prince2)\b',
-                r'\b(machine.?learning|ai|data.?science|analytics|bi|power.?bi|tableau)\b',
-                r'\b(excel|vba|power.?point|word|office|sap|salesforce|jira|confluence)\b',
-                r'\b(react|angular|vue|next\.?js|nuxt\.?js|gatsby|express|django|flask|spring)\b',
-                r'\b(communication|leadership|management|project.?management|team.?work)\b',
-                r'\b(português|inglês|espanhol|francês|italiano|alemão)\b',
-                r'\b(bachelor|master|mba|phd|degree|certification|pmp|csm)\b'
-            ]
+        # Fallback com IA RÁPIDA (Groq gratuito) se a primeira tentativa falhar
+        try:
+            logger.info("🔄 Tentando fallback rápido com Groq para análise ATS...")
             
-            skills = set()
-            text_lower = text.lower()
-            for pattern in skill_patterns:
-                matches = re.findall(pattern, text_lower, re.IGNORECASE)
-                skills.update(matches)
+            from groq import Groq
+            GROQ_API_KEY = os.getenv("GROQ_API_KEY")
             
-            return skills
-        
-        def calculate_keyword_density(cv_text, job_tokens):
-            """Calcula densidade de palavras-chave relevante"""
-            if not job_tokens:
-                return 0
+            if GROQ_API_KEY:
+                groq_client = Groq(api_key=GROQ_API_KEY)
+                
+                # Prompt simplificado para análise ATS rápida
+                fallback_prompt = f"""
+Analise este CV para a vaga e retorne APENAS JSON:
+
+VAGA: {job_description[:800]}
+
+CV: {cv_text[:2000]}
+
+Retorne JSON exato:
+{{
+  "nota_ats": 0,
+  "analise_por_pilares": {{
+    "impacto": 0,
+    "keywords": 0,
+    "ats": 0,
+    "setor_detectado": "TECNOLOGIA"
+  }},
+  "gap_1": {{
+    "titulo": "Problema detectado",
+    "explicacao": "Por que isso é crítico"
+  }},
+  "gap_2": {{
+    "titulo": "Outro problema",
+    "explicacao": "Detalhes"
+  }}
+}}
+
+Regras:
+- nota_ats: 0-100 baseado em matching real
+- pilares: 0-100 baseados em análise específica
+- setor: área detectada (SUPORTE TI, VENDAS, MARKETING, etc)
+- gaps: problemas reais do CV
+"""
+                
+                response_obj = groq_client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "user", "content": fallback_prompt}],
+                    temperature=0.2,
+                    max_tokens=500,
+                )
+                
+                response = response_obj.choices[0].message.content
+                logger.info("✅ Fallback Groq funcionou!")
+                
+                # Parse do JSON
+                response_clean = response.strip()
+                if response_clean.startswith("```"):
+                    response_clean = response_clean.split("```")[1]
+                    if response_clean.startswith("json"):
+                        response_clean = response_clean[4:]
+                
+                data = json.loads(response_clean)
+                
+                # Validação e ajustes
+                nota_ats = max(5, min(int(data.get("nota_ats", 25)), 100))
+                pilares = data.get("analise_por_pilares", {})
+                gap_1 = data.get("gap_1", {})
+                gap_2 = data.get("gap_2", {})
+                
+                return {
+                    "veredito": "ANÁLISE INICIAL CONCLUÍDA",
+                    "nota_ats": nota_ats,
+                    "analise_por_pilares": {
+                        "impacto": max(0, min(int(pilares.get("impacto", nota_ats)), 100)),
+                        "keywords": max(0, min(int(pilares.get("keywords", nota_ats)), 100)),
+                        "ats": max(0, min(int(pilares.get("ats", nota_ats)), 100)),
+                        "setor_detectado": str(pilares.get("setor_detectado", "TECNOLOGIA")).upper()
+                    },
+                    "gap_1": gap_1,
+                    "gap_2": gap_2,
+                    "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
+                    "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
+                    "cv_otimizado_completo": "🔒",
+                    "kit_hacker": {"boolean_string": "🔒"},
+                    "biblioteca_tecnica": []
+                }
+                
+        except Exception as groq_fallback_error:
+            logger.warning(f"⚠️ Fallback Groq falhou: {groq_fallback_error}")
             
-            cv_tokens = normalize(cv_text)
-            matches = cv_tokens.intersection(job_tokens)
-            
-            # ATS real considera densidade, não apenas presença
-            total_cv_words = len(cv_tokens)
-            if total_cv_words == 0:
-                return 0
-            
-            density = (len(matches) / total_cv_words) * 100
-            return min(density * 10, 30)  # Máximo 30 pontos por densidade
-        
-        def check_education_requirements(cv_text, job_description):
-            """Verifica requisitos educacionais"""
-            education_keywords = ['graduação', 'bacharel', 'engenharia', 'administração', 'ciência da computação', 
-                                 'sistemas de informação', 'mba', 'mestrado', 'doutorado', 'phd', 'degree',
-                                 'bachelor', 'master', 'university', 'faculdade', 'universidade']
-            
-            cv_lower = cv_text.lower()
-            job_lower = job_description.lower()
-            
-            required_education = [kw for kw in education_keywords if kw in job_lower]
-            found_education = [kw for kw in required_education if kw in cv_lower]
-            
-            if not required_education:
-                return 15  # Sem requisitos específicos, pontos neutros
-            
-            return (len(found_education) / len(required_education)) * 20
-        
-        def check_experience_level(cv_text, job_description):
-            """Verifica nível de experiência"""
-            # Detecta anos de experiência no CV
-            year_patterns = [
-                r'(\d+)\s*(?:anos|years?)\s*(?:de\s*)?(?:experiência|experience)',
-                r'(\d{4})\s*[-–]\s*(\d{4}|atual|present|current)',
-                r'(?:experiência|experience)[:\s]*(\d+)\s*(?:anos|years?)'
-            ]
-            
-            total_years = 0
-            for pattern in year_patterns:
-                matches = re.findall(pattern, cv_text.lower())
-                for match in matches:
-                    if isinstance(match, tuple):
-                        if len(match) == 2 and match[1].isdigit():
-                            years = int(match[1]) - int(match[0])
-                        else:
-                            years = int(match[0]) if match[0].isdigit() else 0
-                    else:
-                        years = int(match) if match.isdigit() else 0
-                    total_years = max(total_years, years)
-            
-            # Detecta requisitos no job description
-            job_lower = job_description.lower()
-            if any(kw in job_lower for kw in ['sênior', 'senior', 'pleno', 'mid', 'júnior', 'junior']):
-                if 'sênior' in job_lower or 'senior' in job_lower:
-                    required_years = 5
-                elif 'pleno' in job_lower or 'mid' in job_lower:
-                    required_years = 3
-                else:  # júnior
-                    required_years = 1
-            else:
-                required_years = 3  # Padrão
-            
-            # Cálculo baseado em anos de experiência
-            if total_years >= required_years:
-                return min(20, (total_years / required_years) * 15)
-            else:
-                return (total_years / required_years) * 15
-        
-        def check_format_ats_compliance(cv_text):
-            """Verifica conformidade com formatação ATS"""
-            score = 20  # Base points
-            
-            # Penalidades por formatação problemática
-            if cv_text.count('|') > 10:  # Excesso de pipes
-                score -= 5
-            if re.search(r'[^\w\s\-\.\,\;\:\@\(\)\[\]\/\n\r\t]', cv_text):  # Caracteres especiais
-                score -= 3
-            if len(cv_text.split('\n')) < 10:  # Muito curto
-                score -= 5
-            if len(cv_text) < 500:  # CV muito curto
-                score -= 7
-            if len(cv_text) > 8000:  # CV muito longo
-                score -= 3
-            
-            # Bônus por elementos positivos
-            if re.search(r'\b\d{4}\b.*\b\d{4}\b', cv_text):  # Datas de experiência
-                score += 3
-            if re.search(r'\b\d+\s*(?:%|\$|rs|r\$|us\$|€)\b', cv_text.lower()):  # Métricas
-                score += 5
-            if '@' in cv_text and ('.com' in cv_text or '.br' in cv_text):  # Email
-                score += 2
-            
-            return max(0, min(30, score))
-        
-        # Cálculo ATS profissional com múltiplos critérios ponderados
-        cv_tokens = normalize(cv_text)
-        job_tokens = normalize(job_description)
-        
-        # Remove stopwords mais completas
-        extended_stopwords = {
-            'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que', 'um', 'uma', 'os', 'as', 
-            'no', 'na', 'por', 'sem', 'ao', 'como', 'dos', 'das', 'nos', 'nas', 'pelo', 'pela',
-            'este', 'esta', 'esse', 'essa', 'isso', 'aquilo', 'mais', 'muito', 'muita', 'também',
-            'mas', 'porém', 'então', 'porque', 'quando', 'onde', 'como', 'qual', 'quais'
-        }
-        job_tokens = job_tokens - extended_stopwords
-        
-        # 1. Keyword Match (30% do peso) - Critério mais importante
-        matches = cv_tokens.intersection(job_tokens)
-        keyword_match_score = (len(matches) / len(job_tokens)) * 100 if job_tokens else 0
-        keyword_score = min(keyword_match_score * 0.3, 30)
-        
-        # 2. Skills Específicas (25% do peso)
-        cv_skills = extract_skills(cv_text)
-        job_skills = extract_skills(job_description)
-        skill_matches = cv_skills.intersection(job_skills)
-        skills_score = (len(skill_matches) / len(job_skills)) * 25 if job_skills else 12.5
-        
-        # 3. Densidade de Keywords (15% do peso)
-        density_score = calculate_keyword_density(cv_text, job_tokens)
-        
-        # 4. Educação (15% do peso)
-        education_score = check_education_requirements(cv_text, job_description)
-        
-        # 5. Experiência (10% do peso)
-        experience_score = check_experience_level(cv_text, job_description)
-        
-        # 6. Formatação ATS (5% do peso)
-        format_score = check_format_ats_compliance(cv_text)
-        
-        # Score final ATS (máximo 100)
-        final_score = min(keyword_score + skills_score + density_score + 
-                         education_score + experience_score + format_score, 100)
-        final_score = max(int(final_score), 5)  # Mínimo 5 para não ser 0
-        
-        area_detected = detect_job_area(job_description)
-        
-        # Gaps genéricos como fallback
-        # Calcular pilares baseados nos componentes do algoritmo ATS real
-        impacto_score = min(experience_score + density_score, 100)  # Experiência + densidade
-        keywords_score = min(keyword_score + skills_score, 100)      # Keywords + skills
-        ats_score = min(format_score + education_score, 100)         # Formatação + educação
-        
-        # Ajustar para área de suporte especificamente
-        if 'suporte' in job_description.lower() or 'support' in job_description.lower():
-            # Para área de suporte, dar mais peso a skills de atendimento
-            support_keywords = ['atendimento', 'cliente', 'customer', 'service', 'help', 'desk', 'nível', 'n1', 'n2', 'n3']
-            support_matches = cv_tokens.intersection(set(support_keywords))
-            if support_matches:
-                keywords_score = min(keywords_score + 10, 100)
-                area_detected = 'SUPORTE TI'
-        
-        return {
-            "veredito": "ANÁLISE INICIAL CONCLUÍDA",
-            "nota_ats": final_score,
-            "analise_por_pilares": {
-                "impacto": int(impacto_score),
-                "keywords": int(keywords_score), 
-                "ats": int(ats_score),
-                "setor_detectado": area_detected.upper()
-            },
-            "gap_1": {
-                "titulo": "Falta de Resultados Quantificáveis" if final_score < 50 else "Métricas de Impacto Podem Ser Melhoradas",
-                "explicacao": "Seu CV usa descrições genéricas sem números ou impacto mensurável" if final_score < 50 else "Adicione métricas específicas para aumentar seu score ATS",
-                "exemplo_atual": "Responsável por gerenciar projetos e melhorar processos",
-                "exemplo_otimizado": "Gerenciei 12 projetos com orçamento de R$ 2.5M, reduzindo custos em 28%"
-            },
-            "gap_2": {
-                "titulo": "Palavras-Chave da Vaga Ausentes",
-                "explicacao": f"Termos críticos da vaga de {area_detected} não aparecem no seu CV",
-                "termos_faltando": list(job_tokens - cv_tokens)[:5] if (job_tokens - cv_tokens) else ["Atendimento ao cliente", "SLA", "KPIs", "Metodologias ágeis", "Documentação"]
-            },
-            "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
-            "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
-            "cv_otimizado_completo": "🔒",
-            "kit_hacker": {"boolean_string": "🔒"},
-            "biblioteca_tecnica": []
-        }
- 
+            # ÚLTIMO RECURSO: Gemini 1.5 Flash (barato)
+            try:
+                logger.info("🔄 Último recurso: Gemini 1.5 Flash...")
+                
+                from google import genai
+                from google.genai import types
+                
+                GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+                if not GOOGLE_API_KEY:
+                    raise Exception("GOOGLE_API_KEY não configurada")
+                
+                client = genai.Client(api_key=GOOGLE_API_KEY)
+                
+                response_obj = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=fallback_prompt,
+                    config=types.GenerateContentConfig(
+                        temperature=0.2,
+                        max_output_tokens=500,
+                    )
+                )
+                
+                response = response_obj.text
+                logger.info("✅ Gemini fallback funcionou!")
+                
+                # Parse do JSON
+                response_clean = response.strip()
+                if response_clean.startswith("```"):
+                    response_clean = response_clean.split("```")[1]
+                    if response_clean.startswith("json"):
+                        response_clean = response_clean[4:]
+                
+                data = json.loads(response_clean)
+                
+                # Validação e ajustes
+                nota_ats = max(5, min(int(data.get("nota_ats", 25)), 100))
+                pilares = data.get("analise_por_pilares", {})
+                gap_1 = data.get("gap_1", {})
+                gap_2 = data.get("gap_2", {})
+                
+                return {
+                    "veredito": "ANÁLISE INICIAL CONCLUÍDA",
+                    "nota_ats": nota_ats,
+                    "analise_por_pilares": {
+                        "impacto": max(0, min(int(pilares.get("impacto", nota_ats)), 100)),
+                        "keywords": max(0, min(int(pilares.get("keywords", nota_ats)), 100)),
+                        "ats": max(0, min(int(pilares.get("ats", nota_ats)), 100)),
+                        "setor_detectado": str(pilares.get("setor_detectado", "TECNOLOGIA")).upper()
+                    },
+                    "gap_1": gap_1,
+                    "gap_2": gap_2,
+                    "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
+                    "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
+                    "cv_otimizado_completo": "🔒",
+                    "kit_hacker": {"boolean_string": "🔒"},
+                    "biblioteca_tecnica": []
+                }
+                
+            except Exception as gemini_fallback_error:
+                logger.error(f"❌ Todos os fallbacks falharam: {gemini_fallback_error}")
+                
+                # ÚLTIMO RECURSO: Heurística simples
+                return {
+                    "veredito": "ANÁLISE INICIAL CONCLUÍDA",
+                    "nota_ats": 25,
+                    "analise_por_pilares": {
+                        "impacto": 20,
+                        "keywords": 30,
+                        "ats": 25,
+                        "setor_detectado": "TECNOLOGIA"
+                    },
+                    "gap_1": {
+                        "titulo": "Análise Limitada",
+                        "explicacao": "Sistemas de IA indisponíveis no momento"
+                    },
+                    "gap_2": {
+                        "titulo": "Tente Novamente",
+                        "explicacao": "Recarregue a página e tente novamente"
+                    },
+                    "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
+                    "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
+                    "cv_otimizado_completo": "🔒",
+                    "kit_hacker": {"boolean_string": "🔒"},
+                    "biblioteca_tecnica": []
+                }
+
 # ============================================================
 # GERADOR DE WORD V7 (DESIGN SYSTEM TRANSLATION)
 # ============================================================
