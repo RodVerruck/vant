@@ -1116,36 +1116,175 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
         logger.error(f"Erro na análise preview com IA: {e}")
         
         # Fallback para heurística se a IA falhar
+        # ALGORITMO ATS REALISTA (Baseado em sistemas como Taleo, Workday, Greenhouse)
+        
         def normalize(text):
             translator = str.maketrans('', '', string.punctuation)
             return set(text.lower().translate(translator).split())
-         
+        
+        def extract_skills(text):
+            """Extrai skills e competências técnicas"""
+            # Padrões comuns de skills em português/inglês
+            skill_patterns = [
+                r'\b(python|java|javascript|react|node\.?js|angular|vue|php|ruby|go|rust|swift|kotlin)\b',
+                r'\b(sql|mongodb|postgresql|mysql|oracle|redis|elasticsearch|firebase)\b',
+                r'\b(aws|azure|gcp|docker|kubernetes|terraform|jenkins|git|github|gitlab)\b',
+                r'\b(agile|scrum|kanban|safe|lean|itil|pmp|prince2)\b',
+                r'\b(machine.?learning|ai|data.?science|analytics|bi|power.?bi|tableau)\b',
+                r'\b(excel|vba|power.?point|word|office|sap|salesforce|jira|confluence)\b',
+                r'\b(react|angular|vue|next\.?js|nuxt\.?js|gatsby|express|django|flask|spring)\b',
+                r'\b(communication|leadership|management|project.?management|team.?work)\b',
+                r'\b(português|inglês|espanhol|francês|italiano|alemão)\b',
+                r'\b(bachelor|master|mba|phd|degree|certification|pmp|csm)\b'
+            ]
+            
+            skills = set()
+            text_lower = text.lower()
+            for pattern in skill_patterns:
+                matches = re.findall(pattern, text_lower, re.IGNORECASE)
+                skills.update(matches)
+            
+            return skills
+        
+        def calculate_keyword_density(cv_text, job_tokens):
+            """Calcula densidade de palavras-chave relevante"""
+            if not job_tokens:
+                return 0
+            
+            cv_tokens = normalize(cv_text)
+            matches = cv_tokens.intersection(job_tokens)
+            
+            # ATS real considera densidade, não apenas presença
+            total_cv_words = len(cv_tokens)
+            if total_cv_words == 0:
+                return 0
+            
+            density = (len(matches) / total_cv_words) * 100
+            return min(density * 10, 30)  # Máximo 30 pontos por densidade
+        
+        def check_education_requirements(cv_text, job_description):
+            """Verifica requisitos educacionais"""
+            education_keywords = ['graduação', 'bacharel', 'engenharia', 'administração', 'ciência da computação', 
+                                 'sistemas de informação', 'mba', 'mestrado', 'doutorado', 'phd', 'degree',
+                                 'bachelor', 'master', 'university', 'faculdade', 'universidade']
+            
+            cv_lower = cv_text.lower()
+            job_lower = job_description.lower()
+            
+            required_education = [kw for kw in education_keywords if kw in job_lower]
+            found_education = [kw for kw in required_education if kw in cv_lower]
+            
+            if not required_education:
+                return 15  # Sem requisitos específicos, pontos neutros
+            
+            return (len(found_education) / len(required_education)) * 20
+        
+        def check_experience_level(cv_text, job_description):
+            """Verifica nível de experiência"""
+            # Detecta anos de experiência no CV
+            year_patterns = [
+                r'(\d+)\s*(?:anos|years?)\s*(?:de\s*)?(?:experiência|experience)',
+                r'(\d{4})\s*[-–]\s*(\d{4}|atual|present|current)',
+                r'(?:experiência|experience)[:\s]*(\d+)\s*(?:anos|years?)'
+            ]
+            
+            total_years = 0
+            for pattern in year_patterns:
+                matches = re.findall(pattern, cv_text.lower())
+                for match in matches:
+                    if isinstance(match, tuple):
+                        if len(match) == 2 and match[1].isdigit():
+                            years = int(match[1]) - int(match[0])
+                        else:
+                            years = int(match[0]) if match[0].isdigit() else 0
+                    else:
+                        years = int(match) if match.isdigit() else 0
+                    total_years = max(total_years, years)
+            
+            # Detecta requisitos no job description
+            job_lower = job_description.lower()
+            if any(kw in job_lower for kw in ['sênior', 'senior', 'pleno', 'mid', 'júnior', 'junior']):
+                if 'sênior' in job_lower or 'senior' in job_lower:
+                    required_years = 5
+                elif 'pleno' in job_lower or 'mid' in job_lower:
+                    required_years = 3
+                else:  # júnior
+                    required_years = 1
+            else:
+                required_years = 3  # Padrão
+            
+            # Cálculo baseado em anos de experiência
+            if total_years >= required_years:
+                return min(20, (total_years / required_years) * 15)
+            else:
+                return (total_years / required_years) * 15
+        
+        def check_format_ats_compliance(cv_text):
+            """Verifica conformidade com formatação ATS"""
+            score = 20  # Base points
+            
+            # Penalidades por formatação problemática
+            if cv_text.count('|') > 10:  # Excesso de pipes
+                score -= 5
+            if re.search(r'[^\w\s\-\.\,\;\:\@\(\)\[\]\/\n\r\t]', cv_text):  # Caracteres especiais
+                score -= 3
+            if len(cv_text.split('\n')) < 10:  # Muito curto
+                score -= 5
+            if len(cv_text) < 500:  # CV muito curto
+                score -= 7
+            if len(cv_text) > 8000:  # CV muito longo
+                score -= 3
+            
+            # Bônus por elementos positivos
+            if re.search(r'\b\d{4}\b.*\b\d{4}\b', cv_text):  # Datas de experiência
+                score += 3
+            if re.search(r'\b\d+\s*(?:%|\$|rs|r\$|us\$|€)\b', cv_text.lower()):  # Métricas
+                score += 5
+            if '@' in cv_text and ('.com' in cv_text or '.br' in cv_text):  # Email
+                score += 2
+            
+            return max(0, min(30, score))
+        
+        # Cálculo ATS profissional com múltiplos critérios ponderados
         cv_tokens = normalize(cv_text)
         job_tokens = normalize(job_description)
-         
-        stopwords = {'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que', 'um', 'uma', 'os', 'as', 'no', 'na', 'por', 'com', 'sem', 'ao'}
-        job_tokens = job_tokens - stopwords
-         
+        
+        # Remove stopwords mais completas
+        extended_stopwords = {
+            'a', 'e', 'o', 'de', 'do', 'da', 'em', 'para', 'com', 'que', 'um', 'uma', 'os', 'as', 
+            'no', 'na', 'por', 'sem', 'ao', 'como', 'dos', 'das', 'nos', 'nas', 'pelo', 'pela',
+            'este', 'esta', 'esse', 'essa', 'isso', 'aquilo', 'mais', 'muito', 'muita', 'também',
+            'mas', 'porém', 'então', 'porque', 'quando', 'onde', 'como', 'qual', 'quais'
+        }
+        job_tokens = job_tokens - extended_stopwords
+        
+        # 1. Keyword Match (30% do peso) - Critério mais importante
         matches = cv_tokens.intersection(job_tokens)
-        match_count = len(matches)
-        total_relevant = len(job_tokens) if len(job_tokens) > 0 else 1
+        keyword_match_score = (len(matches) / len(job_tokens)) * 100 if job_tokens else 0
+        keyword_score = min(keyword_match_score * 0.3, 30)
         
-        # Cálculo mais realista para poucos dados
-        raw_score = (match_count / total_relevant) * 100 if total_relevant > 0 else 0
+        # 2. Skills Específicas (25% do peso)
+        cv_skills = extract_skills(cv_text)
+        job_skills = extract_skills(job_description)
+        skill_matches = cv_skills.intersection(job_skills)
+        skills_score = (len(skill_matches) / len(job_skills)) * 25 if job_skills else 12.5
         
-        # Bônus por relevância do CV (tamanho e conteúdo)
-        length_bonus = min(len(cv_text) / 1000, 15)  # Aumentado para até 15 pontos
+        # 3. Densidade de Keywords (15% do peso)
+        density_score = calculate_keyword_density(cv_text, job_tokens)
         
-        # Bônus por palavras-chave relevantes encontradas
-        keyword_bonus = min(match_count * 5, 25)  # Até 25 pontos por matches
+        # 4. Educação (15% do peso)
+        education_score = check_education_requirements(cv_text, job_description)
         
-        # Score base mínimo mesmo com poucos dados (não pode ser 0)
-        base_score = 15  # Score mínimo realista
+        # 5. Experiência (10% do peso)
+        experience_score = check_experience_level(cv_text, job_description)
         
-        # Cálculo final com limites realistas
-        final_score = base_score + raw_score + length_bonus + keyword_bonus
-        final_score = min(int(final_score), 75)  # Máximo 75 no fallback (versão lite)
-        final_score = max(final_score, 10)  # Mínimo 10 para não ser 0
+        # 6. Formatação ATS (5% do peso)
+        format_score = check_format_ats_compliance(cv_text)
+        
+        # Score final ATS (máximo 100)
+        final_score = min(keyword_score + skills_score + density_score + 
+                         education_score + experience_score + format_score, 100)
+        final_score = max(int(final_score), 5)  # Mínimo 5 para não ser 0
         
         area_detected = detect_job_area(job_description)
         
