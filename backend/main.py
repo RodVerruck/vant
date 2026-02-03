@@ -44,6 +44,10 @@ except ImportError:
 
 app = FastAPI(title="Vant API", version="0.1.0")
 
+# Inicializa monitoring de produção
+from backend.monitoring import init_monitoring
+init_monitoring()
+
 # Modo de desenvolvimento (true = usa mock, false = usa IA real)
 DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
 
@@ -298,6 +302,9 @@ def get_pricing() -> JSONResponse:
 @app.post("/api/analyze-lite")
 def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...)) -> JSONResponse:
     try:
+        import sentry_sdk
+        sentry_sdk.set_tag("endpoint", "analyze_lite")
+        
         # Salva no cache para facilitar geração de mocks
         file_bytes = file.file.read()
         _save_to_cache(file_bytes, job_description)
@@ -312,6 +319,8 @@ def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...))
         data = analyze_preview_lite(cv_text, job_description)
         return JSONResponse(content=data)
     except Exception as e:
+        import sentry_sdk
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
@@ -325,6 +334,12 @@ def analyze_free(
     Análise gratuita (primeira análise sem paywall).
     Retorna diagnóstico básico com problemas identificados e 2 sugestões.
     """
+    import sentry_sdk
+    
+    if user_id:
+        sentry_sdk.set_context("user", {"id": user_id})
+    sentry_sdk.set_tag("endpoint", "analyze_free")
+    
     if user_id and not validate_user_id(user_id):
         return JSONResponse(
             status_code=400, 
@@ -371,6 +386,7 @@ def analyze_free(
         
         return JSONResponse(content=data)
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
@@ -467,6 +483,11 @@ def analyze_premium_paid(
     job_description: str = Form(...),
     competitor_files: list[UploadFile] | None = File(None),
 ) -> JSONResponse:
+    import sentry_sdk
+    
+    sentry_sdk.set_context("user", {"id": user_id})
+    sentry_sdk.set_tag("endpoint", "analyze_premium_paid")
+    
     if not supabase_admin:
         return JSONResponse(
             status_code=500,
@@ -508,6 +529,7 @@ def analyze_premium_paid(
         new_status = _entitlements_status(user_id)
         return JSONResponse(content={"data": data, "entitlements": new_status})
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
@@ -630,6 +652,11 @@ def _consume_one_credit(user_id: str) -> None:
 
 @app.post("/api/entitlements/activate")
 def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
+    import sentry_sdk
+    
+    sentry_sdk.set_context("user", {"id": payload.user_id})
+    sentry_sdk.set_tag("endpoint", "activate_entitlements")
+    
     if not STRIPE_SECRET_KEY:
         return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
     if not supabase_admin:
@@ -744,6 +771,7 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
             }
         )
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         print(f"[ERROR] activate_entitlements: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
@@ -823,6 +851,12 @@ class StripeCreateCheckoutSessionRequest(BaseModel):
 
 @app.post("/api/stripe/create-checkout-session")
 def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) -> JSONResponse:
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "stripe_create_checkout_session")
+    if payload.client_reference_id:
+        sentry_sdk.set_context("user", {"id": payload.client_reference_id})
+    
     if not STRIPE_SECRET_KEY:
         return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
 
@@ -858,6 +892,7 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
         )
         return JSONResponse(content={"id": session.get("id"), "url": session.get("url")})
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
@@ -867,6 +902,10 @@ class StripeVerifyCheckoutSessionRequest(BaseModel):
 
 @app.post("/api/stripe/verify-checkout-session")
 def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) -> JSONResponse:
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "stripe_verify_checkout_session")
+    
     if not STRIPE_SECRET_KEY:
         return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
 
@@ -895,6 +934,7 @@ def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) 
             }
         )
     except Exception as e:
+        sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
