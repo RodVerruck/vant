@@ -1,1 +1,39 @@
-analista de compras
+Título: Desenvolvedor Full Stack Sênior Empresa: Global Pay Systems (GPS) Local: Híbrido - São Paulo
+
+SOBRE A VAGA: A Global Pay Systems é líder em pagamentos digitais e busca um engenheiro sênior para escalar nosso core bancário. Diferente da vaga anterior, aqui o foco é alta volumetria, mas a stack técnica é a mesma que você já domina.
+
+RESPONSABILIDADES:
+
+Arquitetar soluções para processamento de pagamentos em tempo real
+
+Desenvolver e manter APIs RESTful e microsserviços críticos
+
+Otimizar performance de aplicações web escaláveis
+
+Mentoria técnica para desenvolvedores plenos e juniores
+
+Participação ativa em Code Reviews e decisões de arquitetura
+
+Garantir cobertura de testes automatizados e esteira de CI/CD
+
+REQUISITOS OBRIGATÓRIOS (Hard Skills):
+
+5+ anos de experiência comprovada em desenvolvimento Full Stack
+
+Experiência sólida e avançada com React.js e Node.js
+
+Proficiência em bancos de dados SQL (Postgres/MySQL) e NoSQL (Mongo/Dynamo)
+
+Vivência prática com metodologias ágeis (Scrum/Kanban)
+
+Inglês técnico para leitura e escrita
+
+DIFERENCIAIS:
+
+Vivência prévia no setor bancário ou fintechs
+
+Domínio de Docker e orquestração com Kubernetes
+
+Experiência com arquitetura orientada a eventos e microsserviços
+
+Certificações Cloud (AWS/Azure) são bem-vindas

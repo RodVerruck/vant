@@ -1,0 +1,37 @@
+    VAGA: Desenvolvedor Full Stack Pleno
+    Empresa: Fintech Digital
+    Local: São Paulo/SP (Remoto)
+    Salário: R$ 10.000 - R$ 13.000
+    Tipo: CLT
+
+    DESCRIÇÃO DA VAGA:
+    Procuramos um Desenvolvedor Full Stack Pleno para integrar nossa equipe de desenvolvimento de produtos financeiros inovadores. Você irá atuar no desenvolvimento de novas funcionalidades e manutenção de nossas plataformas digitais.
+
+    RESPONSABILIDADES:
+    - Desenvolvimento de novas features em aplicações web
+    - Criação e manutenção de APIs RESTful
+    - Otimização de performance e usabilidade
+    - Colaboração com equipes multidisciplinares
+    - Code review e boas práticas de desenvolvimento
+    - Automação de testes e deploy
+
+    REQUISITOS OBRIGATÓRIOS:
+    - 4+ anos de experiência em desenvolvimento Full Stack
+    - Forte conhecimento em React e Node.js
+    - Experiência com bancos de dados relacionais e não-relacionais
+    - Familiaridade com metodologias ágeis
+    - Inglês para leitura de documentação técnica
+
+    DIFERENCIAIS:
+    - Background em finanças ou fintechs
+    - Conhecimento em contêineres (Docker)
+    - Experiência com cloud computing
+    - Certificações AWS ou Azure
+    - Experiência com arquitetura de microsserviços
+
+    BENEFÍCIOS:
+    - Plano de saúde completo
+    - Vale alimentação e refeição
+    - Auxílio home office
+    - Plano de carreira
+    - Participação em resultados da empresa

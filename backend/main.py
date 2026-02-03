@@ -19,9 +19,10 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from supabase import create_client
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
+# Adiciona PROJECT_ROOT ao path antes dos imports relativos
+_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 from logic import analyze_cv_logic, analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato  # noqa: E402
 

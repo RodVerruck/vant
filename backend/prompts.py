@@ -162,16 +162,11 @@ REGRAS DE FORMATAÇÃO (CRÍTICO):
 - O campo "texto_reescrito" conterá Markdown.
 - Markdown usa muitos caracteres especiais (hífens, cerquilhas).
 - VOCÊ DEVE ESCAPAR TODAS AS ASPAS DUPLAS INTERNAS com contra-barra (ex: \\").
-- Não use quebras de linha reais dentro do valor JSON, use \\n.
-- Verifique se TODAS as empresas do input estão no output antes de fechar o JSON.
+- Não use quebras de linha reais dentro do valor Markdown, use \\n.
+- Verifique se TODAS as empresas do input estão no output antes de fechar o texto.
 
 # --- PROTOCOLO DE SAÍDA ---
-Retorne APENAS JSON válido. Escape aspas duplas internas.
-
-SCHEMA:
-{{
-  "texto_reescrito": "# NOME...\\n**Email:**... (Conteúdo Markdown Completo)"
-}}
+OUTPUT OBRIGATÓRIO: Retorne APENAS o texto do currículo formatado em Markdown. Use negrito (**texto**) para destaque. Não use blocos de código ```.
 """
 
 # ============================================================
@@ -216,11 +211,11 @@ Se algum dado estiver faltando no input original, não insira placeholder. Apena
 (REGRA DE OURO: Adicione UMA LINHA EM BRANCO entre cada empresa.)
 
 - **Cargo** | Empresa | *Data Início - Fim*
-(SE O TEXTO VIER EM BULLETS NO JSON):
+(SE O TEXTO VIER EM BULLETS NO INPUT):
 - **{Título da Competência}**: {Texto da Experiência...}
 - **{Título da Competência}**: {Texto da Experiência...}
 
-(SE O TEXTO VIER COMO PARÁGRAFO ÚNICO NO JSON):
+(SE O TEXTO VIER COMO PARÁGRAFO ÚNICO NO INPUT):
 {Texto do parágrafo resumo sem bullet points iniciais...}
 
 (Insira linha em branco aqui)
@@ -236,12 +231,8 @@ Se algum dado estiver faltando no input original, não insira placeholder. Apena
 SE a instituição for 'não informado', 'N/A' ou vazia, NÃO escreva o pipe | nem o texto placeholder. Encerre a linha no nome do curso.
 - **Nome** | Instituição
 
-# --- MÓDULO 3: OUTPUT JSON ---
-Retorne APENAS o JSON válido com os dados REAIS preenchidos.
-
-{
-  "cv_otimizado_texto": "# RODRIGO VERRUCK...\\n**Email:** rodrigoverruck@..."
-}
+# --- MÓDULO 3: OUTPUT MARKDOWN ---
+OUTPUT OBRIGATÓRIO: Apenas o documento final renderizado em Markdown. Sem json, sem blocos de código.
 """
 
 # ============================================================
@@ -259,22 +250,25 @@ Gere 5 perguntas que um entrevistador sênior faria para derrubar um candidato d
 - Mix Obrigatório: 3 Técnicas (Hard Skills da vaga) + 2 Comportamentais (Culture Fit/Soft Skills).
 - CRÍTICO: No campo "expectativa_recrutador", explique a INTENÇÃO OCULTA da pergunta (o que eles realmente querem saber? Ex: "Querem testar se você assume culpa ou culpa terceiros").
 
-    {{ 
+OUTPUT JSON OBRIGATÓRIO:
+{{
+  "perguntas_entrevista": [
+    {{
       "erro": "Nome do Gap",
       "evidencia": "O que falta no CV",
-      "correcao_sugerida": "Ação com **ferramentas** e **termos** em negrito."
+      "correcao_sugerida": "Ação com **ferramentas** e **termos** em negrito.",
       "tipo": "Técnica ou Comportamental",
-      "expectativa_recrutador": "A intenção oculta por trás da pergunta...", 
-      "dica_resposta": "Use o método STAR (Situação, Tarefa, Ação, Resultado)..." 
+      "expectativa_recrutador": "A intenção oculta por trás da pergunta...",
+      "dica_resposta": "Use o método STAR (Situação, Tarefa, Ação, Resultado)..."
     }}
   ],
-  "projeto_pratico": {{ 
-    "titulo": "Nome Impactante do Projeto", 
-    "descricao": "Escopo resumido e realizável em 48h...", 
-    "como_apresentar": "Script de Pitch: 'Percebi que vocês usam X, então criei Y para demonstrar...'" 
+  "projeto_pratico": {{
+    "titulo": "Nome Impactante do Projeto",
+    "descricao": "Escopo resumido e realizável em 48h...",
+    "como_apresentar": "Script de Pitch: 'Percebi que vocês usam X, então criei Y para demonstrar...'"
   }},
-  "kit_hacker": {{ 
-    "boolean_string": "site:linkedin.com/in (palavras_chave) (Head OR Manager OR ...) -intitle:assistant ..." 
+  "kit_hacker": {{
+    "boolean_string": "site:linkedin.com/in (palavras_chave) (Head OR Manager OR ...) -intitle:assistant ..."
   }}
 }}
 """

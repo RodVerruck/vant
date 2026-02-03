@@ -41,6 +41,9 @@ def safe_txt(text):
     for old, new in replacements.items():
         text = text.replace(old, new)
     
+    # Corrige objetos colados sem vírgula: e.g. "}{"
+    text = re.sub(r'}\s*{', '},{', text)
+
     # Remove espaços duplos
     text = re.sub(r'\s{2,}', ' ', text)
     # Remove markdown residual se necessário
@@ -544,7 +547,6 @@ from backend.styles import CSS_V13, CSS_PDF
 # ==============================================================================
 # 1. PARSER ENGINE (Mantido para limpar seus dados brutos)
 # ==============================================================================
-
 def parse_raw_data_to_struct(raw_text):
     """
     CÉREBRO DO SISTEMA: Transforma texto bruto em dados estruturados.
@@ -588,12 +590,16 @@ def parse_raw_data_to_struct(raw_text):
 
         # LISTAS SIMPLES
         elif any(k in curr_sec for k in ["IDIOMA", "CERTIFICA"]):
-            l = [safe_txt(x) for x in buffer if safe_txt(x)]
-            if l:
+            entries = []
+            for raw_line in buffer:
+                entry = raw_line.strip()
+                if entry and entry not in ['.', '-', '•', '|']:
+                    entries.append(entry)
+            if entries:
                 parsed["sections"].append({
                     "title": curr_sec,
                     "type": "list_simple",
-                    "content": l
+                    "content": entries
                 })
 
         # JOBS / EXPERIÊNCIA

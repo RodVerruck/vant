@@ -1,0 +1,38 @@
+VAGA: Desenvolvedor Full Stack Sênior
+Empresa: TechFin Solutions
+Local: São Paulo/SP (Remoto/Híbrido)
+Salário: R$ 12.000 - R$ 15.000
+Tipo: CLT
+
+DESCRIÇÃO DA VAGA:
+Buscamos um Desenvolvedor Full Stack Sênior para juntar-se à nossa equipe de inovação. Você será responsável por desenvolver e manter nossas plataformas financeiras, trabalhando com tecnologias de ponta e arquitetura moderna.
+
+RESPONSABILIDADES:
+- Desenvolver e implementar features em aplicações web escaláveis
+- Criar e manter APIs RESTful e microsserviços
+- Otimizar performance e garantir alta disponibilidade
+- Mentoria e liderança técnica para times júnior
+- Participação em [
+    decisões de arquitetura e tecnologia
+- Implementação de testes automatizados e CI/CD
+
+REQUISITOS OBRIGATÓRIOS:
+- 5+ anos de experiência em desenvolvimento Full Stack
+- Experiência sólida com React e Node.js
+- Conhecimento em bancos de dados SQL e NoSQL
+- Experiência com metodologias ágeis
+- Inglês técnico para documentação e comunicação
+
+DIFERENCIAIS:
+- Experiência com sistemas financeiros/fintechs
+- Conhecimento em Docker e Kubernetes
+- Experiência com arquitetura de microsserviços
+- Certificações em cloud (AWS/GCP/Azure)
+- Experiência em liderança técnica
+
+BENEFÍCIOS:
+- Plano de saúde e odontológico
+- Vale alimentação e transporte
+- Auxílio home office
+- Budget para educação
+- Programa de participação nos lucros
