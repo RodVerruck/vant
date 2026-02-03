@@ -130,8 +130,12 @@ class CacheManager:
             max_entries: Mantém no máximo X entradas mais recentes
         """
         try:
+            # Validação para garantir que days seja um número
+            if not isinstance(days, (int, float)):
+                days = 60  # valor padrão
+                
             # 1. Remove entradas mais antigas que X dias
-            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            cutoff_date = datetime.utcnow() - timedelta(days=float(days))
             
             response = self.supabase.table("cached_analyses").delete().lt("last_used", cutoff_date).execute()
             

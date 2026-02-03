@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import concurrent.futures
+import time
 from google import genai
 from google.genai import types
 from groq import Groq
@@ -43,23 +44,22 @@ def _vant_error(message: str, agent_name=None, model_name=None):
 # ============================================================
 AGENT_MODEL_REGISTRY = {
     # ESCRITOR DE CV (Critical Path):
-    # O Gemini 3.0 Flash tem "Thinking" nativo. Ele não tem preguiça.
-    # Custo: ~$0.50/1M input (apenas um pouco mais que o 2.5 Flash, mas muito mais barato que Pro)
-    "cv_writer_semantic": "gemini-3.0-flash-preview", 
+    # Gemini 3.0 Flash Preview - thinking nativo para +30% performance
+    "cv_writer_semantic": "models/gemini-3-flash-preview", 
 
     # TAREFAS RÁPIDAS (Velocidade/Custo):
     # Migrado de 2.0 para 2.5 Flash (O 2.0 morre em março/26)
-    "diagnosis": "gemini-2.5-flash", 
-    "cv_formatter": "gemini-2.5-flash",
-    "tactical": "gemini-2.5-flash",
-    "library": "gemini-2.5-flash",
+    "diagnosis": "models/gemini-2.5-flash", 
+    "cv_formatter": "models/gemini-2.5-flash",
+    "tactical": "models/gemini-2.5-flash",
+    "library": "models/gemini-2.5-flash",
     
     # INTELIGENCE:
-    "competitor_analysis": "gemini-2.5-flash",
-    "interview_evaluator": "gemini-2.5-flash",
+    "competitor_analysis": "models/gemini-2.5-flash",
+    "interview_evaluator": "models/gemini-2.5-flash",
 }
 
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "models/gemini-2.5-flash"
 
 # ============================================================
 # IMPORT PROMPTS
@@ -185,18 +185,44 @@ Apenas JSON válido.
         # TENTATIVA 1: Parse normal
         try:
             return json.loads(cleaned_text)
-        except json.JSONDecodeError:
-            # TENTATIVA 2 (FALLBACK): O texto existe, mas o JSON quebrou.
-            logger.warning(f"⚠️ JSON quebrado em [{agent_name}]. Usando Fallback de Texto Bruto.")
-
-            return {
-                "texto_reescrito": response.text,
-                "cv_otimizado_texto": response.text,
-                "veredito": "Análise Realizada (Texto Bruto)",
-                "gaps_fatais": [],
-                "biblioteca_tecnica": [],
-                "perguntas_entrevista": []
-            }
+        except json.JSONDecodeError as e:
+            # TENTATIVA 2: Tentativa de reparo JSON
+            logger.warning(f"⚠️ JSON quebrado em [{agent_name}]. Tentando reparo automático...")
+            try:
+                # Tentar corrigir problemas comuns de JSON
+                repaired_text = cleaned_text
+                
+                # Corrigir aspas não escapadas em valores
+                repaired_text = re.sub(r'(?<!\\)"(?=[^,:}\s])', r'\\"', repaired_text)
+                
+                # Tentar parse novamente
+                return json.loads(repaired_text)
+            except:
+                # TENTATIVA 3 (FALLBACK): O texto existe, mas o JSON quebrou.
+                logger.warning(f"⚠️ JSON irrecuperável em [{agent_name}]. Usando Fallback de Texto Bruto.")
+                
+                # Para cv_formatter, tentar extrair o texto do markdown
+                if agent_name == "cv_formatter":
+                    # Remover marcadores markdown mas manter estrutura
+                    text_content = re.sub(r'```(?:json)?', '', response.text)
+                    text_content = re.sub(r'```', '', text_content)
+                    
+                    # Tentar encontrar cv_otimizado_texto no texto bruto
+                    if "cv_otimizado_texto" in text_content:
+                        # Extrair apenas o conteúdo do campo
+                        match = re.search(r'"cv_otimizado_texto"\s*:\s*"([^"]*(?:\\"[^"]*)*)"', text_content)
+                        if match:
+                            content = match.group(1).replace('\\"', '"').replace('\\n', '\n')
+                            return {"cv_otimizado_texto": content}
+                
+                return {
+                    "texto_reescrito": response.text,
+                    "cv_otimizado_texto": response.text,
+                    "veredito": "Análise Realizada (Texto Bruto)",
+                    "gaps_fatais": [],
+                    "biblioteca_tecnica": [],
+                    "perguntas_entrevista": []
+                }
 
     try:
         return _generate(model_name)
@@ -339,12 +365,18 @@ def run_llm_orchestrator(
         return cached_result
     
     logger.info(f"🔄 CACHE MISS: Processando com IA...")
+    logger.info("⚡ PARALELIZAÇÃO MÁXIMA: 4 threads independentes")
     
     # Cache miss - processa normalmente com IA
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    # PARALELIZAÇÃO MÁXIMA: 4 threads independentes
+    
+    start_time = time.time()
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        # Thread 1: Diagnosis (rápido, libera outros agentes)
         future_diag = executor.submit(agent_diagnosis, cv_text, job_description)
-
+        
+        # Thread 2: Competitor Analysis (100% independente, roda desde início)
         future_comp = (
             executor.submit(
                 agent_competitor_analysis,
@@ -355,22 +387,25 @@ def run_llm_orchestrator(
             if competitors_text
             else None
         )
-
+        
+        # Espera apenas o Diagnosis para liberar os dependentes
         diag_result = future_diag.result()
         gaps = diag_result.get("gaps_fatais", [])
 
+        # Thread 3: CV Pipeline (crítico, depende do Diagnosis)
         strategy_payload = {
             "cv_original": cv_text,
             "diagnostico": diag_result,
             "vaga": job_description,
         }
-
-        # Executa o pipeline de CV
-        cv_result = run_cv_pipeline(cv_text, strategy_payload)
-
+        future_cv = executor.submit(run_cv_pipeline, cv_text, strategy_payload)
+        
+        # Threads 4 e 5: Tactical e Library (paralelos, dependem só do Diagnosis)
         future_tactical = executor.submit(agent_tactical, job_description, gaps)
         future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
 
+        # Coleta resultados das threads que podem rodar em paralelo
+        cv_result = future_cv.result()
         tactical_result = future_tactical.result()
         library_result = future_library.result()
         
@@ -431,6 +466,8 @@ def run_llm_orchestrator(
             logger.info(f"💾 Resultado salvo no cache para usuário {user_id}")
     
     logger.info("🏁 Orquestração concluída")
+    total_time = time.time() - start_time
+    logger.info(f"⚡ TEMPO TOTAL: {total_time:.1f}s (PARALELIZAÇÃO MÁXIMA)")
     logger.info(f"[DEBUG] Final result keys: {list(result.keys())}")
     return result
 
