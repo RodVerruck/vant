@@ -316,8 +316,8 @@ def check_dependencies() -> dict[str, Any]:
     
     # 2. Verificar Google AI
     try:
-        import google.generativeai as genai
-        genai_client = genai.GenerativeModel('gemini-2.0-flash-exp')
+        from google import genai
+        genai_client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
         health_status["checks"]["google_ai"] = "ok"
     except Exception as e:
         health_status["checks"]["google_ai"] = f"error: {str(e)[:50]}"
