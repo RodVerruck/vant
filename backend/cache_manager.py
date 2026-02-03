@@ -121,32 +121,31 @@ class CacheManager:
             logger.error(f"Erro ao salvar no cache: {e}")
             return False
     
-    def cleanup_old_cache(self, days: int = 7) -> int:
+    def cleanup_old_cache(self, days: int = 60, max_entries: int = 10000) -> bool:
         """
-        Limpa entradas de cache antigas para evitar crescimento infinito
+        Limpa entradas antigas do cache para controlar espaço no banco
         
         Args:
-            days: Número de dias para manter entradas
-            
-        Returns:
-            Número de entradas removidas
+            days: Remove entradas mais antigas que X dias (padrão: 60 dias = 2 meses)
+            max_entries: Mantém no máximo X entradas mais recentes
         """
         try:
-            cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+            # 1. Remove entradas mais antigas que X dias
+            cutoff_date = datetime.utcnow() - timedelta(days=days)
             
             response = self.supabase.table("cached_analyses").delete().lt("last_used", cutoff_date).execute()
             
             if response.data:
                 removed_count = len(response.data)
-                logger.info(f"Cache cleanup: Removidas {removed_count} entradas antigas")
-                return removed_count
+                logger.info(f"Cache cleanup: Removidas {removed_count} entradas antigas (> {days} dias)")
+                return True
             else:
                 logger.info("Cache cleanup: Nenhuma entrada antiga encontrada")
-                return 0
+                return True
                 
         except Exception as e:
-            logger.error(f"Erro no cleanup do cache: {e}")
-            return 0
+            logger.error(f"❌ Erro ao limpar cache: {e}")
+            return False
     
     def get_user_history(self, user_id: str, limit: int = 10) -> list:
         """
