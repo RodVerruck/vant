@@ -39,6 +39,22 @@ class CacheManager:
             # Baseado nos gaps principais + área
             gaps = data.get("gaps_fatais", [])
             area = data.get("area", "")
+            
+            # Tratar gaps_fatais que pode ser dict ou list
+            if isinstance(gaps, dict):
+                # Se for dict, extrair títulos dos gaps
+                gap_list = []
+                for key, value in gaps.items():
+                    if isinstance(value, dict) and "titulo" in value:
+                        gap_list.append(value["titulo"])
+                    else:
+                        gap_list.append(str(key))
+                gaps = gap_list
+            elif isinstance(gaps, list):
+                gaps = gaps
+            else:
+                gaps = []
+            
             normalized = {
                 "type": "diagnosis",
                 "gaps": sorted([gap.lower().strip() for gap in gaps[:3]]),  # Top 3 gaps
@@ -49,6 +65,21 @@ class CacheManager:
             # Baseado na área + gaps principais
             area = data.get("area", "")
             gaps = data.get("gaps_fatais", [])
+            
+            # Tratar gaps_fatais que pode ser dict ou list
+            if isinstance(gaps, dict):
+                gap_list = []
+                for key, value in gaps.items():
+                    if isinstance(value, dict) and "titulo" in value:
+                        gap_list.append(value["titulo"])
+                    else:
+                        gap_list.append(str(key))
+                gaps = gap_list
+            elif isinstance(gaps, list):
+                gaps = gaps
+            else:
+                gaps = []
+            
             normalized = {
                 "type": "library", 
                 "area": area.lower().strip(),
@@ -59,6 +90,21 @@ class CacheManager:
             # Baseado no tipo de vaga + nível
             job_desc = data.get("job_description", "")
             gaps = data.get("gaps_fatais", [])
+            
+            # Tratar gaps_fatais que pode ser dict ou list
+            if isinstance(gaps, dict):
+                gap_list = []
+                for key, value in gaps.items():
+                    if isinstance(value, dict) and "titulo" in value:
+                        gap_list.append(value["titulo"])
+                    else:
+                        gap_list.append(str(key))
+                gaps = gap_list
+            elif isinstance(gaps, list):
+                gaps = gaps
+            else:
+                gaps = []
+            
             normalized = {
                 "type": "tactical",
                 "job_keywords": self._extract_keywords(job_desc.lower()),

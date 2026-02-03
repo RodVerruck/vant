@@ -110,9 +110,44 @@ def clean_json_string(text: str) -> str:
         return text.strip()
 
     text = text[start:end + 1]
+    
     # Remove caracteres de controle invisíveis que quebram json.loads
     text = re.sub(r"[\x00-\x1f\x7f-\x9f]", "", text)
-    return text.strip()
+    
+    # Corrige quebras de linha literais no JSON
+    text = text.replace("\\n", "\n")
+    text = text.replace("\\t", "\t")
+    
+    # Remove quebras de linha dentro de strings JSON (exceto se estiver entre aspas)
+    lines = text.split("\n")
+    cleaned_lines = []
+    in_string = False
+    current_line = ""
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        # Conta aspas para saber se estamos dentro de uma string
+        quote_count = line.count('"')
+        if quote_count % 2 == 1:
+            in_string = not in_string
+            
+        if in_string:
+            # Se estamos dentro de uma string, preserva a quebra de linha como \n
+            current_line += line + "\\n"
+        else:
+            # Se não estamos em string, junta a linha normalmente
+            current_line += line
+            cleaned_lines.append(current_line)
+            current_line = ""
+    
+    if current_line.strip():
+        cleaned_lines.append(current_line)
+    
+    final_text = " ".join(cleaned_lines)
+    return final_text.strip()
 
 # ============================================================
 # CORE LLM CALL (COM FALLBACK DE RESILIÊNCIA)
