@@ -501,7 +501,15 @@ def run_llm_orchestrator(
         else:
             logger.info("🔄 Processando Diagnosis com IA...")
             future_diag = executor.submit(agent_diagnosis, cv_text, job_description)
-            diag_result = future_diag.result()
+            try:
+                diag_result = future_diag.result(timeout=60)  # Timeout de 60s
+            except concurrent.futures.TimeoutError:
+                logger.error("❌ Timeout no agent_diagnosis")
+                diag_result = {"veredito": "Timeout", "gaps_fatais": []}
+            except Exception as e:
+                logger.error(f"❌ Erro no agent_diagnosis: {e}")
+                diag_result = {"veredito": "Erro", "gaps_fatais": []}
+            
             gaps = diag_result.get("gaps_fatais", [])
             # Salvar no cache parcial
             cache_data["gaps_fatais"] = gaps
@@ -534,7 +542,14 @@ def run_llm_orchestrator(
         else:
             logger.info("🔄 Processando Library com IA...")
             future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
-            library_result = future_library.result()
+            try:
+                library_result = future_library.result(timeout=60)  # Timeout de 60s
+            except concurrent.futures.TimeoutError:
+                logger.error("❌ Timeout no agent_library")
+                library_result = {"biblioteca_tecnica": []}
+            except Exception as e:
+                logger.error(f"❌ Erro no agent_library: {e}")
+                library_result = {"biblioteca_tecnica": []}
             # Salvar no cache parcial
             cache_manager.save_partial_cache_safe("library", cache_data, library_result)
         
@@ -545,12 +560,26 @@ def run_llm_orchestrator(
         else:
             logger.info("🔄 Processando Tactical com IA...")
             future_tactical = executor.submit(agent_tactical, job_description, gaps)
-            tactical_result = future_tactical.result()
+            try:
+                tactical_result = future_tactical.result(timeout=60)  # Timeout de 60s
+            except concurrent.futures.TimeoutError:
+                logger.error("❌ Timeout no agent_tactical")
+                tactical_result = {"perguntas_entrevista": [], "kit_hacker": {}}
+            except Exception as e:
+                logger.error(f"❌ Erro no agent_tactical: {e}")
+                tactical_result = {"perguntas_entrevista": [], "kit_hacker": {}}
             # Salvar no cache parcial
             cache_manager.save_partial_cache_safe("tactical", cache_data, tactical_result)
 
         # Coleta resultado do CV (sempre processa)
-        cv_result = future_cv.result()
+        try:
+            cv_result = future_cv.result(timeout=120)  # Timeout maior para CV pipeline
+        except concurrent.futures.TimeoutError:
+            logger.error("❌ Timeout no run_cv_pipeline")
+            cv_result = {"cv_otimizado_completo": "Timeout no processamento do CV"}
+        except Exception as e:
+            logger.error(f"❌ Erro no run_cv_pipeline: {e}")
+            cv_result = {"cv_otimizado_completo": "Erro no processamento do CV"}
         
         # DEBUG: Log dos resultados
         logger.info(f"[DEBUG] Tactical result keys: {list(tactical_result.keys()) if tactical_result else 'None'}")
@@ -591,7 +620,14 @@ def run_llm_orchestrator(
             result["kit_hacker"] = {}
 
         if future_comp:
-            comp_result = future_comp.result()
+            try:
+                comp_result = future_comp.result(timeout=60)  # Timeout de 60s
+            except concurrent.futures.TimeoutError:
+                logger.error("❌ Timeout no agent_competitor_analysis")
+                comp_result = {}
+            except Exception as e:
+                logger.error(f"❌ Erro no agent_competitor_analysis: {e}")
+                comp_result = {}
             logger.info(f"[DEBUG] Competitor result keys: {list(comp_result.keys()) if comp_result else 'None'}")
             result.update(comp_result)
         
