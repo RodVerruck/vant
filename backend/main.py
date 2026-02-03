@@ -25,6 +25,17 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from logic import analyze_cv_logic, analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato  # noqa: E402
+import uuid
+
+def validate_user_id(user_id: str) -> bool:
+    """Valida se user_id é um UUID válido."""
+    if not user_id:
+        return False
+    try:
+        uuid.UUID(user_id)
+        return True
+    except (ValueError, AttributeError):
+        return False
 
 try:
     from backend.mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
@@ -296,6 +307,12 @@ def analyze_free(
     Análise gratuita (primeira análise sem paywall).
     Retorna diagnóstico básico com problemas identificados e 2 sugestões.
     """
+    if user_id and not validate_user_id(user_id):
+        return JSONResponse(
+            status_code=400, 
+            content={"error": "user_id inválido. Deve ser um UUID válido."}
+        )
+    
     try:
         # Salva no cache para facilitar geração de mocks
         file_bytes = file.file.read()
@@ -387,6 +404,13 @@ def entitlements_status(payload: EntitlementsStatusRequest) -> JSONResponse:
             status_code=500,
             content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
         )
+    
+    if payload.user_id and not validate_user_id(payload.user_id):
+        return JSONResponse(
+            status_code=400, 
+            content={"error": "user_id inválido. Deve ser um UUID válido."}
+        )
+    
     try:
         return JSONResponse(content=_entitlements_status(payload.user_id))
     except Exception as e:
@@ -404,6 +428,13 @@ def entitlements_consume_one(payload: ConsumeOneCreditRequest) -> JSONResponse:
             status_code=500,
             content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
         )
+    
+    if payload.user_id and not validate_user_id(payload.user_id):
+        return JSONResponse(
+            status_code=400, 
+            content={"error": "user_id inválido. Deve ser um UUID válido."}
+        )
+    
     try:
         _consume_one_credit(payload.user_id)
         return JSONResponse(content=_entitlements_status(payload.user_id))
@@ -423,6 +454,13 @@ def analyze_premium_paid(
             status_code=500,
             content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
         )
+    
+    if user_id and not validate_user_id(user_id):
+        return JSONResponse(
+            status_code=400, 
+            content={"error": "user_id inválido. Deve ser um UUID válido."}
+        )
+    
     try:
         # Salva no cache para facilitar geração de mocks
         file_bytes = file.file.read()
@@ -580,6 +618,12 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
         return JSONResponse(
             status_code=500,
             content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
+        )
+    
+    if payload.user_id and not validate_user_id(payload.user_id):
+        return JSONResponse(
+            status_code=400, 
+            content={"error": "user_id inválido. Deve ser um UUID válido."}
         )
 
     try:
