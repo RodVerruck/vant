@@ -284,6 +284,18 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/api/test-sentry-error")
+def test_sentry_error() -> JSONResponse:
+    """Endpoint de teste para verificar integração com Sentry."""
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "test_sentry_error")
+    sentry_sdk.set_level("error")
+    
+    # Erro intencional para teste
+    raise RuntimeError("ERRO DE TESTE - Verificar integração Sentry")
+
+
 @app.get("/api/pricing")
 def get_pricing() -> JSONResponse:
     """Retorna informações de pricing para o frontend."""
