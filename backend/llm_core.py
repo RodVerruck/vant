@@ -403,6 +403,11 @@ def run_cv_pipeline(cv_text: str, strategy_payload: dict):
 # AGENTES AUXILIARES (COM PROTEÇÃO CONTRA NONE)
 # ============================================================
 def agent_diagnosis(cv, job):
+    # Sanitizar inputs
+    from logic import sanitize_input
+    cv = sanitize_input(cv)
+    job = sanitize_input(job)
+    
     res = call_llm(
         SYSTEM_AGENT_DIAGNOSIS,
         f"VAGA: {job}\nCV: {cv}",
@@ -451,6 +456,11 @@ def run_llm_orchestrator(
     user_id=None,
 ):
     logger.info(f"🚀 Iniciando VANT | Área: {area}")
+    
+    # Sanitizar inputs
+    from logic import sanitize_input
+    cv_text = sanitize_input(cv_text)
+    job_description = sanitize_input(job_description)
     
     # Inicializa o cache manager
     cache_manager = CacheManager()

@@ -19,6 +19,27 @@ except ImportError:
     from logging_config import setup_logger
 logger = setup_logger("VANT_LOGIC")
 
+import html
+
+def sanitize_input(text: str) -> str:
+    """Remove caracteres perigosos de inputs do usuário."""
+    if not text:
+        return ""
+    
+    # Remove HTML tags
+    text = html.escape(text)
+    
+    # Remove caracteres de controle (exceto \n, \r, \t)
+    text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
+    
+    # Limita tamanho (proteção contra DoS)
+    MAX_INPUT_SIZE = 50000  # ~50KB
+    if len(text) > MAX_INPUT_SIZE:
+        text = text[:MAX_INPUT_SIZE]
+        logger.warning(f"⚠️ Input truncado (>{MAX_INPUT_SIZE} chars)")
+    
+    return text
+
 # ==============================================================================
 # HELPER FUNCTIONS (ESSENCIAIS PARA O PARSER)
 # ==============================================================================
@@ -906,6 +927,10 @@ def _curate_books(area_detected):
 # ============================================================
 def analyze_cv_logic(cv_text, job_description, competitor_files=None, user_id=None):
     
+    # Sanitizar inputs
+    cv_text = sanitize_input(cv_text)
+    job_description = sanitize_input(job_description)
+    
     # [DEV MODE - INICIO] -----------------------------------------
     DEV_MODE = os.getenv("VANT_DEV_MODE", "0") == "1"  # Toggle para testes rápidos sem gastar tokens
 
@@ -995,6 +1020,10 @@ def analyze_preview_lite(cv_text, job_description):
     import string
     import re
     import json
+    
+    # Sanitizar inputs
+    cv_text = sanitize_input(cv_text)
+    job_description = sanitize_input(job_description)
      
     # Prompt específico para análise gratuita (2 gaps reais)
     prompt_preview = f"""
