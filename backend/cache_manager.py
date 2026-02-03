@@ -295,6 +295,32 @@ class CacheManager:
             
         return False
     
+    def save_partial_cache_safe(self, component_type: str, data: Dict[str, Any], result: Dict[str, Any]) -> bool:
+        """Salva no cache com proteção contra race condition usando UPSERT."""
+        try:
+            component_hash = self.generate_component_hash(component_type, data)
+            
+            cache_entry = {
+                "component_hash": component_hash,
+                "component_type": component_type,
+                "result_json": json.dumps(result, default=str),
+                "created_at": datetime.utcnow().isoformat(),
+                "hit_count": 1,
+                "last_used": datetime.utcnow().isoformat()
+            }
+            
+            # UPSERT: Se já existe, não sobrescreve. Se não existe, cria.
+            response = self.supabase.table("partial_cache").upsert(
+                cache_entry,
+                on_conflict="component_hash",  # Chave única
+                ignore_duplicates=True  # Ignora se já existe
+            ).execute()
+            
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao salvar cache parcial [{component_type}]: {e}")
+            return False
+    
     def generate_input_hash(self, cv_text: str, job_description: str, model_version: str = "gemini-2.0-flash") -> str:
         """
         Gera hash SHA256 dos dados de entrada para deduplicação

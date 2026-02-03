@@ -505,7 +505,7 @@ def run_llm_orchestrator(
             gaps = diag_result.get("gaps_fatais", [])
             # Salvar no cache parcial
             cache_data["gaps_fatais"] = gaps
-            cache_manager.save_partial_cache("diagnosis", cache_data, diag_result)
+            cache_manager.save_partial_cache_safe("diagnosis", cache_data, diag_result)
         
         # Thread 2: Competitor Analysis (100% independente, roda desde início)
         future_comp = (
@@ -536,7 +536,7 @@ def run_llm_orchestrator(
             future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
             library_result = future_library.result()
             # Salvar no cache parcial
-            cache_manager.save_partial_cache("library", cache_data, library_result)
+            cache_manager.save_partial_cache_safe("library", cache_data, library_result)
         
         # Thread 5: Tactical (cache parcial ou processamento)
         if tactical_cached:
@@ -547,7 +547,7 @@ def run_llm_orchestrator(
             future_tactical = executor.submit(agent_tactical, job_description, gaps)
             tactical_result = future_tactical.result()
             # Salvar no cache parcial
-            cache_manager.save_partial_cache("tactical", cache_data, tactical_result)
+            cache_manager.save_partial_cache_safe("tactical", cache_data, tactical_result)
 
         # Coleta resultado do CV (sempre processa)
         cv_result = future_cv.result()
