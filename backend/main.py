@@ -77,6 +77,24 @@ FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "htt
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
+# Validação de variáveis críticas
+REQUIRED_ENV_VARS = {
+    "SUPABASE_URL": SUPABASE_URL,
+    "SUPABASE_SERVICE_ROLE_KEY": SUPABASE_SERVICE_ROLE_KEY,
+    "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY"),
+    "STRIPE_SECRET_KEY": STRIPE_SECRET_KEY
+}
+
+missing_vars = [var for var, value in REQUIRED_ENV_VARS.items() if not value]
+
+if missing_vars:
+    print("\n" + "="*60)
+    print("❌ ERRO CRÍTICO: Variáveis de ambiente ausentes:")
+    for var in missing_vars:
+        print(f"   - {var}")
+    print("="*60 + "\n")
+    raise RuntimeError(f"Variáveis ausentes: {', '.join(missing_vars)}")
+
 supabase_admin = None
 if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
