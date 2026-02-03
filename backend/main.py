@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import os
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -288,9 +289,74 @@ def _save_to_cache(file_bytes: bytes, job_description: str) -> None:
         print(f"⚠️  Erro ao salvar cache: {e}")
 
 
+# Cache para health check (evita chamadas excessivas a serviços externos)
+health_cache = {"last_check": 0, "status": None}
+
+def check_dependencies() -> dict[str, Any]:
+    """Verifica status das dependências externas."""
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "checks": {}
+    }
+    
+    overall_healthy = True
+    
+    # 1. Verificar Supabase
+    try:
+        if supabase_admin:
+            supabase_admin.table("subscriptions").select("id").limit(1).execute()
+            health_status["checks"]["supabase"] = "ok"
+        else:
+            health_status["checks"]["supabase"] = "not_configured"
+            overall_healthy = False
+    except Exception as e:
+        health_status["checks"]["supabase"] = f"error: {str(e)[:50]}"
+        overall_healthy = False
+    
+    # 2. Verificar Google AI
+    try:
+        import google.generativeai as genai
+        genai_client = genai.GenerativeModel('gemini-2.0-flash-exp')
+        health_status["checks"]["google_ai"] = "ok"
+    except Exception as e:
+        health_status["checks"]["google_ai"] = f"error: {str(e)[:50]}"
+        overall_healthy = False
+    
+    # 3. Verificar Stripe
+    try:
+        if STRIPE_SECRET_KEY:
+            health_status["checks"]["stripe"] = "ok"
+        else:
+            health_status["checks"]["stripe"] = "not_configured"
+            overall_healthy = False
+    except Exception as e:
+        health_status["checks"]["stripe"] = f"error: {str(e)[:50]}"
+        overall_healthy = False
+    
+    # 4. Status geral
+    if not overall_healthy:
+        health_status["status"] = "degraded"
+    
+    return health_status
+
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> JSONResponse:
+    """Health check completo do sistema com cache de 60 segundos."""
+    # Só verifica dependências a cada 60 segundos ou na primeira vez
+    now = time.time()
+    if now - health_cache["last_check"] > 60 or health_cache["status"] is None:
+        # Roda verificações completas
+        health_cache["status"] = check_dependencies()
+        health_cache["last_check"] = now
+    
+    status = health_cache["status"]
+    
+    # Retorna status 503 se degraded, 200 se healthy
+    if status["status"] == "degraded":
+        return JSONResponse(status_code=503, content=status)
+    
+    return JSONResponse(content=status)
 
 
 @app.get("/api/test-sentry-error")
