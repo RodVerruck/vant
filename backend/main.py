@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
 import sys
 import time
+import asyncio
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,9 @@ from dotenv import load_dotenv
 # Carrega variáveis de ambiente do arquivo .env na raiz do projeto
 PROJECT_ROOT = Path(__file__).parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
+
+# Configuração do logger
+logger = logging.getLogger(__name__)
 
 import stripe
 from fastapi import FastAPI, File, Form, UploadFile, Request
@@ -48,6 +53,18 @@ except ImportError:
     from mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
 
 app = FastAPI(title="Vant API", version="0.1.0")
+
+@app.middleware("http")
+async def timeout_middleware(request: Request, call_next):
+    """Timeout global de 180 segundos para todas as requests."""
+    try:
+        return await asyncio.wait_for(call_next(request), timeout=180.0)
+    except asyncio.TimeoutError:
+        logger.error(f"⏱️ Timeout na rota: {request.url.path}")
+        return JSONResponse(
+            status_code=504,
+            content={"error": "Request timeout. Tente novamente em alguns instantes."}
+        )
 
 # Configuração de Rate Limiting
 limiter = Limiter(key_func=get_remote_address)
