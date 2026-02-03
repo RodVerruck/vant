@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { HistoryItem, ReportData } from "@/types";
 
 interface HistoryStageProps {
@@ -13,6 +13,7 @@ export function HistoryStage({ authUserId, onSelectHistory, onBack }: HistorySta
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
         if (!authUserId) {
@@ -22,9 +23,24 @@ export function HistoryStage({ authUserId, onSelectHistory, onBack }: HistorySta
         }
 
         loadHistory();
+
+        // Cleanup ao desmontar componente
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, [authUserId]);
 
     const loadHistory = async () => {
+        // Cancelar requisição anterior se existir
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Criar novo AbortController
+        abortControllerRef.current = new AbortController();
+
         try {
             setLoading(true);
             setError(null);
@@ -34,7 +50,14 @@ export function HistoryStage({ authUserId, onSelectHistory, onBack }: HistorySta
                 (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
             const apiUrl = isLocalhost ? "http://127.0.0.1:8000" : "https://vant-vlgn.onrender.com";
 
-            const response = await fetch(`${apiUrl}/api/user/history?user_id=${authUserId}`);
+            const response = await fetch(`${apiUrl}/api/user/history?user_id=${authUserId}`, {
+                signal: abortControllerRef.current.signal
+            });
+
+            // Verificar se foi abortado
+            if (abortControllerRef.current.signal.aborted) {
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error(`Erro ${response.status}: ${response.statusText}`);
@@ -42,7 +65,13 @@ export function HistoryStage({ authUserId, onSelectHistory, onBack }: HistorySta
 
             const data = await response.json();
             setHistory(data.history || []);
-        } catch (err) {
+        } catch (err: any) {
+            // Ignorar erro se foi abortado
+            if (err.name === 'AbortError') {
+                console.log('Requisição cancelada ao navegar entre abas');
+                return;
+            }
+
             console.error("Erro ao carregar histórico:", err);
             setError(err instanceof Error ? err.message : "Erro ao carregar histórico");
         } finally {

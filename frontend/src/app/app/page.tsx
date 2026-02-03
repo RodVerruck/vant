@@ -179,6 +179,9 @@ function calculateDynamicCvCount(): number {
 }
 
 export default function AppPage() {
+    // AbortController para cancelar requisições ao navegar
+    const abortControllerRef = useRef<AbortController | null>(null);
+
     // Estados principais
     const [stage, setStage] = useState<AppStage>("hero");
     const [selectedPlan, setSelectedPlan] = useState<PlanType>("basico");
@@ -198,6 +201,15 @@ export default function AppPage() {
     const [isAuthenticating, setIsAuthenticating] = useState(false);  // ← NOVO
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [timeRemaining, setTimeRemaining] = useState({ hours: 23, minutes: 45, seconds: 12 });
+
+    // Cleanup ao desmontar componente
+    useEffect(() => {
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, []);
 
     // Contador dinâmico de vagas baseado em tempo
     const remainingSpots = useMemo(() => {
@@ -296,6 +308,12 @@ export default function AppPage() {
     }, []);
 
     function getErrorMessage(e: unknown, fallback: string): string {
+        // Ignorar AbortError (cancelamento intencional)
+        if (e instanceof Error && e.name === 'AbortError') {
+            console.log('Requisição cancelada pelo usuário');
+            return '';
+        }
+
         if (e instanceof Error && e.message) {
             return String(e.message);
         }
@@ -1072,6 +1090,12 @@ export default function AppPage() {
                 await updateStatus("🔒 PAGAMENTO VERIFICADO. INICIANDO IA GENERATIVA...", 10);
                 await updateStatus("REESCREVENDO SEU CV (AGENT)...", 35);
 
+                // Cancelar requisições anteriores
+                if (abortControllerRef.current) {
+                    abortControllerRef.current.abort();
+                }
+                abortControllerRef.current = new AbortController();
+
                 const form = new FormData();
                 form.append("user_id", authUserId);
                 form.append("job_description", jobDescription);
@@ -1085,6 +1109,7 @@ export default function AppPage() {
                 const resp = await fetch(`${getApiUrl()}/api/analyze-premium-paid`, {
                     method: "POST",
                     body: form,
+                    signal: abortControllerRef.current.signal
                 });
                 const payload = (await resp.json()) as JsonObject;
                 if (!resp.ok) {
@@ -1109,6 +1134,11 @@ export default function AppPage() {
                 }
                 setStage("paid");
             } catch (e: unknown) {
+                // Ignorar AbortError (navegação entre abas)
+                if (e instanceof Error && e.name === 'AbortError') {
+                    console.log('Processamento premium cancelado ao navegar');
+                    return;
+                }
                 setPremiumError(getErrorMessage(e, "Erro na geração premium"));
                 setStage("paid");
             }
@@ -1156,9 +1186,17 @@ export default function AppPage() {
         try {
             // 3. Disparar a requisição em BACKGROUND (sem await imediato)
             // A API trabalha enquanto rodamos o roteiro visual
+
+            // Cancelar requisições anteriores
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+            abortControllerRef.current = new AbortController();
+
             const apiRequestPromise = fetch(`${getApiUrl()}/api/analyze-lite`, {
                 method: "POST",
                 body: form,
+                signal: abortControllerRef.current.signal
             });
 
             // 4. Roteiro da Ansiedade (Total ~8000ms)
@@ -1208,6 +1246,12 @@ export default function AppPage() {
             setStage("preview");
 
         } catch (e: unknown) {
+            // Ignorar AbortError (navegação entre abas)
+            if (e instanceof Error && e.name === 'AbortError') {
+                console.log('Processamento lite cancelado ao navegar');
+                return;
+            }
+
             const message = getErrorMessage(e, "Erro no Scanner Lite");
             setApiError(message);
             setStage("hero");
