@@ -5,7 +5,7 @@ Reduz custos de processamento em 60-80% mantendo UX fluida
 
 import hashlib
 import json
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 import os
 from supabase import create_client
@@ -19,6 +19,148 @@ class CacheManager:
         self.supabase_url = os.getenv("SUPABASE_URL")
         self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # Corrigido nome da variável
         self.supabase = create_client(self.supabase_url, self.supabase_key)
+        
+    # ============================================================
+    # CACHE PARCIAL INTELIGENTE (Fase 2)
+    # ============================================================
+    
+    def generate_component_hash(self, component_type: str, data: Dict[str, Any]) -> str:
+        """
+        Gera hash específico para cada componente do cache parcial
+        
+        Args:
+            component_type: 'diagnosis', 'library', 'tactical'
+            data: Dados relevantes para o componente
+            
+        Returns:
+            Hash SHA256 específico do componente
+        """
+        if component_type == "diagnosis":
+            # Baseado nos gaps principais + área
+            gaps = data.get("gaps_fatais", [])
+            area = data.get("area", "")
+            normalized = {
+                "type": "diagnosis",
+                "gaps": sorted([gap.lower().strip() for gap in gaps[:3]]),  # Top 3 gaps
+                "area": area.lower().strip()
+            }
+            
+        elif component_type == "library":
+            # Baseado na área + gaps principais
+            area = data.get("area", "")
+            gaps = data.get("gaps_fatais", [])
+            normalized = {
+                "type": "library", 
+                "area": area.lower().strip(),
+                "gaps": sorted([gap.lower().strip() for gap in gaps[:2]])  # Top 2 gaps
+            }
+            
+        elif component_type == "tactical":
+            # Baseado no tipo de vaga + nível
+            job_desc = data.get("job_description", "")
+            gaps = data.get("gaps_fatais", [])
+            normalized = {
+                "type": "tactical",
+                "job_keywords": self._extract_keywords(job_desc.lower()),
+                "gaps": sorted([gap.lower().strip() for gap in gaps[:2]])
+            }
+            
+        else:
+            # Fallback para hash genérico
+            normalized = {"type": component_type, "data": str(data)}
+        
+        input_string = json.dumps(normalized, sort_keys=True, separators=(',', ':'))
+        return hashlib.sha256(input_string.encode()).hexdigest()
+    
+    def _extract_keywords(self, text: str) -> List[str]:
+        """Extrai palavras-chave relevantes do texto da vaga"""
+        # Palavras-chave comuns em vagas
+        tech_keywords = ["senior", "junior", "pleno", "lead", "manager", "director", 
+                        "python", "java", "javascript", "react", "node", "aws", "cloud",
+                        "data", "analytics", "mobile", "web", "backend", "frontend"]
+        
+        words = text.split()
+        return [word for word in words if word in tech_keywords][:5]
+    
+    def check_partial_cache(self, component_type: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Verifica cache parcial para um componente específico
+        
+        Args:
+            component_type: Tipo do componente
+            data: Dados para gerar hash
+            
+        Returns:
+            Resultado em cache ou None
+        """
+        try:
+            component_hash = self.generate_component_hash(component_type, data)
+            
+            response = self.supabase.table("partial_cache").select("*").eq("component_hash", component_hash).execute()
+            
+            if response.data and len(response.data) > 0:
+                cache_entry = response.data[0]
+                
+                # Verificar TTL (7 dias)
+                created_at = datetime.fromisoformat(cache_entry["created_at"].replace('Z', '+00:00'))
+                if datetime.utcnow() - created_at < timedelta(days=7):
+                    logger.info(f"⚡ PARTIAL CACHE HIT: {component_type}")
+                    # Atualizar hit count
+                    self._update_hit_count(cache_entry["id"])
+                    return json.loads(cache_entry["result_json"])
+                else:
+                    # Remover entrada expirada
+                    self.supabase.table("partial_cache").delete().eq("id", cache_entry["id"]).execute()
+                    
+        except Exception as e:
+            logger.error(f"❌ Erro ao verificar cache parcial [{component_type}]: {e}")
+            
+        return None
+    
+    def save_partial_cache(self, component_type: str, data: Dict[str, Any], result: Dict[str, Any]) -> bool:
+        """
+        Salva resultado no cache parcial
+        
+        Args:
+            component_type: Tipo do componente
+            data: Dados usados para gerar hash
+            result: Resultado processado
+            
+        Returns:
+            True se salvo com sucesso
+        """
+        try:
+            component_hash = self.generate_component_hash(component_type, data)
+            
+            cache_entry = {
+                "component_hash": component_hash,
+                "component_type": component_type,
+                "result_json": json.dumps(result),
+                "created_at": datetime.utcnow().isoformat(),
+                "hit_count": 1,
+                "last_used": datetime.utcnow().isoformat()
+            }
+            
+            response = self.supabase.table("partial_cache").insert(cache_entry).execute()
+            
+            if response.data:
+                logger.info(f"💾 PARTIAL CACHE SAVED: {component_type}")
+                return True
+                
+        except Exception as e:
+            logger.error(f"❌ Erro ao salvar cache parcial [{component_type}]: {e}")
+            
+        return False
+    
+    def _update_hit_count(self, cache_id: int):
+        """Atualiza contador de hits do cache"""
+        try:
+            self.supabase.table("partial_cache").update({
+                "hit_count": "hit_count + 1",
+                "last_used": datetime.utcnow().isoformat()
+            }).eq("id", cache_id).execute()
+        except Exception as e:
+            logger.error(f"❌ Erro ao atualizar hit count: {e}")
         
     def generate_input_hash(self, cv_text: str, job_description: str, model_version: str = "gemini-2.0-flash") -> str:
         """

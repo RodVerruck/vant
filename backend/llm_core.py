@@ -365,16 +365,46 @@ def run_llm_orchestrator(
         return cached_result
     
     logger.info(f"🔄 CACHE MISS: Processando com IA...")
-    logger.info("⚡ PARALELIZAÇÃO MÁXIMA: 4 threads independentes")
+    logger.info("⚡ PARALELIZAÇÃO MÁXIMA + CACHE PARCIAL INTELIGENTE")
     
-    # Cache miss - processa normalmente com IA
-    # PARALELIZAÇÃO MÁXIMA: 4 threads independentes
-    
+    # Cache miss - processa com cache parcial inteligente
     start_time = time.time()
     
+    # Verificar cache parcial ANTES de processar
+    logger.info("🔍 Verificando cache parcial inteligente...")
+    
+    # Dados para cache parcial
+    cache_data = {
+        "area": area,
+        "job_description": job_description,
+        "gaps_fatais": []  # Será preenchido após diagnosis
+    }
+    
+    # Verificar cache parcial para Diagnosis
+    diag_cached = cache_manager.check_partial_cache("diagnosis", cache_data)
+    
+    # Verificar cache parcial para Library (baseado na área)
+    library_cached = cache_manager.check_partial_cache("library", cache_data)
+    
+    # Verificar cache parcial para Tactical (baseado na vaga)
+    tactical_cached = cache_manager.check_partial_cache("tactical", cache_data)
+    
+    logger.info(f"📊 Cache Status: Diagnosis={bool(diag_cached)}, Library={bool(library_cached)}, Tactical={bool(tactical_cached)}")
+    
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        # Thread 1: Diagnosis (rápido, libera outros agentes)
-        future_diag = executor.submit(agent_diagnosis, cv_text, job_description)
+        # Thread 1: Diagnosis (só se não tiver cache)
+        if diag_cached:
+            logger.info("⚡ Usando Diagnosis do cache parcial")
+            diag_result = diag_cached
+            gaps = diag_result.get("gaps_fatais", [])
+        else:
+            logger.info("🔄 Processando Diagnosis com IA...")
+            future_diag = executor.submit(agent_diagnosis, cv_text, job_description)
+            diag_result = future_diag.result()
+            gaps = diag_result.get("gaps_fatais", [])
+            # Salvar no cache parcial
+            cache_data["gaps_fatais"] = gaps
+            cache_manager.save_partial_cache("diagnosis", cache_data, diag_result)
         
         # Thread 2: Competitor Analysis (100% independente, roda desde início)
         future_comp = (
@@ -388,10 +418,6 @@ def run_llm_orchestrator(
             else None
         )
         
-        # Espera apenas o Diagnosis para liberar os dependentes
-        diag_result = future_diag.result()
-        gaps = diag_result.get("gaps_fatais", [])
-
         # Thread 3: CV Pipeline (crítico, depende do Diagnosis)
         strategy_payload = {
             "cv_original": cv_text,
@@ -400,14 +426,30 @@ def run_llm_orchestrator(
         }
         future_cv = executor.submit(run_cv_pipeline, cv_text, strategy_payload)
         
-        # Threads 4 e 5: Tactical e Library (paralelos, dependem só do Diagnosis)
-        future_tactical = executor.submit(agent_tactical, job_description, gaps)
-        future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
+        # Thread 4: Library (cache parcial ou processamento)
+        if library_cached:
+            logger.info("⚡ Usando Library do cache parcial")
+            library_result = library_cached
+        else:
+            logger.info("🔄 Processando Library com IA...")
+            future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
+            library_result = future_library.result()
+            # Salvar no cache parcial
+            cache_manager.save_partial_cache("library", cache_data, library_result)
+        
+        # Thread 5: Tactical (cache parcial ou processamento)
+        if tactical_cached:
+            logger.info("⚡ Usando Tactical do cache parcial")
+            tactical_result = tactical_cached
+        else:
+            logger.info("🔄 Processando Tactical com IA...")
+            future_tactical = executor.submit(agent_tactical, job_description, gaps)
+            tactical_result = future_tactical.result()
+            # Salvar no cache parcial
+            cache_manager.save_partial_cache("tactical", cache_data, tactical_result)
 
-        # Coleta resultados das threads que podem rodar em paralelo
+        # Coleta resultado do CV (sempre processa)
         cv_result = future_cv.result()
-        tactical_result = future_tactical.result()
-        library_result = future_library.result()
         
         # DEBUG: Log dos resultados
         logger.info(f"[DEBUG] Tactical result keys: {list(tactical_result.keys()) if tactical_result else 'None'}")
@@ -467,7 +509,13 @@ def run_llm_orchestrator(
     
     logger.info("🏁 Orquestração concluída")
     total_time = time.time() - start_time
-    logger.info(f"⚡ TEMPO TOTAL: {total_time:.1f}s (PARALELIZAÇÃO MÁXIMA)")
+    
+    # Calcular estatísticas de cache
+    cache_hits = sum([bool(diag_cached), bool(library_cached), bool(tactical_cached)])
+    cache_total = 3
+    cache_efficiency = (cache_hits / cache_total) * 100
+    
+    logger.info(f"⚡ TEMPO TOTAL: {total_time:.1f}s (CACHE PARCIAL: {cache_hits}/{cache_total} = {cache_efficiency:.0f}% HIT)")
     logger.info(f"[DEBUG] Final result keys: {list(result.keys())}")
     return result
 
