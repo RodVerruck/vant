@@ -328,26 +328,24 @@ BACKUP_CATALOG = {
     ]
 }
 
-_BOOKS_CATALOG_CACHE = None
+from functools import lru_cache
+import json
 
+@lru_cache(maxsize=1)
 def load_books_catalog():
-    global _BOOKS_CATALOG_CACHE
-
-    if _BOOKS_CATALOG_CACHE is not None:
-        return _BOOKS_CATALOG_CACHE
-
+    """Carrega catálogo de livros (cached)."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
     catalog_path = os.path.join(base_dir, "data", "books_catalog.json")
-
+    
     try:
         if os.path.exists(catalog_path):
             with open(catalog_path, encoding="utf-8") as f:
-                _BOOKS_CATALOG_CACHE = json.load(f)
-                return _BOOKS_CATALOG_CACHE
+                return json.load(f)
         else:
+            logger.warning(" Catálogo de livros não encontrado")
             return {}
     except Exception as e:
-        logger.error(f"Erro ao carregar catálogo JSON: {e}")
+        logger.error(f" Erro ao carregar catálogo: {e}")
         return {}
 
 # ============================================================
