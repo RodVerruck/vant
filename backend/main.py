@@ -1095,3 +1095,30 @@ def get_user_history(user_id: str) -> JSONResponse:
         
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+@app.get("/api/admin/cache-stats")
+def get_cache_stats() -> JSONResponse:
+    """
+    Endpoint de admin para monitorar estatísticas do cache.
+    Retorna dados sobre áreas populares para análise de pre-warming.
+    """
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "admin_cache_stats")
+    
+    try:
+        from backend.cache_manager import CacheManager
+        
+        cache_manager = CacheManager()
+        stats = cache_manager.get_cache_stats()
+        
+        return JSONResponse(content=stats)
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro ao buscar estatísticas do cache: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )

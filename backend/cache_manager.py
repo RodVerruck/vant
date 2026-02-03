@@ -473,3 +473,60 @@ class CacheManager:
         except Exception as e:
             logger.error(f"Erro ao buscar histórico: {e}")
             return []
+    
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """
+        Retorna estatísticas de uso do cache para identificar áreas populares.
+        
+        Returns:
+            Dict com total de entradas e top 5 áreas mais buscadas
+        """
+        try:
+            # Busca todas as análises - vamos filtrar no Python para evitar erros de sintaxe
+            response = self.supabase.table("cached_analyses").select("result_json").execute()
+            
+            if not response.data:
+                return {
+                    "total_entries": 0,
+                    "top_areas": [],
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            
+            # Processa resultados para contar áreas
+            areas = {}
+            valid_entries = 0
+            
+            for item in response.data:
+                result_json = item.get("result_json", {})
+                
+                # Handle caso seja string JSON
+                if isinstance(result_json, str):
+                    try:
+                        result_json = json.loads(result_json)
+                    except json.JSONDecodeError:
+                        continue
+                
+                # Verifica se tem área válida
+                area = result_json.get("area", "")
+                if area and area != "unknown" and area.strip():
+                    areas[area] = areas.get(area, 0) + 1
+                    valid_entries += 1
+            
+            # Ordena por popularidade e pega top 5
+            top_areas_sorted = sorted(areas.items(), key=lambda x: x[1], reverse=True)[:5]
+            top_areas = [{"area": k, "count": v} for k, v in top_areas_sorted]
+            
+            return {
+                "total_entries": valid_entries,
+                "top_areas": top_areas,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao buscar estatísticas do cache: {e}")
+            return {
+                "total_entries": 0,
+                "top_areas": [],
+                "timestamp": datetime.utcnow().isoformat(),
+                "error": str(e)
+            }
