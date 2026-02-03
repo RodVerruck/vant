@@ -13,11 +13,15 @@ PROJECT_ROOT = Path(__file__).parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
 import stripe
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from supabase import create_client
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Adiciona PROJECT_ROOT ao path antes dos imports relativos
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -43,6 +47,11 @@ except ImportError:
     from mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
 
 app = FastAPI(title="Vant API", version="0.1.0")
+
+# Configuração de Rate Limiting
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Inicializa monitoring de produção
 from backend.monitoring import init_monitoring
@@ -312,7 +321,8 @@ def get_pricing() -> JSONResponse:
 
 
 @app.post("/api/analyze-lite")
-def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...)) -> JSONResponse:
+@limiter.limit("5/minute")  # 5 requests por minuto
+def analyze_lite(request: Request, file: UploadFile = File(...), job_description: str = Form(...)) -> JSONResponse:
     try:
         import sentry_sdk
         sentry_sdk.set_tag("endpoint", "analyze_lite")
@@ -337,7 +347,9 @@ def analyze_lite(file: UploadFile = File(...), job_description: str = Form(...))
 
 
 @app.post("/api/analyze-free")
+@limiter.limit("5/minute")  # 5 requests por minuto
 def analyze_free(
+    request: Request,
     file: UploadFile = File(...), 
     job_description: str = Form(...),
     user_id: str = Form(None)
@@ -489,7 +501,9 @@ def entitlements_consume_one(payload: ConsumeOneCreditRequest) -> JSONResponse:
 
 
 @app.post("/api/analyze-premium-paid")
+@limiter.limit("10/minute")  # 10 requests por minuto para pagos
 def analyze_premium_paid(
+    request: Request,
     user_id: str = Form(...),
     file: UploadFile = File(...),
     job_description: str = Form(...),
