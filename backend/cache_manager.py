@@ -295,29 +295,6 @@ class CacheManager:
             
         return False
     
-    def _update_hit_count(self, cache_id: int):
-        """Atualiza contador de hits do cache"""
-        try:
-            # Usar SQL raw para incrementar hit_count
-            self.supabase.table("partial_cache").update({
-                "hit_count": "hit_count + 1",
-                "last_used": datetime.utcnow().isoformat()
-            }).eq("id", cache_id).execute()
-        except Exception as e:
-            logger.error(f"❌ Erro ao atualizar hit count: {e}")
-            # Fallback: buscar valor atual e atualizar manualmente
-            try:
-                response = self.supabase.table("partial_cache").select("hit_count").eq("id", cache_id).execute()
-                if response.data:
-                    current_hits = response.data[0]["hit_count"]
-                    new_hits = int(current_hits) + 1
-                    self.supabase.table("partial_cache").update({
-                        "hit_count": new_hits,
-                        "last_used": datetime.utcnow().isoformat()
-                    }).eq("id", cache_id).execute()
-            except Exception as e2:
-                logger.error(f"❌ Erro no fallback do hit count: {e2}")
-        
     def generate_input_hash(self, cv_text: str, job_description: str, model_version: str = "gemini-2.0-flash") -> str:
         """
         Gera hash SHA256 dos dados de entrada para deduplicação
