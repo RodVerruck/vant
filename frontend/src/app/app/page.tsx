@@ -1101,6 +1101,12 @@ export default function AppPage() {
                     console.log("[syncEntitlements] Usuário tem créditos, movendo para stage 'paid'");
                     setStage("paid");
                 }
+
+                // Se usuário tem créditos e está no hero (tela inicial), mostrar mensagem
+                if (creditsRemaining > 0 && stage === "hero") {
+                    console.log("[syncEntitlements] Usuário com créditos detectado no hero");
+                    // O botão "Começar Agora" já vai chamar onStart() que vai usar os créditos
+                }
             } catch {
                 return;
             }
@@ -1891,6 +1897,23 @@ export default function AppPage() {
                                         </div>
                                     )}
                                 </div>
+                                {authUserId && creditsRemaining > 0 && (
+                                    <div style={{
+                                        background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
+                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                        borderRadius: 8,
+                                        padding: "12px",
+                                        marginBottom: 16,
+                                        textAlign: "center"
+                                    }}>
+                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
+                                            ✅ Você tem {creditsRemaining} crédito(s) disponível(is)!
+                                        </div>
+                                        <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
+                                            Clique abaixo para usar seu crédito e receber análise completa
+                                        </div>
+                                    </div>
+                                )}
                                 <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
                                     <button
                                         type="button"
@@ -1925,7 +1948,7 @@ export default function AppPage() {
                                             e.currentTarget.style.transform = "translateY(-2px)";
                                         }}
                                     >
-                                        VER MEU SCORE ATS GRÁTIS
+                                        {authUserId && creditsRemaining > 0 ? "🚀 USAR MEU CRÉDITO E OTIMIZAR CV" : "VER MEU SCORE ATS GRÁTIS"}
                                     </button>
                                 </div>
                             </div>
@@ -2707,27 +2730,73 @@ export default function AppPage() {
                                                         </div>
                                                     </div>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setSelectedPlan("trial");
-                                                            if (!authUserId) setShowAuthModal(true);
-                                                            else setStage("checkout");
-                                                        }}
-                                                        style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.transform = "translateY(-2px)";
-                                                            e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                            e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
-                                                        }}
-                                                        onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                                        onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                                                    >
-                                                        GARANTIR MINHA VAGA - R$ 1,99 🚀
-                                                    </button>
+                                                    {/* VERIFICA SE USUÁRIO JÁ TEM CRÉDITOS/PLANO */}
+                                                    {authUserId && creditsRemaining > 0 ? (
+                                                        <div style={{
+                                                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
+                                                            border: "2px solid #10B981",
+                                                            borderRadius: 12,
+                                                            padding: "20px",
+                                                            marginBottom: 20,
+                                                            textAlign: "center"
+                                                        }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 8 }}>
+                                                                ✅ Você tem {creditsRemaining} crédito(s) disponível(is)!
+                                                            </div>
+                                                            <div style={{ color: "#E2E8F0", fontSize: "0.9rem", marginBottom: 16 }}>
+                                                                Use seu crédito agora para receber a análise completa
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onStart()}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    background: "linear-gradient(135deg, #10B981, #059669)",
+                                                                    color: "#fff",
+                                                                    border: "none",
+                                                                    padding: "16px",
+                                                                    borderRadius: 8,
+                                                                    fontSize: "1rem",
+                                                                    fontWeight: 700,
+                                                                    cursor: "pointer",
+                                                                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+                                                                    transition: "all 0.2s"
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.transform = "translateY(-2px)";
+                                                                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(16, 185, 129, 0.4)";
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.transform = "translateY(0)";
+                                                                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.3)";
+                                                                }}
+                                                            >
+                                                                🚀 USAR MEU CRÉDITO E RECEBER ANÁLISE COMPLETA
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedPlan("trial");
+                                                                if (!authUserId) setShowAuthModal(true);
+                                                                else setStage("checkout");
+                                                            }}
+                                                            style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.transform = "translateY(-2px)";
+                                                                e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.transform = "translateY(0)";
+                                                                e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
+                                                            }}
+                                                            onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
+                                                            onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                                                        >
+                                                            GARANTIR MINHA VAGA - R$ 1,99 🚀
+                                                        </button>
+                                                    )}
 
                                                     <div style={{
                                                         background: "rgba(16, 185, 129, 0.1)",
