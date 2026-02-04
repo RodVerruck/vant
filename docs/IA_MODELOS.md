@@ -3,32 +3,32 @@
 ## Data de Referência
 3 de fevereiro de 2026
 
-## Configuração Atual (VOLTANDO PARA GEMINI)
+## Configuração Atual (GEMINI 2.5 FLASH-LITE)
 
 ### Todos os Agentes
-- **Modelo**: `models/gemini-2.5-flash` (Google)
+- **Modelo**: `models/gemini-2.5-flash-lite` (Google)
 - **API Key**: `GOOGLE_API_KEY`
-- **Status**: ✅ Funcional e estável
+- **Status**: ✅ Funcional e 50% mais barato
 
 ### Registry de Agentes (Atual)
 ```python
 AGENT_MODEL_REGISTRY = {
     # TAREFAS CRÍTICAS (Qualidade):
-    "cv_writer_semantic": "models/gemini-2.5-flash", 
+    "cv_writer_semantic": "models/gemini-2.5-flash-lite", 
 
     # TAREFAS RÁPIDAS (Velocidade/Custo):
-    # Voltando para Gemini 2.5 Flash (confiável e testado)
-    "diagnosis": "models/gemini-2.5-flash", 
-    "cv_formatter": "models/gemini-2.5-flash",
-    "tactical": "models/gemini-2.5-flash",
-    "library": "models/gemini-2.5-flash",
+    # Usando Gemini 2.5 Flash-Lite (50% mais barato que Flash normal)
+    "diagnosis": "models/gemini-2.5-flash-lite", 
+    "cv_formatter": "models/gemini-2.5-flash-lite",
+    "tactical": "models/gemini-2.5-flash-lite",
+    "library": "models/gemini-2.5-flash-lite",
     
     # INTELIGENCE:
-    "competitor_analysis": "models/gemini-2.5-flash",
-    "interview_evaluator": "models/gemini-2.5-flash",
+    "competitor_analysis": "models/gemini-2.5-flash-lite",
+    "interview_evaluator": "models/gemini-2.5-flash-lite",
 }
 
-DEFAULT_MODEL = "models/gemini-2.5-flash"
+DEFAULT_MODEL = "models/gemini-2.5-flash-lite"
 ```
 
 ### Lista de Agentes e Funções
@@ -59,8 +59,15 @@ DEFAULT_MODEL = "models/gemini-2.5-flash"
 ### Retorno ao Gemini (22:15)
 - **Modelo**: `models/gemini-2.5-flash`
 - **Motivo**: Rate limit do Groq
-- **Vantagem**: Mais estável e confiável para produção
+- **Vantagem**: Mais estável e confiável
 - **Custo**: Aceitável para volume de testes
+
+### Mudança para Flash-Lite (22:39)
+- **Modelo**: `models/gemini-2.5-flash-lite`
+- **Motivo**: Economia de custos (50% mais barato)
+- **Resultado**: ✅ Funcional e testado
+- **Economia**: 50% de desconto vs Flash normal
+- **Preços**: $0.0375/1M input, $0.15/1M output
 
 ---
 

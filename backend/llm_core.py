@@ -116,21 +116,21 @@ def _vant_error(message: str, agent_name=None, model_name=None):
 # ============================================================
 AGENT_MODEL_REGISTRY = {
     # TAREFAS CRÍTICAS (Qualidade):
-    "cv_writer_semantic": "models/gemini-2.5-flash", 
+    "cv_writer_semantic": "models/gemini-2.5-flash-lite", 
 
     # TAREFAS RÁPIDAS (Velocidade/Custo):
-    # Voltando para Gemini 2.5 Flash (confiável e testado)
-    "diagnosis": "models/gemini-2.5-flash", 
-    "cv_formatter": "models/gemini-2.5-flash",
-    "tactical": "models/gemini-2.5-flash",
-    "library": "models/gemini-2.5-flash",
+    # Usando Gemini 2.5 Flash-Lite (50% mais barato que Flash normal)
+    "diagnosis": "models/gemini-2.5-flash-lite", 
+    "cv_formatter": "models/gemini-2.5-flash-lite",
+    "tactical": "models/gemini-2.5-flash-lite",
+    "library": "models/gemini-2.5-flash-lite",
     
     # INTELIGENCE:
-    "competitor_analysis": "models/gemini-2.5-flash",
-    "interview_evaluator": "models/gemini-2.5-flash",
+    "competitor_analysis": "models/gemini-2.5-flash-lite",
+    "interview_evaluator": "models/gemini-2.5-flash-lite",
 }
 
-DEFAULT_MODEL = "models/gemini-2.5-flash"
+DEFAULT_MODEL = "models/gemini-2.5-flash-lite"
 
 # ============================================================
 # IMPORT PROMPTS
