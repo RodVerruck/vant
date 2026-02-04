@@ -287,6 +287,7 @@ export default function AppPage() {
     const [stage, setStage] = useState<AppStage>("hero");
     const [selectedPlan, setSelectedPlan] = useState<PlanType>("basico");
     const [jobDescription, setJobDescription] = useState("");
+    const [useGenericJob, setUseGenericJob] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [competitorFiles, setCompetitorFiles] = useState<File[]>([]);
 
@@ -1909,12 +1910,55 @@ export default function AppPage() {
                             <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
                                 <div style={{ flex: "1 1 380px" }}>
                                     <h5>1. VAGA ALVO 🎯</h5>
+
+                                    {/* Opção para usar vaga genérica */}
+                                    <div style={{ marginBottom: 12 }}>
+                                        <label style={{
+                                            display: "flex",
+                                            alignItems: "flex-start",
+                                            gap: 8,
+                                            cursor: "pointer",
+                                            fontSize: "0.9rem",
+                                            color: "#E2E8F0"
+                                        }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={useGenericJob}
+                                                onChange={(e) => {
+                                                    setUseGenericJob(e.target.checked);
+                                                    if (e.target.checked) {
+                                                        // Define descrição genérica quando marcado
+                                                        setJobDescription("Busco oportunidades profissionais que valorizem minhas habilidades e experiência. Estou aberto a posições desafiadoras que permitam meu crescimento e contribuição para os objetivos da empresa, com foco em resultados e inovação.");
+                                                    } else {
+                                                        // Limpa quando desmarcado
+                                                        setJobDescription("");
+                                                    }
+                                                }}
+                                                style={{ marginTop: 2 }}
+                                            />
+                                            <span>
+                                                <strong>Não tenho uma vaga específica</strong> -
+                                                Analisar meu CV contra o mercado geral
+                                            </span>
+                                        </label>
+                                    </div>
+
                                     <div className="stTextArea">
                                         <textarea
                                             value={jobDescription}
                                             onChange={(e) => setJobDescription(e.target.value)}
-                                            placeholder="Cole aqui a descrição da vaga (Título, Requisitos e Responsabilidades)..."
-                                            style={{ height: 185, width: "100%", boxSizing: "border-box" }}
+                                            placeholder={useGenericJob
+                                                ? "Descrição genérica carregada automaticamente..."
+                                                : "Cole aqui a descrição da vaga (Título, Requisitos e Responsabilidades)..."
+                                            }
+                                            disabled={useGenericJob}
+                                            style={{
+                                                height: 185,
+                                                width: "100%",
+                                                boxSizing: "border-box",
+                                                opacity: useGenericJob ? 0.6 : 1,
+                                                backgroundColor: useGenericJob ? "#1E293B" : "transparent"
+                                            }}
                                         />
                                     </div>
                                     <div style={{
@@ -1927,7 +1971,10 @@ export default function AppPage() {
                                     }}>
                                         <span>Caracteres: {jobDescription ? jobDescription.length : 0}/5000</span>
                                         <span style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
-                                            💡 Cole a descrição completa para melhores resultados
+                                            💡 {useGenericJob
+                                                ? "Usando descrição genérica para análise de mercado"
+                                                : "Cole a descrição completa para melhores resultados"
+                                            }
                                         </span>
                                     </div>
                                 </div>
