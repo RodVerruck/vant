@@ -1308,3 +1308,252 @@ def _process_analysis_background(
             update_session_progress(session_id, error_data, "failed")
         except Exception as update_error:
             logger.error(f"❌ Erro ao atualizar status para failed: {update_error}")
+
+
+@app.post("/api/interview/analyze")
+@limiter.limit("10/minute")
+async def analyze_interview_response(
+    request: Request,
+    audio_file: UploadFile = File(...),
+    question: str = Form(...),
+    job_context: str = Form(""),
+    user_id: str = Form(None)
+) -> JSONResponse:
+    """
+    Endpoint principal para análise de resposta de entrevista.
+    Transcreve o áudio e analisa a resposta usando IA.
+    """
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "interview_analyze")
+    
+    try:
+        # Validar arquivo de áudio
+        content_type = audio_file.content_type.lower() if audio_file.content_type else ""
+        filename = audio_file.filename.lower() if audio_file.filename else ""
+        
+        # Verificar se é áudio pelo content-type ou extensão
+        is_audio = (
+            content_type.startswith('audio/') or
+            filename.endswith('.wav') or
+            filename.endswith('.mp3') or
+            filename.endswith('.webm') or
+            filename.endswith('.ogg') or
+            filename.endswith('.m4a')
+        )
+        
+        if not is_audio:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Arquivo inválido. Envie um arquivo de áudio (WAV, MP3, WebM, OGG, M4A)."}
+            )
+        
+        # Ler bytes do áudio
+        audio_bytes = await audio_file.read()
+        
+        if len(audio_bytes) > 10 * 1024 * 1024:  # 10MB max
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Arquivo muito grande. Máximo 10MB."}
+            )
+        
+        # Transcrever áudio
+        from backend.llm_core import transcribe_audio_groq, analyze_interview_gemini
+        
+        transcription = transcribe_audio_groq(audio_bytes)
+        
+        if transcription.startswith("Erro"):
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Falha na transcrição do áudio"}
+            )
+        
+        # Analisar resposta
+        feedback = analyze_interview_gemini(question, transcription, job_context)
+        
+        # Salvar sessão se tiver user_id
+        if user_id and supabase_admin:
+            try:
+                session_data = {
+                    "user_id": user_id,
+                    "question": question,
+                    "transcription": transcription,
+                    "feedback": feedback,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                supabase_admin.table("interview_sessions").insert(session_data).execute()
+            except Exception as save_error:
+                logger.warning(f"⚠️ Erro ao salvar sessão: {save_error}")
+        
+        return JSONResponse(content=feedback)
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro na análise de entrevista: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )
+
+
+@app.get("/api/interview/questions/{cv_analysis_id}")
+def get_interview_questions(cv_analysis_id: str) -> JSONResponse:
+    """
+    Gera perguntas personalizadas baseadas na análise do CV.
+    """
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "interview_questions")
+    
+    try:
+        if not supabase_admin:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Database não configurada"}
+            )
+        
+        # Buscar análise do CV
+        result = supabase_admin.table("analysis_sessions")\
+            .select("result_data")\
+            .eq("id", cv_analysis_id)\
+            .single()\
+            .execute()
+        
+        if not result.data:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Análise não encontrada"}
+            )
+        
+        report_data = result.data["result_data"]
+        
+        # Gerar perguntas baseadas no CV e setor
+        questions = _generate_interview_questions(report_data)
+        
+        return JSONResponse(content={
+            "questions": questions,
+            "total_questions": len(questions),
+            "sector": report_data.get("setor_detectado", "Tecnologia")
+        })
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro ao gerar perguntas: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )
+
+
+def _generate_interview_questions(report_data: dict) -> list[dict]:
+    """
+    Gera perguntas personalizadas baseadas no CV do candidato.
+    """
+    sector = report_data.get("setor_detectado", "Tecnologia")
+    experience_level = _detect_experience_level(report_data)
+    
+    # Base de perguntas por setor e nível
+    question_bank = {
+        "Tecnologia": {
+            "junior": [
+                {
+                    "text": "Fale sobre um projeto desafiador que você desenvolveu e qual foi sua maior aprendizagem.",
+                    "type": "comportamental",
+                    "context": "Use o método STAR para estruturar sua resposta."
+                },
+                {
+                    "text": "Como você mantém suas habilidades técnicas atualizadas?",
+                    "type": "comportamental",
+                    "context": "Mencione cursos, projetos pessoais ou comunidades."
+                },
+                {
+                    "text": "O que é REST e quais são seus princípios fundamentais?",
+                    "type": "tecnica",
+                    "context": "Seja claro e direto na explicação técnica."
+                }
+            ],
+            "pleno": [
+                {
+                    "text": "Descreva uma situação em que você teve que lidar com um bug crítico em produção.",
+                    "type": "comportamental",
+                    "context": "Foque em resolução de problemas e comunicação."
+                },
+                {
+                    "text": "Como você equilibra qualidade de código e prazos apertados?",
+                    "type": "situacional",
+                    "context": "Mostre seu processo de tomada de decisão."
+                },
+                {
+                    "text": "Explique a diferença entre async/await e Promises em JavaScript.",
+                    "type": "tecnica",
+                    "context": "Use exemplos práticos para ilustrar."
+                }
+            ],
+            "senior": [
+                {
+                    "text": "Como você lidera a arquitetura de um novo projeto?",
+                    "type": "comportamental",
+                    "context": "Fale sobre trade-offs e decisões técnicas."
+                },
+                {
+                    "text": "Descreva uma situação em que você precisou convencer outras equipes sobre uma decisão técnica.",
+                    "type": "comportamental",
+                    "context": "Mostre habilidades de comunicação e influência."
+                },
+                {
+                    "text": "Como você avalia a performance e escalabilidade de uma aplicação?",
+                    "type": "tecnica",
+                    "context": "Mencione métricas e ferramentas que você utiliza."
+                }
+            ]
+        }
+    }
+    
+    # Selecionar perguntas apropriadas
+    sector_questions = question_bank.get(sector, question_bank["Tecnologia"])
+    level_questions = sector_questions.get(experience_level, sector_questions["pleno"])
+    
+    # Adicionar perguntas genéricas se necessário
+    generic_questions = [
+        {
+            "text": "Por que você está interessado nesta vaga e nesta empresa?",
+            "type": "comportamental",
+            "context": "Mostre que você pesquisou sobre a empresa."
+        },
+        {
+            "text": "Onde você se vê em 5 anos?",
+            "type": "comportamental",
+            "context": "Alinhe suas metas com a oportunidade."
+        }
+    ]
+    
+    # Combinar e retornar 5 perguntas
+    all_questions = level_questions[:3] + generic_questions[:2]
+    
+    return [
+        {
+            "id": i + 1,
+            **q,
+            "max_duration": 120  # 2 minutos por resposta
+        }
+        for i, q in enumerate(all_questions)
+    ]
+
+
+def _detect_experience_level(report_data: dict) -> str:
+    """
+    Detecta nível de experiência baseado no CV.
+    """
+    cv_text = report_data.get("cv_otimizado_completo", "").lower()
+    
+    # Keywords por nível
+    senior_keywords = ["sênior", "senior", "lead", "architect", "10+", "8+", "9+"]
+    pleno_keywords = ["pleno", "middle", "3+", "4+", "5+", "6+", "7+"]
+    junior_keywords = ["junior", "estágio", "trainee", "1+", "2+"]
+    
+    if any(keyword in cv_text for keyword in senior_keywords):
+        return "senior"
+    elif any(keyword in cv_text for keyword in pleno_keywords):
+        return "pleno"
+    else:
+        return "junior"

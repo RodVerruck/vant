@@ -4,6 +4,7 @@ import os
 import re
 import concurrent.futures
 import time
+from io import BytesIO
 from google import genai
 from google.genai import types
 from groq import Groq

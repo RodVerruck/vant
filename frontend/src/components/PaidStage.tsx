@@ -5,6 +5,7 @@ import type { ReportData } from "@/types";
 import { CopyableSection } from "./CopyableSection";
 import { GapCard } from "./GapCard";
 import { BookCard } from "./BookCard";
+import { InterviewSimulator } from "./InterviewSimulator";
 
 // Estilos CSS para animação de loading
 const loadingStyles = `
@@ -92,7 +93,7 @@ interface PaidStageProps {
 }
 
 export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateReport, onViewHistory }: PaidStageProps) {
-    const [activeTab, setActiveTab] = useState<"diagnostico" | "cv" | "biblioteca">("diagnostico");
+    const [activeTab, setActiveTab] = useState<"diagnostico" | "cv" | "biblioteca" | "simulador">("diagnostico");
     const [editedCvText, setEditedCvText] = useState("");
     const [isEditorOpen, setIsEditorOpen] = useState(false);
 
@@ -100,7 +101,8 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
     const [loadingTabs, setLoadingTabs] = useState<Record<string, boolean>>({
         diagnostico: false,
         cv: false,
-        biblioteca: false
+        biblioteca: false,
+        simulador: false
     });
 
     // Detectar quando as abas estão carregando baseado nos dados disponíveis
@@ -110,7 +112,8 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
         const newLoadingTabs = {
             diagnostico: !reportData.gaps_fatais || !reportData.linkedin_headline || !reportData.resumo_otimizado,
             cv: !reportData.cv_otimizado_completo,
-            biblioteca: !reportData.biblioteca_tecnica || (Array.isArray(reportData.biblioteca_tecnica) && reportData.biblioteca_tecnica.length === 0)
+            biblioteca: !reportData.biblioteca_tecnica || (Array.isArray(reportData.biblioteca_tecnica) && reportData.biblioteca_tecnica.length === 0),
+            simulador: false // Simulador sempre disponível quando há dados
         };
 
         setLoadingTabs(newLoadingTabs);
@@ -378,9 +381,16 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                         <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Diagnóstico"></div>
                         <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="CV Otimizado"></div>
                         <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Biblioteca"></div>
+                        <div style={{
+                            flex: 1,
+                            height: 6,
+                            background: "#374151",
+                            borderRadius: 3,
+                            transition: "background 0.3s ease"
+                        }} title="Simulador"></div>
                     </div>
                     <p style={{ color: "#64748B", fontSize: "0.75rem", marginTop: 10, marginBottom: 0 }}>
-                        Progresso: Diagnóstico ✅ | CV Otimizado ✅ | Biblioteca ✅
+                        Progresso: Diagnóstico ✅ | CV Otimizado ✅ | Biblioteca ✅ | Simulador ⏳
                     </p>
                 </div>
             </div>
@@ -392,7 +402,8 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     {[
                         { id: "diagnostico", label: "📊 DIAGNÓSTICO E AÇÃO" },
                         { id: "cv", label: "📄 CV OTIMIZADO" },
-                        { id: "biblioteca", label: "📚 BIBLIOTECA" }
+                        { id: "biblioteca", label: "📚 BIBLIOTECA" },
+                        { id: "simulador", label: "🎙️ SIMULADOR DE ENTREVISTA" }
                     ].map((tab) => (
                         <button
                             key={tab.id}
@@ -670,6 +681,26 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                     <BookCard key={idx} book={book} index={idx} />
                                 ))}
                             </>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === "simulador" && (
+                    <div style={{ maxWidth: 850, margin: "0 auto" }}>
+                        {loadingTabs.simulador ? (
+                            <LoadingPlaceholder
+                                title="🎙️ Preparando simulador de entrevista..."
+                                description="Estamos gerando perguntas personalizadas baseadas no seu CV e na vaga alvo. O simulador incluirá questões comportamentais, técnicas e situacionais relevantes para sua área."
+                            />
+                        ) : (
+                            <InterviewSimulator
+                                reportData={reportData}
+                                onProgress={(questionIndex, total) => {
+                                    if (questionIndex === total) {
+                                        setLoadingTabs(prev => ({ ...prev, simulador: false }));
+                                    }
+                                }}
+                            />
                         )}
                     </div>
                 )}

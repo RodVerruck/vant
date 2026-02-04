@@ -1,4 +1,4 @@
-export type AppStage = "hero" | "analyzing" | "preview" | "pricing" | "checkout" | "processing_premium" | "paid" | "history";
+export type AppStage = "hero" | "analyzing" | "preview" | "pricing" | "checkout" | "processing_premium" | "paid" | "history" | "simulador";
 export type PlanType = "free" | "pro_monthly" | "pro_annual" | "trial" | "credit_1" | "credit_3" | "credit_5" | "basico" | "premium_plus";
 export type BillingType = "one_time" | "subscription";
 
@@ -119,3 +119,21 @@ export interface HistoryItem {
     };
     full_result?: ReportData;
 }
+
+// Tipos para o Simulador de Entrevista
+export interface InterviewQuestion {
+    id: number;
+    text: string;
+    type: "comportamental" | "tecnica" | "situacional";
+    context: string;
+    max_duration: number;
+}
+
+export interface InterviewSession {
+    question: InterviewQuestion;
+    audioBlob: Blob;
+    feedback: FeedbackEntrevista;
+    timestamp: Date;
+}
+
+export type SimuladorStage = "welcome" | "question" | "recording" | "processing" | "feedback" | "results";
