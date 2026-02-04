@@ -3394,6 +3394,7 @@ export default function AppPage() {
             <AuthModal
                 isOpen={showAuthModal}
                 selectedPlan={selectedPlan}
+                supabase={supabase}
                 onSuccess={(userId, email) => {
                     setAuthUserId(userId);
                     setAuthEmail(email);
