@@ -19,7 +19,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 logger = logging.getLogger(__name__)
 
 import stripe
-from fastapi import FastAPI, File, Form, UploadFile, Request
+from fastapi import FastAPI, File, Form, UploadFile, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -403,6 +403,47 @@ def get_pricing() -> JSONResponse:
     return JSONResponse(content=pricing_info)
 
 
+@app.get("/api/analysis/status/{session_id}")
+def get_analysis_status(session_id: str) -> JSONResponse:
+    """Endpoint para polling do status da análise com progressive loading."""
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "get_analysis_status")
+    
+    if not supabase_admin:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
+        )
+    
+    try:
+        # Buscar sessão no Supabase
+        response = supabase_admin.table("analysis_sessions").select(
+            "status, current_step, result_data, created_at, updated_at"
+        ).eq("id", session_id).limit(1).execute()
+        
+        if not response.data:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Sessão não encontrada."}
+            )
+        
+        session = response.data[0]
+        
+        return JSONResponse(content={
+            "session_id": session_id,
+            "status": session["status"],
+            "current_step": session["current_step"],
+            "result_data": session["result_data"],
+            "created_at": session["created_at"],
+            "updated_at": session["updated_at"]
+        })
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
 @app.post("/api/analyze-lite")
 @limiter.limit("5/minute")  # 5 requests por minuto
 def analyze_lite(request: Request, file: UploadFile = File(...), job_description: str = Form(...)) -> JSONResponse:
@@ -587,6 +628,7 @@ def entitlements_consume_one(payload: ConsumeOneCreditRequest) -> JSONResponse:
 @limiter.limit("10/minute")  # 10 requests por minuto para pagos
 def analyze_premium_paid(
     request: Request,
+    background_tasks: BackgroundTasks,
     user_id: str = Form(...),
     file: UploadFile = File(...),
     job_description: str = Form(...),
@@ -621,22 +663,43 @@ def analyze_premium_paid(
 
         # Consumir crédito
         _consume_one_credit(user_id)
-
-        # Modo de desenvolvimento: retorna mock sem processar IA
-        if DEV_MODE:
-            print("🔧 [DEV MODE] Retornando mock de análise premium (sem processar IA)")
-            new_status = _entitlements_status(user_id)
-            return JSONResponse(content={"data": MOCK_PREMIUM_DATA, "entitlements": new_status})
-
-        # Modo produção: processa com IA real
-        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
-        competitors = []
+        
+        # Criar sessão de análise para progressive loading
+        session_data = {
+            "user_id": user_id,
+            "status": "processing",
+            "current_step": "starting",
+            "result_data": {}
+        }
+        
+        session_response = supabase_admin.table("analysis_sessions").insert(session_data).execute()
+        session_id = session_response.data[0]["id"]
+        
+        # Salvar arquivo em memória para background task
+        file_bytes = file.file.read()
+        _save_to_cache(file_bytes, job_description)
+        
+        # Preparar arquivos de competidores se existirem
+        competitors_bytes = []
         if competitor_files:
             for f in competitor_files:
-                competitors.append(_upload_to_bytes_io(f))
-        data = analyze_cv_logic(cv_text, job_description, competitors, user_id=user_id)
-        new_status = _entitlements_status(user_id)
-        return JSONResponse(content={"data": data, "entitlements": new_status})
+                competitors_bytes.append(f.file.read())
+        
+        # Agendar processamento em background
+        background_tasks.add_task(
+            _process_analysis_background,
+            session_id=session_id,
+            user_id=user_id,
+            file_bytes=file_bytes,
+            job_description=job_description,
+            competitors_bytes=competitors_bytes
+        )
+        
+        # Retornar imediatamente com session_id
+        return JSONResponse(content={
+            "session_id": session_id,
+            "status": "processing"
+        })
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
@@ -1122,3 +1185,103 @@ def get_cache_stats() -> JSONResponse:
             status_code=500,
             content={"error": f"{type(e).__name__}: {e}"}
         )
+
+
+def _process_analysis_background(
+    session_id: str,
+    user_id: str,
+    file_bytes: bytes,
+    job_description: str,
+    competitors_bytes: list[bytes] | None = None
+) -> None:
+    """
+    Função background para processamento assíncrono da análise.
+    Atualiza a sessão no Supabase com resultados parciais e finais.
+    """
+    import sentry_sdk
+    
+    sentry_sdk.set_context("user", {"id": user_id})
+    sentry_sdk.set_tag("background_task", "process_analysis")
+    
+    def update_session(status: str, current_step: str, result_data: dict | None = None) -> bool:
+        """Atualiza sessão no Supabase com status e resultados parciais."""
+        try:
+            update_data = {
+                "status": status,
+                "current_step": current_step,
+                "updated_at": datetime.now().isoformat()
+            }
+            
+            if result_data:
+                update_data["result_data"] = result_data
+            
+            supabase_admin.table("analysis_sessions").update(update_data).eq("id", session_id).execute()
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao atualizar sessão {session_id}: {e}")
+            return False
+    
+    try:
+        # Etapa 1: Iniciar processamento
+        update_session("processing", "extracting_text")
+        
+        # Extrair texto do PDF
+        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
+        
+        # Etapa 2: Diagnóstico pronto
+        update_session("processing", "diagnostico_pronto")
+        
+        # Processar competidores se existirem
+        competitors = []
+        if competitors_bytes:
+            for comp_bytes in competitors_bytes:
+                competitors.append(io.BytesIO(comp_bytes))
+        
+        # Modo DEV: usar mock
+        if DEV_MODE:
+            print("🔧 [BACKGROUND DEV MODE] Processando análise com mock")
+            
+            # Simular etapas progressivas
+            import time
+            
+            # Diagnóstico
+            partial_result = {
+                "diagnostico": {
+                    "gaps_fatais": ["Experiência em Cloud Computing"],
+                    "score_ats": 75,
+                    "veredito": "CV precisa de otimização"
+                }
+            }
+            update_session("processing", "diagnostico_pronto", partial_result)
+            time.sleep(2)  # Simular tempo de processamento
+            
+            # CV otimizado
+            partial_result["cv_otimizado"] = MOCK_PREMIUM_DATA.get("cv_otimizado", {})
+            update_session("processing", "cv_pronto", partial_result)
+            time.sleep(2)
+            
+            # Biblioteca
+            partial_result["biblioteca"] = MOCK_PREMIUM_DATA.get("biblioteca", {})
+            update_session("processing", "biblioteca_pronta", partial_result)
+            time.sleep(1)
+            
+            # Finalizar
+            update_session("completed", "finalizado", MOCK_PREMIUM_DATA)
+            return
+        
+        # Modo produção: processar com IA real
+        # Chamar analyze_cv_logic com progress updates
+        update_session("processing", "processing_with_ai")
+        
+        # Processamento completo
+        data = analyze_cv_logic(cv_text, job_description, competitors, user_id=user_id)
+        
+        # Finalizar com sucesso
+        update_session("completed", "finalizado", data)
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no processamento background {session_id}: {e}")
+        sentry_sdk.capture_exception(e)
+        
+        # Atualizar status para falha
+        update_session("failed", "error_occurred", {"error": str(e)})
