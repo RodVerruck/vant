@@ -675,10 +675,6 @@ def analyze_premium_paid(
         session_response = supabase_admin.table("analysis_sessions").insert(session_data).execute()
         session_id = session_response.data[0]["id"]
         
-        # Salvar arquivo em memória para background task
-        file_bytes = file.file.read()
-        _save_to_cache(file_bytes, job_description)
-        
         # Preparar arquivos de competidores se existirem
         competitors_bytes = []
         if competitor_files:
@@ -1196,92 +1192,73 @@ def _process_analysis_background(
 ) -> None:
     """
     Função background para processamento assíncrono da análise.
-    Atualiza a sessão no Supabase com resultados parciais e finais.
+    Usa orquestrador streaming com progressive loading.
     """
     import sentry_sdk
     
     sentry_sdk.set_context("user", {"id": user_id})
     sentry_sdk.set_tag("background_task", "process_analysis")
     
-    def update_session(status: str, current_step: str, result_data: dict | None = None) -> bool:
-        """Atualiza sessão no Supabase com status e resultados parciais."""
-        try:
-            update_data = {
-                "status": status,
-                "current_step": current_step,
-                "updated_at": datetime.now().isoformat()
-            }
-            
-            if result_data:
-                update_data["result_data"] = result_data
-            
-            supabase_admin.table("analysis_sessions").update(update_data).eq("id", session_id).execute()
-            return True
-        except Exception as e:
-            logger.error(f"❌ Erro ao atualizar sessão {session_id}: {e}")
-            return False
-    
     try:
-        # Etapa 1: Iniciar processamento
-        update_session("processing", "extracting_text")
+        # Importar orquestrador streaming
+        from backend.llm_core import analyze_cv_orchestrator_streaming
+        from backend.logic import extrair_texto_pdf
+        import io
         
-        # Extrair texto do PDF
+        # Etapa 1: Extrair texto do PDF
+        logger.info(f"🔍 Extrando texto do PDF para sessão {session_id}")
         cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
         
-        # Etapa 2: Diagnóstico pronto
-        update_session("processing", "diagnostico_pronto")
-        
-        # Processar competidores se existirem
-        competitors = []
-        if competitors_bytes:
-            for comp_bytes in competitors_bytes:
-                competitors.append(io.BytesIO(comp_bytes))
-        
-        # Modo DEV: usar mock
-        if DEV_MODE:
-            print("🔧 [BACKGROUND DEV MODE] Processando análise com mock")
-            
-            # Simular etapas progressivas
-            import time
-            
-            # Diagnóstico
-            partial_result = {
-                "diagnostico": {
-                    "gaps_fatais": ["Experiência em Cloud Computing"],
-                    "score_ats": 75,
-                    "veredito": "CV precisa de otimização"
-                }
-            }
-            update_session("processing", "diagnostico_pronto", partial_result)
-            time.sleep(2)  # Simular tempo de processamento
-            
-            # CV otimizado
-            partial_result["cv_otimizado"] = MOCK_PREMIUM_DATA.get("cv_otimizado", {})
-            update_session("processing", "cv_pronto", partial_result)
-            time.sleep(2)
-            
-            # Biblioteca
-            partial_result["biblioteca"] = MOCK_PREMIUM_DATA.get("biblioteca", {})
-            update_session("processing", "biblioteca_pronta", partial_result)
-            time.sleep(1)
-            
-            # Finalizar
-            update_session("completed", "finalizado", MOCK_PREMIUM_DATA)
+        if not cv_text or len(cv_text.strip()) < 100:
+            logger.error(f"❌ PDF vazio ou muito pequeno para sessão {session_id}")
+            from backend.llm_core import update_session_progress
+            update_session_progress(session_id, {"error": "PDF vazio ou inválido"}, "failed")
             return
         
-        # Modo produção: processar com IA real
-        # Chamar analyze_cv_logic com progress updates
-        update_session("processing", "processing_with_ai")
+        # Preparar competidores
+        competitors_text = None
+        if competitors_bytes:
+            competitors_texts = []
+            for comp_bytes in competitors_bytes:
+                comp_text = extrair_texto_pdf(io.BytesIO(comp_bytes))
+                if comp_text:
+                    competitors_texts.append(comp_text)
+            competitors_text = "\n\n---\n\n".join(competitors_texts) if competitors_texts else None
         
-        # Processamento completo
-        data = analyze_cv_logic(cv_text, job_description, competitors, user_id=user_id)
+        # Carregar catálogo de livros
+        try:
+            import json
+            from pathlib import Path
+            books_file = Path(__file__).parent.parent / "data" / "books_catalog.json"
+            with open(books_file, 'r', encoding='utf-8') as f:
+                books_catalog = json.load(f)
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao carregar catálogo de livros: {e}")
+            books_catalog = []
         
-        # Finalizar com sucesso
-        update_session("completed", "finalizado", data)
+        # Chamar orquestrador streaming
+        logger.info(f"🚀 Iniciando orquestrador streaming para sessão {session_id}")
+        analyze_cv_orchestrator_streaming(
+            session_id=session_id,
+            cv_text=cv_text,
+            job_description=job_description,
+            books_catalog=books_catalog,
+            competitors_text=competitors_text
+        )
+        
+        logger.info(f"✅ Orquestrador concluído para sessão {session_id}")
         
     except Exception as e:
-        logger.error(f"❌ Erro no processamento background {session_id}: {e}")
+        logger.error(f"❌ Erro fatal no background task {session_id}: {e}")
         sentry_sdk.capture_exception(e)
         
         # Atualizar status para falha
-        update_session("failed", "error_occurred", {"error": str(e)})
+        try:
+            from backend.llm_core import update_session_progress
+            error_data = {
+                "error": f"Erro fatal no processamento: {str(e)}",
+                "error_type": type(e).__name__
+            }
+            update_session_progress(session_id, error_data, "failed")
+        except Exception as update_error:
+            logger.error(f"❌ Erro ao atualizar status para failed: {update_error}")

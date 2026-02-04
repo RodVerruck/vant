@@ -178,6 +178,107 @@ function calculateDynamicCvCount(): number {
     return currentCount + daySeed;
 }
 
+// Função auxiliar para polling do progressive loading
+async function pollAnalysisProgress(
+    sessionId: string,
+    updateStatus: (text: string, percent: number) => Promise<void>,
+    setReportData: (data: any) => void,
+    setStage: (stage: AppStage) => void,
+    setCreditsRemaining: (credits: number) => void
+) {
+    const apiUrl = getApiUrl();
+    const maxAttempts = 120; // 2 minutos com polling a cada 1s
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch(`${apiUrl}/api/analysis/status/${sessionId}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${data.error || 'Erro desconhecido'}`);
+            }
+
+            const { status, current_step, result_data } = data;
+
+            console.log(`[Polling] Status: ${status}, Step: ${current_step}`);
+
+            // Atualizar UI baseado no step
+            switch (current_step) {
+                case 'starting':
+                    await updateStatus("🔒 PAGAMENTO VERIFICADO. INICIANDO IA GENERATIVA...", 10);
+                    break;
+                case 'extracting_text':
+                    await updateStatus("📄 EXTRAINDO TEXTO DO PDF...", 15);
+                    break;
+                case 'diagnostico_pronto':
+                    await updateStatus("🔍 DIAGNÓSTICO CONCLUÍDO!", 25);
+                    // Mostrar diagnóstico parcial e mudar para paid
+                    if (result_data && typeof result_data === 'object') {
+                        console.log("[Polling] Atualizando com diagnóstico parcial:", result_data);
+                        setReportData(result_data);
+                        setStage("paid"); // Mudar para paid para mostrar resultados
+                    }
+                    break;
+                case 'cv_pronto':
+                    await updateStatus("✍️ CV OTIMIZADO PRONTO!", 50);
+                    // Adicionar CV otimizado aos dados existentes
+                    if (result_data && typeof result_data === 'object') {
+                        console.log("[Polling] Atualizando com CV parcial:", result_data);
+                        setReportData((prev: any) => ({ ...prev, ...result_data }));
+                    }
+                    break;
+                case 'library_pronta':
+                    await updateStatus("📚 BIBLIOTECA PRONTA!", 75);
+                    // Adicionar biblioteca aos dados existentes
+                    if (result_data && typeof result_data === 'object') {
+                        console.log("[Polling] Atualizando com biblioteca parcial:", result_data);
+                        setReportData((prev: any) => ({ ...prev, ...result_data }));
+                    }
+                    break;
+                case 'tactical_pronto':
+                    await updateStatus("🎯 ESTRATÉGIAS PRONTAS!", 85);
+                    // Adicionar tactical aos dados existentes
+                    if (result_data && typeof result_data === 'object') {
+                        console.log("[Polling] Atualizando com tactical parcial:", result_data);
+                        setReportData((prev: any) => ({ ...prev, ...result_data }));
+                    }
+                    break;
+                case 'completed':
+                    await updateStatus("🎉 ANÁLISE CONCLUÍDA!", 100);
+                    // Processar resultado final
+                    if (result_data && typeof result_data === 'object') {
+                        // Atualizar estado com resultado completo
+                        const report = result_data as any;
+                        console.log("[Polling] Análise concluída com sucesso:", report);
+
+                        // Atualizar estado do frontend com os dados completos
+                        setReportData(report);
+                        setStage("paid");
+
+                        // Atualizar créditos se disponível
+                        if (report.credits_remaining !== undefined) {
+                            setCreditsRemaining(report.credits_remaining);
+                        }
+                    }
+                    return;
+                case 'failed':
+                    throw new Error(result_data?.error || 'Falha no processamento');
+            }
+
+            // Esperar antes do próximo polling
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            attempts++;
+
+        } catch (error) {
+            console.error("[Polling] Erro:", error);
+            throw error;
+        }
+    }
+
+    throw new Error('Timeout: Análise demorou mais de 2 minutos');
+}
+
 export default function AppPage() {
     // AbortController para cancelar requisições ao navegar
     const abortControllerRef = useRef<AbortController | null>(null);
@@ -233,6 +334,7 @@ export default function AppPage() {
     const [processingStartTime] = useState(Date.now());
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(60); // segundos
+    const [sessionId, setSessionId] = useState<string | null>(null); // ← Progressive loading
 
     // Mensagens dinâmicas para o processamento premium
     const premiumMessages = [
@@ -1117,6 +1219,25 @@ export default function AppPage() {
                     throw new Error(err);
                 }
 
+                // Verificar se é resposta de progressive loading
+                if (payload.session_id && payload.status === "processing") {
+                    console.log("[Progressive Loading] Recebido session_id:", payload.session_id);
+
+                    // Salvar session_id no estado
+                    setSessionId(payload.session_id as string);
+
+                    // Iniciar polling para acompanhar progresso
+                    await pollAnalysisProgress(
+                        payload.session_id as string,
+                        updateStatus,
+                        setReportData,
+                        setStage,
+                        setCreditsRemaining
+                    );
+                    return;
+                }
+
+                // Sistema antigo (fallback)
                 await updateStatus("FINALIZANDO DOSSIÊ...", 90);
                 await sleep(350);
                 await updateStatus("DOSSIÊ PRONTO.", 100);
