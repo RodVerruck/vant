@@ -1230,7 +1230,7 @@ export default function AppPage() {
             }
             console.error("[processing_premium] Dados incompletos:", { jobDescription: !!jobDescription, file: !!file });
             setPremiumError("Dados da sessão incompletos. Volte e envie seu CV novamente.");
-            setStage("preview");
+            setStage("hero");
             return;
         }
 
@@ -1332,7 +1332,7 @@ export default function AppPage() {
                     return;
                 }
                 setPremiumError(getErrorMessage(e, "Erro na geração premium"));
-                setStage("paid");
+                setStage("hero");
             }
         })();
     }, [authUserId, competitorFiles, stage, jobDescription, file]);
