@@ -1,29 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { type SupabaseClient } from "@supabase/supabase-js";
 
 interface AuthModalProps {
     isOpen: boolean;
     onSuccess: (userId: string, email: string) => void;
     onClose: () => void;
     selectedPlan?: string;
+    supabase: SupabaseClient | null;
 }
 
-export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModalProps) {
+export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }: AuthModalProps) {
     const [showEmailForm, setShowEmailForm] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [authEmail, setAuthEmail] = useState("");
     const [authPassword, setAuthPassword] = useState("");
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [error, setError] = useState("");
-
-    const supabase = typeof window !== "undefined"
-        ? createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-        )
-        : null;
 
     if (!isOpen) return null;
 
@@ -206,7 +200,13 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModa
                         </button>
                     </>
                 ) : (
-                    <>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleEmailPasswordAuth();
+                        }}
+                        style={{ display: "flex", flexDirection: "column" }}
+                    >
                         <div style={{ marginBottom: 12 }}>
                             <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
                                 E-mail
@@ -216,6 +216,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModa
                                 value={authEmail}
                                 onChange={(e) => setAuthEmail(e.target.value)}
                                 placeholder="voce@exemplo.com"
+                                autoComplete="username"
                                 style={{
                                     width: "100%",
                                     boxSizing: "border-box",
@@ -238,6 +239,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModa
                                 value={authPassword}
                                 onChange={(e) => setAuthPassword(e.target.value)}
                                 placeholder="Mínimo 6 caracteres"
+                                autoComplete="current-password"
                                 style={{
                                     width: "100%",
                                     boxSizing: "border-box",
@@ -252,8 +254,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModa
                         </div>
 
                         <button
-                            type="button"
-                            onClick={handleEmailPasswordAuth}
+                            type="submit"
                             disabled={isAuthenticating}
                             style={{
                                 width: "100%",
@@ -305,7 +306,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan }: AuthModa
                         >
                             ← Voltar para Google
                         </button>
-                    </>
+                    </form>
                 )}
 
                 {error && (

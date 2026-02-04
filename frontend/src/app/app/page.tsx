@@ -296,6 +296,7 @@ export default function AppPage() {
     const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
     const [creditsRemaining, setCreditsRemaining] = useState(0);
+    const [creditsLoading, setCreditsLoading] = useState(false);
     const [needsActivation, setNeedsActivation] = useState(false);
     const [isActivating, setIsActivating] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(true);  // ← NOVO (true = login, false = cadastro)
@@ -401,12 +402,33 @@ export default function AppPage() {
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
 
     const supabase = useMemo((): SupabaseClient | null => {
+        // Limpar instâncias antigas do Supabase para evitar conflitos
+        if (typeof window !== 'undefined') {
+            // Limpar localStorage com padrão mais abrangente
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('supabase.auth.')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+        }
+
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         if (!url || !key) {
             return null;
         }
-        return createClient(url, key);
+
+        // Criar instância única com storage key customizada
+        return createClient(url, key, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                storageKey: 'vant-supabase-auth', // Chave única para evitar conflitos
+            }
+        });
     }, []);
 
     function getErrorMessage(e: unknown, fallback: string): string {
