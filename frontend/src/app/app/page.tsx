@@ -775,18 +775,43 @@ export default function AppPage() {
             const returnStage = localStorage.getItem("vant_auth_return_stage");
             const returnPlan = localStorage.getItem("vant_auth_return_plan");
 
-            if (returnPlan) {
-                console.log("[Restoration] Restaurando plano e indo para checkout...");
-                setSelectedPlan(returnPlan as PlanType);
-                localStorage.removeItem("vant_auth_return_plan");
+            // Verificar se usuário já tem plano ativo antes de decidir o redirect
+            const checkUserStatus = async () => {
+                try {
+                    const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        console.log("[User Status] Verificação:", data);
 
-                setStage("checkout");
-                localStorage.removeItem("vant_auth_return_stage"); // Limpa stage também para evitar conflito
-            } else if (returnStage) {
-                console.log("[Restoration] Restaurando stage:", returnStage);
-                setStage(returnStage as AppStage);
-                localStorage.removeItem("vant_auth_return_stage");
-            }
+                        // Se usuário tem plano ativo E não está vindo de um fluxo de pagamento
+                        if (data.has_active_plan && data.credits_remaining > 0 && !returnPlan) {
+                            console.log("[User Status] Usuário com plano ativo detectado, redirecionando para paid");
+                            setCreditsRemaining(data.credits_remaining);
+                            setSelectedPlan("premium_plus");
+                            setStage("paid");
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.error("[User Status] Erro ao verificar status:", error);
+                }
+
+                // Fluxo normal se não tiver plano ativo ou se vier de pagamento
+                if (returnPlan) {
+                    console.log("[Restoration] Restaurando plano e indo para checkout...");
+                    setSelectedPlan(returnPlan as PlanType);
+                    localStorage.removeItem("vant_auth_return_plan");
+
+                    setStage("checkout");
+                    localStorage.removeItem("vant_auth_return_stage"); // Limpa stage também para evitar conflito
+                } else if (returnStage) {
+                    console.log("[Restoration] Restaurando stage:", returnStage);
+                    setStage(returnStage as AppStage);
+                    localStorage.removeItem("vant_auth_return_stage");
+                }
+            };
+
+            checkUserStatus();
         }
     }, [authUserId]);
 
@@ -2981,7 +3006,7 @@ export default function AppPage() {
                     setAuthUserId(userId);
                     setAuthEmail(email);
                     setShowAuthModal(false);
-                    setStage("checkout");
+                    // Não forçar checkout - deixar useEffect decidir baseado no status do usuário
                 }}
                 onClose={() => setShowAuthModal(false)}
             />
