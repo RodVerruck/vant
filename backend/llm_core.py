@@ -963,10 +963,19 @@ def analyze_cv_orchestrator_streaming(
         cv_text = sanitize_input(cv_text)
         job_description = sanitize_input(job_description)
         
+        # Se for vaga genérica e tiver área de interesse, força a área
+        if area_of_interest and "busco oportunidades profissionais" in job_description.lower():
+            logger.info(f"🎯 Área de interesse detectada: {area_of_interest}")
+            # Usa a área selecionada pelo usuário
+            modified_job_description = f"Vaga na área de {area_of_interest.replace('_', ' ').title()}. " + job_description
+        else:
+            modified_job_description = job_description
+        
         # ETAPA 1: Diagnosis (rápido, primeiro)
         logger.info("📊 Etapa 1: Processando diagnosis...")
+        
         try:
-            diag_result = agent_diagnosis(cv_text, job_description)
+            diag_result = agent_diagnosis(cv_text, modified_job_description)
             
             # Salvar diagnóstico parcial
             update_session_progress(session_id, diag_result, "diagnostico_pronto")

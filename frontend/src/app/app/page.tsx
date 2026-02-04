@@ -1315,6 +1315,12 @@ export default function AppPage() {
                 form.append("user_id", authUserId);
                 form.append("job_description", jobDescription);
                 form.append("file", file);
+
+                // Adicionar área de interesse se for vaga genérica
+                if (useGenericJob && selectedArea) {
+                    form.append("area_of_interest", selectedArea);
+                }
+
                 if (competitorFiles && competitorFiles.length) {
                     for (const cf of competitorFiles) {
                         form.append("competitor_files", cf);
@@ -1426,6 +1432,11 @@ export default function AppPage() {
         const form = new FormData();
         form.append("job_description", jobDescription);
         form.append("file", file);
+
+        // Adicionar área de interesse se for vaga genérica
+        if (useGenericJob && selectedArea) {
+            form.append("area_of_interest", selectedArea);
+        }
 
         try {
             // 3. Disparar a requisição em BACKGROUND (sem await imediato)
