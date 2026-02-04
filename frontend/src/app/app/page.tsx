@@ -93,7 +93,7 @@ const HERO_INNER_HTML = `
             <p style="color: #94A3B8; font-size: 0.9rem; margin: 0;">Tecnologia baseada em dados reais de mercado</p>
         </div>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; margin: 0 auto;">
             <div style="background: rgba(74, 158, 255, 0.08); border: 1px solid rgba(74, 158, 255, 0.2); border-left: 3px solid #4A9EFF; border-radius: 12px; padding: 24px;">
                 <div style="font-size: 2.2rem; margin-bottom: 16px;">🤖</div>
                 <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; line-height: 1.3;">
@@ -1741,7 +1741,7 @@ export default function AppPage() {
                             borderRadius: 12,
                             padding: "16px 20px",
                             margin: "0 auto 20px",
-                            maxWidth: "800px",
+                            maxWidth: "100%",
                             textAlign: "center"
                         }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
@@ -1809,7 +1809,7 @@ export default function AppPage() {
                             borderRadius: 12,
                             padding: "16px 20px",
                             margin: "0 auto 20px",
-                            maxWidth: "800px",
+                            maxWidth: "100%",
                             textAlign: "center"
                         }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
@@ -1870,7 +1870,7 @@ export default function AppPage() {
                             borderRadius: 12,
                             padding: "20px",
                             margin: "0 auto 20px",
-                            maxWidth: "800px",
+                            maxWidth: "100%",
                             textAlign: "center"
                         }}>
                             <div style={{ fontSize: "2rem", marginBottom: "12px" }}>⚠️</div>
@@ -2278,7 +2278,7 @@ export default function AppPage() {
 
                     <div className="loading-logo logo-pulse">vant.core scanner</div>
 
-                    <div style={{ maxWidth: 680, margin: "0 auto" }}>
+                    <div style={{ width: "100%", margin: "0 auto" }}>
                         <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden", boxShadow: "0 0 10px rgba(0,0,0,0.3) inset" }}>
                             <div
                                 style={{
@@ -2402,7 +2402,7 @@ export default function AppPage() {
                                 borderRadius: 12,
                                 padding: "40px",
                                 margin: "20px auto",
-                                maxWidth: "500px"
+                                maxWidth: "100%"
                             }}>
                                 <div style={{ fontSize: "3rem", marginBottom: "16px" }}>❌</div>
                                 <div style={{ color: "#EF4444", fontSize: "1.5rem", fontWeight: 700, marginBottom: "12px" }}>
@@ -2479,7 +2479,7 @@ export default function AppPage() {
 
                             <div className="loading-logo logo-pulse">vant.core premium</div>
 
-                            <div style={{ maxWidth: 680, margin: "0 auto" }}>
+                            <div style={{ width: "100%", margin: "0 auto" }}>
                                 <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden", boxShadow: "0 0 10px rgba(0,0,0,0.3) inset" }}>
                                     <div
                                         className="progress-bar-glow"

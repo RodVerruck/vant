@@ -113,7 +113,7 @@ body,
    2. HERO SECTION & MARKETING ELEMENTS (NOVO)
    ============================================================ */
 .hero-container {
-    max-width: 900px;
+    width: 100%;
     margin: 0 auto 40px auto;
     text-align: center;
     padding: 20px 0;
@@ -156,6 +156,7 @@ body,
     background: linear-gradient(135deg, var(--primary-blue), #818CF8, #C084FC);
     background-size: 200% 200%;
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: gradient-move 4s ease infinite;
     line-height: 1.1;
@@ -678,6 +679,7 @@ body,
     margin-bottom: 20px;
     background: linear-gradient(135deg, #38BDF8, #818CF8);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: pulse-glow 2s infinite ease-in-out;
 }
