@@ -703,10 +703,24 @@ export default function AppPage() {
                         setAuthUserId(session.user.id);
                         setAuthEmail(session.user.email || "");
                         setCheckoutError("");
+
+                        // Cache imediato de créditos para resposta instantânea
+                        const cachedCredits = localStorage.getItem('vant_cached_credits');
+                        if (cachedCredits) {
+                            const credits = parseInt(cachedCredits);
+                            setCreditsRemaining(credits);
+                            console.log("[AuthStateChange] Usando cache de créditos:", credits);
+                        } else {
+                            setCreditsLoading(true);
+                            console.log("[AuthStateChange] Sem cache, carregando créditos...");
+                        }
                     } else if (event === 'SIGNED_OUT') {
                         setAuthUserId(null);
                         setAuthEmail("");
                         setCreditsRemaining(0);
+                        setCreditsLoading(false);
+                        // Limpar cache ao fazer logout
+                        localStorage.removeItem('vant_cached_credits');
                     }
                 }
             );
@@ -1146,7 +1160,11 @@ export default function AppPage() {
         }
         if (typeof payload.credits_remaining === "number") {
             setCreditsRemaining(payload.credits_remaining);
+            // Salvar no cache para próximos logins
+            localStorage.setItem('vant_cached_credits', payload.credits_remaining.toString());
+            console.log("[syncEntitlements] Créditos atualizados e cacheados:", payload.credits_remaining);
         }
+        setCreditsLoading(false);
     }
 
     useEffect(() => {
@@ -1629,6 +1647,7 @@ export default function AppPage() {
 
         const isLow = creditsRemaining > 0 && creditsRemaining < 3;
         const isHigh = creditsRemaining >= 20;
+        const isLoading = creditsLoading;
 
         return (
             <div style={{
@@ -1637,43 +1656,47 @@ export default function AppPage() {
                 right: 20,
                 zIndex: 1000,
                 background: 'rgba(15, 23, 42, 0.95)',
-                border: `2px solid ${isHigh ? '#10B981' : isLow ? '#F59E0B' : '#38BDF8'}`,
+                border: `2px solid ${isLoading ? '#F59E0B' : isHigh ? '#10B981' : isLow ? '#F59E0B' : '#38BDF8'}`,
                 borderRadius: 12,
-                padding: '12px 20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)'
+                padding: '12px 16px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(8px)',
+                transition: 'all 0.3s ease',
+                minWidth: '120px'
             }}>
                 <div style={{
-                    fontSize: '1.5rem',
-                    filter: 'drop-shadow(0 0 8px currentColor)'
+                    color: '#94A3B8',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    marginBottom: 2
                 }}>
-                    💎
+                    {isLoading ? 'Carregando...' : 'Créditos'}
                 </div>
-                <div>
-                    <div style={{
-                        color: '#94A3B8',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.5px',
-                        textTransform: 'uppercase',
-                        marginBottom: 2
-                    }}>
-                        Créditos
-                    </div>
-                    <div style={{
-                        color: isHigh ? '#10B981' : isLow ? '#F59E0B' : '#F8FAFC',
-                        fontSize: '1.2rem',
-                        fontWeight: 900,
-                        lineHeight: 1,
-                        fontFamily: 'monospace'
-                    }}>
-                        {creditsRemaining}
-                    </div>
+                <div style={{
+                    color: isLoading ? '#F59E0B' : isHigh ? '#10B981' : isLow ? '#F59E0B' : '#F8FAFC',
+                    fontSize: '1.2rem',
+                    fontWeight: 900,
+                    lineHeight: 1,
+                    fontFamily: 'monospace',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                }}>
+                    {isLoading && (
+                        <div style={{
+                            width: '12px',
+                            height: '12px',
+                            border: '2px solid #F59E0B',
+                            borderTop: '2px solid transparent',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                        }} />
+                    )}
+                    {!isLoading && creditsRemaining}
                 </div>
-                {creditsRemaining > 0 && (
+                {!isLoading && creditsRemaining > 0 && (
                     <button
                         onClick={() => setStage("preview")}
                         style={{
