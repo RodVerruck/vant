@@ -807,3 +807,155 @@ def analyze_interview_gemini(pergunta, resposta_texto, contexto_vaga):
         payload=payload,
         agent_name="interview_evaluator"
     )
+
+# ============================================================
+# ORQUESTRADOR STREAMING - PROGRESSIVE LOADING
+# ============================================================
+def analyze_cv_orchestrator_streaming(
+    session_id: str,
+    cv_text: str,
+    job_description: str,
+    books_catalog: list,
+    competitors_text: str | None = None
+) -> None:
+    """
+    Orquestrador com progressive loading para análise de CV.
+    Atualiza resultados parciais no Supabase conforme cada etapa é concluída.
+    
+    Args:
+        session_id: UUID da sessão de análise
+        cv_text: Texto extraído do CV
+        job_description: Descrição da vaga
+        books_catalog: Catálogo de livros para biblioteca
+        competitors_text: Texto dos competidores (opcional)
+    """
+    logger.info(f"🚀 Iniciando orquestrador streaming | Sessão: {session_id}")
+    
+    try:
+        # Sanitizar inputs
+        from logic import sanitize_input
+        cv_text = sanitize_input(cv_text)
+        job_description = sanitize_input(job_description)
+        
+        # ETAPA 1: Diagnosis (rápido, primeiro)
+        logger.info("📊 Etapa 1: Processando diagnosis...")
+        try:
+            diag_result = agent_diagnosis(cv_text, job_description)
+            
+            # Salvar diagnóstico parcial
+            update_session_progress(session_id, diag_result, "diagnostico_pronto")
+            logger.info("✅ Diagnóstico salvo no banco")
+            
+            # Extrair gaps para as próximas etapas
+            gaps = diag_result.get("gaps_fatais", [])
+            
+        except Exception as e:
+            logger.error(f"❌ Erro no diagnosis: {e}")
+            update_session_progress(session_id, {"error": f"Erro no diagnóstico: {str(e)}"}, "failed")
+            return
+        
+        # ETAPA 2: Processamento paralelo (CV, Library, Tactical)
+        logger.info("⚡ Etapa 2: Iniciando processamento paralelo...")
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            # Future 1: CV Pipeline (crítico)
+            strategy_payload = {
+                "cv_original": cv_text,
+                "diagnostico": diag_result,
+                "vaga": job_description,
+            }
+            future_cv = executor.submit(run_cv_pipeline, cv_text, strategy_payload)
+            
+            # Future 2: Library
+            future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
+            
+            # Future 3: Tactical
+            future_tactical = executor.submit(agent_tactical, job_description, gaps)
+            
+            # Future 4: Competitor Analysis (se houver, não bloqueia as outras)
+            future_comp = None
+            if competitors_text:
+                future_comp = executor.submit(agent_competitor_analysis, cv_text, job_description, competitors_text)
+            
+            # ETAPA 3: Coleta incremental dos resultados
+            logger.info("🔄 Etapa 3: Aguardando conclusão das tarefas...")
+            
+            results = {}
+            completed_steps = []
+            
+            # Esperar cada future e salvar assim que terminar
+            futures_to_check = [
+                ("cv_pronto", future_cv, "cv_otimizado_completo"),
+                ("library_pronta", future_library, None),
+                ("tactical_pronto", future_tactical, None)
+            ]
+            
+            for step_name, future, result_key in futures_to_check:
+                try:
+                    result = future.result(timeout=120)  # Timeout de 2 minutos por tarefa
+                    
+                    # Mapear resultado para chave correta se necessário
+                    if result_key and result_key in result:
+                        mapped_result = {result_key: result[result_key]}
+                    else:
+                        mapped_result = result
+                    
+                    # Salvar resultado parcial
+                    update_session_progress(session_id, mapped_result, step_name)
+                    logger.info(f"✅ {step_name.replace('_', ' ').title()} salvo")
+                    completed_steps.append(step_name)
+                    
+                    # Acumular resultado para merge final
+                    results.update(mapped_result)
+                    
+                except concurrent.futures.TimeoutError:
+                    logger.error(f"❌ Timeout em {step_name}")
+                    error_msg = f"Timeout no processamento de {step_name}"
+                    update_session_progress(session_id, {"error": error_msg}, step_name.replace("_pronto", "_failed"))
+                    
+                except Exception as e:
+                    logger.error(f"❌ Erro em {step_name}: {e}")
+                    error_msg = f"Erro no processamento de {step_name}: {str(e)}"
+                    update_session_progress(session_id, {"error": error_msg}, step_name.replace("_pronto", "_failed"))
+            
+            # Competitor Analysis (não crítico, processa se houver)
+            if future_comp:
+                try:
+                    comp_result = future_comp.result(timeout=60)
+                    if comp_result:
+                        update_session_progress(session_id, comp_result, "competitor_analysis_ready")
+                        results.update(comp_result)
+                        logger.info("✅ Competitor analysis salvo")
+                        
+                except Exception as e:
+                    logger.warning(f"⚠️ Erro no competitor analysis (não crítico): {e}")
+        
+        # ETAPA 4: Finalização
+        logger.info("🏁 Etapa 4: Finalizando orquestração...")
+        
+        # Merge final com diagnóstico
+        final_result = {**diag_result, **results}
+        
+        # Garantir campos mínimos
+        if "perguntas_entrevista" not in final_result:
+            final_result["perguntas_entrevista"] = []
+        if "biblioteca_tecnica" not in final_result:
+            final_result["biblioteca_tecnica"] = []
+        if "projeto_pratico" not in final_result:
+            final_result["projeto_pratico"] = {}
+        if "kit_hacker" not in final_result:
+            final_result["kit_hacker"] = {}
+        
+        # Salvar resultado final
+        update_session_progress(session_id, final_result, "completed")
+        logger.info(f"🎉 Orquestração concluída com sucesso | Sessão: {session_id}")
+        
+    except Exception as e:
+        logger.error(f"❌ Erro fatal no orquestrador streaming {session_id}: {e}")
+        
+        # Atualizar status para falha
+        error_data = {
+            "error": f"Erro fatal no processamento: {str(e)}",
+            "error_type": type(e).__name__
+        }
+        update_session_progress(session_id, error_data, "failed")
