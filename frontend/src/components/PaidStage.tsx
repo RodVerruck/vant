@@ -21,6 +21,68 @@ if (typeof window !== "undefined") {
     document.head.appendChild(styleElement);
 }
 
+// Componente de placeholder para conteúdo carregando
+const LoadingPlaceholder = ({ title, description }: { title: string; description: string }) => (
+    <div style={{
+        background: "linear-gradient(135deg, rgba(15, 23, 42, 0.3) 0%, rgba(56, 189, 248, 0.05) 100%)",
+        border: "1px solid rgba(56, 189, 248, 0.2)",
+        borderRadius: 12,
+        padding: 24,
+        margin: "20px 0",
+        position: "relative",
+        overflow: "hidden"
+    }}>
+        <div style={{
+            position: "absolute",
+            top: -20,
+            right: -20,
+            width: 80,
+            height: 80,
+            background: "#38BDF8",
+            filter: "blur(50px)",
+            opacity: 0.1
+        }} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
+            <div
+                style={{
+                    width: "24px",
+                    height: "24px",
+                    border: "3px solid #38BDF8",
+                    borderTop: "3px solid transparent",
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite"
+                }}
+            />
+            <h4 style={{ color: "#38BDF8", margin: 0, fontSize: "1.1rem", fontWeight: 600 }}>
+                {title}
+            </h4>
+        </div>
+
+        <p style={{ color: "#94A3B8", margin: 0, lineHeight: 1.6, fontSize: "0.95rem" }}>
+            {description}
+        </p>
+
+        <div style={{
+            marginTop: 16,
+            padding: 12,
+            background: "rgba(56, 189, 248, 0.1)",
+            borderRadius: 8,
+            border: "1px solid rgba(56, 189, 248, 0.2)"
+        }}>
+            <p style={{
+                color: "#38BDF8",
+                margin: 0,
+                fontSize: "0.85rem",
+                fontWeight: 500,
+                textAlign: "center"
+            }}>
+                🤖 Nossa IA está analisando seu currículo e gerando insights personalizados...
+            </p>
+        </div>
+    </div>
+);
+
 interface PaidStageProps {
     reportData: ReportData | null;
     authUserId: string | null;
@@ -385,7 +447,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                             animation: "spin 1s linear infinite"
                                         }}
                                     />
-                                    <span style={{ opacity: 0.7 }}>Carregando...</span>
+                                    <span style={{ opacity: 0.7 }}>IA processando...</span>
                                 </>
                             )}
                             {!loadingTabs[tab.id] && tab.label}
@@ -396,14 +458,23 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                 {/* Tab Content */}
                 {activeTab === "diagnostico" && (
                     <div style={{ maxWidth: 850, margin: "0 auto" }}>
-                        <h3 style={{ color: "#F8FAFC", marginBottom: 20, fontSize: "1.5rem", fontWeight: 600 }}>1. Plano de Correção Imediata</h3>
-                        {reportData.gaps_fatais?.map((gap, idx) => (
-                            <GapCard key={idx} gap={gap} />
-                        ))}
+                        {loadingTabs.diagnostico ? (
+                            <LoadingPlaceholder
+                                title="🔍 Analisando seu currículo..."
+                                description="Estamos examinando seu currículo em detalhes para identificar gaps críticos, oportunidades de melhoria e alinhamento com o mercado. Este processo leva cerca de 15-20 segundos."
+                            />
+                        ) : (
+                            <>
+                                <h3 style={{ color: "#F8FAFC", marginBottom: 20, fontSize: "1.5rem", fontWeight: 600 }}>1. Plano de Correção Imediata</h3>
+                                {reportData.gaps_fatais?.map((gap, idx) => (
+                                    <GapCard key={idx} gap={gap} />
+                                ))}
 
-                        <div style={{ height: 20 }} />
-                        <CopyableSection title="💼 Headline LinkedIn" content={reportData.linkedin_headline || ""} isHeadline />
-                        <CopyableSection title="📝 Resumo Profissional Otimizado" content={reportData.resumo_otimizado || ""} />
+                                <div style={{ height: 20 }} />
+                                <CopyableSection title="💼 Headline LinkedIn" content={reportData.linkedin_headline || ""} isHeadline />
+                                <CopyableSection title="📝 Resumo Profissional Otimizado" content={reportData.resumo_otimizado || ""} />
+                            </>
+                        )}
 
                         {/* X-Ray Search */}
                         <div style={{ marginTop: 30, marginBottom: 20, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
@@ -497,127 +568,328 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
 
                 {activeTab === "cv" && (
                     <div style={{ maxWidth: 850, margin: "0 auto" }}>
-                        <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>🚀 Currículo Reestruturado Integralmente</h3>
+                        {loadingTabs.cv ? (
+                            <LoadingPlaceholder
+                                title="✍️ Otimizando seu currículo..."
+                                description="Nossa IA está reestruturando seu currículo para destacar seus pontos fortes, adicionar métricas de impacto e alinhar com as melhores práticas do mercado. Este processo leva cerca de 20-30 segundos."
+                            />
+                        ) : (
+                            <>
+                                <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>🚀 Currículo Reestruturado Integralmente</h3>
 
-                        {/* Editor */}
-                        <details open={isEditorOpen} style={{
-                            background: "rgba(15, 23, 42, 0.4)",
-                            border: "1px solid rgba(255,255,255,0.05)",
-                            borderRadius: 8,
-                            padding: "12px",
-                            marginBottom: 20,
-                            cursor: "pointer"
-                        }}>
-                            <summary
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setIsEditorOpen(!isEditorOpen);
-                                    if (!isEditorOpen) {
-                                        setEditedCvText(reportData.cv_otimizado_completo || "");
-                                    }
-                                }}
-                                style={{ fontWeight: 600, color: "#94A3B8", cursor: "pointer" }}
-                            >
-                                ✏️ ENCONTROU UM ERRO? CLIQUE PARA EDITAR O TEXTO
-                            </summary>
-                            {isEditorOpen && (
-                                <div style={{ marginTop: 15 }}>
-                                    <div style={{
-                                        background: "rgba(56, 189, 248, 0.1)",
-                                        border: "1px solid rgba(56, 189, 248, 0.3)",
-                                        borderRadius: 6,
-                                        padding: 12,
-                                        marginBottom: 12,
-                                        color: "#38BDF8",
-                                        fontSize: "0.85rem"
-                                    }}>
-                                        💡 Edite o texto abaixo e clique em SALVAR para atualizar o PDF, o Word e a visualização.
-                                    </div>
-                                    <textarea
-                                        value={editedCvText}
-                                        onChange={(e) => setEditedCvText(e.target.value)}
-                                        style={{
-                                            width: "100%",
-                                            height: 300,
-                                            background: "rgba(15, 23, 42, 0.8)",
-                                            border: "1px solid rgba(255,255,255,0.1)",
-                                            borderRadius: 8,
-                                            color: "#F8FAFC",
-                                            padding: 12,
-                                            fontFamily: "monospace",
-                                            fontSize: "0.9rem",
-                                            resize: "vertical"
+                                {/* Editor */}
+                                <details open={isEditorOpen} style={{
+                                    background: "rgba(15, 23, 42, 0.4)",
+                                    border: "1px solid rgba(255,255,255,0.05)",
+                                    borderRadius: 8,
+                                    padding: "12px",
+                                    marginBottom: 20,
+                                    cursor: "pointer"
+                                }}>
+                                    <summary
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setIsEditorOpen(!isEditorOpen);
+                                            if (!isEditorOpen) {
+                                                setEditedCvText(reportData.cv_otimizado_completo || "");
+                                            }
                                         }}
+                                        style={{ fontWeight: 600, color: "#94A3B8", cursor: "pointer" }}
+                                    >
+                                        ✏️ ENCONTROU UM ERRO? CLIQUE PARA EDITAR O TEXTO
+                                    </summary>
+                                    {isEditorOpen && (
+                                        <div style={{ marginTop: 15 }}>
+                                            <div style={{
+                                                background: "rgba(56, 189, 248, 0.1)",
+                                                border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                borderRadius: 6,
+                                                padding: 12,
+                                                marginBottom: 12,
+                                                color: "#38BDF8",
+                                                fontSize: "0.85rem"
+                                            }}>
+                                                💡 Edite o texto abaixo e clique em SALVAR para atualizar o PDF, o Word e a visualização.
+                                            </div>
+                                            <textarea
+                                                value={editedCvText}
+                                                onChange={(e) => setEditedCvText(e.target.value)}
+                                                style={{
+                                                    width: "100%",
+                                                    height: 300,
+                                                    background: "rgba(15, 23, 42, 0.8)",
+                                                    border: "1px solid rgba(255,255,255,0.1)",
+                                                    borderRadius: 8,
+                                                    color: "#F8FAFC",
+                                                    padding: 12,
+                                                    fontFamily: "monospace",
+                                                    fontSize: "0.9rem",
+                                                    resize: "vertical"
+                                                }}
+                                            />
+                                            <button
+                                                onClick={handleSaveEdit}
+                                                style={{
+                                                    background: "linear-gradient(90deg, #F59E0B, #D97706)",
+                                                    color: "white",
+                                                    border: "none",
+                                                    padding: "12px 24px",
+                                                    borderRadius: 50,
+                                                    fontWeight: 800,
+                                                    textTransform: "uppercase",
+                                                    cursor: "pointer",
+                                                    width: "100%",
+                                                    marginTop: 12
+                                                }}
+                                            >
+                                                💾 SALVAR ALTERAÇÕES
+                                            </button>
+                                        </div>
+                                    )}
+                                </details>
+
+                                {/* Preview do CV */}
+                                <div className="cv-paper-sheet">
+                                    <div
+                                        className="cv-content-flow"
+                                        dangerouslySetInnerHTML={{ __html: formatTextToHtml(reportData.cv_otimizado_completo || "") }}
                                     />
+                                </div>
+
+                                {/* Botões de Download */}
+                                <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 20 }}>
                                     <button
-                                        onClick={handleSaveEdit}
+                                        onClick={handleDownloadPdf}
                                         style={{
-                                            background: "linear-gradient(90deg, #F59E0B, #D97706)",
+                                            background: "#10B981",
                                             color: "white",
                                             border: "none",
-                                            padding: "12px 24px",
-                                            borderRadius: 50,
-                                            fontWeight: 800,
-                                            textTransform: "uppercase",
-                                            cursor: "pointer",
-                                            width: "100%",
-                                            marginTop: 12
+                                            padding: "12px 20px",
+                                            borderRadius: 8,
+                                            fontWeight: 600,
+                                            cursor: "pointer"
                                         }}
                                     >
-                                        💾 SALVAR ALTERAÇÕES
+                                        📥 BAIXAR PDF (OFICIAL)
+                                    </button>
+                                    <button
+                                        onClick={handleDownloadWord}
+                                        style={{
+                                            background: "#38BDF8",
+                                            color: "#0F172A",
+                                            border: "none",
+                                            padding: "12px 20px",
+                                            borderRadius: 8,
+                                            fontWeight: 600,
+                                            cursor: "pointer"
+                                        }}
+                                    >
+                                        📝 BAIXAR WORD (EDITÁVEL)
                                     </button>
                                 </div>
-                            )}
-                        </details>
+                            </>
+                        )}
 
-                        {/* Preview do CV */}
-                        <div className="cv-paper-sheet">
-                            <div
-                                className="cv-content-flow"
-                                dangerouslySetInnerHTML={{ __html: formatTextToHtml(reportData.cv_otimizado_completo || "") }}
+                        {/* X-Ray Search */}
+                        <div style={{ marginTop: 30, marginBottom: 20, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
+                            <h3 style={{ color: "#F8FAFC", marginBottom: 15, fontSize: "1.5rem", fontWeight: 600 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h3>
+                            <div style={{
+                                background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)",
+                                border: "1px solid #38BDF8",
+                                borderRadius: 12,
+                                padding: 20,
+                                position: "relative",
+                                overflow: "hidden"
+                            }}>
+                                <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, background: "#38BDF8", filter: "blur(50px)", opacity: 0.2 }} />
+
+                                <div style={{ marginBottom: 15 }}>
+                                    <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>Como encontrar os Recrutadores dessa vaga?</strong>
+                                    <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 5, lineHeight: 1.5 }}>
+                                        Não espere eles te acharem. Nossa IA gerou um código de busca avançada (Google Dorking) para filtrar Gestores, Recrutadores e Pares Sêniores.
+                                    </p>
+                                </div>
+
+                                <a href={googleLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                                    <div style={{
+                                        background: "#38BDF8",
+                                        color: "white",
+                                        padding: "12px 20px",
+                                        borderRadius: 8,
+                                        fontWeight: 600,
+                                        textAlign: "center",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s"
+                                    }}>
+                                        🔍 BUSCAR NO GOOGLE
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "cv" && (
+                    <div style={{ maxWidth: 850, margin: "0 auto" }}>
+                        {loadingTabs.cv ? (
+                            <LoadingPlaceholder
+                                title="✍️ Otimizando seu currículo..."
+                                description="Nossa IA está reestruturando seu currículo para destacar seus pontos fortes, adicionar métricas de impacto e alinhar com as melhores práticas do mercado. Este processo leva cerca de 20-30 segundos."
                             />
-                        </div>
+                        ) : (
+                            <>
+                                <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>🚀 Currículo Reestruturado Integralmente</h3>
 
-                        {/* Botões de Download */}
-                        <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 20 }}>
-                            <button
-                                onClick={handleDownloadPdf}
-                                style={{
-                                    background: "#10B981",
-                                    color: "white",
-                                    border: "none",
-                                    padding: "12px 20px",
+                                {/* Editor */}
+                                <details open={isEditorOpen} style={{
+                                    background: "rgba(15, 23, 42, 0.4)",
+                                    border: "1px solid rgba(255,255,255,0.05)",
                                     borderRadius: 8,
-                                    fontWeight: 600,
+                                    padding: "12px",
+                                    marginBottom: 20,
                                     cursor: "pointer"
-                                }}
-                            >
-                                📥 BAIXAR PDF (OFICIAL)
-                            </button>
-                            <button
-                                onClick={handleDownloadWord}
-                                style={{
-                                    background: "#38BDF8",
-                                    color: "#0F172A",
-                                    border: "none",
-                                    padding: "12px 20px",
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    cursor: "pointer"
-                                }}
-                            >
-                                📝 BAIXAR WORD (EDITÁVEL)
-                            </button>
-                        </div>
+                                }}>
+                                    <summary
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setIsEditorOpen(!isEditorOpen);
+                                            if (!isEditorOpen) {
+                                                setEditedCvText(reportData.cv_otimizado_completo || "");
+                                            }
+                                        }}
+                                        style={{ fontWeight: 600, color: "#94A3B8", cursor: "pointer" }}
+                                    >
+                                        ✏️ ENCONTROU UM ERRO? CLIQUE PARA EDITAR O TEXTO
+                                    </summary>
+                                    {isEditorOpen && (
+                                        <div style={{ marginTop: 15 }}>
+                                            <div style={{
+                                                background: "rgba(56, 189, 248, 0.1)",
+                                                border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                borderRadius: 6,
+                                                padding: 12,
+                                                marginBottom: 12,
+                                                color: "#38BDF8",
+                                                fontSize: "0.85rem"
+                                            }}>
+                                                💡 Dica: Use **texto em negrito** para destacar cargos e empresas. Use | para separar cargo | empresa | data.
+                                            </div>
+                                            <textarea
+                                                value={editedCvText}
+                                                onChange={(e) => setEditedCvText(e.target.value)}
+                                                style={{
+                                                    width: "100%",
+                                                    height: 400,
+                                                    background: "rgba(15, 23, 42, 0.6)",
+                                                    border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                    borderRadius: 6,
+                                                    padding: 16,
+                                                    color: "#F8FAFC",
+                                                    fontFamily: "monospace",
+                                                    fontSize: "14px",
+                                                    lineHeight: 1.6,
+                                                    resize: "vertical"
+                                                }}
+                                                placeholder="Cole seu currículo aqui..."
+                                            />
+                                            <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
+                                                <button
+                                                    onClick={handleSaveEdit}
+                                                    style={{
+                                                        background: "#10B981",
+                                                        color: "white",
+                                                        border: "none",
+                                                        padding: "10px 20px",
+                                                        borderRadius: 6,
+                                                        fontWeight: 600,
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    💾 SALVAR
+                                                </button>
+                                                <button
+                                                    onClick={() => setIsEditorOpen(false)}
+                                                    style={{
+                                                        background: "transparent",
+                                                        color: "#94A3B8",
+                                                        border: "1px solid #94A3B8",
+                                                        padding: "10px 20px",
+                                                        borderRadius: 6,
+                                                        fontWeight: 600,
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    CANCELAR
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </details>
+
+                                {/* CV Content */}
+                                <div style={{
+                                    background: "rgba(15, 23, 42, 0.4)",
+                                    border: "1px solid rgba(255,255,255,0.05)",
+                                    borderRadius: 12,
+                                    padding: 32,
+                                    fontSize: "15px",
+                                    lineHeight: 1.7,
+                                    color: "#F8FAFC"
+                                }}>
+                                    <div dangerouslySetInnerHTML={{ __html: formatTextToHtml(reportData.cv_otimizado_completo || "") }} />
+                                </div>
+
+                                {/* Download Buttons */}
+                                <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
+                                    <button
+                                        onClick={handleDownloadPdf}
+                                        style={{
+                                            background: "#10B981",
+                                            color: "white",
+                                            border: "none",
+                                            padding: "12px 20px",
+                                            borderRadius: 8,
+                                            fontWeight: 600,
+                                            cursor: "pointer"
+                                        }}
+                                    >
+                                        📄 BAIXAR PDF
+                                    </button>
+                                    <button
+                                        onClick={handleDownloadWord}
+                                        style={{
+                                            background: "transparent",
+                                            color: "#F8FAFC",
+                                            border: "2px solid #F8FAFC",
+                                            padding: "12px 20px",
+                                            borderRadius: 8,
+                                            fontWeight: 600,
+                                            cursor: "pointer"
+                                        }}
+                                    >
+                                        📝 BAIXAR WORD (EDITÁVEL)
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
                 {activeTab === "biblioteca" && (
                     <div style={{ maxWidth: 850, margin: "0 auto" }}>
-                        <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>📚 Biblioteca Definitiva</h3>
-                        {reportData.biblioteca_tecnica?.map((book, idx) => (
-                            <BookCard key={idx} book={book} index={idx} />
-                        ))}
+                        {loadingTabs.biblioteca ? (
+                            <LoadingPlaceholder
+                                title="📚 Montando sua biblioteca técnica..."
+                                description="Estamos compilando os melhores livros, artigos e recursos técnicos específicos para sua área e nível de senioridade. Este processo leva cerca de 15-25 segundos."
+                            />
+                        ) : (
+                            <>
+                                <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>📚 Biblioteca Definitiva</h3>
+                                {reportData.biblioteca_tecnica?.map((book, idx) => (
+                                    <BookCard key={idx} book={book} index={idx} />
+                                ))}
+                            </>
+                        )}
                     </div>
                 )}
             </div>
@@ -654,10 +926,10 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                             fontWeight: 800,
                             textTransform: "uppercase",
                             cursor: "pointer",
-                            flex: onViewHistory ? 1 : "100%"
+                            flex: 1
                         }}
                     >
-                        Analisar outro perfil
+                        🔄 NOVA OTIMIZAÇÃO
                     </button>
                 </div>
             </div>

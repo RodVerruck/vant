@@ -115,23 +115,22 @@ def _vant_error(message: str, agent_name=None, model_name=None):
 # AGENT → MODEL REGISTRY (ATUALIZADO FEV/2026)
 # ============================================================
 AGENT_MODEL_REGISTRY = {
-    # ESCRITOR DE CV (Critical Path):
-    # Gemini 2.5 Flash - estável, bom custo-benefício
-    "cv_writer_semantic": "models/gemini-2.5-flash", 
+    # TAREFAS CRÍTICAS (Qualidade):
+    "cv_writer_semantic": "groq/llama-3.3-70b-versatile", 
 
     # TAREFAS RÁPIDAS (Velocidade/Custo):
-    # Migrado de 2.0 para 2.5 Flash (O 2.0 morre em março/26)
-    "diagnosis": "models/gemini-2.5-flash", 
-    "cv_formatter": "models/gemini-2.5-flash",
-    "tactical": "models/gemini-2.5-flash",
-    "library": "models/gemini-2.5-flash",
+    # Migrado de Gemini para Groq (teste de modelos gratuitos)
+    "diagnosis": "groq/llama-3.3-70b-versatile", 
+    "cv_formatter": "groq/llama-3.3-70b-versatile",
+    "tactical": "groq/llama-3.3-70b-versatile",
+    "library": "groq/llama-3.3-70b-versatile",
     
     # INTELIGENCE:
-    "competitor_analysis": "models/gemini-2.5-flash",
-    "interview_evaluator": "models/gemini-2.5-flash",
+    "competitor_analysis": "groq/llama-3.3-70b-versatile",
+    "interview_evaluator": "groq/llama-3.3-70b-versatile",
 }
 
-DEFAULT_MODEL = "models/gemini-2.5-flash"
+DEFAULT_MODEL = "groq/llama-3.3-70b-versatile"
 
 # ============================================================
 # IMPORT PROMPTS
@@ -413,12 +412,138 @@ Responda APENAS com JSON válido, sem explicações adicionais."""
             model_name=model_name,
         )
 
+def _call_groq(
+    system_prompt: str,
+    user_content: str,
+    agent_name: str,
+    model_name: str,
+):
+    global groq_client
+    if not groq_client:
+        api_key = os.getenv("GROQ_API_KEY")
+        if api_key:
+            try:
+                groq_client = Groq(api_key=api_key)
+            except Exception as e:
+                logger.error(f"❌ Falha ao inicializar groq_client: {e}")
+                return _vant_error(
+                    f"Falha ao inicializar cliente Groq. Verifique GROQ_API_KEY. Detalhe: {type(e).__name__}: {e}",
+                    agent_name=agent_name,
+                    model_name=model_name,
+                )
+        else:
+            logger.error("❌ groq_client indisponível (GROQ_API_KEY ausente)")
+            return _vant_error(
+                "GROQ_API_KEY não configurada. Defina a variável de ambiente GROQ_API_KEY.",
+                agent_name=agent_name,
+                model_name=model_name,
+            )
+
+    try:
+        # SEPARAÇÃO CLARA: CV Writers vs JSON Agents
+        is_cv_agent = agent_name in ["cv_writer_semantic", "cv_formatter"]
+        
+        if is_cv_agent:
+            # Protocolo Texto para CV Writers
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"{user_content}\n\nSAÍDA: Apenas o texto do currículo formatado em Markdown. Não use blocos de código, não use JSON."}
+            ]
+            
+            # Remove prefixo "groq/" do nome do modelo para a API
+            api_model = model_name.replace("groq/", "")
+            
+            response = groq_client.chat.completions.create(
+                model=api_model,
+                messages=messages,
+                temperature=0.4,
+                max_tokens=15000,
+            )
+            
+            # CV Writers: Retorna texto limpo, SEM JSON
+            cleaned_text = response.choices[0].message.content.replace('```json', '').replace('```', '').strip()
+            return {"cv_otimizado_texto": cleaned_text}
+        else:
+            # Protocolo JSON para outros agentes
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"{user_content}\n\nSAÍDA OBRIGATÓRIA: Apenas JSON válido."}
+            ]
+            
+            # Remove prefixo "groq/" do nome do modelo para a API
+            api_model = model_name.replace("groq/", "")
+            
+            response = groq_client.chat.completions.create(
+                model=api_model,
+                messages=messages,
+                temperature=0.2,
+                max_tokens=8192,
+            )
+            
+            # JSON Agents: Processamento seguro com fallback estruturado
+            cleaned_text = clean_json_string(response.choices[0].message.content)
+            
+            # TENTATIVA 1: Parse normal
+            try:
+                return json.loads(cleaned_text)
+            except json.JSONDecodeError as e:
+                logger.warning(f"⚠️ JSON quebrado em Groq [{agent_name}]. Usando Fallback Estruturado.")
+                
+                # FALLBACK ESTRUTURADO - NUNCA RETORNA TEXTO BRUTO
+                if agent_name == "diagnosis":
+                    return {
+                        "nota_ats": 0,
+                        "veredito": "Erro na Análise",
+                        "analise_por_pilares": {"impacto": 0, "keywords": 0, "ats": 0},
+                        "gaps_fatais": [{"erro": "Instabilidade na IA", "evidencia": "Não foi possível processar o arquivo.", "correcao_sugerida": "Tente novamente."}],
+                        "resumo_otimizado": "",
+                        "linkedin_headline": ""
+                    }
+                elif agent_name == "library":
+                    return {
+                        "biblioteca_tecnica": [
+                            {"titulo": "Clean Code", "autor": "Robert C. Martin", "motivo": "Essencial para código de qualidade."}
+                        ]
+                    }
+                elif agent_name == "tactical":
+                    return {
+                        "perguntas_entrevista": [
+                            {"pergunta": "Fale sobre sua experiência.", "expectativa_recrutador": "Avaliar comunicação.", "dica_resposta": "Seja claro e objetivo."}
+                        ],
+                        "projeto_pratico": {
+                            "titulo": "Projeto Básico",
+                            "descricao": "Implemente uma funcionalidade simples.",
+                            "como_apresentar": "Mostre o resultado prático."
+                        },
+                        "kit_hacker": {
+                            "boolean_string": "site:linkedin.com/in desenvolvedor"
+                        }
+                    }
+                else:
+                    # Fallback genérico para qualquer outro agente
+                    return {
+                        "veredito": "Processado com limitações",
+                        "gaps_fatais": [],
+                        "biblioteca_tecnica": [],
+                        "perguntas_entrevista": []
+                    }
+
+    except Exception as e:
+        logger.error(f"❌ Erro Fatal Groq [{agent_name} | {model_name}]: {e}")
+        return _vant_error(
+            f"Falha ao chamar Groq ({agent_name}). Verifique GROQ_API_KEY. Detalhe: {type(e).__name__}: {e}",
+            agent_name=agent_name,
+            model_name=model_name,
+        )
+
 def call_llm(system_prompt: str, payload: str, agent_name: str):
     model = AGENT_MODEL_REGISTRY.get(agent_name, DEFAULT_MODEL)
     
     # Verifica se deve usar Claude
     if model.startswith("claude"):
         return _call_claude(system_prompt, payload, agent_name, model)
+    elif model.startswith("groq"):
+        return _call_groq(system_prompt, payload, agent_name, model)
     else:
         # Usa Google Gemini (padrão)
         return _call_google_cached(system_prompt, payload, agent_name, model)
