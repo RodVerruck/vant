@@ -217,7 +217,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
         // Garantir decoding correto de UTF-8
         try {
             // Se o texto estiver mal-decodificado, tentar corrigir
-            if (text.includes('Ã£') || text.includes('Ã§') || text.includes('Ã©')) {
+            if (text.includes('ã£') || text.includes('ã§') || text.includes('ã©')) {
                 // Corrigir encoding problemático
                 const decoder = new TextDecoder('utf-8');
                 const encoder = new TextEncoder();
@@ -323,93 +323,71 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     }
                 }
                 let full_html = items_html.join('<span class="vant-contact-separator"> • </span>');
-                html_output.push(`<div class="vant-cv-contact-line">${full_html}</div>`);
+                html_output.push(`<div class="vant-cv-contact-row">${full_html}</div>`);
             }
-            // Texto corrido
+            // Texto normal
             else {
                 let clean = line.replace(/\*\*(.*?)\*\*/g, '<span class="vant-bold">$1</span>');
-                html_output.push(`<p class="vant-cv-paragraph">${clean}</p>`);
+                html_output.push(`<div class="vant-cv-text-row">${clean}</div>`);
             }
         }
 
-        return html_output.join("\n");
+        return html_output.join('');
     };
 
-    const kitHacker = reportData.kit_hacker || { boolean_string: "" };
-    const googleLink = `https://www.google.com/search?q=${encodeURIComponent(kitHacker.boolean_string)}`;
+    // Gerar link do Google X-Ray Search
+    const googleLink = reportData.kit_hacker?.boolean_string
+        ? `https://www.google.com/search?q=${encodeURIComponent(reportData.kit_hacker.boolean_string)}`
+        : `https://www.google.com/search?q=${encodeURIComponent(`site:linkedin.com/in "${reportData.area}" "${reportData.linkedin_headline}"`)}`;
 
     return (
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "20px 0" }}>
-            {/* Dashboard de XP */}
-            <div style={{
-                background: "linear-gradient(90deg, rgba(15,23,42,1) 0%, rgba(30,41,59,1) 100%)",
-                padding: 25,
-                borderRadius: 16,
-                border: `1px solid ${barColor}40`,
-                marginBottom: 30,
-                boxShadow: `0 4px 20px ${bgGlow}`
-            }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 15 }}>
-                    <div>
-                        <div style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 600, letterSpacing: "1px", marginBottom: 4 }}>DIAGNÓSTICO TÉCNICO</div>
-                        <div style={{ color: barColor, fontWeight: 800, fontSize: "1.4rem" }}>{nivelLabel}</div>
-                        <div style={{ color: "#CBD5E1", fontSize: "0.9rem", marginTop: 4, fontStyle: "italic" }}>"{msgEgo}"</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: "2rem", fontWeight: 800, color: "#F8FAFC", lineHeight: 1 }}>
-                            {xpAtual}<span style={{ fontSize: "1rem", color: "#64748B" }}>/100</span>
-                        </div>
-                        <div style={{ fontSize: "0.75rem", color: barColor, fontWeight: "bold" }}>SCORE ATS</div>
-                    </div>
-                </div>
-
-                <div style={{
-                    width: "100%",
-                    background: "rgba(0,0,0,0.6)",
-                    height: 14,
-                    borderRadius: 10,
-                    overflow: "hidden",
-                    border: "1px solid rgba(255,255,255,0.05)"
-                }}>
-                    <div style={{
-                        width: `${xpAtual}%`,
-                        background: barColor,
-                        height: "100%",
-                        transition: "width 1.5s cubic-bezier(0.4, 0, 0.2, 1)",
-                        boxShadow: `0 0 15px ${barColor}`
-                    }} />
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, fontSize: "0.8rem", color: "#64748B" }}>
-                    <span>Análise Estrutural: <strong style={{ color: "#E2E8F0" }}>Concluída</strong></span>
-                    <span>Otimização Semântica: <strong style={{ color: "#E2E8F0" }}>Aplicada</strong></span>
-                </div>
-            </div>
-
-            {/* Progresso do Dossiê */}
-            <div style={{
-                background: "rgba(15, 23, 42, 0.6)",
-                border: "1px solid rgba(56, 189, 248, 0.1)",
-                borderRadius: 12,
-                padding: 20,
-                marginBottom: 25
-            }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
-                    <span style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 600 }}>PROGRESSO DO DOSSIÊ</span>
-                    <span style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700 }}>3/3 SEÇÕES ✓</span>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Diagnóstico"></div>
-                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="CV Otimizado"></div>
-                    <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Biblioteca"></div>
-                </div>
-                <p style={{ color: "#64748B", fontSize: "0.75rem", marginTop: 10, marginBottom: 0 }}>
-                    🎉 Dossiê completo gerado! Explore todas as abas abaixo.
+        <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)", color: "#F8FAFC" }}>
+            {/* Header */}
+            <div style={{ padding: "40px 20px", textAlign: "center" }}>
+                <h1 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: 16, background: "linear-gradient(135deg, #38BDF8 0%, #8B5CF6 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                    VANT - Análise Completa
+                </h1>
+                <p style={{ fontSize: "1.2rem", color: "#94A3B8", marginBottom: 32 }}>
+                    Currículo otimizado com IA para {reportData.area || "sua área"}
                 </p>
+
+                {/* Score Card */}
+                <div style={{
+                    maxWidth: 600,
+                    margin: "0 auto 40px",
+                    background: "rgba(15, 23, 42, 0.6)",
+                    border: "1px solid rgba(56, 189, 248, 0.2)",
+                    borderRadius: 16,
+                    padding: 24,
+                    backdropFilter: "blur(10px)"
+                }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <div>
+                            <h2 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: 4 }}>{nivelLabel}</h2>
+                            <p style={{ color: "#94A3B8", margin: 0 }}>{msgEgo}</p>
+                        </div>
+                        <div style={{ textAlign: "center" }}>
+                            <div style={{ fontSize: "3rem", fontWeight: 800, color: barColor, lineHeight: 1 }}>{xpAtual}%</div>
+                            <div style={{ fontSize: "0.9rem", color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Score ATS</div>
+                        </div>
+                    </div>
+                    <div style={{ height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${xpAtual}%`, background: barColor, borderRadius: 4, transition: "width 1s ease-out" }} />
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Diagnóstico"></div>
+                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="CV Otimizado"></div>
+                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Biblioteca"></div>
+                    </div>
+                    <p style={{ color: "#64748B", fontSize: "0.75rem", marginTop: 10, marginBottom: 0 }}>
+                        Progresso: Diagnóstico ✅ | CV Otimizado ✅ | Biblioteca ✅
+                    </p>
+                </div>
             </div>
 
-            {/* Tabs */}
-            <div style={{ marginBottom: 20 }}>
+            {/* Content */}
+            <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px" }}>
+                {/* Tabs */}
                 <div style={{ display: "flex", gap: 8, borderBottom: "1px solid rgba(255,255,255,0.1)", marginBottom: 20 }}>
                     {[
                         { id: "diagnostico", label: "📊 DIAGNÓSTICO E AÇÃO" },
@@ -473,259 +451,66 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                 <div style={{ height: 20 }} />
                                 <CopyableSection title="💼 Headline LinkedIn" content={reportData.linkedin_headline || ""} isHeadline />
                                 <CopyableSection title="📝 Resumo Profissional Otimizado" content={reportData.resumo_otimizado || ""} />
-                            </>
-                        )}
 
-                        {/* X-Ray Search */}
-                        <div style={{ marginTop: 30, marginBottom: 20, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
-                            <h3 style={{ color: "#F8FAFC", marginBottom: 15, fontSize: "1.5rem", fontWeight: 600 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h3>
-                            <div style={{
-                                background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)",
-                                border: "1px solid #38BDF8",
-                                borderRadius: 12,
-                                padding: 20,
-                                position: "relative",
-                                overflow: "hidden"
-                            }}>
-                                <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, background: "#38BDF8", filter: "blur(50px)", opacity: 0.2 }} />
-
-                                <div style={{ marginBottom: 15 }}>
-                                    <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>Como encontrar os Recrutadores dessa vaga?</strong>
-                                    <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 5, lineHeight: 1.5 }}>
-                                        Não espere eles te acharem. Nossa IA gerou um código de busca avançada (Google Dorking) para filtrar Gestores, Recrutadores e Pares Sêniores.
-                                    </p>
-                                </div>
-
-                                <a href={googleLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                                {/* X-Ray Search */}
+                                <div style={{ marginTop: 30, marginBottom: 20, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
+                                    <h3 style={{ color: "#F8FAFC", marginBottom: 15, fontSize: "1.5rem", fontWeight: 600 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h3>
                                     <div style={{
-                                        background: "#38BDF8",
-                                        color: "#0F172A",
-                                        textAlign: "center",
-                                        padding: 12,
-                                        borderRadius: 8,
-                                        fontWeight: 800,
-                                        fontSize: "1rem",
-                                        transition: "transform 0.2s",
-                                        boxShadow: "0 4px 15px rgba(56, 189, 248, 0.3)",
-                                        cursor: "pointer"
+                                        background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)",
+                                        border: "1px solid #38BDF8",
+                                        borderRadius: 12,
+                                        padding: 20,
+                                        position: "relative",
+                                        overflow: "hidden"
                                     }}>
-                                        🔍 CLIQUE PARA RODAR A BUSCA NO GOOGLE
-                                    </div>
-                                </a>
+                                        <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, background: "#38BDF8", filter: "blur(50px)", opacity: 0.2 }} />
 
-                                <div style={{ marginTop: 20 }}>
-                                    <p style={{ fontSize: "0.75rem", color: "#64748B", marginBottom: 5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
-                                        CÓDIGO GERADO PELA IA:
-                                    </p>
-                                    <div style={{
-                                        background: "rgba(0,0,0,0.3)",
-                                        padding: 10,
-                                        borderRadius: 6,
-                                        borderLeft: "2px solid #64748B",
-                                        fontFamily: "monospace",
-                                        fontSize: "0.75rem",
-                                        color: "#CBD5E1",
-                                        wordBreak: "break-all"
-                                    }}>
-                                        {kitHacker.boolean_string}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                        <div style={{ marginBottom: 15 }}>
+                                            <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>Como encontrar os Recrutadores dessa vaga?</strong>
+                                            <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 5, lineHeight: 1.5 }}>
+                                                Não espere eles te acharem. Nossa IA gerou um código de busca avançada (Google Dorking) para filtrar Gestores, Recrutadores e Pares Sêniores.
+                                            </p>
+                                        </div>
 
-                        {/* Projeto Prático */}
-                        {reportData.projeto_pratico && (
-                            <>
-                                <div style={{ height: 20 }} />
-                                <h3 style={{ color: "#F8FAFC", marginBottom: 15, fontSize: "1.5rem", fontWeight: 600 }}>🏆 Projeto Prático (Diferencial)</h3>
-                                <div style={{
-                                    background: "rgba(16, 185, 129, 0.05)",
-                                    border: "1px solid #10B981",
-                                    borderRadius: 12,
-                                    padding: 20
-                                }}>
-                                    <h3 style={{ color: "#10B981", marginTop: 0, fontSize: "1.3rem", fontWeight: 700 }}>
-                                        🔨 {reportData.projeto_pratico.titulo}
-                                    </h3>
-                                    <p style={{ color: "#E2E8F0", fontSize: "1rem", lineHeight: 1.6 }}>
-                                        {reportData.projeto_pratico.descricao}
-                                    </p>
-                                    <div style={{
-                                        marginTop: 15,
-                                        paddingTop: 10,
-                                        borderTop: "1px dashed rgba(16, 185, 129, 0.3)"
-                                    }}>
-                                        <strong style={{ color: "#38BDF8" }}>🚀 Pitch para Entrevista:</strong><br />
-                                        <span style={{ color: "#94A3B8", fontStyle: "italic" }}>
-                                            "{reportData.projeto_pratico.como_apresentar}"
-                                        </span>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
-
-                {activeTab === "cv" && (
-                    <div style={{ maxWidth: 850, margin: "0 auto" }}>
-                        {loadingTabs.cv ? (
-                            <LoadingPlaceholder
-                                title="✍️ Otimizando seu currículo..."
-                                description="Nossa IA está reestruturando seu currículo para destacar seus pontos fortes, adicionar métricas de impacto e alinhar com as melhores práticas do mercado. Este processo leva cerca de 20-30 segundos."
-                            />
-                        ) : (
-                            <>
-                                <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>🚀 Currículo Reestruturado Integralmente</h3>
-
-                                {/* Editor */}
-                                <details open={isEditorOpen} style={{
-                                    background: "rgba(15, 23, 42, 0.4)",
-                                    border: "1px solid rgba(255,255,255,0.05)",
-                                    borderRadius: 8,
-                                    padding: "12px",
-                                    marginBottom: 20,
-                                    cursor: "pointer"
-                                }}>
-                                    <summary
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setIsEditorOpen(!isEditorOpen);
-                                            if (!isEditorOpen) {
-                                                setEditedCvText(reportData.cv_otimizado_completo || "");
-                                            }
-                                        }}
-                                        style={{ fontWeight: 600, color: "#94A3B8", cursor: "pointer" }}
-                                    >
-                                        ✏️ ENCONTROU UM ERRO? CLIQUE PARA EDITAR O TEXTO
-                                    </summary>
-                                    {isEditorOpen && (
-                                        <div style={{ marginTop: 15 }}>
+                                        <a href={googleLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
                                             <div style={{
-                                                background: "rgba(56, 189, 248, 0.1)",
-                                                border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                background: "#38BDF8",
+                                                color: "#0F172A",
+                                                textAlign: "center",
+                                                padding: 12,
+                                                borderRadius: 8,
+                                                fontWeight: 800,
+                                                fontSize: "1rem",
+                                                transition: "transform 0.2s",
+                                                boxShadow: "0 4px 15px rgba(56, 189, 248, 0.3)",
+                                                cursor: "pointer"
+                                            }}>
+                                                🔍 CLIQUE PARA RODAR A BUSCA NO GOOGLE
+                                            </div>
+                                        </a>
+
+                                        <div style={{ marginTop: 20 }}>
+                                            <p style={{ fontSize: "0.75rem", color: "#64748B", marginBottom: 5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
+                                                CÓDIGO GERADO PELA IA:
+                                            </p>
+                                            <div style={{
+                                                background: "rgba(0,0,0,0.3)",
+                                                border: "1px solid rgba(255,255,255,0.1)",
                                                 borderRadius: 6,
                                                 padding: 12,
-                                                marginBottom: 12,
-                                                color: "#38BDF8",
-                                                fontSize: "0.85rem"
+                                                fontFamily: "monospace",
+                                                fontSize: "0.85rem",
+                                                color: "#94A3B8",
+                                                wordBreak: "break-all",
+                                                lineHeight: 1.4
                                             }}>
-                                                💡 Edite o texto abaixo e clique em SALVAR para atualizar o PDF, o Word e a visualização.
+                                                {googleLink}
                                             </div>
-                                            <textarea
-                                                value={editedCvText}
-                                                onChange={(e) => setEditedCvText(e.target.value)}
-                                                style={{
-                                                    width: "100%",
-                                                    height: 300,
-                                                    background: "rgba(15, 23, 42, 0.8)",
-                                                    border: "1px solid rgba(255,255,255,0.1)",
-                                                    borderRadius: 8,
-                                                    color: "#F8FAFC",
-                                                    padding: 12,
-                                                    fontFamily: "monospace",
-                                                    fontSize: "0.9rem",
-                                                    resize: "vertical"
-                                                }}
-                                            />
-                                            <button
-                                                onClick={handleSaveEdit}
-                                                style={{
-                                                    background: "linear-gradient(90deg, #F59E0B, #D97706)",
-                                                    color: "white",
-                                                    border: "none",
-                                                    padding: "12px 24px",
-                                                    borderRadius: 50,
-                                                    fontWeight: 800,
-                                                    textTransform: "uppercase",
-                                                    cursor: "pointer",
-                                                    width: "100%",
-                                                    marginTop: 12
-                                                }}
-                                            >
-                                                💾 SALVAR ALTERAÇÕES
-                                            </button>
                                         </div>
-                                    )}
-                                </details>
-
-                                {/* Preview do CV */}
-                                <div className="cv-paper-sheet">
-                                    <div
-                                        className="cv-content-flow"
-                                        dangerouslySetInnerHTML={{ __html: formatTextToHtml(reportData.cv_otimizado_completo || "") }}
-                                    />
-                                </div>
-
-                                {/* Botões de Download */}
-                                <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 20 }}>
-                                    <button
-                                        onClick={handleDownloadPdf}
-                                        style={{
-                                            background: "#10B981",
-                                            color: "white",
-                                            border: "none",
-                                            padding: "12px 20px",
-                                            borderRadius: 8,
-                                            fontWeight: 600,
-                                            cursor: "pointer"
-                                        }}
-                                    >
-                                        📥 BAIXAR PDF (OFICIAL)
-                                    </button>
-                                    <button
-                                        onClick={handleDownloadWord}
-                                        style={{
-                                            background: "#38BDF8",
-                                            color: "#0F172A",
-                                            border: "none",
-                                            padding: "12px 20px",
-                                            borderRadius: 8,
-                                            fontWeight: 600,
-                                            cursor: "pointer"
-                                        }}
-                                    >
-                                        📝 BAIXAR WORD (EDITÁVEL)
-                                    </button>
+                                    </div>
                                 </div>
                             </>
                         )}
-
-                        {/* X-Ray Search */}
-                        <div style={{ marginTop: 30, marginBottom: 20, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
-                            <h3 style={{ color: "#F8FAFC", marginBottom: 15, fontSize: "1.5rem", fontWeight: 600 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h3>
-                            <div style={{
-                                background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)",
-                                border: "1px solid #38BDF8",
-                                borderRadius: 12,
-                                padding: 20,
-                                position: "relative",
-                                overflow: "hidden"
-                            }}>
-                                <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, background: "#38BDF8", filter: "blur(50px)", opacity: 0.2 }} />
-
-                                <div style={{ marginBottom: 15 }}>
-                                    <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>Como encontrar os Recrutadores dessa vaga?</strong>
-                                    <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 5, lineHeight: 1.5 }}>
-                                        Não espere eles te acharem. Nossa IA gerou um código de busca avançada (Google Dorking) para filtrar Gestores, Recrutadores e Pares Sêniores.
-                                    </p>
-                                </div>
-
-                                <a href={googleLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-                                    <div style={{
-                                        background: "#38BDF8",
-                                        color: "white",
-                                        padding: "12px 20px",
-                                        borderRadius: 8,
-                                        fontWeight: 600,
-                                        textAlign: "center",
-                                        cursor: "pointer",
-                                        transition: "all 0.2s"
-                                    }}>
-                                        🔍 BUSCAR NO GOOGLE
-                                    </div>
-                                </a>
-                            </div>
-                        </div>
                     </div>
                 )}
 
@@ -827,14 +612,10 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                 </details>
 
                                 {/* CV Content */}
-                                <div style={{
-                                    background: "rgba(15, 23, 42, 0.4)",
-                                    border: "1px solid rgba(255,255,255,0.05)",
-                                    borderRadius: 12,
+                                <div className="cv-paper-sheet" style={{
                                     padding: 32,
                                     fontSize: "15px",
-                                    lineHeight: 1.7,
-                                    color: "#F8FAFC"
+                                    lineHeight: 1.7
                                 }}>
                                     <div dangerouslySetInnerHTML={{ __html: formatTextToHtml(reportData.cv_otimizado_completo || "") }} />
                                 </div>
@@ -896,7 +677,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
 
             {/* Botões de Ação */}
             <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+                <div style={{ maxWidth: 850, margin: "0 auto", display: "flex", gap: 16, marginBottom: 16 }}>
                     {onViewHistory && (
                         <button
                             onClick={onViewHistory}
