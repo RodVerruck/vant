@@ -579,6 +579,35 @@ class EntitlementsStatusRequest(BaseModel):
     user_id: str
 
 
+@app.get("/api/user/status/{user_id}")
+def get_user_status(user_id: str) -> JSONResponse:
+    """Endpoint público para verificar se usuário tem plano ativo."""
+    if not supabase_admin:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Supabase não configurado"}
+        )
+    
+    if not validate_user_id(user_id):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "user_id inválido"}
+        )
+    
+    try:
+        status = _entitlements_status(user_id)
+        return JSONResponse(content={
+            "has_active_plan": status.get("payment_verified", False),
+            "credits_remaining": status.get("credits_remaining", 0),
+            "plan": status.get("plan")
+        })
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
+
 @app.post("/api/entitlements/status")
 def entitlements_status(payload: EntitlementsStatusRequest) -> JSONResponse:
     if not supabase_admin:
