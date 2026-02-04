@@ -288,6 +288,7 @@ export default function AppPage() {
     const [selectedPlan, setSelectedPlan] = useState<PlanType>("basico");
     const [jobDescription, setJobDescription] = useState("");
     const [useGenericJob, setUseGenericJob] = useState(false);
+    const [selectedArea, setSelectedArea] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [competitorFiles, setCompetitorFiles] = useState<File[]>([]);
 
@@ -1932,6 +1933,7 @@ export default function AppPage() {
                                                     } else {
                                                         // Limpa quando desmarcado
                                                         setJobDescription("");
+                                                        setSelectedArea("");
                                                     }
                                                 }}
                                                 style={{ marginTop: 2 }}
@@ -1942,6 +1944,52 @@ export default function AppPage() {
                                             </span>
                                         </label>
                                     </div>
+
+                                    {/* Seleção de área de interesse (aparece quando vaga genérica) */}
+                                    {useGenericJob && (
+                                        <div style={{ marginBottom: 12 }}>
+                                            <label style={{
+                                                display: "block",
+                                                marginBottom: 6,
+                                                fontSize: "0.85rem",
+                                                color: "#CBD5E1",
+                                                fontWeight: 500
+                                            }}>
+                                                Área de interesse (opcional):
+                                            </label>
+                                            <select
+                                                value={selectedArea}
+                                                onChange={(e) => setSelectedArea(e.target.value)}
+                                                style={{
+                                                    width: "100%",
+                                                    padding: "8px 12px",
+                                                    backgroundColor: "#1E293B",
+                                                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                                                    borderRadius: "6px",
+                                                    color: "#E2E8F0",
+                                                    fontSize: "0.9rem"
+                                                }}
+                                            >
+                                                <option value="">Selecione uma área...</option>
+                                                <option value="ti_dados_ai">Tecnologia/Dados/IA</option>
+                                                <option value="ti_dev_gen">Desenvolvimento de Software</option>
+                                                <option value="ti_suporte">TI/Suporte Técnico</option>
+                                                <option value="produto_agil">Produto/Agile</option>
+                                                <option value="marketing_growth">Marketing/Growth</option>
+                                                <option value="vendas_cs">Vendas/Customer Success</option>
+                                                <option value="rh_lideranca">RH/Liderança</option>
+                                                <option value="financeiro_corp">Financeiro/Corporativo</option>
+                                                <option value="global_soft_skills">Geral/Soft Skills</option>
+                                            </select>
+                                            <div style={{
+                                                marginTop: 4,
+                                                fontSize: "0.75rem",
+                                                color: "#94A3B8"
+                                            }}>
+                                                💡 Isso ajuda a personalizar a análise para sua área
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="stTextArea">
                                         <textarea

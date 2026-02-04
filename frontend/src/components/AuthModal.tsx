@@ -13,9 +13,10 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }: AuthModalProps) {
     const [showEmailForm, setShowEmailForm] = useState(false);
-    const [isLoginMode, setIsLoginMode] = useState(true);
+    const [isLoginMode, setIsLoginMode] = useState(false);
     const [authEmail, setAuthEmail] = useState("");
     const [authPassword, setAuthPassword] = useState("");
+    const [authPasswordConfirm, setAuthPasswordConfirm] = useState("");
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [error, setError] = useState("");
 
@@ -61,6 +62,18 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
 
     const handleEmailPasswordAuth = async () => {
         setError("");
+
+        // Validação de senhas para cadastro
+        if (!isLoginMode) {
+            if (authPassword.length < 6) {
+                setError("A senha deve ter pelo menos 6 caracteres");
+                return;
+            }
+            if (authPassword !== authPasswordConfirm) {
+                setError("As senhas não coincidem");
+                return;
+            }
+        }
 
         if (!supabase) {
             setError("Supabase não configurado.");
@@ -142,10 +155,10 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
             >
                 <div style={{ textAlign: "center", marginBottom: 24 }}>
                     <h2 style={{ color: "#F8FAFC", fontSize: "1.5rem", fontWeight: 800, marginBottom: 8 }}>
-                        Criar conta para continuar
+                        {isLoginMode ? "Bem-vindo de volta" : "Criar conta para continuar"}
                     </h2>
-                    <p style={{ color: "#94A3B8", fontSize: "0.9rem" }}>
-                        Desbloqueie seu dossiê profissional completo
+                    <p style={{ color: "#CBD5E1", fontSize: "0.9rem" }}>
+                        {isLoginMode ? "Entre para acessar seu dossiê profissional" : "Desbloqueie seu dossiê profissional completo"}
                     </p>
                 </div>
 
@@ -231,7 +244,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
                         </div>
 
                         <div style={{ marginBottom: 16 }}>
-                            <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+                            <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
                                 Senha
                             </div>
                             <input
@@ -239,7 +252,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
                                 value={authPassword}
                                 onChange={(e) => setAuthPassword(e.target.value)}
                                 placeholder="Mínimo 6 caracteres"
-                                autoComplete="current-password"
+                                autoComplete={isLoginMode ? "current-password" : "new-password"}
                                 style={{
                                     width: "100%",
                                     boxSizing: "border-box",
@@ -252,6 +265,31 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
                                 }}
                             />
                         </div>
+
+                        {!isLoginMode && (
+                            <div style={{ marginBottom: 16 }}>
+                                <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>
+                                    Confirmar Senha
+                                </div>
+                                <input
+                                    type="password"
+                                    value={authPasswordConfirm}
+                                    onChange={(e) => setAuthPasswordConfirm(e.target.value)}
+                                    placeholder="Digite a senha novamente"
+                                    autoComplete="new-password"
+                                    style={{
+                                        width: "100%",
+                                        boxSizing: "border-box",
+                                        height: 44,
+                                        padding: "10px 12px",
+                                        background: "rgba(15, 23, 42, 0.6)",
+                                        border: "1px solid rgba(255,255,255,0.1)",
+                                        borderRadius: 6,
+                                        color: "#F8FAFC",
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         <button
                             type="submit"
@@ -270,7 +308,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
                                 marginBottom: 12,
                             }}
                         >
-                            {isAuthenticating ? "Autenticando..." : (isLoginMode ? "ENTRAR" : "CRIAR CONTA")}
+                            {isAuthenticating ? "Autenticando..." : (isLoginMode ? "ENTRAR" : "CRIAR CONTA GRÁTIS")}
                         </button>
 
                         <div style={{ textAlign: "center", marginBottom: 12 }}>

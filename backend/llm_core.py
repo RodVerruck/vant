@@ -940,6 +940,7 @@ def analyze_cv_orchestrator_streaming(
     session_id: str,
     cv_text: str,
     job_description: str,
+    area_of_interest: str,
     books_catalog: list,
     competitors_text: str | None = None
 ) -> None:

@@ -446,7 +446,7 @@ def get_analysis_status(session_id: str) -> JSONResponse:
 
 @app.post("/api/analyze-lite")
 @limiter.limit("5/minute")  # 5 requests por minuto
-def analyze_lite(request: Request, file: UploadFile = File(...), job_description: str = Form(...)) -> JSONResponse:
+def analyze_lite(request: Request, file: UploadFile = File(...), job_description: str = Form(...), area_of_interest: str = Form("")) -> JSONResponse:
     try:
         import sentry_sdk
         sentry_sdk.set_tag("endpoint", "analyze_lite")
@@ -462,7 +462,14 @@ def analyze_lite(request: Request, file: UploadFile = File(...), job_description
         
         # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
-        data = analyze_preview_lite(cv_text, job_description)
+        
+        # Se for vaga genérica e tiver área de interesse, substitui a área detectada
+        if area_of_interest and "busco oportunidades profissionais" in job_description.lower():
+            # Força a área selecionada pelo usuário
+            data = analyze_preview_lite(cv_text, job_description, forced_area=area_of_interest)
+        else:
+            data = analyze_preview_lite(cv_text, job_description)
+        
         return JSONResponse(content=data)
     except Exception as e:
         import sentry_sdk
@@ -476,6 +483,7 @@ def analyze_free(
     request: Request,
     file: UploadFile = File(...), 
     job_description: str = Form(...),
+    area_of_interest: str = Form(""),
     user_id: str = Form(None)
 ) -> JSONResponse:
     """
@@ -520,7 +528,12 @@ def analyze_free(
         
         # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
-        data = analyze_preview_lite(cv_text, job_description)
+        
+        # Se for vaga genérica e tiver área de interesse, substitui a área detectada
+        if area_of_interest and "busco oportunidades profissionais" in job_description.lower():
+            data = analyze_preview_lite(cv_text, job_description, forced_area=area_of_interest)
+        else:
+            data = analyze_preview_lite(cv_text, job_description)
         
         # Registra uso gratuito
         if user_id and supabase_admin:
@@ -661,6 +674,7 @@ def analyze_premium_paid(
     user_id: str = Form(...),
     file: UploadFile = File(...),
     job_description: str = Form(...),
+    area_of_interest: str = Form(""),
     competitor_files: list[UploadFile] | None = File(None),
 ) -> JSONResponse:
     import sentry_sdk
@@ -717,6 +731,7 @@ def analyze_premium_paid(
             user_id=user_id,
             file_bytes=file_bytes,
             job_description=job_description,
+            area_of_interest=area_of_interest,
             competitors_bytes=competitors_bytes
         )
         
@@ -1217,6 +1232,7 @@ def _process_analysis_background(
     user_id: str,
     file_bytes: bytes,
     job_description: str,
+    area_of_interest: str,
     competitors_bytes: list[bytes] | None = None
 ) -> None:
     """
@@ -1271,6 +1287,7 @@ def _process_analysis_background(
             session_id=session_id,
             cv_text=cv_text,
             job_description=job_description,
+            area_of_interest=area_of_interest,
             books_catalog=books_catalog,
             competitors_text=competitors_text
         )

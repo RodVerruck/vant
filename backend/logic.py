@@ -355,6 +355,20 @@ def load_books_catalog():
 def detect_job_area(job_description):
     job_lower = job_description.lower()
     
+    # Detectar se é vaga genérica
+    generic_keywords = [
+        r"busco oportunidades profissionais",
+        r"estou aberto a posições",
+        r"crescimento e contribuição",
+        r"objetivos da empresa",
+        r"foco em resultados e inovação"
+    ]
+    
+    # Se for vaga genérica, retornar área selecionada ou global_soft_skills
+    for pattern in generic_keywords:
+        if re.search(pattern, job_lower):
+            return "global_soft_skills"  # Será substituído pela área selecionada se houver
+    
     keyword_map = {
         "ti_dados_ai": [
             r"dados", r"data", r"analytics", r"bi\b", r"business intelligence", r"cientista de dados", 
@@ -1010,7 +1024,7 @@ def analyze_cv_logic(cv_text, job_description, competitor_files=None, user_id=No
         }
 # [ATUALIZADO] ENGINE HEURÍSTICO COM ENRIQUECIMENTO DE CARGO
 # ============================================================
-def analyze_preview_lite(cv_text, job_description):
+def analyze_preview_lite(cv_text, job_description, forced_area=None):
     """
     Versão FREE com IA REAL: Mostra nota + 2 gaps REAIS específicos do CV.
     Objetivo: Provar valor antes de pedir pagamento.
@@ -1022,6 +1036,15 @@ def analyze_preview_lite(cv_text, job_description):
     # Sanitizar inputs
     cv_text = sanitize_input(cv_text)
     job_description = sanitize_input(job_description)
+    
+    # Se for área forçada (vaga genérica com área de interesse), usa ela
+    if forced_area:
+        area_detected = forced_area
+        logger.info(f"🔎 Área forçada pelo usuário: {area_detected.upper()}")
+    else:
+        # Detecção normal de área
+        area_detected = detect_job_area(job_description)
+        logger.info(f"🔎 Área detectada: {area_detected.upper()}")
      
     # Prompt específico para análise gratuita (2 gaps reais)
     prompt_preview = f"""
