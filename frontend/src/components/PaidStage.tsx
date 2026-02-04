@@ -1,10 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReportData } from "@/types";
 import { CopyableSection } from "./CopyableSection";
 import { GapCard } from "./GapCard";
 import { BookCard } from "./BookCard";
+
+// Estilos CSS para animação de loading
+const loadingStyles = `
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+`;
+
+// Adicionar estilos ao head do documento
+if (typeof window !== "undefined") {
+    const styleElement = document.createElement("style");
+    styleElement.textContent = loadingStyles;
+    document.head.appendChild(styleElement);
+}
 
 interface PaidStageProps {
     reportData: ReportData | null;
@@ -18,6 +33,26 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
     const [activeTab, setActiveTab] = useState<"diagnostico" | "cv" | "biblioteca">("diagnostico");
     const [editedCvText, setEditedCvText] = useState("");
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+
+    // Estado para controlar quais abas estão carregando
+    const [loadingTabs, setLoadingTabs] = useState<Record<string, boolean>>({
+        diagnostico: false,
+        cv: false,
+        biblioteca: false
+    });
+
+    // Detectar quando as abas estão carregando baseado nos dados disponíveis
+    useEffect(() => {
+        if (!reportData) return;
+
+        const newLoadingTabs = {
+            diagnostico: !reportData.gaps_fatais || !reportData.linkedin_headline || !reportData.resumo_otimizado,
+            cv: !reportData.cv_otimizado_completo,
+            biblioteca: !reportData.biblioteca_tecnica || (Array.isArray(reportData.biblioteca_tecnica) && reportData.biblioteca_tecnica.length === 0)
+        };
+
+        setLoadingTabs(newLoadingTabs);
+    }, [reportData]);
 
     if (!reportData) {
         return (
@@ -331,10 +366,29 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                 cursor: "pointer",
                                 fontWeight: 600,
                                 fontSize: "0.9rem",
-                                transition: "all 0.2s"
+                                transition: "all 0.2s",
+                                position: "relative",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px"
                             }}
                         >
-                            {tab.label}
+                            {loadingTabs[tab.id] && (
+                                <>
+                                    <div
+                                        style={{
+                                            width: "16px",
+                                            height: "16px",
+                                            border: "2px solid #38BDF8",
+                                            borderTop: "2px solid transparent",
+                                            borderRadius: "50%",
+                                            animation: "spin 1s linear infinite"
+                                        }}
+                                    />
+                                    <span style={{ opacity: 0.7 }}>Carregando...</span>
+                                </>
+                            )}
+                            {!loadingTabs[tab.id] && tab.label}
                         </button>
                     ))}
                 </div>
