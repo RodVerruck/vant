@@ -855,10 +855,10 @@ export default function AppPage() {
 
                         // Se usuário tem plano ativo E não está vindo de um fluxo de pagamento
                         if (data.has_active_plan && data.credits_remaining > 0 && !returnPlan) {
-                            console.log("[User Status] Usuário com plano ativo detectado, redirecionando para paid");
+                            console.log("[User Status] Usuário com plano ativo detectado, mantendo em hero");
                             setCreditsRemaining(data.credits_remaining);
                             setSelectedPlan("premium_plus");
-                            setStage("paid");
+                            // NÃO redirecionar para paid - manter em hero para usuário enviar arquivo
                             return;
                         }
                     }
@@ -1176,10 +1176,10 @@ export default function AppPage() {
             try {
                 await syncEntitlements(authUserId);
 
-                // Se usuário tem créditos e está na página de planos (preview), mover para paid
+                // Se usuário tem créditos e está na página de planos (preview), mover para hero para usar crédito
                 if (creditsRemaining > 0 && stage === "preview") {
-                    console.log("[syncEntitlements] Usuário tem créditos, movendo para stage 'paid'");
-                    setStage("paid");
+                    console.log("[syncEntitlements] Usuário tem créditos, movendo para hero para usar crédito");
+                    setStage("hero");
                 }
 
                 // Se usuário tem créditos e está no hero (tela inicial), mostrar mensagem
