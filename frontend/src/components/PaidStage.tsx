@@ -338,7 +338,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
     // Gerar link do Google X-Ray Search
     const googleLink = reportData.kit_hacker?.boolean_string
         ? `https://www.google.com/search?q=${encodeURIComponent(reportData.kit_hacker.boolean_string)}`
-        : `https://www.google.com/search?q=${encodeURIComponent(`site:linkedin.com/in "${reportData.area}" "${reportData.linkedin_headline}"`)}`;
+        : `https://www.google.com/search?q=${encodeURIComponent(`site:linkedin.com/in "${reportData.setor_detectado || ''}" "${reportData.linkedin_headline}"`)}`;
 
     return (
         <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)", color: "#F8FAFC" }}>
@@ -348,7 +348,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     VANT - Análise Completa
                 </h1>
                 <p style={{ fontSize: "1.2rem", color: "#94A3B8", marginBottom: 32 }}>
-                    Currículo otimizado com IA para {reportData.area || "sua área"}
+                    Currículo otimizado com IA para {reportData.setor_detectado || "sua área"}
                 </p>
 
                 {/* Score Card */}

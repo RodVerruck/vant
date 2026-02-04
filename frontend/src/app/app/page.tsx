@@ -651,7 +651,7 @@ export default function AppPage() {
             if (!supabase) {
                 return;
             }
-            const { data } = await supabase.auth.getSession();
+            const { data } = await (supabase as any).auth.getSession();
             const session = data?.session;
             const user = session?.user;
             if (user?.id) {
@@ -666,8 +666,8 @@ export default function AppPage() {
 
         // Adicionar listener para mudanças de autenticação em tempo real
         if (supabase) {
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(
-                (event, session) => {
+            const { data: { subscription } } = (supabase as any).auth.onAuthStateChange(
+                (event: any, session: any) => {
                     console.log("[AuthStateChange] Event:", event, "User:", session?.user?.email);
 
                     if (event === 'SIGNED_IN' && session?.user) {
@@ -691,10 +691,11 @@ export default function AppPage() {
         const payment = url.searchParams.get("payment");
         const sessionId = url.searchParams.get("session_id") || "";
 
-        if (code && supabase) {
+        if (code) {
             (async () => {
+                if (!supabase) return;
                 try {
-                    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                    const { data, error } = await (supabase as any).auth.exchangeCodeForSession(code);
                     if (error) {
                         // Ignora erro se for "code already used" em dev, pois o usuário pode já estar logado
                         console.warn("Erro na troca de código (possível duplicidade em dev):", error.message);
@@ -1010,7 +1011,7 @@ export default function AppPage() {
         try {
             if (isLoginMode) {
                 // LOGIN
-                const { data, error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await (supabase as any).auth.signInWithPassword({
                     email: authEmail,
                     password: authPassword,
                 });
@@ -1025,7 +1026,7 @@ export default function AppPage() {
                 }
             } else {
                 // CADASTRO
-                const { data, error } = await supabase.auth.signUp({
+                const { data, error } = await (supabase as any).auth.signUp({
                     email: authEmail,
                     password: authPassword,
                 });
@@ -1067,7 +1068,7 @@ export default function AppPage() {
                 console.log("[DEBUG] handleGoogleLogin page.tsx - Salvando stage:", stage, "plano:", selectedPlan);
             }
 
-            const { error } = await supabase.auth.signInWithOAuth({
+            const { error } = await (supabase as any).auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: typeof window !== "undefined"
@@ -1709,7 +1710,7 @@ export default function AppPage() {
                                     type="button"
                                     onClick={async () => {
                                         if (supabase) {
-                                            await supabase.auth.signOut();
+                                            await (supabase as any).auth.signOut();
                                         }
                                     }}
                                     style={{
@@ -2534,24 +2535,26 @@ export default function AppPage() {
                             </div>
                         </div>
                     )}
+                </>
+            )}
 
-                    {stage === "preview" && (
-                        <div className="hero-container">
-                            {(() => {
-                                const data: Partial<PreviewData> = previewData ?? {};
-                                const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
-                                const pilares = data.analise_por_pilares || {};
-                                const veredito = data.veredito || "ANÁLISE CONCLUÍDA";
-                                const potencial = calcPotencial(nota);
+            {stage === "preview" && (
+                <div className="hero-container">
+                    {(() => {
+                        const data: Partial<PreviewData> = previewData ?? {};
+                        const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
+                        const pilares = data.analise_por_pilares || {};
+                        const veredito = data.veredito || "ANÁLISE CONCLUÍDA";
+                        const potencial = calcPotencial(nota);
 
-                                let texto_destaque = "Recrutadores e Gestores";
-                                const jobText = (jobDescription || "").toLowerCase();
-                                if (jobText.includes("nubank")) texto_destaque += " do Nubank";
-                                else if (jobText.includes("google")) texto_destaque += " do Google";
-                                else if (jobText.includes("amazon")) texto_destaque += " da Amazon";
-                                else if (jobText.includes("itaú") || jobText.includes("itau")) texto_destaque += " do Itaú";
+                        let texto_destaque = "Recrutadores e Gestores";
+                        const jobText = (jobDescription || "").toLowerCase();
+                        if (jobText.includes("nubank")) texto_destaque += " do Nubank";
+                        else if (jobText.includes("google")) texto_destaque += " do Google";
+                        else if (jobText.includes("amazon")) texto_destaque += " da Amazon";
+                        else if (jobText.includes("itaú") || jobText.includes("itau")) texto_destaque += " do Itaú";
 
-                                const metaHtml = `
+                        const metaHtml = `
     <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 185, 129, 0.1)); 
                 border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; margin-top: 20px;">
         <div style="display: flex; align-items: center; gap: 15px;">
@@ -2567,14 +2570,14 @@ export default function AppPage() {
     </div>
     `;
 
-                                const dashHtml = renderDashboardMetricsHtml(nota, veredito, potencial, pilares);
+                        const dashHtml = renderDashboardMetricsHtml(nota, veredito, potencial, pilares);
 
-                                const setorDetectado = typeof pilares.setor_detectado === "string" ? pilares.setor_detectado : "Gestão Estratégica";
-                                const exemploMelhoria = `Especialista em ${setorDetectado} com histórico de ` +
-                                    "liderança em projetos de alta complexidade. Otimizou o budget operacional em 22%..." +
-                                    "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
+                        const setorDetectado = typeof pilares.setor_detectado === "string" ? pilares.setor_detectado : "Gestão Estratégica";
+                        const exemploMelhoria = `Especialista em ${setorDetectado} com histórico de ` +
+                            "liderança em projetos de alta complexidade. Otimizou o budget operacional em 22%..." +
+                            "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
 
-                                const xrayHtml = `
+                        const xrayHtml = `
         <div style='background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(56, 189, 248, 0.2); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;'>
             <div style="position: absolute; top: -20px; right: -20px; background: #38BDF8; width: 60px; height: 60px; filter: blur(40px); opacity: 0.1;"></div>
             
@@ -2596,586 +2599,586 @@ export default function AppPage() {
         </div>
         `;
 
-                                return (
-                                    <>
-                                        <div dangerouslySetInnerHTML={{ __html: metaHtml }} />
+                        return (
+                            <>
+                                <div dangerouslySetInnerHTML={{ __html: metaHtml }} />
 
-                                        <div className="action-island-container" style={{ textAlign: "left", marginTop: 18 }}>
-                                            <div dangerouslySetInnerHTML={{ __html: dashHtml }} />
+                                <div className="action-island-container" style={{ textAlign: "left", marginTop: 18 }}>
+                                    <div dangerouslySetInnerHTML={{ __html: dashHtml }} />
 
-                                            {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
-                                            {data.gap_1 && data.gap_2 && (
-                                                <div style={{ marginTop: 24, marginBottom: 32 }}>
-                                                    <div style={{ textAlign: "center", marginBottom: 20, padding: "16px", background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05))", borderRadius: 12, border: "1px solid rgba(16, 185, 129, 0.3)" }}>
-                                                        <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>✨</div>
-                                                        <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 4 }}>
-                                                            PRÉVIA GRATUITA
-                                                        </div>
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.9rem" }}>
-                                                            Nossa IA analisou seu CV e identificou 2 problemas críticos
-                                                        </div>
-                                                    </div>
+                                    {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
+                                    {data.gap_1 && data.gap_2 && (
+                                        <div style={{ marginTop: 24, marginBottom: 32 }}>
+                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "16px", background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05))", borderRadius: 12, border: "1px solid rgba(16, 185, 129, 0.3)" }}>
+                                                <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>✨</div>
+                                                <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 4 }}>
+                                                    PRÉVIA GRATUITA
+                                                </div>
+                                                <div style={{ color: "#E2E8F0", fontSize: "0.9rem" }}>
+                                                    Nossa IA analisou seu CV e identificou 2 problemas críticos
+                                                </div>
+                                            </div>
 
-                                                    {/* Gap 1 - Dados reais da IA */}
+                                            {/* Gap 1 - Dados reais da IA */}
+                                            <div style={{
+                                                background: "rgba(15, 23, 42, 0.6)",
+                                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                borderLeft: "4px solid #EF4444",
+                                                borderRadius: 12,
+                                                padding: 20,
+                                                marginBottom: 16
+                                            }}>
+                                                <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                     <div style={{
-                                                        background: "rgba(15, 23, 42, 0.6)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.3)",
-                                                        borderLeft: "4px solid #EF4444",
-                                                        borderRadius: 12,
-                                                        padding: 20,
-                                                        marginBottom: 16
-                                                    }}>
-                                                        <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
-                                                            <div style={{
-                                                                background: "rgba(239, 68, 68, 0.2)",
-                                                                borderRadius: "50%",
-                                                                width: 32,
-                                                                height: 32,
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                fontSize: "1rem",
-                                                                flexShrink: 0
-                                                            }}>⚠️</div>
-                                                            <div style={{ flex: 1 }}>
-                                                                <div style={{ color: "#EF4444", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
-                                                                    PROBLEMA #1: {data.gap_1.titulo || "Falta de Resultados Quantificáveis"}
-                                                                </div>
-                                                                <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                                    {data.gap_1.explicacao || "Seu CV usa descrições genéricas sem números ou impacto mensurável."}
-                                                                </div>
-                                                            </div>
+                                                        background: "rgba(239, 68, 68, 0.2)",
+                                                        borderRadius: "50%",
+                                                        width: 32,
+                                                        height: 32,
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        fontSize: "1rem",
+                                                        flexShrink: 0
+                                                    }}>⚠️</div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ color: "#EF4444", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
+                                                            PROBLEMA #1: {data.gap_1.titulo || "Falta de Resultados Quantificáveis"}
                                                         </div>
-
-                                                        {data.gap_1.exemplo_atual && (
-                                                            <div style={{
-                                                                background: "rgba(0, 0, 0, 0.3)",
-                                                                borderRadius: 8,
-                                                                padding: 12,
-                                                                marginBottom: 12
-                                                            }}>
-                                                                <div style={{ color: "#EF4444", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
-                                                                    ❌ VERSÃO ATUAL (Score: {nota}/100)
-                                                                </div>
-                                                                <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic", lineHeight: 1.5 }}>
-                                                                    "{data.gap_1.exemplo_atual}"
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {data.gap_1.exemplo_otimizado && (
-                                                            <div style={{
-                                                                background: "rgba(16, 185, 129, 0.1)",
-                                                                border: "1px solid rgba(16, 185, 129, 0.3)",
-                                                                borderRadius: 8,
-                                                                padding: 12
-                                                            }}>
-                                                                <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
-                                                                    ✅ VERSÃO OTIMIZADA (Score: {potencial}/100)
-                                                                </div>
-                                                                <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}
-                                                                    dangerouslySetInnerHTML={{ __html: data.gap_1.exemplo_otimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                                                            </div>
-                                                        )}
-
-                                                        <div style={{
-                                                            marginTop: 12,
-                                                            padding: 10,
-                                                            background: "rgba(56, 189, 248, 0.1)",
-                                                            borderRadius: 6,
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            gap: 8
-                                                        }}>
-                                                            <span style={{ fontSize: "1rem" }}>💡</span>
-                                                            <span style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600 }}>
-                                                                Impacto: +{Math.min(45, potencial - nota)} pontos no score ATS
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Gap 2 - Dados reais da IA */}
-                                                    <div style={{
-                                                        background: "rgba(15, 23, 42, 0.6)",
-                                                        border: "1px solid rgba(245, 158, 11, 0.3)",
-                                                        borderLeft: "4px solid #F59E0B",
-                                                        borderRadius: 12,
-                                                        padding: 20
-                                                    }}>
-                                                        <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
-                                                            <div style={{
-                                                                background: "rgba(245, 158, 11, 0.2)",
-                                                                borderRadius: "50%",
-                                                                width: 32,
-                                                                height: 32,
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                fontSize: "1rem",
-                                                                flexShrink: 0
-                                                            }}>🎯</div>
-                                                            <div style={{ flex: 1 }}>
-                                                                <div style={{ color: "#F59E0B", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
-                                                                    PROBLEMA #2: {data.gap_2.titulo || "Palavras-Chave da Vaga Ausentes"}
-                                                                </div>
-                                                                <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                                    {data.gap_2.explicacao || "Termos críticos da vaga não aparecem no seu CV."}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
-                                                            <div style={{
-                                                                background: "rgba(0, 0, 0, 0.3)",
-                                                                borderRadius: 8,
-                                                                padding: 12,
-                                                                marginBottom: 8
-                                                            }}>
-                                                                <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 8 }}>
-                                                                    🔍 TERMOS FALTANDO NO SEU CV:
-                                                                </div>
-                                                                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                                                                    {data.gap_2.termos_faltando.slice(0, 5).map((term: string, i: number) => (
-                                                                        <span key={i} style={{
-                                                                            background: "rgba(239, 68, 68, 0.2)",
-                                                                            color: "#EF4444",
-                                                                            padding: "4px 10px",
-                                                                            borderRadius: 16,
-                                                                            fontSize: "0.75rem",
-                                                                            fontWeight: 600,
-                                                                            border: "1px solid rgba(239, 68, 68, 0.3)"
-                                                                        }}>
-                                                                            {term}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        <div style={{
-                                                            marginTop: 12,
-                                                            padding: 10,
-                                                            background: "rgba(16, 185, 129, 0.1)",
-                                                            borderRadius: 6,
-                                                            border: "1px dashed rgba(16, 185, 129, 0.3)"
-                                                        }}>
-                                                            <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>
-                                                                💎 Na versão premium você recebe:
-                                                            </div>
-                                                            <div style={{ color: "#CBD5E1", fontSize: "0.75rem", lineHeight: 1.5 }}>
-                                                                • CV reescrito com <strong>todas as palavras-chave</strong> integradas naturalmente<br />
-                                                                • Análise de <strong>43 critérios ATS</strong> (não apenas 2)<br />
-                                                                • Headline do LinkedIn otimizada para recrutadores
-                                                            </div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                            {data.gap_1.explicacao || "Seu CV usa descrições genéricas sem números ou impacto mensurável."}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )}
 
-                                            <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 14, textAlign: "center" }}>
-                                                🚀 Escolha Seu Plano
-                                            </div>
-                                            <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 24, textAlign: "center" }}>
-                                                Desbloqueie análises completas e otimize múltiplos CVs
-                                            </div>
-
-                                            {/* ARQUITETURA SAAS - "COMPARATIVO DESLEAL" (Growth Hacking Version) */}
-                                            <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: 24 }}>
-
-                                                {/* 1. HEADLINE DE CONVERSÃO */}
-                                                <div style={{ textAlign: "center", marginBottom: 8 }}>
-                                                    <h3 style={{ color: "#E2E8F0", fontSize: "1.2rem", fontWeight: 700, margin: "0 0 8px 0" }}>
-                                                        Não aposte seu futuro em uma única vaga.
-                                                    </h3>
-                                                    <p style={{ color: "#94A3B8", fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>
-                                                        Candidatos que aplicam para <strong>10+ vagas</strong> aumentam em 5x as chances de entrevista.<br />
-                                                        Jogue o jogo dos números.
-                                                    </p>
-                                                </div>
-
-                                                {/* CONTAINER DOS CARDS - Grid Responsivo */}
-                                                <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "stretch" }}>
-
-                                                    {/* CARD 1: SOLUÇÃO RÁPIDA (Âncora & Tripwire) */}
+                                                {data.gap_1.exemplo_atual && (
                                                     <div style={{
-                                                        flex: "1 1 300px",
-                                                        background: "rgba(15, 23, 42, 0.4)",
-                                                        border: "1px solid rgba(148, 163, 184, 0.2)",
-                                                        borderRadius: 16,
-                                                        padding: "24px",
-                                                        display: "flex",
-                                                        flexDirection: "column",
-                                                        justifyContent: "space-between"
+                                                        background: "rgba(0, 0, 0, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: 12,
+                                                        marginBottom: 12
                                                     }}>
-                                                        <div>
-                                                            <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
-                                                                CRÉDITOS AVULSOS
-                                                            </div>
-                                                            <div style={{ color: "#E2E8F0", fontSize: "1.4rem", fontWeight: 700, marginBottom: 8 }}>
-                                                                A partir de R$ 12,90
-                                                            </div>
-
-                                                            <p style={{ color: "#64748B", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 24 }}>
-                                                                Ideal para ajustes pontuais ou se você já tem uma vaga específica em mente.
-                                                            </p>
-
-                                                            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
-                                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                                                    <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
-                                                                    <span style={{ color: "#fff", fontWeight: 700 }}>R$ 12,90</span>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setSelectedPlan("credit_1");
-                                                                        if (!authUserId) setShowAuthModal(true);
-                                                                        else setStage("checkout");
-                                                                    }}
-                                                                    style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                                                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
-                                                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
-                                                                >
-                                                                    Comprar 1 Crédito
-                                                                </button>
-                                                            </div>
-
-                                                            <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
-                                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                                                    <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 3 CVs</span>
-                                                                    <span style={{ color: "#fff", fontWeight: 700 }}>R$ 29,90</span>
-                                                                </div>
-                                                                <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 9,97/cada • economize 23%</div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setSelectedPlan("credit_3");
-                                                                        if (!authUserId) setShowAuthModal(true);
-                                                                        else setStage("checkout");
-                                                                    }}
-                                                                    style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                                                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
-                                                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
-                                                                >
-                                                                    Comprar Pacote 3
-                                                                </button>
-                                                            </div>
-
-                                                            <div style={{ marginTop: 16, padding: 12, background: "rgba(56, 189, 248, 0.1)", borderRadius: 8, border: "1px solid rgba(56, 189, 248, 0.2)" }}>
-                                                                <div style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>💡 Quer otimizar mais de 5 CVs?</div>
-                                                                <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>Trial por R$ 1,99 é melhor negócio!</div>
-                                                            </div>
+                                                        <div style={{ color: "#EF4444", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
+                                                            ❌ VERSÃO ATUAL (Score: {nota}/100)
+                                                        </div>
+                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic", lineHeight: 1.5 }}>
+                                                            "{data.gap_1.exemplo_atual}"
                                                         </div>
                                                     </div>
+                                                )}
 
-                                                    {/* CARD 2: HERO SAAS (O Foco da Venda) */}
+                                                {data.gap_1.exemplo_otimizado && (
                                                     <div style={{
-                                                        flex: "1 1 300px",
-                                                        background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
-                                                        border: "2px solid #10B981",
-                                                        borderRadius: 16,
-                                                        padding: "24px",
-                                                        position: "relative",
-                                                        boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
-                                                        display: "flex",
-                                                        flexDirection: "column",
-                                                        justifyContent: "space-between"
+                                                        background: "rgba(16, 185, 129, 0.1)",
+                                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: 12
                                                     }}>
-                                                        <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
-                                                            🏆 RECOMENDADO PELA IA
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
+                                                            ✅ VERSÃO OTIMIZADA (Score: {potencial}/100)
                                                         </div>
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}
+                                                            dangerouslySetInnerHTML={{ __html: data.gap_1.exemplo_otimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                                    </div>
+                                                )}
 
-                                                        <div>
-                                                            <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.4rem", marginBottom: 20, textAlign: "center" }}>🎯 VANT PRO MENSAL</div>
+                                                <div style={{
+                                                    marginTop: 12,
+                                                    padding: 10,
+                                                    background: "rgba(56, 189, 248, 0.1)",
+                                                    borderRadius: 6,
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 8
+                                                }}>
+                                                    <span style={{ fontSize: "1rem" }}>💡</span>
+                                                    <span style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600 }}>
+                                                        Impacto: +{Math.min(45, potencial - nota)} pontos no score ATS
+                                                    </span>
+                                                </div>
+                                            </div>
 
-                                                            <div style={{
-                                                                background: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))",
-                                                                border: "2px solid #EF4444",
-                                                                borderRadius: 12,
-                                                                padding: "18px",
-                                                                marginBottom: 20,
-                                                                textAlign: "center",
-                                                                boxShadow: "0 0 20px rgba(239, 68, 68, 0.3)"
-                                                            }}>
-                                                                <div style={{ color: "#EF4444", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
-                                                                    🔥 OFERTA RELÂMPAGO DE LANÇAMENTO
-                                                                </div>
-                                                                <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6 }}>
-                                                                    7 DIAS POR R$ 1,99
-                                                                </div>
-                                                                <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 12 }}>
-                                                                    Renova por apenas R$ 19,90/mês
-                                                                </div>
+                                            {/* Gap 2 - Dados reais da IA */}
+                                            <div style={{
+                                                background: "rgba(15, 23, 42, 0.6)",
+                                                border: "1px solid rgba(245, 158, 11, 0.3)",
+                                                borderLeft: "4px solid #F59E0B",
+                                                borderRadius: 12,
+                                                padding: 20
+                                            }}>
+                                                <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
+                                                    <div style={{
+                                                        background: "rgba(245, 158, 11, 0.2)",
+                                                        borderRadius: "50%",
+                                                        width: 32,
+                                                        height: 32,
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        fontSize: "1rem",
+                                                        flexShrink: 0
+                                                    }}>🎯</div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ color: "#F59E0B", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
+                                                            PROBLEMA #2: {data.gap_2.titulo || "Palavras-Chave da Vaga Ausentes"}
+                                                        </div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                            {data.gap_2.explicacao || "Termos críticos da vaga não aparecem no seu CV."}
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                                                                <div style={{
-                                                                    background: "rgba(245, 158, 11, 0.2)",
-                                                                    border: "1px solid rgba(245, 158, 11, 0.4)",
-                                                                    borderRadius: 8,
-                                                                    padding: "10px",
-                                                                    marginBottom: 12
+                                                {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
+                                                    <div style={{
+                                                        background: "rgba(0, 0, 0, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: 12,
+                                                        marginBottom: 8
+                                                    }}>
+                                                        <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 8 }}>
+                                                            🔍 TERMOS FALTANDO NO SEU CV:
+                                                        </div>
+                                                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                                            {data.gap_2.termos_faltando.slice(0, 5).map((term: string, i: number) => (
+                                                                <span key={i} style={{
+                                                                    background: "rgba(239, 68, 68, 0.2)",
+                                                                    color: "#EF4444",
+                                                                    padding: "4px 10px",
+                                                                    borderRadius: 16,
+                                                                    fontSize: "0.75rem",
+                                                                    fontWeight: 600,
+                                                                    border: "1px solid rgba(239, 68, 68, 0.3)"
                                                                 }}>
-                                                                    <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
-                                                                        🔥 PRIMEIROS 100 CLIENTES GARANTEM:
-                                                                    </div>
-                                                                    <div style={{ color: "#FDE68A", fontSize: "0.9rem", fontWeight: 700 }}>
-                                                                        Preço vitalício de R$ 19,90/mês
-                                                                    </div>
-                                                                    <div style={{ color: "#94A3B8", fontSize: "0.7rem", marginTop: 2 }}>
-                                                                        (em vez de R$ 27,90)
-                                                                    </div>
-                                                                </div>
+                                                                    {term}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
 
-                                                                <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 12 }}>
-                                                                    <div>
-                                                                        <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2 }}>⏰ RESTAM</div>
-                                                                        <div style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 900 }}>{remainingSpots} vagas</div>
-                                                                    </div>
-                                                                    <div style={{ width: "1px", background: "rgba(148, 163, 184, 0.3)" }} />
-                                                                    <div>
-                                                                        <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                                                                            <span style={{ animation: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "pulse 1.5s infinite" : "none" }}>🔥</span>
-                                                                            EXPIRA EM
-                                                                        </div>
-                                                                        <div style={{
-                                                                            color: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "#EF4444" : "#fff",
-                                                                            fontSize: "1.3rem",
-                                                                            fontWeight: 900,
-                                                                            fontFamily: "monospace",
-                                                                            animation: timeRemaining.hours === 0 && timeRemaining.minutes < 10 ? "pulse 1.5s infinite" : "none"
-                                                                        }}>
-                                                                            {String(timeRemaining.hours).padStart(2, '0')}:{String(timeRemaining.minutes).padStart(2, '0')}:{String(timeRemaining.seconds).padStart(2, '0')}
-                                                                        </div>
-                                                                    </div>
+                                                <div style={{
+                                                    marginTop: 12,
+                                                    padding: 10,
+                                                    background: "rgba(16, 185, 129, 0.1)",
+                                                    borderRadius: 6,
+                                                    border: "1px dashed rgba(16, 185, 129, 0.3)"
+                                                }}>
+                                                    <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>
+                                                        💎 Na versão premium você recebe:
+                                                    </div>
+                                                    <div style={{ color: "#CBD5E1", fontSize: "0.75rem", lineHeight: 1.5 }}>
+                                                        • CV reescrito com <strong>todas as palavras-chave</strong> integradas naturalmente<br />
+                                                        • Análise de <strong>43 critérios ATS</strong> (não apenas 2)<br />
+                                                        • Headline do LinkedIn otimizada para recrutadores
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 14, textAlign: "center" }}>
+                                        🚀 Escolha Seu Plano
+                                    </div>
+                                    <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 24, textAlign: "center" }}>
+                                        Desbloqueie análises completas e otimize múltiplos CVs
+                                    </div>
+
+                                    {/* ARQUITETURA SAAS - "COMPARATIVO DESLEAL" (Growth Hacking Version) */}
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: 24 }}>
+
+                                        {/* 1. HEADLINE DE CONVERSÃO */}
+                                        <div style={{ textAlign: "center", marginBottom: 8 }}>
+                                            <h3 style={{ color: "#E2E8F0", fontSize: "1.2rem", fontWeight: 700, margin: "0 0 8px 0" }}>
+                                                Não aposte seu futuro em uma única vaga.
+                                            </h3>
+                                            <p style={{ color: "#94A3B8", fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>
+                                                Candidatos que aplicam para <strong>10+ vagas</strong> aumentam em 5x as chances de entrevista.<br />
+                                                Jogue o jogo dos números.
+                                            </p>
+                                        </div>
+
+                                        {/* CONTAINER DOS CARDS - Grid Responsivo */}
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "stretch" }}>
+
+                                            {/* CARD 1: SOLUÇÃO RÁPIDA (Âncora & Tripwire) */}
+                                            <div style={{
+                                                flex: "1 1 300px",
+                                                background: "rgba(15, 23, 42, 0.4)",
+                                                border: "1px solid rgba(148, 163, 184, 0.2)",
+                                                borderRadius: 16,
+                                                padding: "24px",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                justifyContent: "space-between"
+                                            }}>
+                                                <div>
+                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
+                                                        CRÉDITOS AVULSOS
+                                                    </div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "1.4rem", fontWeight: 700, marginBottom: 8 }}>
+                                                        A partir de R$ 12,90
+                                                    </div>
+
+                                                    <p style={{ color: "#64748B", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 24 }}>
+                                                        Ideal para ajustes pontuais ou se você já tem uma vaga específica em mente.
+                                                    </p>
+
+                                                    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
+                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 12,90</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedPlan("credit_1");
+                                                                if (!authUserId) setShowAuthModal(true);
+                                                                else setStage("checkout");
+                                                            }}
+                                                            style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                                                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
+                                                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                        >
+                                                            Comprar 1 Crédito
+                                                        </button>
+                                                    </div>
+
+                                                    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
+                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 3 CVs</span>
+                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 29,90</span>
+                                                        </div>
+                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 9,97/cada • economize 23%</div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedPlan("credit_3");
+                                                                if (!authUserId) setShowAuthModal(true);
+                                                                else setStage("checkout");
+                                                            }}
+                                                            style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                                                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
+                                                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                        >
+                                                            Comprar Pacote 3
+                                                        </button>
+                                                    </div>
+
+                                                    <div style={{ marginTop: 16, padding: 12, background: "rgba(56, 189, 248, 0.1)", borderRadius: 8, border: "1px solid rgba(56, 189, 248, 0.2)" }}>
+                                                        <div style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>💡 Quer otimizar mais de 5 CVs?</div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>Trial por R$ 1,99 é melhor negócio!</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* CARD 2: HERO SAAS (O Foco da Venda) */}
+                                            <div style={{
+                                                flex: "1 1 300px",
+                                                background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
+                                                border: "2px solid #10B981",
+                                                borderRadius: 16,
+                                                padding: "24px",
+                                                position: "relative",
+                                                boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                justifyContent: "space-between"
+                                            }}>
+                                                <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
+                                                    🏆 RECOMENDADO PELA IA
+                                                </div>
+
+                                                <div>
+                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.4rem", marginBottom: 20, textAlign: "center" }}>🎯 VANT PRO MENSAL</div>
+
+                                                    <div style={{
+                                                        background: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))",
+                                                        border: "2px solid #EF4444",
+                                                        borderRadius: 12,
+                                                        padding: "18px",
+                                                        marginBottom: 20,
+                                                        textAlign: "center",
+                                                        boxShadow: "0 0 20px rgba(239, 68, 68, 0.3)"
+                                                    }}>
+                                                        <div style={{ color: "#EF4444", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
+                                                            🔥 OFERTA RELÂMPAGO DE LANÇAMENTO
+                                                        </div>
+                                                        <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6 }}>
+                                                            7 DIAS POR R$ 1,99
+                                                        </div>
+                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 12 }}>
+                                                            Renova por apenas R$ 19,90/mês
+                                                        </div>
+
+                                                        <div style={{
+                                                            background: "rgba(245, 158, 11, 0.2)",
+                                                            border: "1px solid rgba(245, 158, 11, 0.4)",
+                                                            borderRadius: 8,
+                                                            padding: "10px",
+                                                            marginBottom: 12
+                                                        }}>
+                                                            <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
+                                                                🔥 PRIMEIROS 100 CLIENTES GARANTEM:
+                                                            </div>
+                                                            <div style={{ color: "#FDE68A", fontSize: "0.9rem", fontWeight: 700 }}>
+                                                                Preço vitalício de R$ 19,90/mês
+                                                            </div>
+                                                            <div style={{ color: "#94A3B8", fontSize: "0.7rem", marginTop: 2 }}>
+                                                                (em vez de R$ 27,90)
+                                                            </div>
+                                                        </div>
+
+                                                        <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 12 }}>
+                                                            <div>
+                                                                <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2 }}>⏰ RESTAM</div>
+                                                                <div style={{ color: "#fff", fontSize: "1.3rem", fontWeight: 900 }}>{remainingSpots} vagas</div>
+                                                            </div>
+                                                            <div style={{ width: "1px", background: "rgba(148, 163, 184, 0.3)" }} />
+                                                            <div>
+                                                                <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                                                                    <span style={{ animation: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "pulse 1.5s infinite" : "none" }}>🔥</span>
+                                                                    EXPIRA EM
                                                                 </div>
-                                                                <style dangerouslySetInnerHTML={{
-                                                                    __html: `
+                                                                <div style={{
+                                                                    color: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "#EF4444" : "#fff",
+                                                                    fontSize: "1.3rem",
+                                                                    fontWeight: 900,
+                                                                    fontFamily: "monospace",
+                                                                    animation: timeRemaining.hours === 0 && timeRemaining.minutes < 10 ? "pulse 1.5s infinite" : "none"
+                                                                }}>
+                                                                    {String(timeRemaining.hours).padStart(2, '0')}:{String(timeRemaining.minutes).padStart(2, '0')}:{String(timeRemaining.seconds).padStart(2, '0')}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <style dangerouslySetInnerHTML={{
+                                                            __html: `
                                                             @keyframes pulse {
                                                                 0%, 100% { opacity: 1; transform: scale(1); }
                                                                 50% { opacity: 0.8; transform: scale(1.05); }
                                                             }
                                                         ` }} />
+                                                    </div>
+
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 20, textAlign: "center" }}>
+                                                        O que você ganha:
+                                                    </div>
+
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: 24 }}>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                                            <span><strong>30 Otimizações/mês</strong></span>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                                            <span><strong>Simulador de Entrevista IA</strong></span>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                                            <span><strong>Radar de Vagas Inteligente</strong></span>
+                                                        </div>
+                                                        <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                                            💰 Custo por CV: <strong>Apenas R$ 0,93</strong>
+                                                        </div>
+                                                        <div style={{
+                                                            color: "#94A3B8",
+                                                            fontSize: "0.75rem",
+                                                            marginTop: 4
+                                                        }}>
+                                                            (93% mais barato que créditos avulsos)
+                                                        </div>
+                                                    </div>
+
+                                                    {/* VERIFICA SE USUÁRIO JÁ TEM CRÉDITOS/PLANO */}
+                                                    {authUserId && creditsRemaining > 0 ? (
+                                                        <div style={{
+                                                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
+                                                            border: "2px solid #10B981",
+                                                            borderRadius: 12,
+                                                            padding: "20px",
+                                                            marginBottom: 20,
+                                                            textAlign: "center"
+                                                        }}>
+                                                            <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 8 }}>
+                                                                ✅ Você tem {creditsRemaining} crédito(s) disponível(is)!
                                                             </div>
-
-                                                            <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 20, textAlign: "center" }}>
-                                                                O que você ganha:
+                                                            <div style={{ color: "#E2E8F0", fontSize: "0.9rem", marginBottom: 16 }}>
+                                                                Use seu crédito agora para receber a análise completa
                                                             </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onStart()}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    background: "linear-gradient(135deg, #10B981, #059669)",
+                                                                    color: "#fff",
+                                                                    border: "none",
+                                                                    padding: "16px",
+                                                                    borderRadius: 8,
+                                                                    fontSize: "1rem",
+                                                                    fontWeight: 700,
+                                                                    cursor: "pointer",
+                                                                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+                                                                    transition: "all 0.2s"
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.transform = "translateY(-2px)";
+                                                                    e.currentTarget.style.boxShadow = "0 6px 16px rgba(16, 185, 129, 0.4)";
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.transform = "translateY(0)";
+                                                                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.3)";
+                                                                }}
+                                                            >
+                                                                🚀 USAR MEU CRÉDITO E RECEBER ANÁLISE COMPLETA
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedPlan("trial");
+                                                                if (!authUserId) setShowAuthModal(true);
+                                                                else setStage("checkout");
+                                                            }}
+                                                            style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.transform = "translateY(-2px)";
+                                                                e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.transform = "translateY(0)";
+                                                                e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
+                                                            }}
+                                                            onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
+                                                            onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                                                        >
+                                                            GARANTIR MINHA VAGA - R$ 1,99 🚀
+                                                        </button>
+                                                    )}
 
-                                                            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: 24 }}>
-                                                                <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                                                    <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
-                                                                    <span><strong>30 Otimizações/mês</strong></span>
+                                                    <div style={{
+                                                        background: "rgba(16, 185, 129, 0.1)",
+                                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                                        borderRadius: 8,
+                                                        padding: "14px",
+                                                        marginTop: 16
+                                                    }}>
+                                                        <div style={{ display: "flex", alignItems: "start", gap: 10, marginBottom: 10 }}>
+                                                            <span style={{ fontSize: "1.3rem" }}>🔒</span>
+                                                            <div>
+                                                                <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
+                                                                    GARANTIA TOTAL DE 7 DIAS
                                                                 </div>
-                                                                <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                                                    <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
-                                                                    <span><strong>Simulador de Entrevista IA</strong></span>
-                                                                </div>
-                                                                <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                                                    <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
-                                                                    <span><strong>Radar de Vagas Inteligente</strong></span>
-                                                                </div>
-                                                                <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                                                    <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
-                                                                    💰 Custo por CV: <strong>Apenas R$ 0,93</strong>
-                                                                </div>
-                                                                <div style={{
-                                                                    color: "#94A3B8",
-                                                                    fontSize: "0.75rem",
-                                                                    marginTop: 4
-                                                                }}>
-                                                                    (93% mais barato que créditos avulsos)
+                                                                <div style={{ color: "#CBD5E1", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                                                                    Teste sem risco. Não gostou? Devolvemos 100%<br />
+                                                                    Sem perguntas, sem burocracia.
                                                                 </div>
                                                             </div>
-
-                                                            {/* VERIFICA SE USUÁRIO JÁ TEM CRÉDITOS/PLANO */}
-                                                            {authUserId && creditsRemaining > 0 ? (
-                                                                <div style={{
-                                                                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
-                                                                    border: "2px solid #10B981",
-                                                                    borderRadius: 12,
-                                                                    padding: "20px",
-                                                                    marginBottom: 20,
-                                                                    textAlign: "center"
-                                                                }}>
-                                                                    <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 8 }}>
-                                                                        ✅ Você tem {creditsRemaining} crédito(s) disponível(is)!
-                                                                    </div>
-                                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", marginBottom: 16 }}>
-                                                                        Use seu crédito agora para receber a análise completa
-                                                                    </div>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => onStart()}
-                                                                        style={{
-                                                                            width: "100%",
-                                                                            background: "linear-gradient(135deg, #10B981, #059669)",
-                                                                            color: "#fff",
-                                                                            border: "none",
-                                                                            padding: "16px",
-                                                                            borderRadius: 8,
-                                                                            fontSize: "1rem",
-                                                                            fontWeight: 700,
-                                                                            cursor: "pointer",
-                                                                            boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
-                                                                            transition: "all 0.2s"
-                                                                        }}
-                                                                        onMouseEnter={(e) => {
-                                                                            e.currentTarget.style.transform = "translateY(-2px)";
-                                                                            e.currentTarget.style.boxShadow = "0 6px 16px rgba(16, 185, 129, 0.4)";
-                                                                        }}
-                                                                        onMouseLeave={(e) => {
-                                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                                            e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.3)";
-                                                                        }}
-                                                                    >
-                                                                        🚀 USAR MEU CRÉDITO E RECEBER ANÁLISE COMPLETA
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setSelectedPlan("trial");
-                                                                        if (!authUserId) setShowAuthModal(true);
-                                                                        else setStage("checkout");
-                                                                    }}
-                                                                    style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.currentTarget.style.transform = "translateY(-2px)";
-                                                                        e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.transform = "translateY(0)";
-                                                                        e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
-                                                                    }}
-                                                                    onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                                                    onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                                                                >
-                                                                    GARANTIR MINHA VAGA - R$ 1,99 🚀
-                                                                </button>
-                                                            )}
-
-                                                            <div style={{
-                                                                background: "rgba(16, 185, 129, 0.1)",
-                                                                border: "1px solid rgba(16, 185, 129, 0.3)",
-                                                                borderRadius: 8,
-                                                                padding: "14px",
-                                                                marginTop: 16
-                                                            }}>
-                                                                <div style={{ display: "flex", alignItems: "start", gap: 10, marginBottom: 10 }}>
-                                                                    <span style={{ fontSize: "1.3rem" }}>🔒</span>
-                                                                    <div>
-                                                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
-                                                                            GARANTIA TOTAL DE 7 DIAS
-                                                                        </div>
-                                                                        <div style={{ color: "#CBD5E1", fontSize: "0.8rem", lineHeight: 1.5 }}>
-                                                                            Teste sem risco. Não gostou? Devolvemos 100%<br />
-                                                                            Sem perguntas, sem burocracia.
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div style={{ borderTop: "1px dashed rgba(16, 185, 129, 0.3)", paddingTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                                                                    <span style={{ fontSize: "1rem" }}>🔐</span>
-                                                                    <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
-                                                                        <strong style={{ color: "#D1FAE5" }}>Cancele online em 1 clique</strong> • Sem renovação automática forçada • Sem taxas escondidas
-                                                                    </div>
-                                                                </div>
+                                                        </div>
+                                                        <div style={{ borderTop: "1px dashed rgba(16, 185, 129, 0.3)", paddingTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                                                            <span style={{ fontSize: "1rem" }}>🔐</span>
+                                                            <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
+                                                                <strong style={{ color: "#D1FAE5" }}>Cancele online em 1 clique</strong> • Sem renovação automática forçada • Sem taxas escondidas
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                {/* Botão Voltar Discreto */}
-                                                <div style={{ textAlign: "center", marginTop: 16 }}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setStage("hero")}
-                                                        style={{
-                                                            background: "none",
-                                                            border: "none",
-                                                            color: "#475569",
-                                                            fontSize: "0.85rem",
-                                                            cursor: "pointer",
-                                                            display: "inline-flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "center",
-                                                            gap: 6,
-                                                            padding: "10px"
-                                                        }}
-                                                    >
-                                                        ← Voltar para edição
-                                                    </button>
-                                                </div>
                                             </div>
                                         </div>
-                                    </>
-                                );
-                            })()}
-                        </div>
-                    )}
 
-                    {stage === "checkout" && (
-                        <div className="hero-container">
-                            <div className="action-island-container">
-                                {(() => {
-                                    const planId = (selectedPlan || "premium_plus").trim();
+                                        {/* Botão Voltar Discreto */}
+                                        <div style={{ textAlign: "center", marginTop: 16 }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setStage("hero")}
+                                                style={{
+                                                    background: "none",
+                                                    border: "none",
+                                                    color: "#475569",
+                                                    fontSize: "0.85rem",
+                                                    cursor: "pointer",
+                                                    display: "inline-flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    gap: 6,
+                                                    padding: "10px"
+                                                }}
+                                            >
+                                                ← Voltar para edição
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
+                </div>
+            )}
 
-                                    const prices: any = {
-                                        credit_1: {
-                                            price: 12.90,
-                                            name: "1 Crédito Avulso",
-                                            billing: "one_time",
-                                            desc: "Otimização pontual"
-                                        },
-                                        credit_3: {
-                                            price: 29.90,
-                                            name: "Pacote 3 Créditos",
-                                            billing: "one_time",
-                                            desc: "3 otimizações completas"
-                                        },
-                                        pro_monthly: {
-                                            price: 27.90,
-                                            name: "VANT Pro Mensal",
-                                            billing: "subscription",
-                                            desc: "Otimizações ilimitadas"
-                                        },
-                                        pro_annual: {
-                                            price: 239.00,
-                                            name: "VANT Pro Anual",
-                                            billing: "subscription",
-                                            desc: "Economize 29% vs mensal"
-                                        },
-                                        trial: {
-                                            price: 1.99,
-                                            name: "Trial 7 Dias",
-                                            billing: "trial",
-                                            desc: "Teste PRO por 7 dias"
-                                        },
-                                        premium_plus: {
-                                            price: 29.90,
-                                            name: "VANT Pro Mensal (Legacy)",
-                                            billing: "subscription",
-                                            desc: "Plano legado"
-                                        },
-                                        basico: {
-                                            price: 9.90,
-                                            name: "1 Crédito (Legacy)",
-                                            billing: "one_time",
-                                            desc: "Plano legado"
-                                        },
-                                    };
+            {stage === "checkout" && (
+                <div className="hero-container">
+                    <div className="action-island-container">
+                        {(() => {
+                            const planId = (selectedPlan || "premium_plus").trim();
 
-                                    const plan = prices[planId] || prices.premium_plus;
-                                    // CORREÇÃO: Trial também é um fluxo de assinatura/recorrência
-                                    const isSubscription = plan.billing === "subscription" || plan.billing === "trial";
+                            const prices: any = {
+                                credit_1: {
+                                    price: 12.90,
+                                    name: "1 Crédito Avulso",
+                                    billing: "one_time",
+                                    desc: "Otimização pontual"
+                                },
+                                credit_3: {
+                                    price: 29.90,
+                                    name: "Pacote 3 Créditos",
+                                    billing: "one_time",
+                                    desc: "3 otimizações completas"
+                                },
+                                pro_monthly: {
+                                    price: 27.90,
+                                    name: "VANT Pro Mensal",
+                                    billing: "subscription",
+                                    desc: "Otimizações ilimitadas"
+                                },
+                                pro_annual: {
+                                    price: 239.00,
+                                    name: "VANT Pro Anual",
+                                    billing: "subscription",
+                                    desc: "Economize 29% vs mensal"
+                                },
+                                trial: {
+                                    price: 1.99,
+                                    name: "Trial 7 Dias",
+                                    billing: "trial",
+                                    desc: "Teste PRO por 7 dias"
+                                },
+                                premium_plus: {
+                                    price: 29.90,
+                                    name: "VANT Pro Mensal (Legacy)",
+                                    billing: "subscription",
+                                    desc: "Plano legado"
+                                },
+                                basico: {
+                                    price: 9.90,
+                                    name: "1 Crédito (Legacy)",
+                                    billing: "one_time",
+                                    desc: "Plano legado"
+                                },
+                            };
 
-                                    let billingLine = "✅ Pagamento único · Acesso vitalício aos créditos";
-                                    // CORREÇÃO: Melhorar o texto de billing para trial
-                                    if (plan.billing === "trial") {
-                                        billingLine = "✅ 7 dias de teste por R$ 1,99, depois assinatura mensal";
-                                    } else if (plan.billing === "subscription") {
-                                        billingLine = "✅ Assinatura mensal · Cancele quando quiser";
-                                    }
+                            const plan = prices[planId] || prices.premium_plus;
+                            // CORREÇÃO: Trial também é um fluxo de assinatura/recorrência
+                            const isSubscription = plan.billing === "subscription" || plan.billing === "trial";
 
-                                    const boxHtml = `
+                            let billingLine = "✅ Pagamento único · Acesso vitalício aos créditos";
+                            // CORREÇÃO: Melhorar o texto de billing para trial
+                            if (plan.billing === "trial") {
+                                billingLine = "✅ 7 dias de teste por R$ 1,99, depois assinatura mensal";
+                            } else if (plan.billing === "subscription") {
+                                billingLine = "✅ Assinatura mensal · Cancele quando quiser";
+                            }
+
+                            const boxHtml = `
                             <div style="background: rgba(15, 23, 42, 0.6); padding: 24px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(56, 189, 248, 0.2);">
                                 <div style="display:flex; justify-content: space-between; align-items:start; margin-bottom: 12px;">
                                     <div>
@@ -3195,146 +3198,145 @@ export default function AppPage() {
                             </div>
                             `;
 
-                                    return (
+                            return (
+                                <>
+                                    <div style={{ textAlign: "center", marginBottom: 24 }}>
+                                        <div style={{ color: "#E2E8F0", fontSize: "1.5rem", fontWeight: 800 }}>
+                                            Finalizar Compra
+                                        </div>
+                                        <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 4 }}>
+                                            Ambiente seguro e criptografado
+                                        </div>
+                                    </div>
+
+                                    <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
+
+                                    {!authUserId ? (
                                         <>
-                                            <div style={{ textAlign: "center", marginBottom: 24 }}>
-                                                <div style={{ color: "#E2E8F0", fontSize: "1.5rem", fontWeight: 800 }}>
-                                                    Finalizar Compra
+                                            <div style={{ marginBottom: 20, padding: 16, background: "rgba(56, 189, 248, 0.05)", border: "1px solid rgba(56, 189, 248, 0.2)", borderRadius: 8, textAlign: "center" }}>
+                                                <div style={{ color: "#38BDF8", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
+                                                    🔒 Identifique-se para salvar seu acesso
                                                 </div>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 4 }}>
-                                                    Ambiente seguro e criptografado
+                                                <div style={{ color: "#94A3B8", fontSize: "0.85rem" }}>
+                                                    Seus créditos ficarão vinculados à sua conta.
                                                 </div>
                                             </div>
 
-                                            <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%", marginBottom: 16 }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGoogleLogin}
+                                                    disabled={isAuthenticating}
+                                                    style={{
+                                                        width: "100%", height: 52, background: "#fff", color: "#1f2937",
+                                                        border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
+                                                        fontSize: "1rem", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                                                        cursor: isAuthenticating ? "not-allowed" : "pointer", opacity: isAuthenticating ? 0.6 : 1
+                                                    }}
+                                                >
+                                                    <svg width="20" height="20" viewBox="0 0 18 18">
+                                                        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
+                                                        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
+                                                        <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
+                                                        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
+                                                    </svg>
+                                                    {isAuthenticating ? "Autenticando..." : "Continuar com Google"}
+                                                </button>
+                                            </div>
 
-                                            {!authUserId ? (
-                                                <>
-                                                    <div style={{ marginBottom: 20, padding: 16, background: "rgba(56, 189, 248, 0.05)", border: "1px solid rgba(56, 189, 248, 0.2)", borderRadius: 8, textAlign: "center" }}>
-                                                        <div style={{ color: "#38BDF8", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
-                                                            🔒 Identifique-se para salvar seu acesso
-                                                        </div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem" }}>
-                                                            Seus créditos ficarão vinculados à sua conta.
-                                                        </div>
-                                                    </div>
-
-                                                    <div data-testid="stButton" className="stButton" style={{ width: "100%", marginBottom: 16 }}>
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleGoogleLogin}
-                                                            disabled={isAuthenticating}
-                                                            style={{
-                                                                width: "100%", height: 52, background: "#fff", color: "#1f2937",
-                                                                border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
-                                                                fontSize: "1rem", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-                                                                cursor: isAuthenticating ? "not-allowed" : "pointer", opacity: isAuthenticating ? 0.6 : 1
-                                                            }}
-                                                        >
-                                                            <svg width="20" height="20" viewBox="0 0 18 18">
-                                                                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
-                                                                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
-                                                                <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
-                                                                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
-                                                            </svg>
-                                                            {isAuthenticating ? "Autenticando..." : "Continuar com Google"}
-                                                        </button>
-                                                    </div>
-
-                                                    <div style={{ textAlign: "center" }}>
-                                                        <button type="button" onClick={() => setShowAuthModal(true)} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", textDecoration: "underline", cursor: "pointer" }}>
-                                                            Prefiro usar e-mail e senha
-                                                        </button>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
-                                                        <div style={{ fontSize: "1.2rem" }}>👤</div>
-                                                        <div style={{ overflow: "hidden" }}>
-                                                            <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase" }}>Logado como</div>
-                                                            <div style={{ color: "#E2E8F0", fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{authEmail}</div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                        <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%", height: 56, fontSize: "1.1rem", background: "#10B981", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)" }}>
-                                                            IR PARA PAGAMENTO SEGURO
-                                                        </button>
-                                                    </div>
-
-                                                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", opacity: 0.6 }}>
-                                                        <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                                        <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                                        <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>📍</div>
-                                                        <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                                    </div>
-                                                    <div style={{ textAlign: "center", marginTop: 4, color: "#64748B", fontSize: "0.75rem" }}>
-                                                        Aceitamos Visa, Mastercard, PIX e Amex
-                                                    </div>
-
-                                                    {/* TRUST SIGNALS - SVGs OFICIAIS & BLINDAGEM */}
-                                                    <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-
-                                                        {/* Ícones de Pagamento (Grayscale -> Color on Hover) */}
-                                                        <div
-                                                            style={{ display: "flex", alignItems: "center", gap: 20, opacity: 0.7, filter: "grayscale(100%)", transition: "all 0.3s ease" }}
-                                                            onMouseEnter={(e) => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.opacity = "1"; }}
-                                                            onMouseLeave={(e) => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.opacity = "0.7"; }}
-                                                        >
-                                                            {/* PIX (Logo Oficial) */}
-                                                            <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto" }} />
-
-                                                            {/* VISA (Logo Oficial) */}
-                                                            <img src="/icons/visa.svg" alt="Visa" style={{ height: "16px", width: "auto" }} />
-
-                                                            {/* MASTERCARD (Logo Oficial) */}
-                                                            <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto" }} />
-
-                                                            {/* AMEX (Logo Oficial) */}
-                                                            <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto" }} />
-                                                        </div>
-
-                                                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                            <span style={{ fontSize: "0.9rem" }}>🔒</span>
-                                                            <span style={{ color: "#64748B", fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.3px" }}>
-                                                                Pagamento processado via Stripe • Dados Criptografados
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )}
-
-                                            {checkoutError && (
-                                                <div style={{ marginTop: 16, padding: 12, background: checkoutError.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", border: `1px solid ${checkoutError.startsWith("✅") ? "#10B981" : "#EF4444"}`, borderRadius: 8, color: checkoutError.startsWith("✅") ? "#10B981" : "#EF4444", fontSize: "0.85rem", textAlign: "center" }}>
-                                                    {checkoutError}
-                                                </div>
-                                            )}
-
-                                            <div style={{ textAlign: "center", marginTop: 24 }}>
-                                                <button type="button" onClick={() => setStage("preview")} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                                                    ← Alterar plano
+                                            <div style={{ textAlign: "center" }}>
+                                                <button type="button" onClick={() => setShowAuthModal(true)} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", textDecoration: "underline", cursor: "pointer" }}>
+                                                    Prefiro usar e-mail e senha
                                                 </button>
                                             </div>
                                         </>
-                                    );
-                                })()}
-                            </div>
-                        </div>
-                    )}
+                                    ) : (
+                                        <>
+                                            <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                                                <div style={{ fontSize: "1.2rem" }}>👤</div>
+                                                <div style={{ overflow: "hidden" }}>
+                                                    <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase" }}>Logado como</div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{authEmail}</div>
+                                                </div>
+                                            </div>
 
-                    <AuthModal
-                        isOpen={showAuthModal}
-                        selectedPlan={selectedPlan}
-                        onSuccess={(userId, email) => {
-                            setAuthUserId(userId);
-                            setAuthEmail(email);
-                            setShowAuthModal(false);
-                            // Não forçar checkout - deixar useEffect decidir baseado no status do usuário
-                        }}
-                        onClose={() => setShowAuthModal(false)}
-                    />
-                    )}
-                </main>
-            );
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%", height: 56, fontSize: "1.1rem", background: "#10B981", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)" }}>
+                                                    IR PARA PAGAMENTO SEGURO
+                                                </button>
+                                            </div>
+
+                                            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", opacity: 0.6 }}>
+                                                <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                                <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                                <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>📍</div>
+                                                <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                            </div>
+                                            <div style={{ textAlign: "center", marginTop: 4, color: "#64748B", fontSize: "0.75rem" }}>
+                                                Aceitamos Visa, Mastercard, PIX e Amex
+                                            </div>
+
+                                            {/* TRUST SIGNALS - SVGs OFICIAIS & BLINDAGEM */}
+                                            <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+
+                                                {/* Ícones de Pagamento (Grayscale -> Color on Hover) */}
+                                                <div
+                                                    style={{ display: "flex", alignItems: "center", gap: 20, opacity: 0.7, filter: "grayscale(100%)", transition: "all 0.3s ease" }}
+                                                    onMouseEnter={(e) => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.opacity = "1"; }}
+                                                    onMouseLeave={(e) => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.opacity = "0.7"; }}
+                                                >
+                                                    {/* PIX (Logo Oficial) */}
+                                                    <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto" }} />
+
+                                                    {/* VISA (Logo Oficial) */}
+                                                    <img src="/icons/visa.svg" alt="Visa" style={{ height: "16px", width: "auto" }} />
+
+                                                    {/* MASTERCARD (Logo Oficial) */}
+                                                    <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto" }} />
+
+                                                    {/* AMEX (Logo Oficial) */}
+                                                    <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto" }} />
+                                                </div>
+
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                    <span style={{ fontSize: "0.9rem" }}>🔒</span>
+                                                    <span style={{ color: "#64748B", fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.3px" }}>
+                                                        Pagamento processado via Stripe • Dados Criptografados
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {checkoutError && (
+                                        <div style={{ marginTop: 16, padding: 12, background: checkoutError.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", border: `1px solid ${checkoutError.startsWith("✅") ? "#10B981" : "#EF4444"}`, borderRadius: 8, color: checkoutError.startsWith("✅") ? "#10B981" : "#EF4444", fontSize: "0.85rem", textAlign: "center" }}>
+                                            {checkoutError}
+                                        </div>
+                                    )}
+
+                                    <div style={{ textAlign: "center", marginTop: 24 }}>
+                                        <button type="button" onClick={() => setStage("preview")} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                            ← Alterar plano
+                                        </button>
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </div>
+                </div>
+            )}
+
+            <AuthModal
+                isOpen={showAuthModal}
+                selectedPlan={selectedPlan}
+                onSuccess={(userId, email) => {
+                    setAuthUserId(userId);
+                    setAuthEmail(email);
+                    setShowAuthModal(false);
+                    // Não forçar checkout - deixar useEffect decidir baseado no status do usuário
+                }}
+                onClose={() => setShowAuthModal(false)}
+            />
+        </main>
+    );
 }
