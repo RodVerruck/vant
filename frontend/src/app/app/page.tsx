@@ -55,7 +55,7 @@ const HERO_INNER_HTML = `
                 <div class="stat-number">+34%</div>
                 <div class="stat-label">
                     de aprovação em ATS
-                    <span class="vant-tooltip" tabindex="0" data-tooltip="Aumento médio de pontuação comparado ao currículo original (Base: 50k+ processamentos)." style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
+                    <span class="vant-tooltip" tabindex="0" data-tooltip="Aumento médio de pontuação comparado ao currículo original (Base: 50k+ processamentos)." style="margin-left: 4px; opacity: 0.6; border-bottom: 1px dotted #CBD5E1; cursor: help;">
                         
                     </span>
                 </div>
@@ -65,7 +65,7 @@ const HERO_INNER_HTML = `
                 <div class="stat-number">3x</div>
                 <div class="stat-label">
                     mais entrevistas conseguidas
-                    <span class="vant-tooltip" tabindex="0" data-tooltip="Média de conversão de usuários ativos nos últimos 3 meses." style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
+                    <span class="vant-tooltip" tabindex="0" data-tooltip="Média de conversão de usuários ativos nos últimos 3 meses." style="margin-left: 4px; opacity: 0.6; border-bottom: 1px dotted #CBD5E1; cursor: help;">
                         
                     </span>
                 </div>
@@ -75,13 +75,13 @@ const HERO_INNER_HTML = `
                 <div class="stat-number">100%</div>
                 <div class="stat-label">
                     Privado - Dados anonimizados
-                    <span class="vant-tooltip" tabindex="0" data-tooltip="Processamento em memória volátil (RAM). Seus dados são destruídos após a sessão. Zero logs" style="margin-left: 4px; opacity: 0.6; font-size: 0.75rem; border-bottom: 1px dotted #94A3B8; cursor: help;">
+                    <span class="vant-tooltip" tabindex="0" data-tooltip="Processamento em memória volátil (RAM). Seus dados são destruídos após a sessão. Zero logs" style="margin-left: 4px; opacity: 0.6; border-bottom: 1px dotted #CBD5E1; cursor: help;">
                         
                     </span>
                 </div>
             </div>
         </div>
-        <div style="text-align: center; margin-top: 20px; color: #64748B; font-size: 0.8rem; font-style: italic;">
+        <div style="text-align: center; margin-top: 20px; color: #94A3B8; font-size: 0.8rem; font-style: italic;">
             Baseado em dados de 50.000+ processamentos reais
         </div>
     </div>
@@ -90,7 +90,7 @@ const HERO_INNER_HTML = `
     <div class="hero-section" style="margin-top: 80px;">
         <div style="text-align: center; margin-bottom: 32px;">
             <h3 style="color: #F8FAFC; font-size: 1.5rem; font-weight: 700; margin: 0 0 8px 0;">Por que funciona</h3>
-            <p style="color: #94A3B8; font-size: 0.9rem; margin: 0;">Tecnologia baseada em dados reais de mercado</p>
+            <p style="color: #CBD5E1; font-size: 0.9rem; margin: 0;">Tecnologia baseada em dados reais de mercado</p>
         </div>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; margin: 0 auto;">
@@ -136,13 +136,13 @@ const HERO_INNER_HTML = `
                 <strong>Sem compromisso. Sem cartão de crédito.</strong>
             </p>
             <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 24px;">
-                <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
                     <span style="color: #10B981;">✓</span> Score ATS instantâneo
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
                     <span style="color: #10B981;">✓</span> Top 2 problemas detectados
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; color: #94A3B8; font-size: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
                     <span style="color: #10B981;">✓</span> Dados destruídos após análise
                 </div>
             </div>
@@ -159,10 +159,10 @@ const LINKEDIN_INSTRUCTIONS_HTML = `
         <p style="color: #E2E8F0; font-size: 0.9rem; margin: 0 0 12px 0; line-height: 1.5; font-weight: 500;">
             Quer descobrir os segredos de quem já foi contratado?
         </p>
-        <p style="color: #94A3B8; font-size: 0.85rem; margin: 0; line-height: 1.6;">
+        <p style="color: #CBD5E1; font-size: 0.85rem; margin: 0; line-height: 1.6;">
             Anexe o CV de um profissional da área e a IA fará engenharia reversa para aplicar os acertos no seu perfil.
             <br><br>
-            <span style="color: #64748B; font-size: 0.8rem;">
+            <span style="color: #94A3B8; font-size: 0.8rem;">
                 Dica: Baixe um perfil do LinkedIn em PDF (botão "Mais" → "Salvar como PDF")
             </span>
         </p>
@@ -1515,7 +1515,7 @@ export default function AppPage() {
 
         const row = (label: string, value: number) => `
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
-                <span style="color:#94A3B8; font-size:0.75rem; font-weight:600; letter-spacing:0.5px;">${label.toUpperCase()}</span>
+                <span style="color:#CBD5E1; font-size:0.75rem; font-weight:600; letter-spacing:0.5px;">${label.toUpperCase()}</span>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <div style="width:60px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
                         <div style="width:${value}%; height:100%; background:${value > 70 ? '#10B981' : value > 40 ? '#F59E0B' : '#EF4444'};"></div>
@@ -1528,17 +1528,17 @@ export default function AppPage() {
         return `
             <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 12px; padding: 16px;">
                 <div style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #64748B; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
+                    <span style="color: #94A3B8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
                     <span style="background: rgba(56, 189, 248, 0.1); color: #38BDF8; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">VERSÃO LITE</span>
                 </div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 16px;">
                     <div>
-                        <div style="color:#94A3B8; font-size:0.75rem; font-weight:600;">SCORE ATS ATUAL</div>
-                        <div style="color:#E2E8F0; font-weight:900; font-size: 2rem; line-height: 1;">${nota}<span style="font-size:1rem; color:#64748B;">/100</span></div>
+                        <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">SCORE ATS ATUAL</div>
+                        <div style="color:#E2E8F0; font-weight:900; font-size: 2rem; line-height: 1;">${nota}<span style="font-size:1rem; color:#94A3B8;">/100</span></div>
                     </div>
                     <div style="text-align:right;">
-                         <div style="color:#94A3B8; font-size:0.75rem; font-weight:600;">POTENCIAL</div>
+                         <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">POTENCIAL</div>
                          <div style="color:#10B981; font-weight:900; font-size: 2rem; line-height: 1;">${potencial}<span style="font-size:1rem; color:#10B981;">%</span></div>
                     </div>
                 </div>
@@ -1563,7 +1563,7 @@ export default function AppPage() {
             <div style="color: #38BDF8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
                 ${title}
             </div>
-            <div style="color: #94A3B8; font-size: 0.9rem; margin-top: 5px;">
+            <div style="color: #CBD5E1; font-size: 0.9rem; margin-top: 5px;">
                 ${subtitle}
             </div>
         </div>
@@ -1621,7 +1621,7 @@ export default function AppPage() {
         <div>
             <div style="text-align:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:15px;">
                 <h3 style="margin:0; color:#F8FAFC; font-size:1.1rem; font-weight:700; letter-spacing:0.5px;">DOSSIÊ PROFISSIONAL</h3>
-                <p style="margin:4px 0 0 0; color:#94A3B8; font-size:0.75rem;">Acesso Vitalício • VANT-PRO</p>
+                <p style="margin:4px 0 0 0; color:#CBD5E1; font-size:0.75rem;">Acesso Vitalício • VANT-PRO</p>
             </div>
             <ul style="list-style:none; padding:0; margin:0;">
                 ${listaHtml}
@@ -1630,11 +1630,11 @@ export default function AppPage() {
 
         <div style="text-align:center; margin-top: 20px;">
             <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-                <span style="text-decoration: line-through; color: #64748B; font-size: 0.8rem;">R$ 97,90</span>
+                <span style="text-decoration: line-through; color: #94A3B8; font-size: 0.8rem;">R$ 97,90</span>
                 <span style="background:#10B981; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:700;">-70% OFF</span>
             </div>
             <div style="font-size: 3rem; font-weight: 800; color: #fff; line-height:1; margin-bottom: 5px;">
-                <span style="font-size:1.5rem; vertical-align:top; color:#94A3B8;">R$</span>29<span style="font-size:1rem; color:#94A3B8;">,90</span>
+                <span style="font-size:1.5rem; vertical-align:top; color:#CBD5E1;">R$</span>29<span style="font-size:1rem; color:#CBD5E1;">,90</span>
             </div>
         </div>
     </div>

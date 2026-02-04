@@ -114,7 +114,7 @@ export function PricingTiers({ onSelectTier, currentTier, showFree = true }: Pri
 
         .pricing-subtitle {
           font-size: 1.1rem;
-          color: #94A3B8;
+          color: #CBD5E1;
           max-width: 600px;
           margin: 0 auto;
         }
@@ -190,7 +190,7 @@ export function PricingTiers({ onSelectTier, currentTier, showFree = true }: Pri
 
         .tier-description {
           font-size: 0.9rem;
-          color: #94A3B8;
+          color: #CBD5E1;
           margin-bottom: 24px;
           min-height: 40px;
         }
@@ -215,7 +215,7 @@ export function PricingTiers({ onSelectTier, currentTier, showFree = true }: Pri
 
         .price-period {
           font-size: 1rem;
-          color: #94A3B8;
+          color: #CBD5E1;
         }
 
         .tier-features {
@@ -332,13 +332,12 @@ export function PricingTiers({ onSelectTier, currentTier, showFree = true }: Pri
         {displayTiers.map((tier) => (
           <div
             key={tier.id}
-            className={`tier-card ${tier.highlighted ? "highlighted" : ""} ${
-              currentTier === tier.id ? "current" : ""
-            }`}
+            className={`tier-card ${tier.highlighted ? "highlighted" : ""} ${currentTier === tier.id ? "current" : ""
+              }`}
             onClick={() => onSelectTier(tier.id)}
           >
             {tier.badge && <div className="tier-badge">{tier.badge}</div>}
-            
+
             <h3 className="tier-name">{tier.name}</h3>
             <p className="tier-description">{tier.description}</p>
 

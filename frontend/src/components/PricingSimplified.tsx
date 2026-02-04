@@ -37,7 +37,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
 
         .pricing-subtitle {
           font-size: 1.1rem;
-          color: #94A3B8;
+          color: #CBD5E1;
           margin-bottom: 32px;
         }
 
@@ -59,7 +59,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
           cursor: pointer;
           transition: all 0.2s ease;
           background: transparent;
-          color: #94A3B8;
+          color: #CBD5E1;
           position: relative;
         }
 
@@ -137,7 +137,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
 
         .tier-description {
           font-size: 0.9rem;
-          color: #94A3B8;
+          color: #CBD5E1;
           margin-bottom: 24px;
           min-height: 40px;
         }
@@ -166,7 +166,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
 
         .price-period {
           font-size: 1rem;
-          color: #94A3B8;
+          color: #CBD5E1;
         }
 
         .price-detail {
@@ -251,7 +251,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
 
         .credits-subtitle {
           font-size: 0.95rem;
-          color: #94A3B8;
+          color: #CBD5E1;
         }
 
         .credits-grid {
@@ -306,7 +306,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
 
         .credit-detail {
           font-size: 0.85rem;
-          color: #94A3B8;
+          color: #CBD5E1;
           margin-bottom: 16px;
         }
 

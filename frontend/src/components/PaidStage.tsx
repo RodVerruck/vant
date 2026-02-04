@@ -500,7 +500,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                                 padding: 12,
                                                 fontFamily: "monospace",
                                                 fontSize: "0.85rem",
-                                                color: "#94A3B8",
+                                                color: "#CBD5E1",
                                                 wordBreak: "break-all",
                                                 lineHeight: 1.4
                                             }}>
@@ -542,7 +542,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                                 setEditedCvText(reportData.cv_otimizado_completo || "");
                                             }
                                         }}
-                                        style={{ fontWeight: 600, color: "#94A3B8", cursor: "pointer" }}
+                                        style={{ fontWeight: 600, color: "#CBD5E1", cursor: "pointer" }}
                                     >
                                         ✏️ ENCONTROU UM ERRO? CLIQUE PARA EDITAR O TEXTO
                                     </summary>
@@ -596,8 +596,8 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                                     onClick={() => setIsEditorOpen(false)}
                                                     style={{
                                                         background: "transparent",
-                                                        color: "#94A3B8",
-                                                        border: "1px solid #94A3B8",
+                                                        color: "#CBD5E1",
+                                                        border: "1px solid #CBD5E1",
                                                         padding: "10px 20px",
                                                         borderRadius: 6,
                                                         fontWeight: 600,
@@ -684,7 +684,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                             style={{
                                 background: "transparent",
                                 border: "2px solid #6B7280",
-                                color: "#6B7280",
+                                color: "#94A3B8",
                                 padding: "12px 24px",
                                 borderRadius: 50,
                                 fontWeight: 800,
