@@ -1,6 +1,26 @@
 """
 Sistema de Cache Inteligente para Vant
 Reduz custos de processamento em 60-80% mantendo UX fluida
+
+🎯 ESTRATÉGIA DE CACHE: Equilíbrio entre Personalização e Performance
+
+✅ COMPONENTES CACHED (Performance Alta):
+- library: Livros/cursos são estáticos por área+gap. Cache seguro.
+- tactical: Perguntas de entrevista por vaga+gap específico. Cache seguro.
+
+❌ COMPONENTES SEM CACHE (Personalização Máxima):  
+- diagnosis: Deve citar experiências específicas do usuário. Sempre processar pela IA.
+- cv_writer: Texto final é único para cada pessoa. Sempre processar pela IA.
+
+🔁 HASH STRATEGY:
+- diagnosis: area + gaps (NÃO USAR - risco de ficar genérico)
+- library: area + gaps_hash (✅ Seguro)
+- tactical: keywords + gaps_signature (✅ Corrigido para relevância)
+
+📊 RESULTADO ESPERADO:
+- Diagnóstico: 100% Pessoal (IA roda sempre)
+- Biblioteca/Tático: 100% Rápido (Cache reutilizado)  
+- CV: 100% Pessoal (IA roda sempre)
 """
 
 import hashlib
@@ -21,6 +41,37 @@ class CacheManager:
         self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # Corrigido nome da variável
         self.supabase = create_client(self.supabase_url, self.supabase_key)
         
+    # ============================================================
+    # CACHE STRATEGY UTILITIES
+    # ============================================================
+    
+    def should_use_cache(self, component_type: str) -> bool:
+        """
+        Verifica se o componente deve usar cache baseado na estratégia de personalização vs performance
+        
+        Args:
+            component_type: Tipo do componente ('diagnosis', 'library', 'tactical', 'cv_writer')
+            
+        Returns:
+            True se deve usar cache, False se deve processar sempre pela IA
+        """
+        # Componentes seguros para cache (conteúdo estático/reutilizável)
+        cached_components = {'library', 'tactical'}
+        
+        # Componentes que exigem personalização máxima (sempre processar pela IA)
+        personal_components = {'diagnosis', 'cv_writer'}
+        
+        if component_type in cached_components:
+            logger.info(f"✅ Componente [{component_type}] autorizado para cache")
+            return True
+        elif component_type in personal_components:
+            logger.info(f"🚫 Componente [{component_type}] exige processamento pessoal (sem cache)")
+            return False
+        else:
+            # Por padrão, permite cache para componentes desconhecidos
+            logger.warning(f"⚠️ Componente [{component_type}] não reconhecido, permitindo cache por padrão")
+            return True
+
     # ============================================================
     # NORMALIZATION UTILITIES
     # ============================================================
@@ -122,7 +173,7 @@ class CacheManager:
             }
             
         elif component_type == "tactical":
-            # Extrai keywords da vaga, normaliza e usa com contagem de gaps
+            # Extrai keywords da vaga, normaliza e usa assinatura dos gaps
             job_desc = data.get("job_description", "")
             gaps = data.get("gaps_fatais", [])
             
@@ -130,13 +181,18 @@ class CacheManager:
             job_keywords = self._extract_keywords(job_desc.lower())
             normalized_keywords = [self._normalize_string(kw) for kw in job_keywords]
             
-            # Contagem de gaps
-            gap_count = len(gaps) if isinstance(gaps, list) else 0
+            # --- CORREÇÃO: Usar a assinatura dos gaps, não a contagem ---
+            # Isso garante que as perguntas de entrevista sejam relevantes aos problemas específicos
+            gap_texts = []
+            if isinstance(gaps, list):
+                for gap in gaps[:3]:
+                    val = gap.get("titulo", "") if isinstance(gap, dict) else str(gap)
+                    gap_texts.append(self._normalize_string(val))
             
             normalized = {
                 "type": "tactical",
                 "keywords": sorted([kw for kw in normalized_keywords if kw]),
-                "gap_count": min(gap_count, 5)  # Limitar contagem para evitar variações extremas
+                "gaps_signature": hashlib.md5("".join(sorted(gap_texts)).encode()).hexdigest()
             }
             
         else:
@@ -196,7 +252,7 @@ class CacheManager:
     
     def check_partial_cache(self, component_type: str, data: Dict[str, Any], required_keys: List[str] = None) -> Optional[Dict[str, Any]]:
         """
-        Verifica cache parcial para um componente específico com validação de chaves obrigatórias
+        Verifica cache parcial para um componente específico com validação de estratégia e chaves obrigatórias
         
         Args:
             component_type: Tipo do componente
@@ -204,8 +260,13 @@ class CacheManager:
             required_keys: Lista de chaves obrigatórias que devem estar presentes e preenchidas
             
         Returns:
-            Dados do cache ou None se não encontrado/inválido
+            Dados do cache ou None se não encontrado/inválido/estratégia proíbe cache
         """
+        # 🔥 VERIFICAÇÃO DE ESTRATÉGIA: Componentes pessoais não usam cache
+        if not self.should_use_cache(component_type):
+            logger.info(f"🚫 Cache ignorado para [{component_type}] por exigir personalização máxima")
+            return None
+        
         component_hash = self.generate_component_hash(component_type, data)
         
         try:
@@ -262,7 +323,7 @@ class CacheManager:
     
     def save_partial_cache(self, component_type: str, data: Dict[str, Any], result: Dict[str, Any]) -> bool:
         """
-        Salva resultado no cache parcial
+        Salva resultado no cache parcial (apenas se estratégia permitir)
         
         Args:
             component_type: Tipo do componente
@@ -270,8 +331,13 @@ class CacheManager:
             result: Resultado processado
             
         Returns:
-            True se salvo com sucesso
+            True se salvo com sucesso, False se estratégia proíbe ou erro
         """
+        # 🔥 VERIFICAÇÃO DE ESTRATÉGIA: Componentes pessoais não são salvos em cache
+        if not self.should_use_cache(component_type):
+            logger.info(f"🚫 Cache não salvo para [{component_type}] por exigir personalização máxima")
+            return False
+        
         try:
             component_hash = self.generate_component_hash(component_type, data)
             
