@@ -664,6 +664,28 @@ export default function AppPage() {
 
         initSession();
 
+        // Adicionar listener para mudanças de autenticação em tempo real
+        if (supabase) {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(
+                (event, session) => {
+                    console.log("[AuthStateChange] Event:", event, "User:", session?.user?.email);
+
+                    if (event === 'SIGNED_IN' && session?.user) {
+                        setAuthUserId(session.user.id);
+                        setAuthEmail(session.user.email || "");
+                        setCheckoutError("");
+                    } else if (event === 'SIGNED_OUT') {
+                        setAuthUserId(null);
+                        setAuthEmail("");
+                        setCreditsRemaining(0);
+                    }
+                }
+            );
+
+            // Cleanup do listener ao desmontar
+            return () => subscription.unsubscribe();
+        }
+
         const url = new URL(window.location.href);
         const code = url.searchParams.get("code");
         const payment = url.searchParams.get("payment");
@@ -1638,6 +1660,132 @@ export default function AppPage() {
             {renderCreditsIndicator()}
             {stage === "hero" && (
                 <>
+                    {/* Indicador de Status do Usuário */}
+                    {authUserId && (
+                        <div style={{
+                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
+                            border: "1px solid rgba(16, 185, 129, 0.3)",
+                            borderRadius: 12,
+                            padding: "16px 20px",
+                            margin: "0 auto 20px",
+                            maxWidth: "800px",
+                            textAlign: "center"
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+                                <div style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: "50%",
+                                    background: "rgba(16, 185, 129, 0.2)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "1.2rem"
+                                }}>
+                                    ✅
+                                </div>
+                                <div style={{ flex: 1, textAlign: "left" }}>
+                                    <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 2 }}>
+                                        Logado como {authEmail}
+                                    </div>
+                                    <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
+                                        {creditsRemaining > 0
+                                            ? `Você tem ${creditsRemaining} crédito(s) disponível(is)`
+                                            : "Pronto para analisar seu CV"
+                                        }
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (supabase) {
+                                            await supabase.auth.signOut();
+                                        }
+                                    }}
+                                    style={{
+                                        background: "none",
+                                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                                        color: "#EF4444",
+                                        borderRadius: 6,
+                                        padding: "6px 12px",
+                                        fontSize: "0.75rem",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s"
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = "none";
+                                    }}
+                                >
+                                    Sair
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Botão de Login para Usuários Não Logados */}
+                    {!authUserId && (
+                        <div style={{
+                            background: "linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(99, 102, 241, 0.1))",
+                            border: "1px solid rgba(56, 189, 248, 0.3)",
+                            borderRadius: 12,
+                            padding: "16px 20px",
+                            margin: "0 auto 20px",
+                            maxWidth: "800px",
+                            textAlign: "center"
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+                                <div style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: "50%",
+                                    background: "rgba(56, 189, 248, 0.2)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "1.2rem"
+                                }}>
+                                    🔐
+                                </div>
+                                <div style={{ flex: 1, textAlign: "left" }}>
+                                    <div style={{ color: "#38BDF8", fontSize: "0.9rem", fontWeight: 700, marginBottom: 2 }}>
+                                        Faça login para salvar suas análises
+                                    </div>
+                                    <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
+                                        Acesse seu histórico e acompanhe suas otimizações
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAuthModal(true)}
+                                    style={{
+                                        background: "linear-gradient(135deg, #38BDF8, #6366F1)",
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: 6,
+                                        padding: "8px 16px",
+                                        fontSize: "0.8rem",
+                                        fontWeight: 600,
+                                        cursor: "pointer",
+                                        transition: "all 0.2s"
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = "translateY(-2px)";
+                                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(56, 189, 248, 0.3)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = "translateY(0)";
+                                        e.currentTarget.style.boxShadow = "none";
+                                    }}
+                                >
+                                    Entrar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="hero-container">
                         <div dangerouslySetInnerHTML={{ __html: HERO_INNER_HTML }} />
 
