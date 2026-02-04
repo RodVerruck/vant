@@ -116,21 +116,21 @@ def _vant_error(message: str, agent_name=None, model_name=None):
 # ============================================================
 AGENT_MODEL_REGISTRY = {
     # TAREFAS CRÍTICAS (Qualidade):
-    "cv_writer_semantic": "groq/llama-3.3-70b-versatile", 
+    "cv_writer_semantic": "models/gemini-2.5-flash", 
 
     # TAREFAS RÁPIDAS (Velocidade/Custo):
-    # Migrado de Gemini para Groq (teste de modelos gratuitos)
-    "diagnosis": "groq/llama-3.3-70b-versatile", 
-    "cv_formatter": "groq/llama-3.3-70b-versatile",
-    "tactical": "groq/llama-3.3-70b-versatile",
-    "library": "groq/llama-3.3-70b-versatile",
+    # Voltando para Gemini 2.5 Flash (confiável e testado)
+    "diagnosis": "models/gemini-2.5-flash", 
+    "cv_formatter": "models/gemini-2.5-flash",
+    "tactical": "models/gemini-2.5-flash",
+    "library": "models/gemini-2.5-flash",
     
     # INTELIGENCE:
-    "competitor_analysis": "groq/llama-3.3-70b-versatile",
-    "interview_evaluator": "groq/llama-3.3-70b-versatile",
+    "competitor_analysis": "models/gemini-2.5-flash",
+    "interview_evaluator": "models/gemini-2.5-flash",
 }
 
-DEFAULT_MODEL = "groq/llama-3.3-70b-versatile"
+DEFAULT_MODEL = "models/gemini-2.5-flash"
 
 # ============================================================
 # IMPORT PROMPTS

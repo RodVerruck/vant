@@ -3,32 +3,32 @@
 ## Data de Referência
 3 de fevereiro de 2026
 
-## Configuração Atual (TESTE COM GROQ)
+## Configuração Atual (VOLTANDO PARA GEMINI)
 
 ### Todos os Agentes
-- **Modelo**: `groq/llama-3.3-70b-versatile` (Groq/Llama 3.3)
-- **API Key**: `GROQ_API_KEY`
-- **Status**: Em teste e funcionando
+- **Modelo**: `models/gemini-2.5-flash` (Google)
+- **API Key**: `GOOGLE_API_KEY`
+- **Status**: ✅ Funcional e estável
 
-### Registry de Agentes (Teste)
+### Registry de Agentes (Atual)
 ```python
 AGENT_MODEL_REGISTRY = {
     # TAREFAS CRÍTICAS (Qualidade):
-    "cv_writer_semantic": "groq/llama-3.3-70b-versatile", 
+    "cv_writer_semantic": "models/gemini-2.5-flash", 
 
     # TAREFAS RÁPIDAS (Velocidade/Custo):
-    # Migrado de Gemini para Groq (teste de modelos gratuitos)
-    "diagnosis": "groq/llama-3.3-70b-versatile", 
-    "cv_formatter": "groq/llama-3.3-70b-versatile",
-    "tactical": "groq/llama-3.3-70b-versatile",
-    "library": "groq/llama-3.3-70b-versatile",
+    # Voltando para Gemini 2.5 Flash (confiável e testado)
+    "diagnosis": "models/gemini-2.5-flash", 
+    "cv_formatter": "models/gemini-2.5-flash",
+    "tactical": "models/gemini-2.5-flash",
+    "library": "models/gemini-2.5-flash",
     
     # INTELIGENCE:
-    "competitor_analysis": "groq/llama-3.3-70b-versatile",
-    "interview_evaluator": "groq/llama-3.3-70b-versatile",
+    "competitor_analysis": "models/gemini-2.5-flash",
+    "interview_evaluator": "models/gemini-2.5-flash",
 }
 
-DEFAULT_MODEL = "groq/llama-3.3-70b-versatile"
+DEFAULT_MODEL = "models/gemini-2.5-flash"
 ```
 
 ### Lista de Agentes e Funções
@@ -45,6 +45,22 @@ DEFAULT_MODEL = "groq/llama-3.3-70b-versatile"
 - **Groq**: Configurada no .env ✅
 - **Gemini**: Configurada no .env (backup)
 - **Claude**: Configurada no .env ✅ 
+
+---
+
+## Histórico de Mudanças (Fev/2026)
+
+### Teste com Groq (21:55 - 22:15)
+- **Modelo**: `groq/llama-3.3-70b-versatile`
+- **Motivo**: Testar modelos gratuitos
+- **Resultado**: ✅ Funcional, mas atingiu rate limit rapidamente
+- **Problema**: Groq tem limites mais restritivos
+
+### Retorno ao Gemini (22:15)
+- **Modelo**: `models/gemini-2.5-flash`
+- **Motivo**: Rate limit do Groq
+- **Vantagem**: Mais estável e confiável para produção
+- **Custo**: Aceitável para volume de testes
 
 ---
 
