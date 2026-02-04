@@ -31,6 +31,75 @@ else:
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 claude_client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 
+# ============================================================
+# PROGRESSIVE LOADING - FUNÇÃO AUXILIAR
+# ============================================================
+def update_session_progress(session_id: str, data_chunk: dict, step_name: str) -> bool:
+    """
+    Atualiza sessão no Supabase com resultados parciais para progressive loading.
+    
+    Args:
+        session_id: UUID da sessão de análise
+        data_chunk: Dicionário com dados parciais a serem mesclados
+        step_name: Nome do passo atual (ex: 'diagnostico_pronto')
+    
+    Returns:
+        bool: True se atualização foi bem-sucedida, False caso contrário
+    """
+    try:
+        from supabase import create_client
+        import os
+        from datetime import datetime
+        
+        # Conectar ao Supabase
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        
+        if not supabase_url or not supabase_key:
+            logger.error("❌ Supabase não configurado para update_session_progress")
+            return False
+        
+        supabase = create_client(supabase_url, supabase_key)
+        
+        # Buscar dados atuais da sessão
+        response = supabase.table("analysis_sessions").select("result_data").eq("id", session_id).limit(1).execute()
+        
+        if not response.data:
+            logger.error(f"❌ Sessão {session_id} não encontrada")
+            return False
+        
+        # Recuperar JSON atual
+        current_data = response.data[0].get("result_data", {})
+        
+        # Se for string JSON, fazer parse
+        if isinstance(current_data, str):
+            try:
+                current_data = json.loads(current_data)
+            except json.JSONDecodeError:
+                current_data = {}
+        
+        # Fazer merge dos novos dados
+        if isinstance(current_data, dict) and isinstance(data_chunk, dict):
+            merged_data = {**current_data, **data_chunk}
+        else:
+            merged_data = data_chunk
+        
+        # Atualizar sessão com dados combinados e novo step
+        update_data = {
+            "result_data": merged_data,
+            "current_step": step_name,
+            "updated_at": datetime.now().isoformat()
+        }
+        
+        supabase.table("analysis_sessions").update(update_data).eq("id", session_id).execute()
+        
+        logger.info(f"✅ Sessão {session_id} atualizada: step={step_name}, keys={list(data_chunk.keys())}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao atualizar sessão {session_id}: {e}")
+        return False
+
 def _vant_error(message: str, agent_name=None, model_name=None):
     payload = {
         "_vant_error": True,
