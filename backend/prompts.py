@@ -39,6 +39,8 @@ CRITÉRIOS DE ANÁLISE (USE COMO CHECKLIST):
 - Keywords: As palavras-chave CRÍTICAS da vaga aparecem explicitamente?
 - ATS: Estrutura limpa, cronologia clara, linguagem objetiva?
 
+⚠️ ÁREA FORÇADA: Se a vaga começar com "ÁREA ESPECÍFICA:", use essa área como setor_detectado no JSON. Ignore outras detecções.
+
 CRITÉRIO DE DESCLASSIFICAÇÃO IMEDIATA:
 - Se a vaga pede "Sênior/Especialista" e o CV é "Júnior/Assistente" (diferença > 3 anos ou nível hierárquico):
 - O VEREDITO deve ser: "GAP DE SENIORIDADE CRÍTICO".
@@ -72,7 +74,8 @@ OUTPUT JSON (SIGA ESTRITAMENTE):
   "analise_por_pilares": {{
     "impacto": 0,
     "keywords": 0,
-    "ats": 0
+    "ats": 0,
+    "setor_detectado": "TECNOLOGIA"
   }},
   "nota_ats": 0,
   "veredito": "Frase curta (máx 10 palavras).",

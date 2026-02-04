@@ -1063,7 +1063,9 @@ INSTRUÇÕES ESPECÍFICAS:
 2. Use exemplos REAIS do texto do CV (não invente)
 3. Seja direto e objetivo
 4. Foque em: falta de números/resultados E palavras-chave ausentes
-5. DETECTE A ÁREA ESPECÍFICA (BASEADO APENAS NA VAGA - NÃO NO CV):
+5. DETECTE A ÁREA ESPECÍFICA:
+   
+   {"⚠️ ÁREA FORÇADA ESPECÍFICA: Use exatamente '" + forced_area.replace('_', ' ').upper() + "' como setor_detectado. Ignore outras detecções." if forced_area else ""}
    
    Prioridade 1 - Mapeamento Exato (baseado na VAGA):
    - Se a VAGA menciona "suporte", "suporte técnico", "analista de suporte", "help desk", "atendimento", "service desk", "suporte ao cliente" → "SUPORTE TI"

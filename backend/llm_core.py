@@ -8,7 +8,7 @@ from google import genai
 from google.genai import types
 from groq import Groq
 from anthropic import Anthropic
-from backend.cache_manager import CacheManager
+from cache_manager import CacheManager
 
 # ============================================================
 # LOGGING & CONFIG
@@ -596,11 +596,15 @@ def run_cv_pipeline(cv_text: str, strategy_payload: dict):
 # ============================================================
 # AGENTES AUXILIARES (COM PROTEÇÃO CONTRA NONE)
 # ============================================================
-def agent_diagnosis(cv, job):
+def agent_diagnosis(cv, job, forced_area=None):
     # Sanitizar inputs
     from logic import sanitize_input
     cv = sanitize_input(cv)
     job = sanitize_input(job)
+    
+    # Se tiver área forçada, adiciona contexto ao prompt
+    if forced_area:
+        job = f"ÁREA ESPECÍFICA: {forced_area.replace('_', ' ').title()}\n\nVAGA: {job}"
     
     res = call_llm(
         SYSTEM_AGENT_DIAGNOSIS,
@@ -610,7 +614,11 @@ def agent_diagnosis(cv, job):
     return res if res else {"veredito": "Indisponível", "gaps_fatais": []}
 
 
-def agent_tactical(job, gaps):
+def agent_tactical(job, gaps, forced_area=None):
+    # Se tiver área forçada, adiciona contexto ao prompt
+    if forced_area:
+        job = f"ÁREA ESPECÍFICA: {forced_area.replace('_', ' ').title()}\n\nVAGA: {job}"
+    
     res = call_llm(
         SYSTEM_AGENT_COMBO_TACTICAL,
         json.dumps({"vaga": job, "gaps": gaps}, ensure_ascii=False),
@@ -619,7 +627,11 @@ def agent_tactical(job, gaps):
     return res if res else {"perguntas_entrevista": [], "kit_hacker": {}}
 
 
-def agent_library(job, gaps, catalog):
+def agent_library(job, gaps, catalog, forced_area=None):
+    # Se tiver área forçada, adiciona contexto ao prompt
+    if forced_area:
+        job = f"ÁREA ESPECÍFICA: {forced_area.replace('_', ' ').title()}\n\nVAGA: {job}"
+    
     res = call_llm(
         SYSTEM_AGENT_LIBRARY_CURATOR,
         json.dumps({"vaga": job, "gaps": gaps, "catalogo": catalog}, ensure_ascii=False),
@@ -964,9 +976,11 @@ def analyze_cv_orchestrator_streaming(
         job_description = sanitize_input(job_description)
         
         # Se for vaga genérica e tiver área de interesse, força a área
+        forced_area = None
         if area_of_interest and "busco oportunidades profissionais" in job_description.lower():
             logger.info(f"🎯 Área de interesse detectada: {area_of_interest}")
             # Usa a área selecionada pelo usuário
+            forced_area = area_of_interest
             modified_job_description = f"Vaga na área de {area_of_interest.replace('_', ' ').title()}. " + job_description
         else:
             modified_job_description = job_description
@@ -975,7 +989,7 @@ def analyze_cv_orchestrator_streaming(
         logger.info("📊 Etapa 1: Processando diagnosis...")
         
         try:
-            diag_result = agent_diagnosis(cv_text, modified_job_description)
+            diag_result = agent_diagnosis(cv_text, modified_job_description, forced_area=forced_area)
             
             # Salvar diagnóstico parcial
             update_session_progress(session_id, diag_result, "diagnostico_pronto")
@@ -997,15 +1011,15 @@ def analyze_cv_orchestrator_streaming(
             strategy_payload = {
                 "cv_original": cv_text,
                 "diagnostico": diag_result,
-                "vaga": job_description,
+                "vaga": modified_job_description,
             }
             future_cv = executor.submit(run_cv_pipeline, cv_text, strategy_payload)
             
             # Future 2: Library
-            future_library = executor.submit(agent_library, job_description, gaps, books_catalog)
+            future_library = executor.submit(agent_library, modified_job_description, gaps, books_catalog, forced_area)
             
             # Future 3: Tactical
-            future_tactical = executor.submit(agent_tactical, job_description, gaps)
+            future_tactical = executor.submit(agent_tactical, modified_job_description, gaps, forced_area)
             
             # Future 4: Competitor Analysis (se houver, não bloqueia as outras)
             future_comp = None
