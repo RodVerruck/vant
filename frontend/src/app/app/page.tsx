@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap, HistoryItem } from "@/types";
 import { PaidStage } from "@/components/PaidStage";
 import { AuthModal } from "@/components/AuthModal";
@@ -400,7 +400,7 @@ export default function AppPage() {
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
 
-    const supabase = useMemo(() => {
+    const supabase = useMemo((): SupabaseClient | null => {
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         if (!url || !key) {
@@ -651,7 +651,11 @@ export default function AppPage() {
             if (!supabase) {
                 return;
             }
-            const { data } = await (supabase as any).auth.getSession();
+
+            // Verificação de tipo explícita para evitar never
+            const client = supabase as SupabaseClient;
+
+            const { data } = await client.auth.getSession();
             const session = data?.session;
             const user = session?.user;
             if (user?.id) {
@@ -666,8 +670,11 @@ export default function AppPage() {
 
         // Adicionar listener para mudanças de autenticação em tempo real
         if (supabase) {
-            const { data: { subscription } } = (supabase as any).auth.onAuthStateChange(
-                (event: any, session: any) => {
+            // Verificação de tipo explícita para evitar never
+            const client = supabase as SupabaseClient;
+
+            const { data: { subscription } } = client.auth.onAuthStateChange(
+                (event, session) => {
                     console.log("[AuthStateChange] Event:", event, "User:", session?.user?.email);
 
                     if (event === 'SIGNED_IN' && session?.user) {
@@ -694,8 +701,12 @@ export default function AppPage() {
         if (code) {
             (async () => {
                 if (!supabase) return;
+
+                // Verificação de tipo explícita para evitar never
+                const client = supabase as SupabaseClient;
+
                 try {
-                    const { data, error } = await (supabase as any).auth.exchangeCodeForSession(code);
+                    const { data, error } = await client.auth.exchangeCodeForSession(code);
                     if (error) {
                         // Ignora erro se for "code already used" em dev, pois o usuário pode já estar logado
                         console.warn("Erro na troca de código (possível duplicidade em dev):", error.message);
@@ -1008,10 +1019,13 @@ export default function AppPage() {
 
         setIsAuthenticating(true);
 
+        // Verificação de tipo explícita para evitar never
+        const client = supabase as SupabaseClient;
+
         try {
             if (isLoginMode) {
                 // LOGIN
-                const { data, error } = await (supabase as any).auth.signInWithPassword({
+                const { data, error } = await client.auth.signInWithPassword({
                     email: authEmail,
                     password: authPassword,
                 });
@@ -1026,7 +1040,7 @@ export default function AppPage() {
                 }
             } else {
                 // CADASTRO
-                const { data, error } = await (supabase as any).auth.signUp({
+                const { data, error } = await client.auth.signUp({
                     email: authEmail,
                     password: authPassword,
                 });
@@ -1068,7 +1082,10 @@ export default function AppPage() {
                 console.log("[DEBUG] handleGoogleLogin page.tsx - Salvando stage:", stage, "plano:", selectedPlan);
             }
 
-            const { error } = await (supabase as any).auth.signInWithOAuth({
+            // Verificação de tipo explícita para evitar never
+            const client = supabase as SupabaseClient;
+
+            const { error } = await client.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: typeof window !== "undefined"
@@ -1710,7 +1727,10 @@ export default function AppPage() {
                                     type="button"
                                     onClick={async () => {
                                         if (supabase) {
-                                            await (supabase as any).auth.signOut();
+                                            // Verificação de tipo explícita para evitar never
+                                            const client = supabase as SupabaseClient;
+
+                                            await client.auth.signOut();
                                         }
                                     }}
                                     style={{
