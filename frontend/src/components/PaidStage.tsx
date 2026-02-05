@@ -364,19 +364,55 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     padding: 24,
                     backdropFilter: "blur(10px)"
                 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    {/* Score Atual vs Projetado */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                         <div>
                             <h2 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: 4 }}>{nivelLabel}</h2>
                             <p style={{ color: "#94A3B8", margin: 0 }}>{msgEgo}</p>
                         </div>
                         <div style={{ textAlign: "center" }}>
                             <div style={{ fontSize: "3rem", fontWeight: 800, color: barColor, lineHeight: 1 }}>{xpAtual}%</div>
-                            <div style={{ fontSize: "0.9rem", color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Score ATS</div>
+                            <div style={{ fontSize: "0.9rem", color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Score ATS Atual</div>
                         </div>
                     </div>
-                    <div style={{ height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${xpAtual}%`, background: barColor, borderRadius: 4, transition: "width 1s ease-out" }} />
+
+                    {/* Barra do Score Atual */}
+                    <div style={{ marginBottom: 8 }}>
+                        <div style={{ height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${xpAtual}%`, background: barColor, borderRadius: 4, transition: "width 1s ease-out" }} />
+                        </div>
                     </div>
+
+                    {/* Score Projetado */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, padding: "16px", background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%)", borderRadius: 12, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
+                        <div>
+                            <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#10B981", lineHeight: 1 }}>94/100</div>
+                            <div style={{ fontSize: "0.85rem", color: "#10B981", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Score Projetado Pós-Otimização</div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                            <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#10B981" }}>+{94 - xpAtual}%</div>
+                            <div style={{ fontSize: "0.75rem", color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Potencial de Melhoria</div>
+                        </div>
+                    </div>
+
+                    {/* Barra do Score Projetado */}
+                    <div style={{ marginBottom: 16 }}>
+                        <div style={{ height: 10, background: "rgba(255,255,255,0.1)", borderRadius: 5, overflow: "hidden", position: "relative" }}>
+                            <div style={{ height: "100%", width: "94%", background: "linear-gradient(90deg, #10B981 0%, #22C55E 100%)", borderRadius: 5, transition: "width 1s ease-out", boxShadow: "0 0 20px rgba(16, 185, 129, 0.3)" }} />
+                            {/* Indicador visual do ganho */}
+                            <div style={{
+                                position: "absolute",
+                                left: `${xpAtual}%`,
+                                top: 0,
+                                width: "2px",
+                                height: "100%",
+                                background: "#F59E0B",
+                                boxShadow: "0 0 10px rgba(245, 158, 11, 0.5)"
+                            }} />
+                        </div>
+                    </div>
+
+                    {/* Progresso das Etapas */}
                     <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                         <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Diagnóstico"></div>
                         <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="CV Otimizado"></div>
