@@ -1065,12 +1065,13 @@ INSTRUÇÕES ESPECÍFICAS:
    - Adicione palavras-chave da vaga que fazem sentido
    - Melhore a linguagem profissional
    - NÃO invente números, porcentagens ou métricas
-4. Foque em problemas FÁCEIS de identificar:
-   - Formatação inadequada (parágrafos longos, sem bullets)
-   - Linguagem passiva (ex: "fui responsável por" → "gerenciei")
+4. **NÃO USE** "falta de métricas" ou "falta de números" como problema
+5. Foque APENAS nestes 4 tipos de problemas:
+   - Formatação inadequada (parágrafos longos, sem bullets, estrutura confusa)
+   - Linguagem passiva (ex: "fui responsável por", "participei de" → "gerenciei", "implementei")
    - Falta de palavras-chave técnicas da vaga
-   - Descrições genéricas sem especificidade
-5. Seja direto e objetivo
+   - Descrições genéricas sem especificidade ou detalhes relevantes
+6. Seja direto e objetivo
 5. DETECTE A ÁREA ESPECÍFICA:
    
    {"⚠️ ÁREA FORÇADA ESPECÍFICA: Use exatamente '" + forced_area.replace('_', ' ').upper() + "' como setor_detectado. Ignore outras detecções." if forced_area else ""}
@@ -1126,6 +1127,7 @@ IMPORTANTE:
 - pilares: 0-100 baseados em análise específica
 - setor_detectado: área exata detectada acima
 - NÃO ADICIONE setores fora do lugar
+- **PROIBIDO IDENTIFICAR "FALTA DE MÉTRICAS" OU "FALTA DE NÚMEROS" COMO PROBLEMA**
 """
     
     try:
@@ -1247,6 +1249,7 @@ VAGA: {job_description[:800]}
 CV: {cv_text[:2000]}
 
 **IMPORTANTE**: Use APENAS dados reais do CV. Não invente exemplos, números ou porcentagens.
+**PROIBIDO**: Não use "falta de métricas" ou "falta de números" como problema.
 
 Retorne JSON exato:
 {{
