@@ -6,6 +6,7 @@ import { CopyableSection } from "./CopyableSection";
 import { GapCard } from "./GapCard";
 import { BookCard } from "./BookCard";
 import { InterviewSimulator } from "./InterviewSimulator";
+import { calculateProjectedScore } from "@/lib/helpers";
 
 // Estilos CSS para animação de loading
 const loadingStyles = `
@@ -144,6 +145,14 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
 
     const nota = reportData.nota_ats || 0;
     const xpAtual = Math.min(100, nota);
+
+    // 🎯 Calcular score projetado inteligente
+    const gapsCount = reportData.gaps_fatais ? reportData.gaps_fatais.length : 0;
+    const impacto = reportData.analise_por_pilares?.impacto || 0;
+    const keywords = reportData.analise_por_pilares?.keywords || 0;
+    const ats = reportData.analise_por_pilares?.ats || 0;
+
+    const projected = calculateProjectedScore(xpAtual, gapsCount, 0, ats, keywords, impacto);
 
     let nivelLabel = "FORMATADO COMO JÚNIOR 🧱";
     let barColor = "#EF4444";
@@ -386,11 +395,11 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     {/* Score Projetado */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, padding: "16px", background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%)", borderRadius: 12, border: "1px solid rgba(16, 185, 129, 0.2)" }}>
                         <div>
-                            <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#10B981", lineHeight: 1 }}>94/100</div>
+                            <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#10B981", lineHeight: 1 }}>{projected.score}/100</div>
                             <div style={{ fontSize: "0.85rem", color: "#10B981", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Score Projetado Pós-Otimização</div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                            <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#10B981" }}>+{94 - xpAtual}%</div>
+                            <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#10B981" }}>+{projected.improvement}%</div>
                             <div style={{ fontSize: "0.75rem", color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Potencial de Melhoria</div>
                         </div>
                     </div>
@@ -398,7 +407,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                     {/* Barra do Score Projetado */}
                     <div style={{ marginBottom: 16 }}>
                         <div style={{ height: 10, background: "rgba(255,255,255,0.1)", borderRadius: 5, overflow: "hidden", position: "relative" }}>
-                            <div style={{ height: "100%", width: "94%", background: "linear-gradient(90deg, #10B981 0%, #22C55E 100%)", borderRadius: 5, transition: "width 1s ease-out", boxShadow: "0 0 20px rgba(16, 185, 129, 0.3)" }} />
+                            <div style={{ height: "100%", width: `${projected.score}%`, background: "linear-gradient(90deg, #10B981 0%, #22C55E 100%)", borderRadius: 5, transition: "width 1s ease-out", boxShadow: "0 0 20px rgba(16, 185, 129, 0.3)" }} />
                             {/* Indicador visual do ganho */}
                             <div style={{
                                 position: "absolute",

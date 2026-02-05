@@ -7,7 +7,7 @@ import { PaidStage } from "@/components/PaidStage";
 import { AuthModal } from "@/components/AuthModal";
 import { HistoryStage } from "@/components/HistoryStage";
 import { PricingSimplified } from "@/components/PricingSimplified";
-import { calcPotencial } from "@/lib/helpers";
+import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
 
@@ -1514,11 +1514,14 @@ export default function AppPage() {
         competitorUploaderInputRef.current?.click();
     }
 
-    function renderDashboardMetricsHtml(nota: number, veredito: string, potencial: number, pilares: PilaresData) {
+    function renderDashboardMetricsHtml(nota: number, veredito: string, potencial: number, pilares: PilaresData, gapsFatals: number = 0) {
         const getNum = (v: unknown) => (typeof v === "number" ? v : 0);
         const impacto = getNum(pilares.impacto);
         const keywords = getNum(pilares.keywords);
         const ats = getNum(pilares.ats);
+
+        // 🎯 Cálculo inteligente do score projetado
+        const projected = calculateProjectedScore(nota, gapsFatals, 0, ats, keywords, impacto);
 
         const row = (label: string, value: number) => `
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
@@ -1546,8 +1549,8 @@ export default function AppPage() {
                     </div>
                     <div style="text-align:right;">
                          <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">SCORE PROJETADO</div>
-                         <div style="color:#10B981; font-weight:900; font-size: 2rem; line-height: 1;">94<span style="font-size:1rem; color:#10B981;">/100</span></div>
-                         <div style="color:#F59E0B; font-size:0.9rem; font-weight:700; margin-top:2px;">+${94 - nota}%</div>
+                         <div style="color:#10B981; font-weight:900; font-size: 2rem; line-height: 1;">${projected.score}<span style="font-size:1rem; color:#10B981;">/100</span></div>
+                         <div style="color:#F59E0B; font-size:0.9rem; font-weight:700; margin-top:2px;">+${projected.improvement}%</div>
                     </div>
                 </div>
 
@@ -2832,6 +2835,16 @@ export default function AppPage() {
                         else if (jobText.includes("amazon")) texto_destaque += " da Amazon";
                         else if (jobText.includes("itaú") || jobText.includes("itau")) texto_destaque += " do Itaú";
 
+                        // 🎯 Calcular score projetado inteligente
+                        const impacto = typeof pilares.impacto === "number" ? pilares.impacto : 0;
+                        const keywords = typeof pilares.keywords === "number" ? pilares.keywords : 0;
+                        const ats = typeof pilares.ats === "number" ? pilares.ats : 0;
+
+                        // Contar gaps baseado nos gaps identificados no preview
+                        const gapsCount = (data.gap_1 ? 1 : 0) + (data.gap_2 ? 1 : 0);
+
+                        const projected = calculateProjectedScore(nota, gapsCount, 0, ats, keywords, impacto);
+
                         const metaHtml = `
     <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 185, 129, 0.1)); 
                 border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; margin-top: 20px;">
@@ -2840,15 +2853,15 @@ export default function AppPage() {
             <div>
                 <div style="color: #F59E0B; font-weight: 800; font-size: 1.1rem;">META DE PONTUAÇÃO</div>
                 <div style="color: #E2E8F0; font-size: 0.9rem; margin-top: 5px;">
-                    Com as otimizações completas, seu score pode chegar a <strong style="color: #10B981;">94/100</strong>
-                    <br>Isso coloca você no <strong>Top 5%</strong> dos candidatos.
+                    Com as otimizações completas, seu score pode chegar a <strong style="color: #10B981;">${projected.score}/100</strong>
+                    <br>Isso coloca você no <strong>${projected.percentile}</strong> dos candidatos.
                 </div>
             </div>
         </div>
     </div>
     `;
 
-                        const dashHtml = renderDashboardMetricsHtml(nota, veredito, potencial, pilares);
+                        const dashHtml = renderDashboardMetricsHtml(nota, veredito, potencial, pilares, gapsCount);
 
                         const setorDetectado = typeof pilares.setor_detectado === "string" ? pilares.setor_detectado : "Gestão Estratégica";
                         const exemploMelhoria = `Especialista em ${setorDetectado} com histórico de ` +
