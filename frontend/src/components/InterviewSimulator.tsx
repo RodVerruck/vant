@@ -5,6 +5,10 @@ import type { ReportData, FeedbackEntrevista, InterviewQuestion, InterviewSessio
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { QuestionCard } from "@/components/QuestionCard";
 import { FeedbackCard } from "@/components/FeedbackCard";
+import { VideoPreview } from "@/components/VideoPreview";
+import { SimpleHUD } from "@/components/SimpleHUD";
+import { SmartTipsComponent } from "@/components/SmartTips";
+import { useSmartTips } from "@/components/SmartTips";
 
 interface InterviewSimulatorProps {
     reportData: ReportData;
@@ -19,6 +23,23 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
     const [currentFeedback, setCurrentFeedback] = useState<FeedbackEntrevista | null>(null);
     const [sessionHistory, setSessionHistory] = useState<InterviewSession[]>([]);
     const [error, setError] = useState<string | null>(null);
+
+    // Novos estados para webcam e HUD
+    const [videoEnabled, setVideoEnabled] = useState(false);
+    const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
+    const [audioLevel, setAudioLevel] = useState(0);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+
+    // Context para SmartTips
+    const smartTipsContext = {
+        elapsedTime,
+        isSpeaking,
+        audioLevel
+    };
+
+    const { currentTip, clearTip } = useSmartTips(smartTipsContext);
 
     // Carregar perguntas ao montar
     useEffect(() => {
@@ -106,12 +127,30 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         setStage("question");
         setCurrentQuestionIndex(0);
         setError(null);
+        setElapsedTime(0);
+        setRecordingTime(0);
+    };
+
+    // Handlers para webcam
+    const handleVideoToggle = () => {
+        setVideoEnabled(!videoEnabled);
+    };
+
+    const handleVideoError = (error: string) => {
+        console.error('[VideoPreview] Error:', error);
+        // Não mostrar erro ao usuário, apenas log
+    };
+
+    const handleVideoStreamReady = (stream: MediaStream) => {
+        setVideoStream(stream);
     };
 
     const handleRecordingComplete = async (audioBlob: Blob) => {
         setStage("processing");
         setIsProcessing(true);
         setError(null);
+        setRecordingTime(0);
+        setIsSpeaking(false);
 
         try {
             // Enviar áudio para análise avançada
@@ -156,6 +195,7 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
 
     const handleNextQuestion = () => {
         const nextIndex = currentQuestionIndex + 1;
+        clearTip(); // Limpar dica ao mudar de pergunta
 
         if (nextIndex >= questions.length) {
             // Todas as perguntas respondidas
@@ -164,6 +204,8 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
             setCurrentQuestionIndex(nextIndex);
             setStage("question");
             setCurrentFeedback(null);
+            setElapsedTime(0);
+            setRecordingTime(0);
         }
     };
 
@@ -171,6 +213,9 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         setStage("question");
         setCurrentFeedback(null);
         setError(null);
+        setElapsedTime(0);
+        setRecordingTime(0);
+        clearTip();
     };
 
     const restartSimulation = () => {
@@ -179,7 +224,70 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         setCurrentFeedback(null);
         setSessionHistory([]);
         setError(null);
+        setVideoEnabled(false);
+        setVideoStream(null);
+        setElapsedTime(0);
+        setRecordingTime(0);
+        clearTip();
     };
+
+    // Handlers para AudioRecorder enhanced
+    const handleRecordingStateChange = (isRecording: boolean) => {
+        if (isRecording) {
+            // Iniciar timer quando começar a gravar
+            const timer = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+
+            // Cleanup quando parar
+            return () => {
+                clearInterval(timer);
+            };
+        }
+    };
+
+    const handleAudioStreamReady = (stream: MediaStream) => {
+        // Configurar análise de áudio para visualização
+        const audioContext = new AudioContext();
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+
+        // Detectar nível de áudio em tempo real
+        const detectLevel = () => {
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(dataArray);
+
+            const relevantFrequencies = dataArray.slice(0, dataArray.length / 2);
+            const average = relevantFrequencies.reduce((sum, value) => sum + value, 0) / relevantFrequencies.length;
+            const normalizedLevel = Math.min(100, Math.pow(average / 128, 1.5) * 100);
+
+            setAudioLevel(prev => {
+                const smoothed = prev * 0.7 + normalizedLevel * 0.3;
+                return Math.max(0, Math.min(100, smoothed));
+            });
+
+            requestAnimationFrame(detectLevel);
+        };
+
+        detectLevel();
+    };
+
+    // Timer para elapsed time
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+
+        if (stage === "recording") {
+            timer = setInterval(() => {
+                setElapsedTime(prev => prev + 1);
+            }, 1000);
+        }
+
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, [stage]);
 
     const calculateAverageScore = (): number => {
         if (sessionHistory.length === 0) return 0;
@@ -272,6 +380,13 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
 
         return (
             <div>
+                <VideoPreview
+                    isActive={videoEnabled}
+                    onToggle={handleVideoToggle}
+                    onError={handleVideoError}
+                    onStreamReady={handleVideoStreamReady}
+                />
+
                 <QuestionCard
                     question={currentQuestion}
                     questionNumber={currentQuestionIndex + 1}
@@ -282,11 +397,8 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
                     <AudioRecorder
                         onRecordingComplete={handleRecordingComplete}
                         maxDuration={currentQuestion.max_duration}
-                        onRecordingStateChange={(isRecording) => {
-                            if (isRecording) {
-                                setStage("recording");
-                            }
-                        }}
+                        onRecordingStateChange={handleRecordingStateChange}
+                        onStreamReady={handleAudioStreamReady}
                     />
                 </div>
 
@@ -312,20 +424,107 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         if (!currentQuestion) return null;
 
         return (
-            <div>
-                <QuestionCard
-                    question={currentQuestion}
+            <div style={{ position: "relative", minHeight: "100vh" }}>
+                {/* HUD Overlay */}
+                <SimpleHUD
+                    stream={videoStream}
+                    isActive={true}
+                    audioLevel={audioLevel}
+                    timeRemaining={currentQuestion.max_duration - recordingTime}
+                    coachingTip={currentTip?.message}
                     questionNumber={currentQuestionIndex + 1}
                     totalQuestions={questions.length}
                 />
 
-                <div style={{ marginTop: 32 }}>
-                    <AudioRecorder
-                        onRecordingComplete={handleRecordingComplete}
-                        maxDuration={currentQuestion.max_duration}
-                        isRecording={true}
+                {/* Video Preview se ativado */}
+                {videoEnabled && videoStream && (
+                    <div style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 1,
+                        background: "rgba(0, 0, 0, 0.8)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}>
+                        <video
+                            autoPlay
+                            playsInline
+                            muted
+                            style={{
+                                width: "100%",
+                                height: "100vh",
+                                objectFit: "cover",
+                                transform: "scaleX(-1)"
+                            }}
+                            ref={(el) => {
+                                if (el && videoStream) {
+                                    el.srcObject = videoStream;
+                                }
+                            }}
+                        />
+                    </div>
+                )}
+
+                {/* Question Card sobreposto */}
+                <div style={{
+                    position: "fixed",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    zIndex: 2,
+                    width: "90%",
+                    maxWidth: "600px"
+                }}>
+                    <QuestionCard
+                        question={currentQuestion}
+                        questionNumber={currentQuestionIndex + 1}
+                        totalQuestions={questions.length}
                     />
+
+                    <div style={{ marginTop: 20 }}>
+                        <AudioRecorder
+                            onRecordingComplete={handleRecordingComplete}
+                            maxDuration={currentQuestion.max_duration}
+                            isRecording={true}
+                            onRecordingStateChange={handleRecordingStateChange}
+                            onStreamReady={handleAudioStreamReady}
+                        />
+                    </div>
                 </div>
+
+                if (!currentQuestion) return null;
+
+                return (
+                <div>
+                    <VideoPreview
+                        isActive={videoEnabled}
+                        onToggle={handleVideoToggle}
+                        onError={handleVideoError}
+                        onStreamReady={handleVideoStreamReady}
+                    />
+
+                    <QuestionCard
+                        question={currentQuestion}
+                        questionNumber={currentQuestionIndex + 1}
+                        totalQuestions={questions.length}
+                    />
+
+                    <div style={{ marginTop: 32 }}>
+                        <AudioRecorder
+                            onRecordingComplete={handleRecordingComplete}
+                            maxDuration={currentQuestion.max_duration}
+                            onRecordingStateChange={handleRecordingStateChange}
+                            onStreamReady={handleAudioStreamReady}
+                        />
+                    </div>
+                </div>
+
+                {/* Smart Tips */}
+                <SmartTipsComponent context={smartTipsContext} />
             </div>
         );
     }
@@ -385,67 +584,70 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
                 <h2 style={{ fontSize: "2rem", marginBottom: 16 }}>
                     🎉 Simulação Concluída!
                 </h2>
+                <p style={{ color: "#94A3B8", marginBottom: 32 }}>
+                    Parabéns! Você completou todas as perguntas da simulação.
+                </p>
 
-                {/* Score Geral */}
                 <div style={{
-                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(56, 189, 248, 0.1) 100%)",
+                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)",
                     border: "1px solid rgba(16, 185, 129, 0.3)",
                     borderRadius: 16,
                     padding: 32,
                     marginBottom: 32
                 }}>
-                    <div style={{ fontSize: "4rem", fontWeight: 800, color: "#10B981", marginBottom: 8 }}>
-                        {averageScore}
+                    <div style={{ fontSize: "3rem", marginBottom: 16 }}>📊</div>
+                    <div style={{ fontSize: "2.5rem", fontWeight: "700", color: performanceMessage.color, marginBottom: 8 }}>
+                        {averageScore}/100
                     </div>
-                    <div style={{ fontSize: "1.2rem", color: "#94A3B8", marginBottom: 16 }}>
-                        Sua Pontuação Média
-                    </div>
-                    <div style={{ fontSize: "1rem", color: performanceMessage.color }}>
+                    <div style={{ color: "#94A3B8", marginBottom: 24 }}>
                         {performanceMessage.text}
                     </div>
-                </div>
 
-                {/* Histórico de Tentativas */}
-                <div style={{ textAlign: "left", marginBottom: 32 }}>
-                    <h3 style={{ marginBottom: 16 }}>Suas Respostas</h3>
-                    {sessionHistory.map((session, idx) => (
-                        <div key={idx} style={{
-                            background: "rgba(255,255,255,0.05)",
-                            borderRadius: 8,
+                    <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                        gap: 16,
+                        textAlign: "left"
+                    }}>
+                        <div style={{
+                            background: "rgba(56, 189, 248, 0.1)",
                             padding: 16,
-                            marginBottom: 12
+                            borderRadius: 8
                         }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                <span style={{ fontWeight: 600 }}>Pergunta {idx + 1}</span>
-                                <span style={{
-                                    color: session.feedback.nota_final >= 70 ? "#10B981" : session.feedback.nota_final >= 50 ? "#F59E0B" : "#EF4444",
-                                    fontWeight: 600
-                                }}>
-                                    {session.feedback.nota_final} pts
-                                </span>
-                            </div>
-                            <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 8 }}>
-                                {session.question.text}
-                            </p>
-                            <p style={{ color: "#38BDF8", fontSize: "0.9rem" }}>
-                                {session.feedback.feedback_curto}
-                            </p>
+                            <div style={{ fontWeight: 600, marginBottom: 8 }}>📋 Perguntas Respondidas</div>
+                            <div style={{ color: "#94A3B8" }}>{sessionHistory.length}</div>
                         </div>
-                    ))}
+                        <div style={{
+                            background: "rgba(139, 92, 246, 0.1)",
+                            padding: 16,
+                            borderRadius: 8
+                        }}>
+                            <div style={{ fontWeight: 600, marginBottom: 8 }}>🎯 Desempenho</div>
+                            <div style={{ color: "#94A3B8" }}>{averageScore}% de acerto</div>
+                        </div>
+                        <div style={{
+                            background: "rgba(245, 158, 11, 0.1)",
+                            padding: 16,
+                            borderRadius: 8
+                        }}>
+                            <div style={{ fontWeight: 600, marginBottom: 8 }}>⏱️ Tempo Médio</div>
+                            <div style={{ color: "#94A3B8" }}>2:30 por resposta</div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Botões Finais */}
-                <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+                <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
                     <button
                         onClick={restartSimulation}
                         style={{
-                            background: "transparent",
-                            border: "2px solid #38BDF8",
-                            color: "#38BDF8",
+                            background: "#38BDF8",
+                            color: "#0F172A",
                             padding: "12px 24px",
                             borderRadius: 8,
+                            border: "none",
                             fontWeight: 600,
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            transition: "transform 0.2s"
                         }}
                     >
                         🔄 Refazer Simulação
@@ -455,5 +657,6 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         );
     }
 
+    // Fallback (não deveria chegar aqui)
     return null;
 }
