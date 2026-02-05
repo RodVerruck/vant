@@ -1178,10 +1178,11 @@ export default function AppPage() {
             try {
                 await syncEntitlements(authUserId);
 
-                // Se usuário tem créditos e está na página de planos (preview), mover para hero para usar crédito
+                // Se usuário tem créditos e está na página de planos (preview), NÃO mover para hero automaticamente
+                // Usuário pode querer ver planos mesmo tendo créditos
                 if (creditsRemaining > 0 && stage === "preview") {
-                    console.log("[syncEntitlements] Usuário tem créditos, movendo para hero para usar crédito");
-                    setStage("hero");
+                    console.log("[syncEntitlements] Usuário tem créditos mas está em preview - mantendo em preview para ver planos");
+                    // Não mover para hero - deixar usuário decidir
                 }
 
                 // Se usuário tem créditos e está no hero (tela inicial), mostrar mensagem
@@ -1709,33 +1710,93 @@ export default function AppPage() {
                     )}
                     {!isLoading && creditsRemaining}
                 </div>
-                {!isLoading && creditsRemaining > 0 && (
-                    <button
-                        onClick={() => setStage("preview")}
-                        style={{
-                            background: 'rgba(59, 130, 246, 0.2)',
-                            border: '1px solid #3B82F6',
-                            borderRadius: 6,
-                            padding: '6px 12px',
-                            color: '#3B82F6',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            whiteSpace: 'nowrap'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
-                            e.currentTarget.style.transform = 'scale(1.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-                            e.currentTarget.style.transform = 'scale(1)';
-                        }}
-                        title="Comprar mais créditos"
-                    >
-                        + Comprar
-                    </button>
+                {!isLoading && (
+                    <div>
+                        {creditsRemaining > 0 ? (
+                            <>
+                                <button
+                                    onClick={() => setStage("preview")}
+                                    style={{
+                                        background: 'rgba(34, 197, 94, 0.2)',
+                                        border: '1px solid #22C55E',
+                                        borderRadius: 6,
+                                        padding: '6px 12px',
+                                        color: '#22C55E',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        whiteSpace: 'nowrap',
+                                        marginRight: '6px'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = 'rgba(34, 197, 94, 0.3)';
+                                        e.currentTarget.style.transform = 'scale(1.05)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = 'rgba(34, 197, 94, 0.2)';
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                    }}
+                                    title="Ver planos disponíveis"
+                                >
+                                    Ver planos
+                                </button>
+                                <button
+                                    onClick={() => setStage("preview")}
+                                    style={{
+                                        background: 'rgba(59, 130, 246, 0.2)',
+                                        border: '1px solid #3B82F6',
+                                        borderRadius: 6,
+                                        padding: '6px 12px',
+                                        color: '#3B82F6',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                                        e.currentTarget.style.transform = 'scale(1.05)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                    }}
+                                    title="Comprar mais créditos"
+                                >
+                                    + Comprar
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => setStage("preview")}
+                                style={{
+                                    background: 'rgba(59, 130, 246, 0.2)',
+                                    border: '1px solid #3B82F6',
+                                    borderRadius: 6,
+                                    padding: '6px 12px',
+                                    color: '#3B82F6',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    whiteSpace: 'nowrap'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.3)';
+                                    e.currentTarget.style.transform = 'scale(1.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                                    e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                                title="Comprar créditos"
+                            >
+                                + Comprar
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
         );
