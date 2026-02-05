@@ -3318,7 +3318,7 @@ export default function AppPage() {
                                                         boxShadow: "0 0 20px rgba(239, 68, 68, 0.3)"
                                                     }}>
                                                         <div style={{ color: "#EF4444", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
-                                                            🔥 OFERTA RELÂMPAGO DE LANÇAMENTO
+                                                            🔥 OFERTA POR TEMPO LIMITADO
                                                         </div>
                                                         <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6 }}>
                                                             7 DIAS POR R$ 1,99
@@ -3335,21 +3335,21 @@ export default function AppPage() {
                                                             marginBottom: 12
                                                         }}>
                                                             <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
-                                                                🔥 PRIMEIROS 100 CLIENTES GARANTEM:
+                                                                🚀 JUNTE-SE A <strong style={{ color: "#10B981" }}>50.000+</strong> PROFISSIONAIS:
                                                             </div>
-                                                            <div style={{ color: "#FDE68A", fontSize: "0.9rem", fontWeight: 700 }}>
-                                                                Preço vitalício de R$ 19,90/mês
+                                                            <div style={{ color: "#fff", fontSize: "0.9rem", fontWeight: 700 }}>
+                                                                Preço Vitalício de R$ 19,90/mês garantido
                                                             </div>
                                                             <div style={{ color: "#94A3B8", fontSize: "0.7rem", marginTop: 2 }}>
-                                                                (em vez de R$ 27,90)
+                                                                (Desconto de 30% aplicado automaticamente)
                                                             </div>
                                                         </div>
 
                                                         <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
                                                             <div>
                                                                 <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                                                                    <span style={{ animation: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "pulse 1.5s infinite" : "none" }}>🔥</span>
-                                                                    OFERTA DE BOAS-VINDAS
+                                                                    <span style={{ animation: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "pulse 1.5s infinite" : "none" }}>⏱️</span>
+                                                                    ESSA CONDIÇÃO EXPIRA EM
                                                                 </div>
                                                                 <div style={{
                                                                     color: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "#EF4444" : "#fff",
