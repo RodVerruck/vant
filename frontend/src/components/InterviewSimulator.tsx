@@ -25,52 +25,81 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         loadQuestions();
     }, []);
 
+    // Carregar perguntas personalizadas do backend
     const loadQuestions = async () => {
         try {
-            // Gerar perguntas baseadas no CV (mock por enquanto)
-            const mockQuestions: InterviewQuestion[] = [
-                {
-                    id: 1,
-                    text: "Fale sobre um projeto desafiador que você desenvolveu e qual foi sua maior aprendizagem.",
-                    type: "comportamental",
-                    context: "Use o método STAR para estruturar sua resposta.",
-                    max_duration: 120
-                },
-                {
-                    id: 2,
-                    text: "Como você mantém suas habilidades técnicas atualizadas?",
-                    type: "comportamental",
-                    context: "Mencione cursos, projetos pessoais ou comunidades.",
-                    max_duration: 120
-                },
-                {
-                    id: 3,
-                    text: "Descreva uma situação em que você teve que lidar com um bug crítico em produção.",
-                    type: "comportamental",
-                    context: "Foque em resolução de problemas e comunicação.",
-                    max_duration: 120
-                },
-                {
-                    id: 4,
-                    text: "Como você equilibra qualidade de código e prazos apertados?",
-                    type: "situacional",
-                    context: "Mostre seu processo de tomada de decisão.",
-                    max_duration: 120
-                },
-                {
-                    id: 5,
-                    text: "Por que você está interessado nesta vaga e nesta empresa?",
-                    type: "comportamental",
-                    context: "Mostre que você pesquisou sobre a empresa.",
-                    max_duration: 120
-                }
-            ];
+            // Buscar ID da análise do CV
+            const cvId = localStorage.getItem('vant_cv_analysis_id');
+            if (!cvId) {
+                // Fallback para perguntas mock se não tiver ID
+                loadMockQuestions();
+                return;
+            }
 
-            setQuestions(mockQuestions);
+            const formData = new FormData();
+            formData.append("cv_analysis_id", cvId);
+            formData.append("mode", "standard");
+            formData.append("difficulty", "intermediate");
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interview/generate-questions`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setQuestions(data.questions);
+            } else {
+                // Fallback para mock se falhar
+                loadMockQuestions();
+            }
         } catch (error) {
             console.error("Erro ao carregar perguntas:", error);
-            setError("Não foi possível carregar as perguntas.");
+            // Fallback para mock
+            loadMockQuestions();
         }
+    };
+
+    const loadMockQuestions = () => {
+        const mockQuestions: InterviewQuestion[] = [
+            {
+                id: 1,
+                text: "Fale sobre um projeto desafiador que você desenvolveu e qual foi sua maior aprendizagem.",
+                type: "comportamental",
+                context: "Use o método STAR para estruturar sua resposta.",
+                max_duration: 120
+            },
+            {
+                id: 2,
+                text: "Como você mantém suas habilidades técnicas atualizadas?",
+                type: "comportamental",
+                context: "Mencione cursos, projetos pessoais ou comunidades.",
+                max_duration: 120
+            },
+            {
+                id: 3,
+                text: "Descreva uma situação em que você teve que lidar com um bug crítico em produção.",
+                type: "comportamental",
+                context: "Foque em resolução de problemas e comunicação.",
+                max_duration: 120
+            },
+            {
+                id: 4,
+                text: "Como você equilibra qualidade de código e prazos apertados?",
+                type: "situacional",
+                context: "Mostre seu processo de tomada de decisão.",
+                max_duration: 120
+            },
+            {
+                id: 5,
+                text: "Por que você está interessado nesta vaga e nesta empresa?",
+                type: "comportamental",
+                context: "Mostre que você pesquisou sobre a empresa.",
+                max_duration: 120
+            }
+        ];
+
+        setQuestions(mockQuestions);
     };
 
     const startSimulation = () => {
@@ -85,22 +114,23 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         setError(null);
 
         try {
-            // Enviar áudio para análise
+            // Enviar áudio para análise avançada
             const formData = new FormData();
             formData.append("audio_file", audioBlob, "recording.webm");
             formData.append("question", questions[currentQuestionIndex].text);
-            formData.append("job_context", reportData.setor_detectado || "Tecnologia");
+            formData.append("cv_context", JSON.stringify(reportData));
+            formData.append("interview_mode", "standard");
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interview/analyze`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interview/analyze-advanced`, {
                 method: "POST",
                 body: formData,
             });
 
             if (!response.ok) {
-                throw new Error("Falha na análise da resposta");
+                throw new Error("Falha na análise avançada da resposta");
             }
 
-            const feedback: FeedbackEntrevista = await response.json();
+            const feedback = await response.json();
             setCurrentFeedback(feedback);
 
             // Adicionar ao histórico

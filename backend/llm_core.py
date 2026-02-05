@@ -10,6 +10,10 @@ from google.genai import types
 from groq import Groq
 from anthropic import Anthropic
 from cache_manager import CacheManager
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente
+load_dotenv()
 
 # ============================================================
 # LOGGING & CONFIG
@@ -887,6 +891,38 @@ def run_llm_orchestrator(
 # ============================================================
 # FUNÇÕES DE ÁUDIO E ENTREVISTA (NOVO)
 # ============================================================
+
+def transcribe_audio_gemini(audio_bytes):
+    """
+    Transcreve áudio usando Gemini 2.5-flash-lite.
+    Mais econômico e integrado ao nosso ecossistema.
+    """
+    if not genai_client:
+        logger.error("❌ Gemini Client não configurado.")
+        return "Erro: API Gemini indisponível."
+
+    try:
+        # Transcrição usando Gemini com bytes diretamente
+        response = genai_client.models.generate_content(
+            model="models/gemini-2.5-flash-lite",
+            contents=[
+                types.Part(text="Transcreva exatamente o que está sendo dito neste áudio. Retorne apenas a transcrição, sem formatação adicional."),
+                types.Part(
+                    inline_data=types.Blob(
+                        mime_type="audio/webm",
+                        data=audio_bytes
+                    )
+                )
+            ]
+        )
+        
+        transcription = response.text.strip()
+        return transcription
+
+    except Exception as e:
+        logger.error(f"❌ Erro na transcrição Gemini: {e}")
+        return f"Erro ao transcrever áudio: {str(e)}"
+
 
 def transcribe_audio_groq(audio_bytes):
     """

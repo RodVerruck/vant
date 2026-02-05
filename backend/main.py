@@ -11,6 +11,35 @@ from pathlib import Path
 from typing import Any
 from dotenv import load_dotenv
 
+# Importar endpoints de persistência
+from interview_endpoints import router as interview_router
+
+try:
+    from generate_questions_fixed import _generate_interview_questions_wow_fixed
+    # Tentar usar o gerador WOW primeiro
+    try:
+        from question_generator_wow import generate_dynamic_questions_wow
+        def _generate_interview_questions_wow(report_data: dict, mode: str, difficulty: str, focus_areas: List[str]) -> List[dict]:
+            """Função wrapper que usa o gerador WOW dinâmico"""
+            try:
+                return generate_dynamic_questions_wow(
+                    sector=report_data.get("setor_detectado", "Tecnologia"),
+                    gaps_fatais=report_data.get("gaps_fatais", []),
+                    job_description=report_data.get("job_description", ""),
+                    mode=mode,
+                    difficulty=difficulty,
+                    num_questions=5
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Gerador WOW falhou, usando fallback: {e}")
+                return _generate_interview_questions_wow_fixed(report_data, mode, difficulty, focus_areas)
+    except ImportError:
+        logger.info("📦 Gerador WOW não disponível, usando função fixa")
+        _generate_interview_questions_wow = _generate_interview_questions_wow_fixed
+except ImportError:
+    # Fallback para função antiga se o arquivo não existir
+    pass
+
 # Carrega variáveis de ambiente do arquivo .env na raiz do projeto
 PROJECT_ROOT = Path(__file__).parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
@@ -53,6 +82,9 @@ except ImportError:
     from mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
 
 app = FastAPI(title="Vant API", version="0.1.0")
+
+# Incluir router de persistência
+app.include_router(interview_router)
 
 @app.middleware("http")
 async def timeout_middleware(request: Request, call_next):
@@ -463,9 +495,8 @@ def analyze_lite(request: Request, file: UploadFile = File(...), job_description
         # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
         
-        # Se for vaga genérica e tiver área de interesse, substitui a área detectada
-        if area_of_interest and "busco oportunidades profissionais" in job_description.lower():
-            # Força a área selecionada pelo usuário
+        # Se o usuário selecionou uma área específica, priorize-a
+        if area_of_interest:
             data = analyze_preview_lite(cv_text, job_description, forced_area=area_of_interest)
         else:
             data = analyze_preview_lite(cv_text, job_description)
@@ -529,8 +560,8 @@ def analyze_free(
         # Modo produção: processa com IA real
         cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
         
-        # Se for vaga genérica e tiver área de interesse, substitui a área detectada
-        if area_of_interest and "busco oportunidades profissionais" in job_description.lower():
+        # Se o usuário selecionou uma área específica, priorize-a
+        if area_of_interest:
             data = analyze_preview_lite(cv_text, job_description, forced_area=area_of_interest)
         else:
             data = analyze_preview_lite(cv_text, job_description)
@@ -1357,10 +1388,10 @@ async def analyze_interview_response(
                 content={"error": "Arquivo muito grande. Máximo 10MB."}
             )
         
-        # Transcrever áudio
-        from backend.llm_core import transcribe_audio_groq, analyze_interview_gemini
+        # Transcrever áudio com Gemini (mais econômico e integrado)
+        from backend.llm_core import transcribe_audio_gemini, analyze_interview_gemini
         
-        transcription = transcribe_audio_groq(audio_bytes)
+        transcription = transcribe_audio_gemini(audio_bytes)
         
         if transcription.startswith("Erro"):
             return JSONResponse(
@@ -1371,7 +1402,7 @@ async def analyze_interview_response(
         # Analisar resposta
         feedback = analyze_interview_gemini(question, transcription, job_context)
         
-        # Salvar sessão se tiver user_id
+        # Salvar apenas transcrição e feedback (sem áudio para economizar espaço)
         if user_id and supabase_admin:
             try:
                 session_data = {
@@ -1394,6 +1425,622 @@ async def analyze_interview_response(
             status_code=500,
             content={"error": f"{type(e).__name__}: {e}"}
         )
+
+
+@app.post("/api/interview/generate-questions")
+@limiter.limit("20/minute")
+async def generate_interview_questions(
+    request: Request,
+    cv_analysis_id: str = Form(...),
+    mode: str = Form("standard"),
+    difficulty: str = Form("intermediate"),
+    focus_areas: List[str] = Form(default=[])
+) -> JSONResponse:
+    """
+    Gera perguntas ultra-personalizadas baseadas na análise completa do CV.
+    """
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "interview_generate_questions")
+    
+    try:
+        if not supabase_admin:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Database não configurada"}
+            )
+        
+        # Buscar análise completa do CV
+        result = supabase_admin.table("analysis_sessions")\
+            .select("result_data")\
+            .eq("id", cv_analysis_id)\
+            .single()\
+            .execute()
+        
+        if not result.data:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Análise não encontrada"}
+            )
+        
+        report_data = result.data["result_data"]
+        
+        # Gerar perguntas ultra-personalizadas
+        questions = _generate_interview_questions_wow(report_data, mode, difficulty, focus_areas)
+        
+        return JSONResponse(content={
+            "questions": questions,
+            "total_questions": len(questions),
+            "mode": mode,
+            "difficulty": difficulty,
+            "sector": report_data.get("setor_detectado", "Tecnologia"),
+            "experience_level": _detect_experience_level(report_data),
+            "focus_areas": focus_areas
+        })
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro ao gerar perguntas personalizadas: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )
+
+
+@app.post("/api/interview/pre-analysis")
+@limiter.limit("10/minute")
+async def pre_interview_analysis(
+    request: Request,
+    cv_analysis_id: str = Form(...),
+    target_job: str = Form(""),
+    interview_date: str = Form("")  # ISO string
+) -> JSONResponse:
+    """
+    Analisa prontificação do candidato e gera plano de preparação.
+    """
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "interview_pre_analysis")
+    
+    try:
+        if not supabase_admin:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Database não configurada"}
+            )
+        
+        # Buscar análise completa do CV
+        result = supabase_admin.table("analysis_sessions")\
+            .select("result_data")\
+            .eq("id", cv_analysis_id)\
+            .single()\
+            .execute()
+        
+        if not result.data:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Análise não encontrada"}
+            )
+        
+        report_data = result.data["result_data"]
+        
+        # Análise de prontificação
+        readiness_analysis = _analyze_interview_readiness(report_data, target_job, interview_date)
+        
+        return JSONResponse(content=readiness_analysis)
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro na pré-análise: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )
+
+
+@app.post("/api/interview/analyze-advanced")
+@limiter.limit("10/minute")
+async def analyze_interview_advanced(
+    request: Request,
+    audio_file: UploadFile = File(...),
+    question: str = Form(...),
+    cv_context: str = Form("{}"),
+    interview_mode: str = Form("standard"),
+    user_id: str = Form(None)
+) -> JSONResponse:
+    """
+    Análise avançada com contexto completo do CV e benchmark.
+    """
+    import sentry_sdk
+    import json
+    
+    sentry_sdk.set_tag("endpoint", "interview_analyze_advanced")
+    
+    try:
+        # Validar arquivo de áudio
+        content_type = audio_file.content_type.lower() if audio_file.content_type else ""
+        filename = audio_file.filename.lower() if audio_file.filename else ""
+        
+        # Verificar se é áudio pelo content-type ou extensão
+        is_audio = (
+            content_type.startswith('audio/') or
+            filename.endswith('.wav') or
+            filename.endswith('.mp3') or
+            filename.endswith('.webm') or
+            filename.endswith('.ogg') or
+            filename.endswith('.m4a')
+        )
+        
+        if not is_audio:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Arquivo inválido. Envie um arquivo de áudio (WAV, MP3, WebM, OGG, M4A)."}
+            )
+        
+        # Ler bytes do áudio
+        audio_bytes = await audio_file.read()
+        
+        if len(audio_bytes) > 10 * 1024 * 1024:  # 10MB max
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Arquivo muito grande. Máximo 10MB."}
+            )
+        
+        # Transcrever áudio com Gemini
+        from backend.llm_core import transcribe_audio_gemini
+        
+        transcription = transcribe_audio_gemini(audio_bytes)
+        
+        if transcription.startswith("Erro"):
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Falha na transcrição do áudio"}
+            )
+        
+        # Parse do contexto do CV
+        try:
+            cv_data = json.loads(cv_context) if cv_context else {}
+        except json.JSONDecodeError:
+            cv_data = {}
+        
+        # Análise avançada
+        feedback = _analyze_interview_advanced(
+            question=question,
+            transcription=transcription,
+            cv_context=cv_data,
+            interview_mode=interview_mode
+        )
+        
+        # Salvar apenas transcrição e feedback (sem áudio)
+        if user_id and supabase_admin:
+            try:
+                session_data = {
+                    "user_id": user_id,
+                    "question": question,
+                    "transcription": transcription,
+                    "feedback": feedback,
+                    "interview_mode": interview_mode,
+                    "cv_context": cv_context,
+                    "created_at": datetime.utcnow().isoformat()
+                }
+                supabase_admin.table("interview_sessions_enhanced").insert(session_data).execute()
+            except Exception as save_error:
+                logger.warning(f"⚠️ Erro ao salvar sessão avançada: {save_error}")
+        
+        return JSONResponse(content=feedback)
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro na análise avançada: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )
+
+
+def _generate_interview_questions_wow_old(report_data: dict, mode: str, difficulty: str, focus_areas: List[str]) -> List[dict]:
+    """
+    Gera perguntas ultra-personalizadas baseadas nos gaps do CV e contexto completo.
+    """
+    sector = report_data.get("setor_detectado", "Tecnologia")
+    experience_level = _detect_experience_level(report_data)
+    gaps_fatais = report_data.get("gaps_fatais", [])
+    biblioteca_tecnica = report_data.get("biblioteca_tecnica", [])
+    
+    # Extrair keywords do CV para personalização
+    cv_text = report_data.get("cv_otimizado_completo", "")
+    
+    # Banco de perguntas WOW por modo e setor
+    question_banks = {
+        "warmup": {
+            "Tecnologia": [
+                {
+                    "text": f"Qual foi sua maior conquista profissional recente e o que você aprendeu com ela?",
+                    "type": "comportamental",
+                    "context": "Seja específico e use números quando possível.",
+                    "focus": ["confiança", "clareza"]
+                },
+                {
+                    "text": "Como você descreveria seu estilo de trabalho em 3 palavras?",
+                    "type": "comportamental",
+                    "context": "Pense em como você colabora e resolve problemas.",
+                    "focus": ["autoconhecimento", "comunicação"]
+                },
+                {
+                    "text": "O que te motiva a buscar uma nova oportunidade profissional?",
+                    "type": "comportamental",
+                    "context": "Seja autêntico sobre suas aspirações.",
+                    "focus": ["motivação", "carreira"]
+                }
+            ]
+        },
+        "technical": {
+            "Tecnologia": [
+                {
+                    "text": f"Explique como você otimizaria o desempenho de uma aplicação que está lenta.",
+                    "type": "tecnica",
+                    "context": "Fale sobre diagnóstico, ferramentas e soluções.",
+                    "focus": ["performance", "problem-solving"]
+                },
+                {
+                    "text": "Como você garante a qualidade do código que produz?",
+                    "type": "tecnica",
+                    "context": "Mencione testes, code review e boas práticas.",
+                    "focus": ["qualidade", "processos"]
+                },
+                {
+                    "text": "Descreva um desafio técnico complexo que você superou.",
+                    "type": "comportamental",
+                    "context": "Use o método STAR para estruturar sua resposta.",
+                    "focus": ["resiliência", "aprendizado"]
+                }
+            ]
+        },
+        "behavioral": {
+            "Tecnologia": [
+                {
+                    "text": "Fale sobre uma situação em que você teve que lidar com um conflito na equipe.",
+                    "type": "comportamental",
+                    "context": "Foque em como você mediou e resolveu a situação.",
+                    "focus": ["comunicação", "trabalho em equipe"]
+                },
+                {
+                    "text": "Como você lida com feedback crítico sobre seu trabalho?",
+                    "type": "comportamental",
+                    "context": "Seja honesto sobre como você processa e aplica feedback.",
+                    "focus": ["crescimento", "resiliência"]
+                },
+                {
+                    "text": "Descreva um projeto em que você precisou influenciar outros sem autoridade formal.",
+                    "type": "comportamental",
+                    "context": "Mostre suas habilidades de persuasão e liderança.",
+                    "focus": ["influência", "liderança"]
+                }
+            ]
+        },
+        "pressure": {
+            "Tecnologia": [
+                {
+                    "text": "Você tem 5 minutos para explicar por que deveríamos te contratar. Vamos!",
+                    "type": "situacional",
+                    "context": "Seja direto, confiante e impactante.",
+                    "focus": ["rapidez", "impacto"]
+                },
+                {
+                    "text": "Seu sistema acabou de cair em produção. O que você faz AGORA?",
+                    "type": "situacional",
+                    "context": "Mostre calma, método e priorização.",
+                    "focus": ["crise", "priorização"]
+                },
+                {
+                    "text": "Por que você é melhor que os outros candidatos para esta vaga?",
+                    "type": "comportamental",
+                    "context": "Seja confiante mas não arrogante. Use evidências.",
+                    "focus": ["diferenciação", "confiança"]
+                }
+            ]
+        },
+        "company": {
+            "Tecnologia": [
+                {
+                    "text": "Por que você quer trabalhar especificamente nesta empresa?",
+                    "type": "comportamental",
+                    "context": "Mostre que você pesquisou sobre a empresa e cultura.",
+                    "focus": ["pesquisa", "fit cultural"]
+                },
+                {
+                    "text": "Como suas habilidades contribuiriam para os objetivos da empresa?",
+                    "type": "situacional",
+                    "context": "Conecte sua experiência com as necessidades da empresa.",
+                    "focus": ["contribuição", "estratégia"]
+                },
+                {
+                    "text": "Que tipo de ambiente de trabalho te faz mais produtivo?",
+                    "type": "comportamental",
+                    "context": "Seja honesto sobre seu estilo ideal de trabalho.",
+                    "focus": ["cultura", "produtividade"]
+                }
+            ]
+        }
+    }
+    
+    # Selecionar banco baseado no modo
+    mode_questions = question_banks.get(mode, question_banks["warmup"])
+    sector_questions = mode_questions.get(sector, mode_questions["Tecnologia"])
+    
+    # Personalizar perguntas baseado nos gaps
+    if gaps_fatais:
+        gap_questions = []
+        for gap in gaps_fatais[:2]:  # Máximo 2 perguntas sobre gaps
+            gap_title = gap.get("titulo", "")
+            if "exemplo" in gap_title.lower() or "projetos" in gap_title.lower():
+                gap_questions.append({
+                    "text": f"Me detalhe um projeto seu que demonstre {gap_title.lower()}",
+                    "type": "comportamental",
+                    "context": "Use exemplos concretos e resultados mensuráveis.",
+                    "focus": ["exemplos", "resultados"]
+                })
+        
+        # Substituir algumas perguntas genéricas pelas de gaps
+        if gap_questions:
+            sector_questions = sector_questions[:-len(gap_questions)] + gap_questions
+    
+    # Adicionar perguntas baseadas na biblioteca técnica
+    if biblioteca_tecnica and mode in ["technical", "standard"]:
+        tech_questions = []
+        for book in biblioteca_tecnica[:1]:  # Máximo 1 pergunta sobre livros
+            book_title = book.get("titulo", "")
+            if book_title:
+                tech_questions.append({
+                    "text": f"Como os conceitos do livro '{book_title}' se aplicam ao seu trabalho?",
+                    "type": "tecnica",
+                    "context": "Mostre aplicação prática dos conceitos teóricos.",
+                    "focus": ["aplicação", "conhecimento"]
+                })
+        
+        # Adicionar pergunta técnica se houver espaço
+        if tech_questions and len(sector_questions) < 5:
+            sector_questions.extend(tech_questions)
+    
+    # Ajustar dificuldade
+    if difficulty == "fácil":
+        sector_questions = sector_questions[:3]  # Menos perguntas
+    elif difficulty == "difícil":
+        # Adicionar perguntas mais desafiadoras
+        challenging_questions = [
+            {
+                "text": "Qual seria a arquitetura que você proporia para um sistema com 1M de usuários?",
+                "type": "tecnica",
+                "context": "Pense em escalabilidade, performance e custos.",
+                "focus": ["arquitetura", "escalabilidade"]
+            }
+        ]
+        sector_questions.extend(challenging_questions[:1])
+    
+    # Retornar perguntas finais com IDs e duração
+    return [
+        {
+            "id": i + 1,
+            **q,
+            "max_duration": 90 if mode == "pressure" else 120
+        }
+        for i, q in enumerate(sector_questions[:5])  # Máximo 5 perguntas
+    ]
+
+
+def _analyze_interview_readiness(report_data: dict, target_job: str, interview_date: str) -> dict:
+    """
+    Analisa prontificação do candidato para entrevista.
+    """
+    gaps_fatais = report_data.get("gaps_fatais", [])
+    setor = report_data.get("setor_detectado", "Tecnologia")
+    cv_text = report_data.get("cv_otimizado_completo", "")
+    
+    # Calcular score de prontificação
+    base_score = 70  # Score base
+    
+    # Penalizar gaps
+    gap_penalty = min(len(gaps_fatais) * 10, 30)
+    
+    # Bônus por indicadores de experiência
+    experience_bonuses = 0
+    if "sênior" in cv_text.lower() or "senior" in cv_text.lower():
+        experience_bonuses += 10
+    if "lider" in cv_text.lower() or "lead" in cv_text.lower():
+        experience_bonuses += 5
+    
+    # Bônus por biblioteca técnica
+    biblioteca = report_data.get("biblioteca_tecnica", [])
+    if len(biblioteca) > 3:
+        experience_bonuses += 5
+    
+    readiness_score = max(0, min(100, base_score - gap_penalty + experience_bonuses))
+    
+    # Identificar gaps críticos
+    critical_gaps = []
+    for gap in gaps_fatais[:3]:
+        gap_title = gap.get("titulo", "")
+        if "exemplo" in gap_title.lower():
+            critical_gaps.append("Falta de exemplos concretos")
+        elif "projetos" in gap_title.lower():
+            critical_gaps.append("Detalhamento insuficiente de projetos")
+        elif "skills" in gap_title.lower() or "competências" in gap_title.lower():
+            critical_gaps.append("Competências técnicas não destacadas")
+    
+    # Recomendar foco
+    recommended_focus = []
+    if len(gaps_fatais) > 2:
+        recommended_focus.append("comportamental")
+    if setor == "Tecnologia":
+        recommended_focus.append("técnica")
+    if len(critical_gaps) > 0:
+        recommended_focus.append("estrutura")
+    
+    # Estimar dificuldade
+    if readiness_score >= 80:
+        estimated_difficulty = "avançado"
+    elif readiness_score >= 60:
+        estimated_difficulty = "intermediário"
+    else:
+        estimated_difficulty = "básico"
+    
+    # Calcular tempo de preparação
+    prep_time = max(15, len(gaps_fatais) * 10)  # Mínimo 15 minutos
+    
+    return {
+        "readiness_score": readiness_score,
+        "critical_gaps": critical_gaps,
+        "recommended_focus": recommended_focus[:2],  # Máximo 2 focos
+        "estimated_difficulty": estimated_difficulty,
+        "prep_time_minutes": prep_time,
+        "sector": setor,
+        "total_gaps": len(gaps_fatais),
+        "experience_indicators": {
+            "has_leadership": "lider" in cv_text.lower(),
+            "is_senior": any(keyword in cv_text.lower() for keyword in ["sênior", "senior"]),
+            "has_projects": "projeto" in cv_text.lower(),
+            "tech_breadth": len(biblioteca)
+        }
+    }
+
+
+def _analyze_interview_advanced(question: str, transcription: str, cv_context: dict, interview_mode: str) -> dict:
+    """
+    Análise avançada com benchmark e insights adicionais.
+    """
+    # Análise base usando função existente
+    from backend.llm_core import analyze_interview_gemini
+    
+    base_feedback = analyze_interview_gemini(question, transcription, cv_context.get("setor_detectado", ""))
+    
+    # Adicionar camadas WOW
+    enhanced_feedback = base_feedback.copy()
+    
+    # Análise de sentimento (simulada)
+    sentiment_score = _analyze_sentiment(transcription)
+    enhanced_feedback["sentiment_analysis"] = {
+        "confidence": sentiment_score["confidence"],
+        "clarity": sentiment_score["clarity"],
+        "engagement": sentiment_score["engagement"]
+    }
+    
+    # Benchmark comparison (simulado)
+    benchmark = _generate_benchmark_comparison(base_feedback.get("nota_final", 0))
+    enhanced_feedback["benchmark_comparison"] = benchmark
+    
+    # Cultural fit analysis
+    cultural_fit = _analyze_cultural_fit(transcription, cv_context)
+    enhanced_feedback["cultural_fit"] = cultural_fit
+    
+    # Next level insights
+    insights = _generate_next_level_insights(base_feedback, cv_context)
+    enhanced_feedback["next_level_insights"] = insights
+    
+    return enhanced_feedback
+
+
+def _analyze_sentiment(text: str) -> dict:
+    """
+    Análise simplificada de sentimento.
+    """
+    # Indicadores positivos
+    positive_words = ["excelente", "ótimo", "consegui", "sucesso", "aprendi", "cresci", "melhorei"]
+    # Indicadores de confiança
+    confidence_words = ["tenho certeza", "sem dúvida", "claro", "definitivamente"]
+    # Indicadores de engajamento
+    engagement_words = ["apaixonado", "motivado", "focado", "dedicado"]
+    
+    positive_count = sum(1 for word in positive_words if word in text.lower())
+    confidence_count = sum(1 for word in confidence_words if word in text.lower())
+    engagement_count = sum(1 for word in engagement_words if word in text.lower())
+    
+    return {
+        "confidence": min(100, confidence_count * 25),
+        "clarity": min(100, positive_count * 20),
+        "engagement": min(100, engagement_count * 30)
+    }
+
+
+def _generate_benchmark_comparison(user_score: int) -> dict:
+    """
+    Gera comparação com benchmarks (simulado).
+    """
+    # Médias simuladas baseadas em mercado
+    average_approved = 75
+    top_10_percent = 90
+    
+    # Calcular percentil
+    if user_score >= top_10_percent:
+        percentile = 95
+    elif user_score >= average_approved:
+        percentile = 70
+    else:
+        percentile = max(10, user_score - 20)
+    
+    return {
+        "user_score": user_score,
+        "average_approved": average_approved,
+        "top_10_percent": top_10_percent,
+        "percentile": percentile,
+        "ranking": "Top 10%" if percentile >= 90 else "Acima da média" if percentile >= 70 else "Abaixo da média"
+    }
+
+
+def _analyze_cultural_fit(transcription: str, cv_context: dict) -> dict:
+    """
+    Análise de fit cultural (simulada).
+    """
+    # Indicadores de fit cultural
+    collaboration_words = ["equipe", "time", "colaborar", "junto", "grupo"]
+    leadership_words = ["liderei", "gerenciei", "coordenei", "orientei"]
+    innovation_words = ["inovei", "criei", "desenvolvi", "idealizei"]
+    
+    collaboration_score = sum(1 for word in collaboration_words if word in transcription.lower())
+    leadership_score = sum(1 for word in leadership_words if word in transcription.lower())
+    innovation_score = sum(1 for word in innovation_words if word in transcription.lower())
+    
+    return {
+        "company_match": min(100, collaboration_score * 20),
+        "team_fit": min(100, collaboration_score * 15),
+        "leadership_potential": min(100, leadership_score * 25)
+    }
+
+
+def _generate_next_level_insights(feedback: dict, cv_context: dict) -> dict:
+    """
+    Gera insights para próximo nível.
+    """
+    nota = feedback.get("nota_final", 0)
+    pontos_melhoria = feedback.get("pontos_melhoria", [])
+    
+    what_worked_well = []
+    critical_improvements = []
+    industry_trends = []
+    
+    if nota >= 80:
+        what_worked_well.append("Comunicação clara e estruturada")
+        what_worked_well.append("Exemplos concretos e relevantes")
+    elif nota >= 60:
+        what_worked_well.append("Bom conteúdo técnico")
+        critical_improvements.append("Estruturar resposta com método STAR")
+    else:
+        critical_improvements.append("Desenvolver clareza na comunicação")
+        critical_improvements.append("Preparar exemplos específicos")
+    
+    # Trends baseadas no setor
+    setor = cv_context.get("setor_detectado", "Tecnologia")
+    if setor == "Tecnologia":
+        industry_trends.extend([
+            "Foco em cloud e arquitetura distribuída",
+            "Ênfase em IA e Machine Learning",
+            "Importância de soft skills em tech"
+        ])
+    
+    return {
+        "what_worked_well": what_worked_well,
+        "critical_improvements": critical_improvements,
+        "industry_trends": industry_trends
+    }
 
 
 @app.get("/api/interview/questions/{cv_analysis_id}")
