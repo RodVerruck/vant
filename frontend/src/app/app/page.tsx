@@ -2943,15 +2943,32 @@ export default function AppPage() {
 
                                                 {data.gap_1.exemplo_atual && (
                                                     <div style={{
-                                                        background: "rgba(0, 0, 0, 0.3)",
-                                                        borderRadius: 8,
-                                                        padding: 12,
-                                                        marginBottom: 12
+                                                        background: "transparent",
+                                                        borderLeft: "2px solid #EF4444",
+                                                        borderRadius: 6,
+                                                        padding: "12px 0 12px 16px",
+                                                        marginBottom: 12,
+                                                        position: "relative",
+                                                        opacity: 0.7
                                                     }}>
-                                                        <div style={{ color: "#EF4444", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
-                                                            ❌ VERSÃO ATUAL (Score: {nota}/100)
+                                                        <div style={{
+                                                            position: "absolute",
+                                                            left: "-8px",
+                                                            top: "12px",
+                                                            color: "#EF4444",
+                                                            fontSize: "0.7rem",
+                                                            fontWeight: 700
+                                                        }}>❌</div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                            VERSÃO ATUAL (Score: {nota}/100)
                                                         </div>
-                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic", lineHeight: 1.5 }}>
+                                                        <div style={{
+                                                            color: "#475569",
+                                                            fontSize: "0.85rem",
+                                                            fontStyle: "italic",
+                                                            lineHeight: 1.5,
+                                                            textDecoration: "line-through"
+                                                        }}>
                                                             "{data.gap_1.exemplo_atual}"
                                                         </div>
                                                     </div>
@@ -2959,15 +2976,34 @@ export default function AppPage() {
 
                                                 {data.gap_1.exemplo_otimizado && (
                                                     <div style={{
-                                                        background: "rgba(16, 185, 129, 0.1)",
-                                                        border: "1px solid rgba(16, 185, 129, 0.3)",
-                                                        borderRadius: 8,
-                                                        padding: 12
+                                                        background: "rgba(34, 197, 94, 0.18)",
+                                                        border: "1px solid rgba(34, 197, 94, 0.35)",
+                                                        borderRadius: 10,
+                                                        padding: 14,
+                                                        boxShadow: "0 0 15px rgba(34, 197, 94, 0.15)"
                                                     }}>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
-                                                            ✅ VERSÃO OTIMIZADA (Score: 94/100)
+                                                        <div style={{
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            alignItems: "center",
+                                                            marginBottom: 4,
+                                                            gap: 8
+                                                        }}>
+                                                            <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 700 }}>
+                                                                ✅ VERSÃO OTIMIZADA (Score: 94/100)
+                                                            </div>
+                                                            <div style={{
+                                                                background: "#10B981",
+                                                                color: "#fff",
+                                                                fontSize: "0.65rem",
+                                                                fontWeight: 700,
+                                                                padding: "3px 10px",
+                                                                borderRadius: 999
+                                                            }}>
+                                                                +{94 - nota} pts
+                                                            </div>
                                                         </div>
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}
+                                                        <div style={{ color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 500, lineHeight: 1.6 }}
                                                             dangerouslySetInnerHTML={{ __html: data.gap_1.exemplo_otimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                                                     </div>
                                                 )}
@@ -3020,25 +3056,37 @@ export default function AppPage() {
 
                                                 {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
                                                     <div style={{
-                                                        background: "rgba(0, 0, 0, 0.3)",
-                                                        borderRadius: 8,
-                                                        padding: 12,
+                                                        background: "transparent",
+                                                        padding: "12px 0",
                                                         marginBottom: 8
                                                     }}>
-                                                        <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 8 }}>
+                                                        <div style={{ color: "#FCD34D", fontSize: "0.75rem", fontWeight: 600, marginBottom: 8 }}>
                                                             🔍 TERMOS FALTANDO NO SEU CV:
                                                         </div>
                                                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                                                             {data.gap_2.termos_faltando.slice(0, 5).map((term: string, i: number) => (
-                                                                <span key={i} style={{
-                                                                    background: "rgba(239, 68, 68, 0.2)",
-                                                                    color: "#EF4444",
-                                                                    padding: "4px 10px",
-                                                                    borderRadius: 16,
-                                                                    fontSize: "0.75rem",
-                                                                    fontWeight: 600,
-                                                                    border: "1px solid rgba(239, 68, 68, 0.3)"
-                                                                }}>
+                                                                <span
+                                                                    key={i}
+                                                                    style={{
+                                                                        background: "transparent",
+                                                                        color: "#FCD34D",
+                                                                        padding: "4px 10px",
+                                                                        borderRadius: 16,
+                                                                        fontSize: "0.75rem",
+                                                                        fontWeight: 600,
+                                                                        border: "1px dashed rgba(252, 211, 77, 0.6)",
+                                                                        transition: "all 0.2s",
+                                                                        cursor: "pointer"
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        e.currentTarget.style.background = "rgba(252, 211, 77, 0.12)";
+                                                                        e.currentTarget.style.borderStyle = "solid";
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.background = "transparent";
+                                                                        e.currentTarget.style.borderStyle = "dashed";
+                                                                    }}
+                                                                >
                                                                     {term}
                                                                 </span>
                                                             ))}
