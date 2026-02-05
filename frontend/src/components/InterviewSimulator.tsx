@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ReportData, FeedbackEntrevista, InterviewQuestion, InterviewSession, SimuladorStage } from "@/types";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { QuestionCard } from "@/components/QuestionCard";
@@ -31,6 +31,8 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
     const [recordingTime, setRecordingTime] = useState(0);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [isSpeaking, setIsSpeaking] = useState(false);
+
+    const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Context para SmartTips
     const smartTipsContext = {
@@ -228,23 +230,55 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         setVideoStream(null);
         setElapsedTime(0);
         setRecordingTime(0);
+        setAudioLevel(0);
         clearTip();
     };
 
     // Handlers para AudioRecorder enhanced
     const handleRecordingStateChange = (isRecording: boolean) => {
+        console.log('[InterviewSimulator] handleRecordingStateChange:', isRecording, 'current stage:', stage);
+
         if (isRecording) {
-            // Iniciar timer quando começar a gravar
-            const timer = setInterval(() => {
+            console.log('[InterviewSimulator] Starting recording - switching to recording stage');
+            setStage("recording");
+            setElapsedTime(0);
+            setRecordingTime(0);
+
+            if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+            }
+
+            recordingTimerRef.current = setInterval(() => {
                 setRecordingTime(prev => prev + 1);
             }, 1000);
+        } else {
+            console.log('[InterviewSimulator] Stopping recording - checking stage:', stage);
 
-            // Cleanup quando parar
-            return () => {
-                clearInterval(timer);
-            };
+            if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+                recordingTimerRef.current = null;
+            }
+
+            setRecordingTime(0);
+
+            // Se não estiver processando, voltar para question
+            if (!isProcessing) {
+                console.log('[InterviewSimulator] Not processing - switching back to question');
+                setStage(prev => {
+                    console.log('[InterviewSimulator] Stage transition:', prev, '->', prev === "recording" ? "question" : prev);
+                    return prev === "recording" ? "question" : prev;
+                });
+            }
         }
     };
+
+    useEffect(() => {
+        return () => {
+            if (recordingTimerRef.current) {
+                clearInterval(recordingTimerRef.current);
+            }
+        };
+    }, []);
 
     const handleAudioStreamReady = (stream: MediaStream) => {
         // Configurar análise de áudio para visualização
@@ -424,8 +458,7 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
         if (!currentQuestion) return null;
 
         return (
-            <div style={{ position: "relative", minHeight: "100vh" }}>
-                {/* HUD Overlay */}
+            <div style={{ position: "relative", minHeight: "100vh", background: "rgba(0, 0, 0, 0.95)" }}>
                 <SimpleHUD
                     stream={videoStream}
                     isActive={true}
@@ -436,40 +469,6 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
                     totalQuestions={questions.length}
                 />
 
-                {/* Video Preview se ativado */}
-                {videoEnabled && videoStream && (
-                    <div style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        zIndex: 1,
-                        background: "rgba(0, 0, 0, 0.8)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center"
-                    }}>
-                        <video
-                            autoPlay
-                            playsInline
-                            muted
-                            style={{
-                                width: "100%",
-                                height: "100vh",
-                                objectFit: "cover",
-                                transform: "scaleX(-1)"
-                            }}
-                            ref={(el) => {
-                                if (el && videoStream) {
-                                    el.srcObject = videoStream;
-                                }
-                            }}
-                        />
-                    </div>
-                )}
-
-                {/* Question Card sobreposto */}
                 <div style={{
                     position: "fixed",
                     top: "50%",
@@ -496,34 +495,63 @@ export function InterviewSimulator({ reportData, onProgress }: InterviewSimulato
                     </div>
                 </div>
 
-                if (!currentQuestion) return null;
-
-                return (
-                <div>
-                    <VideoPreview
-                        isActive={videoEnabled}
-                        onToggle={handleVideoToggle}
-                        onError={handleVideoError}
-                        onStreamReady={handleVideoStreamReady}
-                    />
-
-                    <QuestionCard
-                        question={currentQuestion}
-                        questionNumber={currentQuestionIndex + 1}
-                        totalQuestions={questions.length}
-                    />
-
-                    <div style={{ marginTop: 32 }}>
-                        <AudioRecorder
-                            onRecordingComplete={handleRecordingComplete}
-                            maxDuration={currentQuestion.max_duration}
-                            onRecordingStateChange={handleRecordingStateChange}
-                            onStreamReady={handleAudioStreamReady}
+                {videoEnabled && videoStream && (
+                    <div style={{
+                        position: "fixed",
+                        bottom: "24px",
+                        right: "24px",
+                        width: "220px",
+                        height: "160px",
+                        borderRadius: "16px",
+                        overflow: "hidden",
+                        border: "2px solid rgba(56, 189, 248, 0.6)",
+                        boxShadow: "0 20px 45px rgba(0, 0, 0, 0.45)",
+                        background: "#000",
+                        zIndex: 3
+                    }}>
+                        <video
+                            autoPlay
+                            playsInline
+                            muted
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                transform: "scaleX(-1)"
+                            }}
+                            ref={(el) => {
+                                if (el && videoStream) {
+                                    el.srcObject = videoStream;
+                                }
+                            }}
                         />
-                    </div>
-                </div>
 
-                {/* Smart Tips */}
+                        <div style={{
+                            position: "absolute",
+                            top: "8px",
+                            right: "8px",
+                            background: "rgba(239, 68, 68, 0.9)",
+                            color: "white",
+                            padding: "4px 8px",
+                            borderRadius: "999px",
+                            fontSize: "0.7rem",
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px"
+                        }}>
+                            <span style={{
+                                width: "8px",
+                                height: "8px",
+                                borderRadius: "50%",
+                                background: "white",
+                                animation: "pulse 1.5s infinite"
+                            }} />
+                            REC
+                        </div>
+                    </div>
+                )}
+
                 <SmartTipsComponent context={smartTipsContext} />
             </div>
         );

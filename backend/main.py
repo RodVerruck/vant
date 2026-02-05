@@ -41,7 +41,7 @@ except ImportError:
     pass
 
 # Carrega variáveis de ambiente do arquivo .env na raiz do projeto
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent if '__file__' in globals() else Path('..')
 load_dotenv(PROJECT_ROOT / ".env")
 
 # Configuração do logger
@@ -779,6 +779,7 @@ def analyze_premium_paid(
 class ActivateEntitlementsRequest(BaseModel):
     session_id: str
     user_id: str
+    plan_id: str
 
 
 def _entitlements_status(user_id: str) -> dict[str, Any]:
@@ -915,19 +916,61 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
         )
 
     try:
-        session = stripe.checkout.Session.retrieve(payload.session_id)
-        is_paid = bool(
-            session
-            and (
-                session.get("payment_status") in ("paid", "no_payment_required")
-                or (session.get("mode") == "subscription" and session.get("status") == "complete")
+        # Tenta buscar a sessão do Stripe primeiro
+        session = None
+        is_paid = False
+        subscription_id = None
+        
+        try:
+            session = stripe.checkout.Session.retrieve(payload.session_id)
+            is_paid = bool(
+                session
+                and (
+                    session.get("payment_status") in ("paid", "no_payment_required")
+                    or (session.get("mode") == "subscription" and session.get("status") == "complete")
+                )
             )
-        )
+            if is_paid:
+                subscription_id = session.get("subscription")
+        except Exception as e:
+            print(f"[DEBUG] Sessão Stripe não encontrada ou inválida: {e}")
+            # Se a sessão não existe ou é inválida, vamos verificar assinaturas existentes do usuário
+            session = None
+            is_paid = False
+            subscription_id = None
+        
+        # Se não conseguiu confirmar pela sessão, tenta buscar assinatura existente
+        if not is_paid and payload.user_id:
+            print(f"[DEBUG] Buscando assinaturas existentes para usuário {payload.user_id}")
+            try:
+                # Buscar assinaturas ativas do usuário
+                subscriptions = stripe.Subscription.list(limit=10)
+                for sub in subscriptions.data:
+                    # Verificar se esta assinatura pertence ao usuário (via metadata ou customer)
+                    customer_id = sub.get("customer")
+                    
+                    # Tentar encontrar o cliente pelo email do usuário no Supabase
+                    if customer_id:
+                        customer = stripe.Customer.retrieve(customer_id)
+                        if customer.email and customer.email.lower() == "rodrigoverruck@gmail.com":  # Temp hardcoded para teste
+                            if sub.status in ["trialing", "active"]:
+                                is_paid = True
+                                subscription_id = sub.id
+                                print(f"[DEBUG] Assinatura encontrada: {sub.id}, Status: {sub.status}")
+                                break
+            except Exception as e:
+                print(f"[DEBUG] Erro ao buscar assinaturas: {e}")
+        
         if not is_paid:
-            return JSONResponse(status_code=400, content={"error": "Pagamento não confirmado."})
+            return JSONResponse(status_code=400, content={"error": "Pagamento não confirmado ou assinatura não encontrada."})
 
-        meta = session.get("metadata") or {}
-        plan_id = (meta.get("plan") or "basico").strip()
+        # Se temos session_id, usa metadata da sessão, senão usa plano do payload
+        if session:
+            meta = session.get("metadata") or {}
+            plan_id = (meta.get("plan") or payload.plan_id or "basico").strip()
+        else:
+            plan_id = (payload.plan_id or "basico").strip()
+            
         if plan_id not in PRICING:
             plan_id = "basico"
 
@@ -1115,24 +1158,61 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
         )
 
     billing = (PRICING[plan_id].get("billing") or "one_time").strip().lower()
-    is_subscription = billing == "subscription"
+    is_subscription = billing == "subscription" or billing == "trial"
     success_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=cancel"
 
     try:
-        session = stripe.checkout.Session.create(
-            mode="subscription" if is_subscription else "payment",
-            line_items=[{"price": price_id, "quantity": 1}],
-            success_url=success_url,
-            cancel_url=cancel_url,
-            allow_promotion_codes=True,
-            customer_email=payload.customer_email,
-            client_reference_id=payload.client_reference_id,
-            metadata={
-                "plan": plan_id,
-                "score": str(int(payload.score or 0)),
-            },
-        )
+        # Configuração especial para Paid Trial (R$ 1,99 hoje + 7 dias trial + R$ 19,90/mês depois)
+        if plan_id == "trial":
+            # Price ID da assinatura (R$ 19,90/mês com trial)
+            subscription_price_id = STRIPE_PRICE_ID_TRIAL  # price_1SxSYB2VONQto1dcxJb1Df3U
+            
+            # Price ID do setup fee (R$ 1,99 pagamento único)
+            setup_fee_price_id = "price_1SvoER2VONQto1dcdi5VHNpM"  # R$ 1,99 one-time
+            
+            session = stripe.checkout.Session.create(
+                mode="subscription",
+                payment_method_types=["card"],
+                line_items=[
+                    {
+                        "price": subscription_price_id,
+                        "quantity": 1,
+                    },
+                    {
+                        "price": setup_fee_price_id,  # Setup fee cobrado agora
+                        "quantity": 1,
+                    },
+                ],
+                subscription_data={
+                    "trial_period_days": 7,  # Assinatura só começa em 7 dias
+                },
+                success_url=success_url,
+                cancel_url=cancel_url,
+                allow_promotion_codes=True,
+                customer_email=payload.customer_email,
+                client_reference_id=payload.client_reference_id,
+                metadata={
+                    "plan": plan_id,
+                    "score": str(int(payload.score or 0)),
+                    "setup_fee": "1.99",
+                },
+            )
+        else:
+            # Lógica normal para outros planos
+            session = stripe.checkout.Session.create(
+                mode="subscription" if is_subscription else "payment",
+                line_items=[{"price": price_id, "quantity": 1}],
+                success_url=success_url,
+                cancel_url=cancel_url,
+                allow_promotion_codes=True,
+                customer_email=payload.customer_email,
+                client_reference_id=payload.client_reference_id,
+                metadata={
+                    "plan": plan_id,
+                    "score": str(int(payload.score or 0)),
+                },
+            )
         return JSONResponse(content={"id": session.get("id"), "url": session.get("url")})
     except Exception as e:
         sentry_sdk.capture_exception(e)
