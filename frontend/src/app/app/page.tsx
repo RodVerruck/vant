@@ -1545,8 +1545,9 @@ export default function AppPage() {
                         <div style="color:#E2E8F0; font-weight:900; font-size: 2rem; line-height: 1;">${nota}<span style="font-size:1rem; color:#94A3B8;">/100</span></div>
                     </div>
                     <div style="text-align:right;">
-                         <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">POTENCIAL</div>
-                         <div style="color:#10B981; font-weight:900; font-size: 2rem; line-height: 1;">${potencial}<span style="font-size:1rem; color:#10B981;">%</span></div>
+                         <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">SCORE PROJETADO</div>
+                         <div style="color:#10B981; font-weight:900; font-size: 2rem; line-height: 1;">94<span style="font-size:1rem; color:#10B981;">/100</span></div>
+                         <div style="color:#F59E0B; font-size:0.9rem; font-weight:700; margin-top:2px;">+${94 - nota}%</div>
                     </div>
                 </div>
 
@@ -2839,8 +2840,8 @@ export default function AppPage() {
             <div>
                 <div style="color: #F59E0B; font-weight: 800; font-size: 1.1rem;">META DE PONTUAÇÃO</div>
                 <div style="color: #E2E8F0; font-size: 0.9rem; margin-top: 5px;">
-                    Se aplicar as correções sugeridas, sua nota pode chegar a <strong style="color: #10B981;">${potencial}%</strong>
-                    <br>Isso coloca você no <strong>Top 15%</strong> dos candidatos.
+                    Com as otimizações completas, seu score pode chegar a <strong style="color: #10B981;">94/100</strong>
+                    <br>Isso coloca você no <strong>Top 5%</strong> dos candidatos.
                 </div>
             </div>
         </div>
@@ -2951,7 +2952,7 @@ export default function AppPage() {
                                                         padding: 12
                                                     }}>
                                                         <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, marginBottom: 6 }}>
-                                                            ✅ VERSÃO OTIMIZADA (Score: {potencial}/100)
+                                                            ✅ VERSÃO OTIMIZADA (Score: 94/100)
                                                         </div>
                                                         <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}
                                                             dangerouslySetInnerHTML={{ __html: data.gap_1.exemplo_otimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
@@ -2969,7 +2970,7 @@ export default function AppPage() {
                                                 }}>
                                                     <span style={{ fontSize: "1rem" }}>💡</span>
                                                     <span style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600 }}>
-                                                        Impacto: +{Math.min(45, potencial - nota)} pontos no score ATS
+                                                        Impacto: +{94 - nota} pontos no score ATS
                                                     </span>
                                                 </div>
                                             </div>
