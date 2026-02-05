@@ -3324,7 +3324,7 @@ export default function AppPage() {
                                                             onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
                                                             onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
                                                         >
-                                                            GARANTIR MINHA VAGA - R$ 1,99 🚀
+                                                            Desbloquear Meu Novo Currículo - R$ 1,99 🚀
                                                         </button>
                                                     )}
 
