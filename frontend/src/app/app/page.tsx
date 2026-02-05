@@ -3298,11 +3298,11 @@ export default function AppPage() {
                                                 transition: "all 0.3s ease"
                                             }}>
                                                 <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
-                                                    🏆 RECOMENDADO PELA IA
+                                                    RECOMENDADO PELA IA
                                                 </div>
 
                                                 <div>
-                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.4rem", marginBottom: 20, textAlign: "center" }}>🎯 VANT PRO MENSAL</div>
+                                                    <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.4rem", marginBottom: 20, textAlign: "center" }}>VANT PRO MENSAL</div>
 
                                                     <div style={{
                                                         background: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))",
@@ -3331,7 +3331,7 @@ export default function AppPage() {
                                                             marginBottom: 12
                                                         }}>
                                                             <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
-                                                                🚀 JUNTE-SE A <strong style={{ color: "#10B981" }}>50.000+</strong> PROFISSIONAIS:
+                                                                👥 JUNTE-SE A <strong style={{ color: "#10B981" }}>50.000+</strong> PROFISSIONAIS:
                                                             </div>
                                                             <div style={{ color: "#fff", fontSize: "0.9rem", fontWeight: 700 }}>
                                                                 Preço Vitalício de R$ 19,90/mês garantido
@@ -3344,7 +3344,6 @@ export default function AppPage() {
                                                         <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
                                                             <div>
                                                                 <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                                                                    <span style={{ animation: timeRemaining.hours === 0 && timeRemaining.minutes < 60 ? "pulse 1.5s infinite" : "none" }}>⏱️</span>
                                                                     ESSA CONDIÇÃO EXPIRA EM
                                                                 </div>
                                                                 <div style={{
@@ -3386,7 +3385,7 @@ export default function AppPage() {
                                                         </div>
                                                         <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
                                                             <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
-                                                            💰 Custo por CV: <strong>Apenas R$ 0,93</strong>
+                                                            Custo por CV: <strong>Apenas R$ 0,93</strong>
                                                         </div>
                                                         <div style={{
                                                             color: "#94A3B8",
