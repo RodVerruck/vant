@@ -1,0 +1,1 @@
+{"user": {"email": "test@example.com", "password": "test123456", "name": "Test User"}, "cv": {"filename": "test-cv.pdf", "content": "Exemplo de conteúdo de CV para testes"}, "jobDescription": {"title": "Desenvolvedor Senior React", "company": "Tech Company", "description": "Buscamos desenvolvedor React com experiência em TypeScript e Next.js"}}
