@@ -3048,18 +3048,101 @@ export default function AppPage() {
 
                                                 <div style={{
                                                     marginTop: 12,
-                                                    padding: 10,
-                                                    background: "rgba(16, 185, 129, 0.1)",
-                                                    borderRadius: 6,
-                                                    border: "1px dashed rgba(16, 185, 129, 0.3)"
+                                                    padding: 16,
+                                                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(56, 189, 248, 0.1))",
+                                                    borderRadius: 10,
+                                                    border: "2px solid rgba(16, 185, 129, 0.4)",
+                                                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)"
                                                 }}>
-                                                    <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>
-                                                        💎 Na versão premium você recebe:
+                                                    <div style={{ color: "#10B981", fontSize: "1rem", fontWeight: 800, marginBottom: 8, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
+                                                        🎁 NA VERSÃO PREMIUM VOCÊ RECEBE:
                                                     </div>
-                                                    <div style={{ color: "#CBD5E1", fontSize: "0.75rem", lineHeight: 1.5 }}>
-                                                        • CV reescrito com <strong>todas as palavras-chave</strong> integradas naturalmente<br />
-                                                        • Análise de <strong>43 critérios ATS</strong> (não apenas 2)<br />
-                                                        • Headline do LinkedIn otimizada para recrutadores
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                                            <div style={{
+                                                                minWidth: "28px",
+                                                                height: "28px",
+                                                                background: "linear-gradient(135deg, #10B981, #059669)",
+                                                                borderRadius: "50%",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                fontSize: "1rem",
+                                                                flexShrink: 0,
+                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
+                                                            }}>✅</div>
+                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
+                                                                <strong>CV reescrito</strong> com todas as palavras-chave integradas naturalmente
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                                            <div style={{
+                                                                minWidth: "28px",
+                                                                height: "28px",
+                                                                background: "linear-gradient(135deg, #10B981, #059669)",
+                                                                borderRadius: "50%",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                fontSize: "1rem",
+                                                                flexShrink: 0,
+                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
+                                                            }}>✅</div>
+                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
+                                                                Análise completa de <strong>43 critérios ATS</strong> (não apenas 2)
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                                            <div style={{
+                                                                minWidth: "28px",
+                                                                height: "28px",
+                                                                background: "linear-gradient(135deg, #10B981, #059669)",
+                                                                borderRadius: "50%",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                fontSize: "1rem",
+                                                                flexShrink: 0,
+                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
+                                                            }}>✅</div>
+                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
+                                                                <strong>Headline do LinkedIn</strong> otimizada para recrutadores
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                                            <div style={{
+                                                                minWidth: "28px",
+                                                                height: "28px",
+                                                                background: "linear-gradient(135deg, #10B981, #059669)",
+                                                                borderRadius: "50%",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                fontSize: "1rem",
+                                                                flexShrink: 0,
+                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
+                                                            }}>✅</div>
+                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
+                                                                <strong>Biblioteca técnica</strong> personalizada para seu cargo
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                                            <div style={{
+                                                                minWidth: "28px",
+                                                                height: "28px",
+                                                                background: "linear-gradient(135deg, #10B981, #059669)",
+                                                                borderRadius: "50%",
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                fontSize: "1rem",
+                                                                flexShrink: 0,
+                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
+                                                            }}>✅</div>
+                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
+                                                                <strong>Projeto prático</strong> para diferencial em entrevistas
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
