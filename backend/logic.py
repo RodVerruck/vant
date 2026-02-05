@@ -1072,6 +1072,8 @@ INSTRUÇÕES ESPECÍFICAS:
    - Falta de palavras-chave técnicas da vaga
    - Descrições genéricas sem especificidade ou detalhes relevantes
 6. Seja direto e objetivo
+7. **VERIFICAÇÃO OBRIGATÓRIA**: Não inclua "métricas", "números", "resultados quantitativos" em nenhum gap
+8. **VERIFICAÇÃO OBRIGATÓRIA**: Revise sua resposta antes de enviar para garantir que não há gaps sobre métricas
 5. DETECTE A ÁREA ESPECÍFICA:
    
    {"⚠️ ÁREA FORÇADA ESPECÍFICA: Use exatamente '" + forced_area.replace('_', ' ').upper() + "' como setor_detectado. Ignore outras detecções." if forced_area else ""}

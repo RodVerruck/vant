@@ -2284,3 +2284,8 @@ def _detect_experience_level(report_data: dict) -> str:
         return "pleno"
     else:
         return "junior"
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
