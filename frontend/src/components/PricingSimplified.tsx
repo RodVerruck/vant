@@ -14,7 +14,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
   return (
-    <div className="pricing-container">
+    <div className="pricing-container" data-cy="pricing-container">
       <style jsx>{`
         .pricing-container {
           width: 100%;
@@ -400,7 +400,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
 
       <div className="pricing-grid">
         {/* FREE TIER */}
-        <div className="tier-card" onClick={() => onSelectPlan("free")}>
+        <div className="tier-card" data-cy="plan-free" onClick={() => onSelectPlan("free")}>
           <div className="tier-icon">🆓</div>
           <h3 className="tier-name">Gratuito</h3>
           <p className="tier-description">Teste Agora</p>
@@ -422,7 +422,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
         </div>
 
         {/* PRO TIER */}
-        <div className="tier-card highlighted" onClick={() => onSelectPlan(billingPeriod === "monthly" ? "pro_monthly" : "pro_annual")}>
+        <div className="tier-card highlighted" data-cy="plan-pro" onClick={() => onSelectPlan(billingPeriod === "monthly" ? "pro_monthly" : "pro_annual")}>
           <div className="tier-badge">MAIS POPULAR ⭐</div>
           <div className="tier-icon">🚀</div>
           <h3 className="tier-name">PRO</h3>
@@ -471,14 +471,14 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
         </div>
 
         <div className="credits-grid">
-          <div className="credit-card" onClick={() => onSelectPlan("credit_1")}>
+          <div className="credit-card" data-cy="plan-credit-1" onClick={() => onSelectPlan("credit_1")}>
             <div className="credit-name">Crédito Único</div>
             <div className="credit-price">R$ 12,90</div>
             <div className="credit-detail">1 otimização completa</div>
             <button className="credit-cta">COMPRAR CRÉDITO</button>
           </div>
 
-          <div className="credit-card popular" onClick={() => onSelectPlan("credit_5")}>
+          <div className="credit-card popular" data-cy="plan-credit-5" onClick={() => onSelectPlan("credit_5")}>
             <div className="credit-badge">ECONOMIZE 22%</div>
             <div className="credit-name">Pacote 5 CVs</div>
             <div className="credit-price">R$ 49,90</div>

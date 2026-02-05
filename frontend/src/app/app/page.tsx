@@ -37,7 +37,7 @@ const HERO_INNER_HTML = `
             </span>
         </div>
 
-        <div class="logo-text">VANT</div>
+        <div class="logo-text" data-cy="main-heading">VANT</div>
 
         <div class="headline">
             Vença o algoritmo ATS.<br>
@@ -1717,6 +1717,7 @@ export default function AppPage() {
                             <>
                                 <button
                                     onClick={() => setStage("pricing")}
+                                    data-cy="see-plans-button"
                                     style={{
                                         background: 'rgba(34, 197, 94, 0.2)',
                                         border: '1px solid #22C55E',
@@ -1911,6 +1912,7 @@ export default function AppPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowAuthModal(true)}
+                                    data-cy="login-button"
                                     style={{
                                         background: "linear-gradient(135deg, #38BDF8, #6366F1)",
                                         color: "#fff",
@@ -2133,9 +2135,10 @@ export default function AppPage() {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div data-testid="stFileUploader">
+                                        <div data-testid="stFileUploader" data-cy="cv-upload-area">
                                             <section
                                                 onClick={openFileDialog}
+                                                data-cy="cv-upload-section"
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter' || e.key === ' ') {
                                                         e.preventDefault();
@@ -2159,6 +2162,7 @@ export default function AppPage() {
                                                         ref={uploaderInputRef}
                                                         type="file"
                                                         accept="application/pdf"
+                                                        data-cy="cv-file-input"
                                                         style={{ display: "none" }}
                                                         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                                                     />
@@ -2350,6 +2354,7 @@ export default function AppPage() {
                                     <button
                                         type="button"
                                         data-kind="primary"
+                                        data-cy="main-cta"
                                         onClick={onStart}
                                         style={{
                                             width: "100%",

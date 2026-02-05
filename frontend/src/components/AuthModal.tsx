@@ -126,6 +126,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
 
     return (
         <div
+            data-cy="auth-modal"
             style={{
                 position: "fixed",
                 top: 0,
@@ -154,7 +155,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
                 onClick={(e) => e.stopPropagation()}
             >
                 <div style={{ textAlign: "center", marginBottom: 24 }}>
-                    <h2 style={{ color: "#F8FAFC", fontSize: "1.5rem", fontWeight: 800, marginBottom: 8 }}>
+                    <h2 data-cy="auth-title" style={{ color: "#F8FAFC", fontSize: "1.5rem", fontWeight: 800, marginBottom: 8 }}>
                         {isLoginMode ? "Bem-vindo de volta" : "Criar conta para continuar"}
                     </h2>
                     <p style={{ color: "#CBD5E1", fontSize: "0.9rem" }}>
@@ -226,6 +227,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
                             </div>
                             <input
                                 type="email"
+                                data-cy="email-input"
                                 value={authEmail}
                                 onChange={(e) => setAuthEmail(e.target.value)}
                                 placeholder="voce@exemplo.com"
@@ -249,6 +251,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
                             </div>
                             <input
                                 type="password"
+                                data-cy="password-input"
                                 value={authPassword}
                                 onChange={(e) => setAuthPassword(e.target.value)}
                                 placeholder="Mínimo 6 caracteres"
@@ -293,6 +296,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
 
                         <button
                             type="submit"
+                            data-cy="login-submit"
                             disabled={isAuthenticating}
                             style={{
                                 width: "100%",
