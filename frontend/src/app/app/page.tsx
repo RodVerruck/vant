@@ -3446,27 +3446,29 @@ export default function AppPage() {
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedPlan("trial");
-                                                                if (!authUserId) setShowAuthModal(true);
-                                                                else setStage("checkout");
-                                                            }}
-                                                            style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.transform = "translateY(-2px)";
-                                                                e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.transform = "translateY(0)";
-                                                                e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
-                                                            }}
-                                                            onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                                            onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                                                        >
-                                                            Desbloquear Meu Novo Currículo - R$ 1,99 🚀
-                                                        </button>
+                                                        <div style={{ marginBottom: 28 }}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedPlan("trial");
+                                                                    if (!authUserId) setShowAuthModal(true);
+                                                                    else setStage("checkout");
+                                                                }}
+                                                                style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.transform = "translateY(-2px)";
+                                                                    e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.transform = "translateY(0)";
+                                                                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
+                                                                }}
+                                                                onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
+                                                                onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                                                            >
+                                                                Desbloquear Meu Novo Currículo - R$ 1,99 🚀
+                                                            </button>
+                                                        </div>
                                                     )}
 
                                                     <div style={{
