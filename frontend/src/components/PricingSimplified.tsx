@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export type PlanType = "free" | "pro_monthly" | "pro_annual" | "trial" | "credit_1" | "credit_5";
+export type PlanType = "free" | "pro_monthly" | "pro_annual" | "trial" | "credit_1" | "credit_3" | "credit_5";
 
 interface PricingSimplifiedProps {
   onSelectPlan: (planId: PlanType) => void;

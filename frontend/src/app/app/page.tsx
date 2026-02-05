@@ -6,6 +6,7 @@ import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal
 import { PaidStage } from "@/components/PaidStage";
 import { AuthModal } from "@/components/AuthModal";
 import { HistoryStage } from "@/components/HistoryStage";
+import { PricingSimplified } from "@/components/PricingSimplified";
 import { calcPotencial } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
@@ -1715,7 +1716,7 @@ export default function AppPage() {
                         {creditsRemaining > 0 ? (
                             <>
                                 <button
-                                    onClick={() => setStage("preview")}
+                                    onClick={() => setStage("pricing")}
                                     style={{
                                         background: 'rgba(34, 197, 94, 0.2)',
                                         border: '1px solid #22C55E',
@@ -2405,6 +2406,53 @@ export default function AppPage() {
                     onSelectHistory={handleSelectHistory}
                     onBack={handleBackFromHistory}
                 />
+            )}
+
+            {stage === "pricing" && (
+                <div className="hero-container">
+                    <div style={{ textAlign: "center", marginBottom: 32 }}>
+                        <h2 style={{ color: "#F8FAFC", fontSize: "2rem", fontWeight: 700, marginBottom: 16 }}>
+                            Escolha seu plano
+                        </h2>
+                        <p style={{ color: "#CBD5E1", fontSize: "1.1rem" }}>
+                            Mais créditos para mais análises e otimizações
+                        </p>
+                    </div>
+                    <PricingSimplified
+                        onSelectPlan={(planId) => {
+                            setSelectedPlan(planId);
+                            setStage("preview");
+                        }}
+                        currentPlan={selectedPlan}
+                        showTrial={true}
+                    />
+                    <div style={{ textAlign: "center", marginTop: 32 }}>
+                        <button
+                            onClick={() => setStage("hero")}
+                            style={{
+                                background: "rgba(148, 163, 184, 0.2)",
+                                border: "1px solid rgba(148, 163, 184, 0.3)",
+                                borderRadius: 8,
+                                padding: "12px 24px",
+                                color: "#94A3B8",
+                                fontSize: "0.9rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                transition: "all 0.2s ease"
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "rgba(148, 163, 184, 0.3)";
+                                e.currentTarget.style.transform = "scale(1.05)";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "rgba(148, 163, 184, 0.2)";
+                                e.currentTarget.style.transform = "scale(1)";
+                            }}
+                        >
+                            ← Voltar
+                        </button>
+                    </div>
+                </div>
             )}
 
             {stage === "analyzing" && (
