@@ -3070,7 +3070,7 @@ export default function AppPage() {
                                                                 fontSize: "1rem",
                                                                 flexShrink: 0,
                                                                 boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✅</div>
+                                                            }}>✓</div>
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 <strong>CV reescrito</strong> com todas as palavras-chave integradas naturalmente
                                                             </span>
@@ -3087,7 +3087,7 @@ export default function AppPage() {
                                                                 fontSize: "1rem",
                                                                 flexShrink: 0,
                                                                 boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✅</div>
+                                                            }}>✓</div>
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 Análise completa de <strong>43 critérios ATS</strong> (não apenas 2)
                                                             </span>
@@ -3104,7 +3104,7 @@ export default function AppPage() {
                                                                 fontSize: "1rem",
                                                                 flexShrink: 0,
                                                                 boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✅</div>
+                                                            }}>✓</div>
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 <strong>Headline do LinkedIn</strong> otimizada para recrutadores
                                                             </span>
@@ -3121,7 +3121,7 @@ export default function AppPage() {
                                                                 fontSize: "1rem",
                                                                 flexShrink: 0,
                                                                 boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✅</div>
+                                                            }}>✓</div>
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 <strong>Biblioteca técnica</strong> personalizada para seu cargo
                                                             </span>
@@ -3138,7 +3138,7 @@ export default function AppPage() {
                                                                 fontSize: "1rem",
                                                                 flexShrink: 0,
                                                                 boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✅</div>
+                                                            }}>✓</div>
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 <strong>Projeto prático</strong> para diferencial em entrevistas
                                                             </span>
