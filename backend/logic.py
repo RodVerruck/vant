@@ -1062,11 +1062,15 @@ INSTRUÇÕES ESPECÍFICAS:
 1. Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV
 2. **CRÍTICO**: Para exemplo_atual, copie EXATAMENTE um trecho real do CV (não modifique)
 3. **CRÍTICO**: Para exemplo_otimizado, use o MESMO trecho real mas apenas:
-   - Adicione números/métricas PLAUSÍVEIS baseadas no contexto
    - Adicione palavras-chave da vaga que fazem sentido
-   - NÃO invente projetos, empresas ou valores que não existem no original
-4. Seja direto e objetivo
-5. Foque em: falta de números/resultados E palavras-chave ausentes
+   - Melhore a linguagem profissional
+   - NÃO invente números, porcentagens ou métricas
+4. Foque em problemas FÁCEIS de identificar:
+   - Formatação inadequada (parágrafos longos, sem bullets)
+   - Linguagem passiva (ex: "fui responsável por" → "gerenciei")
+   - Falta de palavras-chave técnicas da vaga
+   - Descrições genéricas sem especificidade
+5. Seja direto e objetivo
 5. DETECTE A ÁREA ESPECÍFICA:
    
    {"⚠️ ÁREA FORÇADA ESPECÍFICA: Use exatamente '" + forced_area.replace('_', ' ').upper() + "' como setor_detectado. Ignore outras detecções." if forced_area else ""}
@@ -1242,7 +1246,7 @@ VAGA: {job_description[:800]}
 
 CV: {cv_text[:2000]}
 
-**IMPORTANTE**: Use APENAS dados reais do CV. Não invente exemplos.
+**IMPORTANTE**: Use APENAS dados reais do CV. Não invente exemplos, números ou porcentagens.
 
 Retorne JSON exato:
 {{
@@ -1257,7 +1261,7 @@ Retorne JSON exato:
     "titulo": "Problema detectado",
     "explicacao": "Por que isso é crítico",
     "exemplo_atual": "Trecho REAL do CV (copie exatamente)",
-    "exemplo_otimizado": "MESMO trecho com melhorias PLAUSÍVEIS (sem inventar)"
+    "exemplo_otimizado": "MESMO trecho com melhorias linguísticas (sem inventar métricas)"
   }},
   "gap_2": {{
     "titulo": "Outro problema",
@@ -1272,7 +1276,7 @@ Regras:
 - setor: área detectada (SUPORTE TI, VENDAS, MARKETING, etc)
 - gaps: problemas reais do CV
 - exemplo_atual: copie trecho exato do CV
-- exemplo_otimizado: mesmo trecho com melhorias realistas
+- exemplo_otimizado: mesmo trecho com melhorias linguísticas (sem números/percentagens)
 """
                 
                 response_obj = groq_client.chat.completions.create(
