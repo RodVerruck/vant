@@ -3173,33 +3173,35 @@ export default function AppPage() {
                                         {/* CONTAINER DOS CARDS - Grid Responsivo */}
                                         <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "stretch" }}>
 
-                                            {/* CARD 1: SOLUÇÃO RÁPIDA (Âncora & Tripwire) */}
+                                            {/* CARD 1: SOLUÇÃO RÁPIDA (Âncora & Tripwire) - ENFEITADO PARA SER DECOY */}
                                             <div style={{
                                                 flex: "1 1 300px",
-                                                background: "rgba(15, 23, 42, 0.4)",
-                                                border: "1px solid rgba(148, 163, 184, 0.2)",
-                                                borderRadius: 16,
-                                                padding: "24px",
+                                                background: "transparent",
+                                                border: "1px solid rgba(71, 85, 105, 0.15)",
+                                                borderRadius: 12,
+                                                padding: "20px",
                                                 display: "flex",
                                                 flexDirection: "column",
-                                                justifyContent: "space-between"
+                                                justifyContent: "space-between",
+                                                opacity: 0.7,
+                                                filter: "grayscale(20%)"
                                             }}>
                                                 <div>
-                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
+                                                    <div style={{ color: "#64748B", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>
                                                         CRÉDITOS AVULSOS
                                                     </div>
-                                                    <div style={{ color: "#E2E8F0", fontSize: "1.4rem", fontWeight: 700, marginBottom: 8 }}>
+                                                    <div style={{ color: "#94A3B8", fontSize: "1.2rem", fontWeight: 600, marginBottom: 6 }}>
                                                         A partir de R$ 12,90
                                                     </div>
 
-                                                    <p style={{ color: "#64748B", fontSize: "0.85rem", lineHeight: 1.5, marginBottom: 24 }}>
+                                                    <p style={{ color: "#64748B", fontSize: "0.8rem", lineHeight: 1.4, marginBottom: 20 }}>
                                                         Ideal para ajustes pontuais ou se você já tem uma vaga específica em mente.
                                                     </p>
 
-                                                    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
-                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>1 Otimização</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 12,90</span>
+                                                    <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: "1px dashed rgba(100, 116, 139, 0.15)" }}>
+                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                                            <span style={{ color: "#64748B", fontWeight: 500 }}>1 Otimização</span>
+                                                            <span style={{ color: "#94A3B8", fontWeight: 600 }}>R$ 12,90</span>
                                                         </div>
                                                         <button
                                                             type="button"
@@ -3208,20 +3210,40 @@ export default function AppPage() {
                                                                 if (!authUserId) setShowAuthModal(true);
                                                                 else setStage("checkout");
                                                             }}
-                                                            style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                                                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
-                                                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                            style={{
+                                                                width: "100%",
+                                                                background: "transparent",
+                                                                border: "1px solid rgba(100, 116, 139, 0.25)",
+                                                                color: "#64748B",
+                                                                padding: "8px",
+                                                                borderRadius: 6,
+                                                                fontSize: "0.8rem",
+                                                                fontWeight: 500,
+                                                                cursor: "pointer",
+                                                                transition: "all 0.2s",
+                                                                opacity: 0.6
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.borderColor = "rgba(100, 116, 139, 0.4)";
+                                                                e.currentTarget.style.color = "#64748B";
+                                                                e.currentTarget.style.opacity = "0.8";
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.borderColor = "rgba(100, 116, 139, 0.25)";
+                                                                e.currentTarget.style.color = "#64748B";
+                                                                e.currentTarget.style.opacity = "0.6";
+                                                            }}
                                                         >
                                                             Comprar 1 Crédito
                                                         </button>
                                                     </div>
 
-                                                    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
+                                                    <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: "1px dashed rgba(100, 116, 139, 0.15)" }}>
                                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                                            <span style={{ color: "#CBD5E1", fontWeight: 600 }}>Pacote 3 CVs</span>
-                                                            <span style={{ color: "#fff", fontWeight: 700 }}>R$ 29,90</span>
+                                                            <span style={{ color: "#64748B", fontWeight: 500 }}>Pacote 3 CVs</span>
+                                                            <span style={{ color: "#94A3B8", fontWeight: 600 }}>R$ 29,90</span>
                                                         </div>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", marginBottom: 8 }}>R$ 9,97/cada • economize 23%</div>
+                                                        <div style={{ color: "#64748B", fontSize: "0.7rem", marginBottom: 6 }}>R$ 9,97/cada • economize 23%</div>
                                                         <button
                                                             type="button"
                                                             onClick={() => {
@@ -3229,22 +3251,42 @@ export default function AppPage() {
                                                                 if (!authUserId) setShowAuthModal(true);
                                                                 else setStage("checkout");
                                                             }}
-                                                            style={{ width: "100%", background: "transparent", border: "1px solid rgba(148, 163, 184, 0.4)", color: "#94A3B8", padding: "10px", borderRadius: 8, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                                                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#fff"; e.currentTarget.style.color = "#fff"; }}
-                                                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                            style={{
+                                                                width: "100%",
+                                                                background: "transparent",
+                                                                border: "1px solid rgba(100, 116, 139, 0.25)",
+                                                                color: "#64748B",
+                                                                padding: "8px",
+                                                                borderRadius: 6,
+                                                                fontSize: "0.8rem",
+                                                                fontWeight: 500,
+                                                                cursor: "pointer",
+                                                                transition: "all 0.2s",
+                                                                opacity: 0.6
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.borderColor = "rgba(100, 116, 139, 0.4)";
+                                                                e.currentTarget.style.color = "#64748B";
+                                                                e.currentTarget.style.opacity = "0.8";
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.borderColor = "rgba(100, 116, 139, 0.25)";
+                                                                e.currentTarget.style.color = "#64748B";
+                                                                e.currentTarget.style.opacity = "0.6";
+                                                            }}
                                                         >
                                                             Comprar Pacote 3
                                                         </button>
                                                     </div>
 
-                                                    <div style={{ marginTop: 16, padding: 12, background: "rgba(56, 189, 248, 0.1)", borderRadius: 8, border: "1px solid rgba(56, 189, 248, 0.2)" }}>
-                                                        <div style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600, marginBottom: 4 }}>💡 Quer otimizar mais de 5 CVs?</div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>Trial por R$ 1,99 é melhor negócio!</div>
+                                                    <div style={{ marginTop: 12, padding: 10, background: "rgba(100, 116, 139, 0.08)", borderRadius: 6, border: "1px solid rgba(100, 116, 139, 0.15)" }}>
+                                                        <div style={{ color: "#64748B", fontSize: "0.75rem", fontWeight: 500, marginBottom: 3 }}>💡 Quer otimizar mais de 5 CVs?</div>
+                                                        <div style={{ color: "#64748B", fontSize: "0.7rem" }}>Trial por R$ 1,99 é melhor negócio!</div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* CARD 2: HERO SAAS (O Foco da Venda) */}
+                                            {/* CARD 2: HERO SAAS (O Foco da Venda) - DESTACADO COM GLOW */}
                                             <div style={{
                                                 flex: "1 1 300px",
                                                 background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
@@ -3252,10 +3294,12 @@ export default function AppPage() {
                                                 borderRadius: 16,
                                                 padding: "24px",
                                                 position: "relative",
-                                                boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)",
+                                                boxShadow: "0 0 40px rgba(16, 185, 129, 0.4), 0 0 80px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.1)",
                                                 display: "flex",
                                                 flexDirection: "column",
-                                                justifyContent: "space-between"
+                                                justifyContent: "space-between",
+                                                transform: "scale(1.02)",
+                                                transition: "all 0.3s ease"
                                             }}>
                                                 <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
                                                     🏆 RECOMENDADO PELA IA
