@@ -1060,9 +1060,13 @@ VAGA ALVO:
 
 INSTRUÇÕES ESPECÍFICAS:
 1. Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV
-2. Use exemplos REAIS do texto do CV (não invente)
-3. Seja direto e objetivo
-4. Foque em: falta de números/resultados E palavras-chave ausentes
+2. **CRÍTICO**: Para exemplo_atual, copie EXATAMENTE um trecho real do CV (não modifique)
+3. **CRÍTICO**: Para exemplo_otimizado, use o MESMO trecho real mas apenas:
+   - Adicione números/métricas PLAUSÍVEIS baseadas no contexto
+   - Adicione palavras-chave da vaga que fazem sentido
+   - NÃO invente projetos, empresas ou valores que não existem no original
+4. Seja direto e objetivo
+5. Foque em: falta de números/resultados E palavras-chave ausentes
 5. DETECTE A ÁREA ESPECÍFICA:
    
    {"⚠️ ÁREA FORÇADA ESPECÍFICA: Use exatamente '" + forced_area.replace('_', ' ').upper() + "' como setor_detectado. Ignore outras detecções." if forced_area else ""}
@@ -1238,6 +1242,8 @@ VAGA: {job_description[:800]}
 
 CV: {cv_text[:2000]}
 
+**IMPORTANTE**: Use APENAS dados reais do CV. Não invente exemplos.
+
 Retorne JSON exato:
 {{
   "nota_ats": 0,
@@ -1249,11 +1255,14 @@ Retorne JSON exato:
   }},
   "gap_1": {{
     "titulo": "Problema detectado",
-    "explicacao": "Por que isso é crítico"
+    "explicacao": "Por que isso é crítico",
+    "exemplo_atual": "Trecho REAL do CV (copie exatamente)",
+    "exemplo_otimizado": "MESMO trecho com melhorias PLAUSÍVEIS (sem inventar)"
   }},
   "gap_2": {{
     "titulo": "Outro problema",
-    "explicacao": "Detalhes"
+    "explicacao": "Detalhes",
+    "termos_faltando": ["termo1", "termo2", "termo3"]
   }}
 }}
 
@@ -1262,6 +1271,8 @@ Regras:
 - pilares: 0-100 baseados em análise específica
 - setor: área detectada (SUPORTE TI, VENDAS, MARKETING, etc)
 - gaps: problemas reais do CV
+- exemplo_atual: copie trecho exato do CV
+- exemplo_otimizado: mesmo trecho com melhorias realistas
 """
                 
                 response_obj = groq_client.chat.completions.create(
