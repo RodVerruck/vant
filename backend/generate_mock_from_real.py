@@ -26,6 +26,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 from logic import extrair_texto_pdf, analyze_preview_lite, analyze_cv_logic
 import json
+from io import BytesIO
 
 def main():
     print("\n" + "="*70)
@@ -43,26 +44,39 @@ def main():
         print("   4. Depois reativar DEV_MODE=true\n")
         return
     
-    # Verifica se existe CV de teste
-    cache_dir = PROJECT_ROOT / ".cache"
-    cv_path = cache_dir / "last_cv.pdf"
-    job_path = cache_dir / "last_job.txt"
-    
-    if not cv_path.exists():
-        print("\n⚠️  ERRO: Arquivo de CV não encontrado!")
-        print(f"   Esperado em: {cv_path}")
-        print("   Faça upload de um CV pelo app primeiro.\n")
+    # Busca o batch mais recente do storage
+    try:
+        from storage_manager import storage_manager
+        
+        # Buscar batch mais recente (para desenvolvimento)
+        response = storage_manager.supabase.table("temp_files_metadata") \
+            .select("*") \
+            .order("created_at", desc=True) \
+            .limit(1) \
+            .execute()
+        
+        if not response.data:
+            print("\n⚠️  ERRO: Nenhum batch encontrado no storage!")
+            print("   Faça upload de um CV pelo app primeiro.\n")
+            return
+        
+        batch_data = response.data[0]
+        batch_id = batch_data["batch_id"]
+        job_description = batch_data["job_description"]
+        
+        # Recuperar CV do storage
+        cv_bytes = storage_manager.get_cv_bytes(batch_data["cv_path"])
+        if not cv_bytes:
+            print(f"\n⚠️  ERRO: CV não encontrado no storage para batch {batch_id}!\n")
+            return
+            
+        print(f"✅ Usando batch {batch_id} do storage")
+        
+    except Exception as e:
+        print(f"\n⚠️  ERRO: Falha ao acessar storage: {e}")
+        print("   Verifique se as variáveis SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY estão configuradas.\n")
         return
-    
-    if not job_path.exists():
-        print("\n⚠️  AVISO: Descrição de vaga não encontrada.")
-        print("   Usando descrição padrão...\n")
-        job_description = "Analista de Suporte Técnico Júnior"
-    else:
-        with open(job_path, 'r', encoding='utf-8') as f:
-            job_description = f.read().strip()
-    
-    print(f"\n📄 CV encontrado: {cv_path.name}")
+    print(f"\n📄 CV recuperado do storage (batch {batch_id})")
     print(f"💼 Vaga: {job_description[:60]}...")
     print("\n🤖 Processando com IA REAL (isso vai gastar tokens)...")
     print("   Aguarde, pode levar 30-60 segundos...\n")
@@ -70,8 +84,7 @@ def main():
     # Processa PREVIEW (análise lite)
     print("1️⃣  Gerando MOCK_PREVIEW_DATA...")
     try:
-        with open(cv_path, 'rb') as f:
-            cv_text = extrair_texto_pdf(f)
+        cv_text = extrair_texto_pdf(io.BytesIO(cv_bytes))
         
         preview_data = analyze_preview_lite(cv_text, job_description)
         print("   ✅ Preview gerado com sucesso!")
@@ -83,8 +96,7 @@ def main():
     print("\n2️⃣  Gerando MOCK_PREMIUM_DATA...")
     print("   (Isso é mais demorado, aguarde...)")
     try:
-        with open(cv_path, 'rb') as f:
-            cv_text = extrair_texto_pdf(f)
+        cv_text = extrair_texto_pdf(io.BytesIO(cv_bytes))
         
         premium_data = analyze_cv_logic(cv_text, job_description, competitor_files=[])
         print("   ✅ Premium gerado com sucesso!")

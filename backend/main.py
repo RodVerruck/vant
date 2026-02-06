@@ -318,27 +318,6 @@ def _upload_to_bytes_io(upload: UploadFile) -> io.BytesIO:
     return io.BytesIO(b)
 
 
-def _save_to_cache(file_bytes: bytes, job_description: str) -> None:
-    """Salva CV e job description no cache para facilitar geração de mocks."""
-    try:
-        cache_dir = PROJECT_ROOT / ".cache"
-        cache_dir.mkdir(exist_ok=True)
-        
-        # Salva CV
-        cv_path = cache_dir / "last_cv.pdf"
-        with open(cv_path, 'wb') as f:
-            f.write(file_bytes)
-        
-        # Salva descrição da vaga
-        job_path = cache_dir / "last_job.txt"
-        with open(job_path, 'w', encoding='utf-8') as f:
-            f.write(job_description)
-        
-        print(f"💾 Cache atualizado: {cv_path.name} + job description")
-    except Exception as e:
-        print(f"⚠️  Erro ao salvar cache: {e}")
-
-
 # Cache para health check (evita chamadas excessivas a serviços externos)
 health_cache = {"last_check": 0, "status": None}
 
@@ -484,9 +463,11 @@ def analyze_lite(request: Request, file: UploadFile = File(...), job_description
         import sentry_sdk
         sentry_sdk.set_tag("endpoint", "analyze_lite")
         
-        # Salva no cache para facilitar geração de mocks
+        # Salva no storage para facilitar geração de mocks (produção-safe)
         file_bytes = file.file.read()
-        _save_to_cache(file_bytes, job_description)
+        from backend.storage_manager import storage_manager
+        storage_result = storage_manager.save_temp_files(file_bytes, job_description)
+        batch_id = storage_result.get("batch_id") if storage_result else None
         
         # Modo de desenvolvimento: retorna mock instantaneamente
         if DEV_MODE:
@@ -535,9 +516,11 @@ def analyze_free(
         )
     
     try:
-        # Salva no cache para facilitar geração de mocks
+        # Salva no storage para facilitar geração de mocks (produção-safe)
         file_bytes = file.file.read()
-        _save_to_cache(file_bytes, job_description)
+        from backend.storage_manager import storage_manager
+        storage_result = storage_manager.save_temp_files(file_bytes, job_description, user_id)
+        batch_id = storage_result.get("batch_id") if storage_result else None
         
         # Verifica se usuário já usou análise gratuita (se tiver user_id)
         if user_id and supabase_admin:
@@ -727,9 +710,11 @@ def analyze_premium_paid(
         )
     
     try:
-        # Salva no cache para facilitar geração de mocks
+        # Salva no storage para facilitar geração de mocks (produção-safe)
         file_bytes = file.file.read()
-        _save_to_cache(file_bytes, job_description)
+        from backend.storage_manager import storage_manager
+        storage_result = storage_manager.save_temp_files(file_bytes, job_description, user_id)
+        batch_id = storage_result.get("batch_id") if storage_result else None
         
         # Verificar créditos (tanto em DEV quanto em produção)
         status = _entitlements_status(user_id)
