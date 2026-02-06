@@ -985,12 +985,18 @@ export default function AppPage() {
                 }
 
                 // Sucesso! Se response.ok for true, considere sucesso independente do conteúdo de data
-                console.log("[needsActivation] Ativação bem-sucedida! Status:", resp.status);
+                console.log("[needsActivation] Ativação bem-sucedida! Status:", resp.status, "Data:", data);
 
                 // Limpar sessão pendente após ativação bem-sucedida
                 window.localStorage.removeItem("vant_pending_stripe_session_id");
 
                 setCheckoutError("");
+
+                // Atualizar créditos com valor retornado pelo backend (se disponível)
+                if (typeof data.credits_remaining === "number") {
+                    setCreditsRemaining(data.credits_remaining as number);
+                    localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
+                }
 
                 // 🔥 ATUALIZAÇÃO IMEDIATA APÓS ATIVAÇÃO
                 console.log("[needsActivation] Ativação bem-sucedida! Sincronizando créditos...");
@@ -1003,8 +1009,9 @@ export default function AppPage() {
                     if (creditsRemaining > 0) {
                         console.log("[needsActivation] Créditos detectados:", creditsRemaining);
 
-                        // Mostrar toast de sucesso
-                        alert("Assinatura ativada com sucesso!");
+                        // Mostrar toast de sucesso (mensagem adequada ao tipo de compra)
+                        const isAvulso = data.activation_type === "one_time";
+                        alert(isAvulso ? "Créditos adicionados com sucesso!" : "Assinatura ativada com sucesso!");
 
                         // Verificar se já tem relatório salvo
                         const hasReport = localStorage.getItem('vant_last_report');

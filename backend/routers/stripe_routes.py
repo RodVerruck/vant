@@ -227,40 +227,74 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
             logger.error(f"[ACTIVATE] Erro ao buscar assinatura: {e}")
             stripe_status = "active"  # fallback
     
-    # 7. Chamar RPC única
+    # 7. Ativar créditos de acordo com o tipo de compra
     try:
-        logger.info(f"[ACTIVATE] Debug tipos:")
-        logger.info(f"  - type(user_id): {type(user_id)}")
-        logger.info(f"  - type(subscription_id): {type(subscription_id)}")
-        logger.info(f"  - type(customer_id): {type(customer_id)}")
-        logger.info(f"  - type(plan_id): {type(plan_id)}")
-        logger.info(f"  - type(stripe_status): {type(stripe_status)}")
-        
-        rpc_params = {
-            "p_user_id": user_id,
-            "p_stripe_sub_id": subscription_id or f"one_time_{user_id[:8]}",
-            "p_stripe_cust_id": customer_id or f"cus_one_time_{user_id[:8]}",
-            "p_plan": plan_id,
-            "p_status": stripe_status or "active",
-            "p_start": period_start or datetime.now().isoformat(),
-            "p_end": period_end or (datetime.now() + timedelta(days=30)).isoformat()
-        }
-        
-        logger.info(f"[ACTIVATE] Chamando RPC com parâmetros: {rpc_params}")
-        
-        response = supabase_admin.rpc("activate_subscription_rpc", rpc_params).execute()
-        
-        logger.info(f"[ACTIVATE] RPC executada com sucesso. Retorno: {response.data}")
-        
-        return JSONResponse(content={
-            "ok": True,
-            "plan_id": plan_id,
-            "credits_remaining": credits,
-            "activation_type": activation_type
-        })
+        if activation_type == "one_time":
+            # COMPRA AVULSA: Adicionar créditos à tabela user_credits SEM destruir assinatura existente
+            logger.info(f"[ACTIVATE] Compra avulsa: adicionando {credits} créditos para user={user_id}")
+            
+            existing = (
+                supabase_admin.table("user_credits")
+                .select("balance")
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+            existing_row = (existing.data or [])[0] if existing.data else None
+            
+            if existing_row:
+                new_balance = int(existing_row.get("balance", 0)) + credits
+                logger.info(f"[ACTIVATE] Créditos existentes: {existing_row.get('balance', 0)}, novo saldo: {new_balance}")
+                supabase_admin.table("user_credits").update(
+                    {"balance": new_balance}
+                ).eq("user_id", user_id).execute()
+            else:
+                logger.info(f"[ACTIVATE] Sem créditos avulsos anteriores, criando registro com {credits}")
+                supabase_admin.table("user_credits").insert(
+                    {"user_id": user_id, "balance": credits}
+                ).execute()
+            
+            # Calcular total de créditos (assinatura + avulsos) para retornar ao frontend
+            status = _entitlements_status(user_id)
+            total_credits = status.get("credits_remaining", credits)
+            
+            logger.info(f"[ACTIVATE] Créditos avulsos ativados. Total disponível: {total_credits}")
+            
+            return JSONResponse(content={
+                "ok": True,
+                "plan_id": plan_id,
+                "credits_remaining": total_credits,
+                "activation_type": activation_type
+            })
+        else:
+            # ASSINATURA: Usar RPC que cria/substitui assinatura e usage
+            logger.info(f"[ACTIVATE] Assinatura: chamando RPC para user={user_id}")
+            
+            rpc_params = {
+                "p_user_id": user_id,
+                "p_stripe_sub_id": subscription_id,
+                "p_stripe_cust_id": customer_id or f"cus_{user_id[:8]}",
+                "p_plan": plan_id,
+                "p_status": stripe_status or "active",
+                "p_start": period_start or datetime.now().isoformat(),
+                "p_end": period_end or (datetime.now() + timedelta(days=30)).isoformat()
+            }
+            
+            logger.info(f"[ACTIVATE] Chamando RPC com parâmetros: {rpc_params}")
+            
+            response = supabase_admin.rpc("activate_subscription_rpc", rpc_params).execute()
+            
+            logger.info(f"[ACTIVATE] RPC executada com sucesso. Retorno: {response.data}")
+            
+            return JSONResponse(content={
+                "ok": True,
+                "plan_id": plan_id,
+                "credits_remaining": credits,
+                "activation_type": activation_type
+            })
         
     except Exception as e:
-        logger.error(f"[ACTIVATE] Erro na RPC: {e}")
+        logger.error(f"[ACTIVATE] Erro na ativação: {e}")
         return JSONResponse(status_code=500, content={"error": f"Erro na ativação: {str(e)}"})
 
 

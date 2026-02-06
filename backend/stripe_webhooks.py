@@ -179,6 +179,7 @@ def activate_subscription_webhook(subscription_id: str, customer_id: str, user_i
 def activate_one_time_payment_webhook(session_id: str, customer_id: str, user_id: str, plan_id: str) -> bool:
     """
     Ativa créditos avulsos via webhook.
+    Adiciona créditos ao saldo existente (não sobrescreve).
     """
     try:
         logger.info(f"🔥 [WEBHOOK] Ativando créditos avulsos: user={user_id}, plan={plan_id}")
@@ -187,23 +188,33 @@ def activate_one_time_payment_webhook(session_id: str, customer_id: str, user_id
         plan = PRICING.get(plan_id, {"credits": 1})
         credits = plan.get("credits", 1)
         
-        # Criar registro de créditos avulsos
-        credits_data = {
-            "user_id": user_id,
-            "balance": credits,
-            "stripe_customer_id": customer_id,
-            "stripe_session_id": session_id,
-            "created_at": datetime.now().isoformat()
-        }
+        # Verificar se já tem registro de créditos avulsos
+        existing = (
+            supabase_admin.table("user_credits")
+            .select("balance")
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+        existing_row = (existing.data or [])[0] if existing.data else None
         
-        result = supabase_admin.table("user_credits").insert(credits_data).execute()
-        
-        if result.data:
-            logger.info(f"✅ [WEBHOOK] Créditos avulsos ativados: user={user_id}, credits={credits}")
-            return True
+        if existing_row:
+            # Adicionar ao saldo existente
+            new_balance = int(existing_row.get("balance", 0)) + credits
+            logger.info(f"🔥 [WEBHOOK] Créditos existentes: {existing_row.get('balance', 0)}, adicionando {credits}, novo saldo: {new_balance}")
+            supabase_admin.table("user_credits").update(
+                {"balance": new_balance}
+            ).eq("user_id", user_id).execute()
         else:
-            logger.error(f"❌ [WEBHOOK] Falha ao criar créditos: user={user_id}")
-            return False
+            # Criar novo registro
+            credits_data = {
+                "user_id": user_id,
+                "balance": credits,
+            }
+            supabase_admin.table("user_credits").insert(credits_data).execute()
+        
+        logger.info(f"✅ [WEBHOOK] Créditos avulsos ativados: user={user_id}, credits={credits}")
+        return True
             
     except Exception as e:
         logger.error(f"❌ [WEBHOOK] Erro ao ativar créditos avulsos: {e}")

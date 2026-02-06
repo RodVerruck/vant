@@ -285,8 +285,11 @@ def _upload_to_bytes_io(upload: UploadFile) -> io.BytesIO:
 
 
 def _entitlements_status(user_id: str) -> dict[str, Any]:
-    """Verifica status de entitlements do usuário."""
+    """Verifica status de entitlements do usuário (assinatura + avulsos combinados)."""
     print(f'[DEBUG] Buscando subs para user {user_id}')
+    
+    subscription_credits = 0
+    has_subscription = False
     
     subs = (
         supabase_admin.table("subscriptions")
@@ -309,6 +312,7 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
         
         # Todos os planos de assinatura (PRO, Trial, premium_plus) usam sistema de usage com limite mensal
         if plan_name in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
+            has_subscription = True
             usage = (
                 supabase_admin.table("usage")
                 .select("used,usage_limit")
@@ -320,41 +324,38 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
             row = (usage.data or [])[0] if usage.data else None
             used = int(row.get('used', 0) if row else 0)
             limit_val = int(row.get('usage_limit', 30) if row else 30)
-            credits_remaining = max(0, limit_val - used)
-            return {
-                "payment_verified": credits_remaining > 0,
-                "credits_remaining": credits_remaining,
-                "plan": "premium_plus",
-            }
+            subscription_credits = max(0, limit_val - used)
+            print(f"[DEBUG] Créditos da assinatura: {subscription_credits} (used={used}, limit={limit_val})")
 
-    # Sem assinatura ativa, verificar créditos avulsos
+    # Verificar créditos avulsos (sempre, mesmo com assinatura)
+    avulso_credits = 0
     credits = (
         supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
     )
     row = (credits.data or [])[0] if credits.data else None
     
-    if row is None:
-        print(f"[DEBUG] Sem assinatura ativa. Sem registros de créditos avulsos: balance=0")
-        return {
-            "payment_verified": False,
-            "credits_remaining": 0,
-            "plan": None,
-        }
+    if row is not None:
+        avulso_credits = max(0, int(row.get("balance", 0)))
     
-    balance = int(row.get("balance", 0))
+    print(f"[DEBUG] Créditos avulsos: {avulso_credits}")
     
-    print(f"[DEBUG] Sem assinatura ativa. Créditos avulsos: balance={balance}")
+    # Total = assinatura + avulsos
+    total_credits = subscription_credits + avulso_credits
+    
+    print(f"[DEBUG] Total de créditos: {total_credits} (assinatura={subscription_credits} + avulsos={avulso_credits})")
     
     return {
-        "payment_verified": balance > 0,
-        "credits_remaining": max(0, balance),
-        "plan": None,
+        "payment_verified": total_credits > 0,
+        "credits_remaining": total_credits,
+        "plan": "premium_plus" if has_subscription else None,
     }
 
 
 def _consume_one_credit(user_id: str) -> None:
     if not supabase_admin or not user_id:
         raise RuntimeError("Banco não configurado")
+
+    consumed_from_subscription = False
 
     subs = (
         supabase_admin.table("subscriptions")
@@ -382,19 +383,24 @@ def _consume_one_credit(user_id: str) -> None:
             row = (usage.data or [])[0] if usage.data else None
             used = int(row.get('used', 0) if row else 0)
             limit_val = int(row.get('usage_limit', 30) if row else 30)
-            if used >= limit_val:
-                raise RuntimeError("Limite mensal atingido")
+            
+            if used < limit_val:
+                # Ainda tem créditos na assinatura, consumir daqui
+                if row is None:
+                    supabase_admin.table("usage").insert(
+                        {"user_id": user_id, "period_start": period_start, "used": 1, "usage_limit": limit_val}
+                    ).execute()
+                else:
+                    supabase_admin.table("usage").update({"used": used + 1}).eq("user_id", user_id).eq(
+                        "period_start", period_start
+                    ).execute()
+                consumed_from_subscription = True
+            # Se used >= limit_val, NÃO levantar erro - cair para créditos avulsos abaixo
 
-            if row is None:
-                supabase_admin.table("usage").insert(
-                    {"user_id": user_id, "period_start": period_start, "used": 1, "usage_limit": limit_val}
-                ).execute()
-            else:
-                supabase_admin.table("usage").update({"used": used + 1}).eq("user_id", user_id).eq(
-                    "period_start", period_start
-                ).execute()
-            return
+    if consumed_from_subscription:
+        return
 
+    # Consumir de créditos avulsos (fallback quando assinatura esgotada ou inexistente)
     credits = (
         supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
     )
@@ -406,7 +412,7 @@ def _consume_one_credit(user_id: str) -> None:
     balance = int(row.get("balance", 0))
     if balance <= 0:
         raise RuntimeError("Sem créditos")
-    supabase_admin.table("user_credits").upsert({"user_id": user_id, "balance": balance - 1}).execute()
+    supabase_admin.table("user_credits").update({"balance": balance - 1}).eq("user_id", user_id).execute()
 
 
 def _create_fallback_subscription(payload: ActivateEntitlementsRequest, plan_id: str, plan: dict) -> JSONResponse:
