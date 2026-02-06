@@ -46,10 +46,23 @@ PROJECT_ROOT = Path(__file__).parent.parent if '__file__' in globals() else Path
 load_dotenv(PROJECT_ROOT / ".env")
 
 # Configuração do logger
+# DEV ONLY: Importar configurações centralizadas (não afeta produção)
+try:
+    from backend.config import settings, validate_critical_settings, get_size_limit_bytes, IS_DEV
+    # Validar configurações críticas em DEV
+    if IS_DEV:
+        missing_vars = validate_critical_settings()
+        if missing_vars:
+            raise RuntimeError(f"Variáveis críticas faltando no .env.local: {', '.join(missing_vars)}")
+        print("✅ Configurações centralizadas carregadas (DEV)")
+except ImportError:
+    # Fallback para produção (Render não usa config.py)
+    print("🔄 Usando configurações legadas (PROD)")
+    settings = None
 logger = logging.getLogger(__name__)
 
 import stripe
-from fastapi import FastAPI, File, Form, UploadFile, Request, BackgroundTasks, HTTPException, Header
+from fastapi import FastAPI, File, Form, UploadFile, Request, BackgroundTasks, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -111,24 +124,38 @@ else:
     print("   Tokens serão consumidos")
     print("="*60 + "\n")
 
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
-
-# Novos Price IDs - Modelo Simplificado
-STRIPE_PRICE_ID_PRO_MONTHLY = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")  # R$ 27,90/mês
-STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD")  # R$ 19,90/mês (desconto vitalício)
-STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")    # R$ 239/ano
-STRIPE_PRICE_ID_TRIAL = os.getenv("STRIPE_PRICE_ID_TRIAL")              # R$ 1,99 trial 7 dias
-STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,90 (1 CV)
-STRIPE_PRICE_ID_CREDIT_3 = os.getenv("STRIPE_PRICE_ID_CREDIT_3")        # R$ 29,90 (3 CVs)
-STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")        # R$ 49,90 (5 CVs)
-
-FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-# Chave secreta para proteger endpoints de debug
-DEBUG_API_SECRET = os.getenv("DEBUG_API_SECRET", "vant_debug_2026_secure_key")
+# DEV: Usar config centralizado | PROD: Usar environment variables diretas
+if settings and IS_DEV:
+    STRIPE_SECRET_KEY = settings.STRIPE_SECRET_KEY
+    SUPABASE_URL = settings.SUPABASE_URL
+    SUPABASE_SERVICE_ROLE_KEY = settings.SUPABASE_SERVICE_ROLE_KEY
+    DEBUG_API_SECRET = settings.DEBUG_API_SECRET
+    GOOGLE_API_KEY = settings.GOOGLE_API_KEY
+    GROQ_API_KEY = settings.GROQ_API_KEY
+    FRONTEND_CHECKOUT_RETURN_URL = settings.FRONTEND_CHECKOUT_RETURN_URL
+    STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = settings.STRIPE_PRICE_ID_PRO_MONTHLY
+    STRIPE_PRICE_ID_PRO_MONTHLY = settings.STRIPE_PRICE_ID_PRO_MONTHLY  # Adicionado variável faltante
+    STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")    # R$ 239/ano
+    STRIPE_PRICE_ID_TRIAL = os.getenv("STRIPE_PRICE_ID_TRIAL")              # R$ 1,99 trial 7 dias
+    STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,90 (1 CV)
+    STRIPE_PRICE_ID_CREDIT_3 = os.getenv("STRIPE_PRICE_ID_CREDIT_3")        # R$ 29,90 (3 CVs)
+    STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")        # R$ 49,90 (5 CVs)
+else:
+    # PROD: Mantém comportamento original (environment variables)
+    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+    SUPABASE_URL = os.getenv("SUPABASE_URL")
+    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    DEBUG_API_SECRET = os.getenv("DEBUG_API_SECRET", "vant_debug_2026_secure_key")
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
+    STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD")  # R$ 19,90/mês (desconto vitalício)
+    STRIPE_PRICE_ID_PRO_MONTHLY = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")  # Adicionado variável faltante
+    STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")    # R$ 239/ano
+    STRIPE_PRICE_ID_TRIAL = os.getenv("STRIPE_PRICE_ID_TRIAL")              # R$ 1,99 trial 7 dias
+    STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,90 (1 CV)
+    STRIPE_PRICE_ID_CREDIT_3 = os.getenv("STRIPE_PRICE_ID_CREDIT_3")        # R$ 29,90 (3 CVs)
+    STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")        # R$ 49,90 (5 CVs)
 
 # Verificação de ambiente para endpoints de debug
 ALLOW_DEBUG_ENDPOINTS = os.getenv("ALLOW_DEBUG_ENDPOINTS", "false").lower() == "true"
@@ -607,7 +634,7 @@ class GeneratePdfRequest(BaseModel):
 
 
 @app.post("/api/generate-pdf")
-def generate_pdf(request: GeneratePdfRequest) -> StreamingResponse | JSONResponse:
+def generate_pdf(request: GeneratePdfRequest) -> Response:
     try:
         # Gerar PDF completamente em memória antes de enviar resposta
         pdf_bytes = gerar_pdf_candidato(request.data)
@@ -653,7 +680,7 @@ class GenerateWordRequest(BaseModel):
 
 
 @app.post("/api/generate-word")
-def generate_word(request: GenerateWordRequest) -> StreamingResponse | JSONResponse:
+def generate_word(request: GenerateWordRequest) -> Response:
     try:
         # Gerar Word completamente em memória antes de enviar resposta
         word_bytes_io = gerar_word_candidato(request.data)
@@ -2059,10 +2086,12 @@ async def analyze_interview_response(
         # Ler bytes do áudio
         audio_bytes = await audio_file.read()
         
-        if len(audio_bytes) > 10 * 1024 * 1024:  # 10MB max
+        # DEV: Usar config centralizado | PROD: Usar hardcoded
+        max_size = settings.MAX_AUDIO_SIZE_MB * 1024 * 1024 if settings and IS_DEV else 10 * 1024 * 1024
+        if len(audio_bytes) > max_size:
             return JSONResponse(
                 status_code=400,
-                content={"error": "Arquivo muito grande. Máximo 10MB."}
+                content={"error": f"Arquivo muito grande. Máximo {max_size // (1024 * 1024)}MB."}
             )
         
         # Transcrever áudio com Gemini (mais econômico e integrado)
@@ -2257,10 +2286,12 @@ async def analyze_interview_advanced(
         # Ler bytes do áudio
         audio_bytes = await audio_file.read()
         
-        if len(audio_bytes) > 10 * 1024 * 1024:  # 10MB max
+        # DEV: Usar config centralizado | PROD: Usar hardcoded
+        max_size = settings.MAX_AUDIO_SIZE_MB * 1024 * 1024 if settings and IS_DEV else 10 * 1024 * 1024
+        if len(audio_bytes) > max_size:
             return JSONResponse(
                 status_code=400,
-                content={"error": "Arquivo muito grande. Máximo 10MB."}
+                content={"error": f"Arquivo muito grande. Máximo {max_size // (1024 * 1024)}MB."}
             )
         
         # Transcrever áudio com Gemini
