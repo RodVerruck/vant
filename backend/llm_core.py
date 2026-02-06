@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 from groq import Groq
 from anthropic import Anthropic
-from cache_manager import CacheManager
+from backend.cache_manager import CacheManager
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente
@@ -140,30 +140,15 @@ DEFAULT_MODEL = "models/gemini-2.5-flash-lite"
 # ============================================================
 # IMPORT PROMPTS
 # ============================================================
-try:
-    from backend.prompts import (
-        SYSTEM_AGENT_DIAGNOSIS,
-        SYSTEM_AGENT_CV_WRITER_SEMANTIC,
-        SYSTEM_AGENT_CV_FORMATTER,
-        SYSTEM_AGENT_COMBO_TACTICAL,
-        SYSTEM_AGENT_LIBRARY_CURATOR,
-        SYSTEM_AGENT_COMPETITOR_ANALYSIS,
-        SYSTEM_AGENT_INTERVIEW_EVALUATOR,
-    )
-except ImportError:
-    try:
-        from prompts import (
-            SYSTEM_AGENT_DIAGNOSIS,
-            SYSTEM_AGENT_CV_WRITER_SEMANTIC,
-            SYSTEM_AGENT_CV_FORMATTER,
-            SYSTEM_AGENT_COMBO_TACTICAL,
-            SYSTEM_AGENT_LIBRARY_CURATOR,
-            SYSTEM_AGENT_COMPETITOR_ANALYSIS,
-            SYSTEM_AGENT_INTERVIEW_EVALUATOR,
-        )
-    except ImportError as e:
-        logger.critical(f"❌ Erro ao importar prompts: {e}")
-        raise e
+from backend.prompts import (
+    SYSTEM_AGENT_DIAGNOSIS,
+    SYSTEM_AGENT_CV_WRITER_SEMANTIC,
+    SYSTEM_AGENT_CV_FORMATTER,
+    SYSTEM_AGENT_COMBO_TACTICAL,
+    SYSTEM_AGENT_LIBRARY_CURATOR,
+    SYSTEM_AGENT_COMPETITOR_ANALYSIS,
+    SYSTEM_AGENT_INTERVIEW_EVALUATOR,
+)
 
 # ============================================================
 # JSON CLEANER (SIMPLIFICADO E SEGURO)

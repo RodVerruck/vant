@@ -13,7 +13,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 # Importar endpoints de persistência
-from interview_endpoints import router as interview_router
+from backend.interview_endpoints import router as interview_router
 
 try:
     from generate_questions_fixed import _generate_interview_questions_wow_fixed
@@ -59,12 +59,9 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-# Adiciona PROJECT_ROOT ao path antes dos imports relativos
-_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
-from logic import analyze_cv_logic, analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato  # noqa: E402
+# Imports diretos sem manipulação de sys.path
+# O backend deve ser executado sempre com PYTHONPATH configurado corretamente
+from backend.logic import analyze_cv_logic, analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato
 import uuid
 
 def validate_user_id(user_id: str) -> bool:
@@ -77,10 +74,8 @@ def validate_user_id(user_id: str) -> bool:
     except (ValueError, AttributeError):
         return False
 
-try:
-    from backend.mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
-except ImportError:
-    from mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
+# Importações mock_data - sempre usar backend prefix para consistência
+from backend.mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
 
 app = FastAPI(title="Vant API", version="0.1.0")
 
