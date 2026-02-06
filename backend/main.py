@@ -53,7 +53,7 @@ from fastapi import FastAPI, File, Form, UploadFile, Request, BackgroundTasks, H
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
-from supabase import create_client
+from supabase import create_client, Client
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -151,7 +151,7 @@ if missing_vars:
     print("="*60 + "\n")
     raise RuntimeError(f"Variáveis ausentes: {', '.join(missing_vars)}")
 
-supabase_admin = None
+supabase_admin: Client | None = None
 if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
