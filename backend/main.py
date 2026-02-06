@@ -607,14 +607,42 @@ class GeneratePdfRequest(BaseModel):
 
 
 @app.post("/api/generate-pdf")
-def generate_pdf(request: GeneratePdfRequest) -> StreamingResponse:
+def generate_pdf(request: GeneratePdfRequest) -> StreamingResponse | JSONResponse:
     try:
+        # Gerar PDF completamente em memória antes de enviar resposta
         pdf_bytes = gerar_pdf_candidato(request.data)
+        
+        # Verificar se o PDF foi gerado corretamente
+        if not pdf_bytes or len(pdf_bytes) == 0:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Falha ao gerar PDF: arquivo vazio"}
+            )
+        
+        # Verificar tamanho mínimo razoável para um PDF (pelo menos 1KB)
+        if len(pdf_bytes) < 1024:
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"PDF gerado é muito pequeno ({len(pdf_bytes)} bytes)"}
+            )
+        
+        # Verificar cabeçalho PDF válido
+        if not pdf_bytes.startswith(b'%PDF'):
+            return JSONResponse(
+                status_code=500,
+                content={"error": "PDF gerado é inválido: cabeçalho ausente"}
+            )
+        
+        # Se tudo estiver correto, criar o streaming response
         return StreamingResponse(
             io.BytesIO(pdf_bytes),
             media_type="application/pdf",
-            headers={"Content-Disposition": "attachment; filename=Curriculo_VANT.pdf"}
+            headers={
+                "Content-Disposition": "attachment; filename=Curriculo_VANT.pdf",
+                "Content-Length": str(len(pdf_bytes))  # Adiciona tamanho para melhor UX
+            }
         )
+        
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
@@ -625,15 +653,56 @@ class GenerateWordRequest(BaseModel):
 
 
 @app.post("/api/generate-word")
-def generate_word(request: GenerateWordRequest) -> StreamingResponse:
+def generate_word(request: GenerateWordRequest) -> StreamingResponse | JSONResponse:
     try:
+        # Gerar Word completamente em memória antes de enviar resposta
         word_bytes_io = gerar_word_candidato(request.data)
+        
+        # Verificar se o arquivo foi gerado corretamente
+        if not word_bytes_io:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Falha ao gerar Word: arquivo nulo"}
+            )
+        
+        # Posicionar no início e ler conteúdo para validação
         word_bytes_io.seek(0)
+        word_bytes = word_bytes_io.read()
+        
+        # Verificar se o Word foi gerado corretamente
+        if not word_bytes or len(word_bytes) == 0:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Falha ao gerar Word: arquivo vazio"}
+            )
+        
+        # Verificar tamanho mínimo razoável para um DOCX (pelo menos 2KB)
+        if len(word_bytes) < 2048:
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"Word gerado é muito pequeno ({len(word_bytes)} bytes)"}
+            )
+        
+        # Verificar cabeçalho DOCX válido (arquivos DOCX são ZIPs)
+        if not word_bytes.startswith(b'PK'):
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Word gerado é inválido: não é um formato DOCX válido"}
+            )
+        
+        # Resetar posição para o início do stream
+        word_bytes_io.seek(0)
+        
+        # Se tudo estiver correto, criar o streaming response
         return StreamingResponse(
             word_bytes_io,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={"Content-Disposition": "attachment; filename=Curriculo_VANT_Editavel.docx"}
+            headers={
+                "Content-Disposition": "attachment; filename=Curriculo_VANT_Editavel.docx",
+                "Content-Length": str(len(word_bytes))  # Adiciona tamanho para melhor UX
+            }
         )
+        
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
