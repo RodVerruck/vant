@@ -1,0 +1,251 @@
+.layout {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #1e293b, #020617);
+    color: #F8FAFC;
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Header */
+.header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.headerInner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.logoBlock {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    color: #F8FAFC;
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin: 0;
+    cursor: default;
+}
+
+.proBadge {
+    background: linear-gradient(135deg, #38BDF8, #6366F1);
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.freeBadge {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94A3B8;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.creditsPill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 6px 14px;
+    border-radius: 20px;
+    color: #10B981;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.creditsPillZero {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    padding: 6px 14px;
+    border-radius: 20px;
+    color: #64748B;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.upgradeButton {
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.upgradeButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Profile dropdown */
+.profileWrapper {
+    position: relative;
+}
+
+.profileButton {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 14px;
+    border-radius: 10px;
+    color: #CBD5E1;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.profileButton:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.profileAvatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #38BDF8, #6366F1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.profileDropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 6px;
+    background: #1E293B;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 200px;
+    z-index: 200;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.profileEmail {
+    padding: 8px 12px;
+    color: #64748B;
+    font-size: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profileMenuItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: none;
+    color: #CBD5E1;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+    font-family: inherit;
+    text-align: left;
+}
+
+.profileMenuItem:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #F8FAFC;
+}
+
+.profileMenuItemDanger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: none;
+    color: #CBD5E1;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+    font-family: inherit;
+    text-align: left;
+}
+
+.profileMenuItemDanger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+}
+
+/* Body */
+.body {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+}
+
+@media (max-width: 640px) {
+    .headerInner {
+        padding: 12px 16px;
+    }
+
+    .body {
+        padding: 24px 16px 60px;
+    }
+
+    .logo {
+        font-size: 1.2rem;
+    }
+
+    .upgradeButton {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+}

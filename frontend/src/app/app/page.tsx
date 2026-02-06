@@ -893,48 +893,86 @@ export default function AppPage() {
     // NOVO: useEffect dedicado para restaurar o estado após login (Google/Email)
     // Isso funciona independente se o exchangeCode falhar no Strict Mode
     useEffect(() => {
-        if (authUserId && typeof window !== "undefined") {
-            const returnStage = localStorage.getItem("vant_auth_return_stage");
-            const returnPlan = localStorage.getItem("vant_auth_return_plan");
+        if (!authUserId || typeof window === "undefined") return;
 
-            // Verificar se usuário já tem plano ativo antes de decidir o redirect
-            const checkUserStatus = async () => {
-                try {
-                    const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        console.log("[User Status] Verificação:", data);
+        const returnStage = localStorage.getItem("vant_auth_return_stage");
+        const returnPlan = localStorage.getItem("vant_auth_return_plan");
 
-                        // Se usuário tem plano ativo E não está vindo de um fluxo de pagamento
-                        if (data.has_active_plan && data.credits_remaining > 0 && !returnPlan) {
-                            console.log("[User Status] Usuário com plano ativo detectado, mantendo em hero");
-                            setCreditsRemaining(data.credits_remaining);
-                            setSelectedPlan("premium_plus");
-                            // NÃO redirecionar para paid - manter em hero para usuário enviar arquivo
-                            return;
-                        }
-                    }
-                } catch (error) {
-                    console.error("[User Status] Erro ao verificar status:", error);
-                }
+        // Verificar se há fluxo ativo que impede redirect ao Dashboard
+        const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
+        const hasReturnStage = !!returnStage;
+        const hasActiveFlow = returnPlan || hasReturnStage || hasHistoryItem;
 
-                // Fluxo normal se não tiver plano ativo ou se vier de pagamento
-                if (returnPlan) {
-                    console.log("[Restoration] Restaurando plano e indo para checkout...");
-                    setSelectedPlan(returnPlan as PlanType);
-                    localStorage.removeItem("vant_auth_return_plan");
-
-                    setStage("checkout");
-                    localStorage.removeItem("vant_auth_return_stage"); // Limpa stage também para evitar conflito
-                } else if (returnStage) {
-                    console.log("[Restoration] Restaurando stage:", returnStage);
-                    setStage(returnStage as AppStage);
-                    localStorage.removeItem("vant_auth_return_stage");
-                }
-            };
-
-            checkUserStatus();
+        if (!hasActiveFlow) {
+            // Sem fluxo ativo → redirecionar para Dashboard
+            console.log("[Auth] Usuário autenticado sem fluxo ativo, redirecionando para /dashboard");
+            window.location.href = "/dashboard";
+            return;
         }
+
+        // Processar fluxo ativo normalmente (pagamento, history, etc.)
+        console.log("[Auth] Fluxo ativo detectado, mantendo em /app");
+
+        if (returnPlan) {
+            console.log("[Restoration] Restaurando plano e indo para checkout...");
+            setSelectedPlan(returnPlan as PlanType);
+            localStorage.removeItem("vant_auth_return_plan");
+            setStage("checkout");
+            localStorage.removeItem("vant_auth_return_stage");
+        } else if (returnStage) {
+            localStorage.removeItem("vant_auth_return_stage");
+            if (returnStage !== "hero") {
+                console.log("[Restoration] Restaurando stage:", returnStage);
+                setStage(returnStage as AppStage);
+            } else {
+                console.log("[Restoration] Retorno ao hero (default) via Dashboard");
+            }
+        }
+        // hasHistoryItem é tratado pelo useEffect dedicado abaixo
+
+        // Sincronizar créditos em background
+        (async () => {
+            try {
+                const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.credits_remaining > 0) {
+                        setCreditsRemaining(data.credits_remaining);
+                        setSelectedPlan("premium_plus");
+                    }
+                }
+            } catch (e) {
+                console.error("[Auth] Erro ao sincronizar créditos:", e);
+            }
+        })();
+    }, [authUserId]);
+
+    // NOVO: useEffect para abrir item do histórico vindo do Dashboard
+    useEffect(() => {
+        if (!authUserId || typeof window === "undefined") return;
+
+        const historyId = localStorage.getItem("vant_dashboard_open_history_id");
+        if (!historyId) return;
+
+        // Limpar flag imediatamente para evitar loop
+        localStorage.removeItem("vant_dashboard_open_history_id");
+
+        console.log("[Dashboard→App] Abrindo item do histórico:", historyId);
+
+        (async () => {
+            try {
+                const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${historyId}`);
+                if (!response.ok) throw new Error(`Erro ${response.status}`);
+
+                const fullResult = await response.json();
+                if (fullResult.data) {
+                    setReportData(fullResult.data as ReportData);
+                    setStage("paid");
+                }
+            } catch (err) {
+                console.error("[Dashboard→App] Erro ao carregar histórico:", err);
+            }
+        })();
     }, [authUserId]);
 
     // useRef para controlar se ativação já foi tentada

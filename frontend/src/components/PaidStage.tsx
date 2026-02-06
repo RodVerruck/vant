@@ -754,6 +754,22 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
             {/* Botões de Ação */}
             <div style={{ marginTop: 40, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
                 <div style={{ maxWidth: 850, margin: "0 auto", display: "flex", gap: 16, marginBottom: 16 }}>
+                    <button
+                        onClick={() => { window.location.href = "/dashboard"; }}
+                        style={{
+                            background: "linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(99, 102, 241, 0.1))",
+                            border: "2px solid rgba(56, 189, 248, 0.3)",
+                            color: "#38BDF8",
+                            padding: "12px 24px",
+                            borderRadius: 50,
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                            cursor: "pointer",
+                            flex: 1
+                        }}
+                    >
+                        ← DASHBOARD
+                    </button>
                     {onViewHistory && (
                         <button
                             onClick={onViewHistory}
