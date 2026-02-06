@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap, HistoryItem } from "@/types";
 import { PaidStage } from "@/components/PaidStage";
@@ -426,6 +427,26 @@ export default function AppPage() {
         });
     }, []);
 
+    // Hook do Next.js para capturar parâmetros da URL de forma robusta
+    const searchParams = useSearchParams();
+
+    // NOVO: useEffect dedicado para capturar parâmetros do Stripe via useSearchParams
+    // Isso é mais robusto que window.location no Next.js App Router
+    useEffect(() => {
+        const payment = searchParams.get("payment");
+        const sessionId = searchParams.get("session_id");
+
+        console.log("[DEBUG URL - useSearchParams] Params encontrados:", { payment, sessionId: sessionId?.slice(0, 20) });
+
+        if (payment === "success" && sessionId) {
+            console.log("[DEBUG URL] Pagamento detectado! Setando estado...");
+            setStripeSessionId(sessionId);
+            setNeedsActivation(true);
+            setStage("checkout");
+            setCheckoutError("Pagamento confirmado. Ativando seu plano...");
+        }
+    }, [searchParams]);
+
     function getErrorMessage(e: unknown, fallback: string): string {
         // Ignorar AbortError (cancelamento intencional)
         if (e instanceof Error && e.name === 'AbortError') {
@@ -749,6 +770,8 @@ export default function AppPage() {
                         setCreditsLoading(false);
                         // Limpar cache ao fazer logout
                         localStorage.removeItem('vant_cached_credits');
+                        // Resetar estado de ativação ao fazer logout
+                        activationAttempted.current = false;
                     }
                 }
             );
@@ -913,6 +936,17 @@ export default function AppPage() {
         }
     }, [authUserId]);
 
+    // useRef para controlar se ativação já foi tentada
+    const activationAttempted = useRef(false);
+
+    // Função para resetar estado de ativação
+    const resetActivationState = () => {
+        activationAttempted.current = false;
+        setStripeSessionId(null);
+        setNeedsActivation(false);
+        setCheckoutError("");
+    };
+
     useEffect(() => {
         console.log("[useEffect needsActivation] Rodou.");
         if (!needsActivation || !authUserId || !stripeSessionId || isActivating) {
@@ -920,40 +954,97 @@ export default function AppPage() {
         }
 
         (async () => {
+            // Marcar que ativação foi tentada ANTES da chamada
+            activationAttempted.current = true;
             setIsActivating(true);
+
+            // Limpar needsActivation imediatamente para evitar re-renderizações
+            setNeedsActivation(false);
+
             try {
                 console.log("[needsActivation] Chamando /api/entitlements/activate...");
                 const resp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ session_id: stripeSessionId, user_id: authUserId }),
+                    body: JSON.stringify({
+                        session_id: stripeSessionId,
+                        user_id: authUserId,
+                        plan_id: selectedPlan || "basico"
+                    }),
                 });
-                const payload = (await resp.json()) as JsonObject;
+                let data: JsonObject = {};
+                try {
+                    data = await resp.json();
+                } catch (e) {
+                    console.warn('Resposta da ativação não é JSON válido, mas status é', resp.status);
+                }
+
                 if (!resp.ok) {
-                    const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status} `;
+                    const err = typeof data.error === "string" ? data.error : `HTTP ${resp.status} `;
                     throw new Error(err);
                 }
-                if (typeof payload.plan_id === "string") {
-                    setSelectedPlan(payload.plan_id as PlanType);
-                }
-                if (typeof payload.credits_remaining === "number") {
-                    setCreditsRemaining(payload.credits_remaining);
-                }
+
+                // Sucesso! Se response.ok for true, considere sucesso independente do conteúdo de data
+                console.log("[needsActivation] Ativação bem-sucedida! Status:", resp.status);
 
                 // Limpar sessão pendente após ativação bem-sucedida
                 window.localStorage.removeItem("vant_pending_stripe_session_id");
 
-                setNeedsActivation(false);
                 setCheckoutError("");
-                // Em vez de ir direto para paid, vai para processing_premium para processar o arquivo
-                setStage("processing_premium");
+
+                // 🔥 ATUALIZAÇÃO IMEDIATA APÓS ATIVAÇÃO
+                console.log("[needsActivation] Ativação bem-sucedida! Sincronizando créditos...");
+
+                // Chamar syncEntitlements imediatamente
+                if (authUserId) {
+                    await syncEntitlements(authUserId);
+
+                    // Verificar se tem créditos após sincronização
+                    if (creditsRemaining > 0) {
+                        console.log("[needsActivation] Créditos detectados:", creditsRemaining);
+
+                        // Mostrar toast de sucesso
+                        alert("Assinatura ativada com sucesso!");
+
+                        // Verificar se já tem relatório salvo
+                        const hasReport = localStorage.getItem('vant_last_report');
+                        if (hasReport) {
+                            console.log("[needsActivation] Relatório encontrado, indo para paid");
+                            setStage("paid");
+                        } else {
+                            console.log("[needsActivation] Sem relatório, indo para hero");
+                            setStage("hero");
+                        }
+                    } else {
+                        console.log("[needsActivation] Nenhum crédito detectado, indo para processing_premium");
+                        setStage("processing_premium");
+                    }
+
+                    // 🔥 SEGUNDA SINCRONIZAÇÃO APÓS 1s (garantia)
+                    setTimeout(async () => {
+                        console.log("[needsActivation] Segunda sincronização de segurança...");
+                        await syncEntitlements(authUserId);
+
+                        // Verificar novamente se tem créditos
+                        if (creditsRemaining > 0 && stage === "processing_premium") {
+                            console.log("[needsActivation] Créditos confirmados na segunda verificação, atualizando stage");
+                            const hasReport = localStorage.getItem('vant_last_report');
+                            setStage(hasReport ? "paid" : "hero");
+                        }
+                    }, 1000);
+                } else {
+                    // Fallback caso não tenha authUserId
+                    setStage("processing_premium");
+                }
             } catch (e: unknown) {
                 setCheckoutError(getErrorMessage(e, "Falha ao ativar plano"));
+                // Em caso de erro, resetar o flag para permitir nova tentativa
+                activationAttempted.current = false;
             } finally {
                 setIsActivating(false);
             }
         })();
-    }, [authUserId, needsActivation, stripeSessionId, isActivating]);
+    }, [authUserId, needsActivation]); // Removido stripeSessionId e isActivating das dependências
 
     // Carrossel automático de depoimentos
     useEffect(() => {
@@ -1001,6 +1092,9 @@ export default function AppPage() {
 
     async function startCheckout() {
         setCheckoutError("");
+
+        // Resetar estado de ativação ao iniciar novo checkout
+        activationAttempted.current = false;
 
         const planId = (selectedPlan || "basico").trim();
         if (!authEmail || !authEmail.includes("@")) {
@@ -1297,8 +1391,8 @@ export default function AppPage() {
                     return;
                 }
             }
-            console.error("[processing_premium] Dados incompletos:", { jobDescription: !!jobDescription, file: !!file });
-            setPremiumError("Dados da sessão incompletos. Volte e envie seu CV novamente.");
+            console.log("[processing_premium] Usuário comprou créditos, redirecionando para hero para usar créditos...");
+            // setPremiumError("Para usar seus créditos, envie seu CV primeiro."); // Removido para não assustar usuário
             setStage("hero");
             return;
         }

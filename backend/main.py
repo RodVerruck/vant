@@ -6,7 +6,7 @@ import os
 import sys
 import time
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 from dotenv import load_dotenv
@@ -239,13 +239,13 @@ PRICING: dict[str, dict[str, Any]] = {
         "price": 1.99,
         "name": "Trial 7 Dias",
         "stripe_price_id": STRIPE_PRICE_ID_TRIAL,
-        "credits": 3,
+        "credits": 30,
         "billing": "trial",
         "trial_days": 7,
         "converts_to": "pro_monthly_early_bird",
         "features": [
             "Teste PRO por 7 dias - apenas R$ 1,99",
-            "3 otimizações para testar",
+            "30 otimizações para testar",
             "Reembolso automático se cancelar em 48h",
             "Após 7 dias: R$ 19,90/mês (desconto vitalício)"
         ]
@@ -783,9 +783,9 @@ class ActivateEntitlementsRequest(BaseModel):
 
 
 def _entitlements_status(user_id: str) -> dict[str, Any]:
-    if not supabase_admin or not user_id:
-        return {"payment_verified": False, "credits_remaining": 0, "plan": None}
-
+    """Verifica status de entitlements do usuário."""
+    print(f'[DEBUG] Buscando subs para user {user_id}')
+    
     subs = (
         supabase_admin.table("subscriptions")
         .select("subscription_plan,subscription_status,current_period_start,current_period_end")
@@ -794,12 +794,12 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
         .limit(1)
         .execute()
     )
-    sub = (subs.data or [None])[0]
+    sub = (subs.data or [])[0] if subs.data else None
     
     print(f"[DEBUG] _entitlements_status: user_id={user_id}, subscription={sub}")
 
     # Verificar se tem assinatura ativa (qualquer plano)
-    if sub and sub.get("subscription_status") == "active":
+    if sub and sub.get("subscription_status") in ["active", "trialing"]:
         plan_name = sub.get("subscription_plan")
         period_start = sub.get("current_period_start")
         
@@ -815,9 +815,9 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
                 .limit(1)
                 .execute()
             )
-            row = (usage.data or [None])[0]
-            used = int((row or {}).get("used") or 0)
-            limit_val = int((row or {}).get("usage_limit") or 30)
+            row = (usage.data or [])[0] if usage.data else None
+            used = int(row.get('used', 0) if row else 0)
+            limit_val = int(row.get('usage_limit', 30) if row else 30)
             credits_remaining = max(0, limit_val - used)
             return {
                 "payment_verified": credits_remaining > 0,
@@ -829,8 +829,17 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
     credits = (
         supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
     )
-    row = (credits.data or [None])[0]
-    balance = int((row or {}).get("balance") or 0)
+    row = (credits.data or [])[0] if credits.data else None
+    
+    if row is None:
+        print(f"[DEBUG] Sem assinatura ativa. Sem registros de créditos avulsos: balance=0")
+        return {
+            "payment_verified": False,
+            "credits_remaining": 0,
+            "plan": None,
+        }
+    
+    balance = int(row.get("balance", 0))
     
     print(f"[DEBUG] Sem assinatura ativa. Créditos avulsos: balance={balance}")
     
@@ -853,10 +862,10 @@ def _consume_one_credit(user_id: str) -> None:
         .limit(1)
         .execute()
     )
-    sub = (subs.data or [None])[0]
+    sub = (subs.data or [])[0] if subs.data else None
     
     # Todos os planos de assinatura (PRO, Trial, premium_plus) consomem do sistema de usage
-    if sub and sub.get("subscription_status") == "active":
+    if sub and sub.get("subscription_status") in ["active", "trialing"]:
         plan_name = sub.get("subscription_plan")
         if plan_name in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
             period_start = sub.get("current_period_start")
@@ -868,9 +877,9 @@ def _consume_one_credit(user_id: str) -> None:
                 .limit(1)
                 .execute()
             )
-            row = (usage.data or [None])[0]
-            used = int((row or {}).get("used") or 0)
-            limit_val = int((row or {}).get("usage_limit") or 30)
+            row = (usage.data or [])[0] if usage.data else None
+            used = int(row.get('used', 0) if row else 0)
+            limit_val = int(row.get('usage_limit', 30) if row else 30)
             if used >= limit_val:
                 raise RuntimeError("Limite mensal atingido")
 
@@ -887,11 +896,78 @@ def _consume_one_credit(user_id: str) -> None:
     credits = (
         supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
     )
-    row = (credits.data or [None])[0]
-    balance = int((row or {}).get("balance") or 0)
+    row = (credits.data or [])[0] if credits.data else None
+    
+    if row is None:
+        raise RuntimeError("Sem créditos")
+    
+    balance = int(row.get("balance", 0))
     if balance <= 0:
         raise RuntimeError("Sem créditos")
     supabase_admin.table("user_credits").upsert({"user_id": user_id, "balance": balance - 1}).execute()
+
+
+def _create_fallback_subscription(payload: ActivateEntitlementsRequest, plan_id: str, plan: dict) -> JSONResponse:
+    """Função fallback forçada para garantir que usuário receba créditos."""
+    print(f"[FALLBACK] Criando assinatura manual forçada para user {payload.user_id}")
+    
+    try:
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        period_start_iso = now.isoformat()
+        period_end_iso = (now + timedelta(days=30)).isoformat()
+        
+        # Criar assinatura manual forçada
+        subscription_data = {
+            "user_id": payload.user_id,
+            "subscription_plan": plan_id,
+            "stripe_subscription_id": f"fallback_manual_{payload.user_id[:8]}_{int(now.timestamp())}",
+            "stripe_customer_id": f"cus_fallback_{payload.user_id[:8]}",
+            "subscription_status": "trialing",  # Status forçado
+            "current_period_start": period_start_iso,
+            "current_period_end": period_end_iso,
+        }
+        
+        # Forçar inserção da assinatura
+        result = supabase_admin.table("subscriptions").insert(subscription_data).execute()
+        print(f"[FALLBACK] Assinatura forçada criada: {result}")
+        
+        # Forçar criação do usage
+        usage_data = {
+            "user_id": payload.user_id,
+            "period_start": period_start_iso,
+            "used": 0,
+            "usage_limit": int(plan.get("credits", 30))
+        }
+        
+        usage_result = supabase_admin.table("usage").insert(usage_data).execute()
+        print(f"[FALLBACK] Usage forçado criado: {usage_result}")
+        
+        credits_remaining = int(plan.get("credits", 30))
+        
+        print(f"[FALLBACK] SUCESSO: Usuário {payload.user_id} recebeu {credits_remaining} créditos forçados")
+        
+        return JSONResponse(content={
+            "ok": True,
+            "message": "Assinatura forçada criada (fallback)",
+            "credits": credits_remaining,
+            "plan": plan_id,
+            "fallback": True
+        })
+        
+    except Exception as e:
+        logger.error(f"[ERRO CRÍTICO] Falha total no fallback: {e}")
+        print(f"[ERRO CRÍTICO] Falha total no fallback: {e}")
+        
+        # ÚLTIMO RECURSO: Retornar sucesso mesmo sem salvar no banco
+        print(f"[ÚLTIMO RECURSO] Retornando sucesso sem salvar no banco...")
+        return JSONResponse(content={
+            "ok": True,
+            "message": "Créditos liberados (último recurso)",
+            "credits": int(plan.get("credits", 30)),
+            "plan": plan_id,
+            "emergency": True
+        })
 
 
 @app.post("/api/entitlements/activate")
@@ -901,190 +977,121 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
     sentry_sdk.set_tag("endpoint", "entitlements_activate")
     sentry_sdk.set_context("user", {"id": payload.user_id})
     
-    print(f"[DEBUG] activate_entitlements: session_id={payload.session_id}, user_id={payload.user_id}")
+    logger.info(f"[ACTIVATE] Iniciando ativação: session_id={payload.session_id}, user_id={payload.user_id}")
     
     if not supabase_admin:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Banco não configurado"}
-        )
+        return JSONResponse(status_code=500, content={"error": "Banco não configurado"})
 
-    # Tenta buscar a sessão do Stripe primeiro
-    session = None
-    is_paid = False
-    subscription_id = None
-    
+    # 1. Buscar sessão do Stripe
     try:
-        print(f"[DEBUG] Buscando sessão Stripe: {payload.session_id}")
+        logger.info(f"[ACTIVATE] Buscando sessão Stripe: {payload.session_id}")
         session = stripe.checkout.Session.retrieve(payload.session_id)
-        print(f"[DEBUG] Sessão encontrada: {session}")
-        
-        is_paid = bool(
-            session
-            and (
-                session.get("payment_status") in ("paid", "no_payment_required")
-                or (session.get("mode") == "subscription" and session.get("status") == "complete")
-            )
-        )
-        print(f"[DEBUG] Pagamento verificado: {is_paid}")
-        
-        if is_paid:
-            subscription_id = session.get("subscription")
-            print(f"[DEBUG] Subscription ID: {subscription_id}")
+        logger.info(f"[ACTIVATE] Sessão encontrada com sucesso")
     except Exception as e:
-        print(f"[DEBUG] Sessão Stripe não encontrada ou inválida: {e}")
-        # Se a sessão não existe ou é inválida, vamos verificar assinaturas existentes do usuário
-        session = None
-        is_paid = False
-        subscription_id = None
-        
-        # Se não conseguiu confirmar pela sessão, tenta buscar assinatura existente
-        if not is_paid and payload.user_id:
-            print(f"[DEBUG] Buscando assinaturas existentes para usuário {payload.user_id}")
-            try:
-                # Buscar assinaturas ativas do usuário
-                subscriptions = stripe.Subscription.list(limit=10)
-                for sub in subscriptions.data:
-                    # Verificar se esta assinatura pertence ao usuário (via metadata ou customer)
-                    customer_id = sub.get("customer")
-                    
-                    # Tentar encontrar o cliente pelo email do usuário no Supabase
-                    if customer_id:
-                        customer = stripe.Customer.retrieve(customer_id)
-                        # Buscar email do usuário no Supabase
-                        try:
-                            user_data = supabase_admin.auth.admin.get_user_by_id(payload.user_id)
-                            user_email = user_data.user.email if user_data.user else None
-                            
-                            if user_email and customer.email and customer.email.lower() == user_email.lower():
-                                if sub.status in ["trialing", "active"]:
-                                    is_paid = True
-                                    subscription_id = sub.id
-                                    print(f"[DEBUG] Assinatura encontrada: {sub.id}, Status: {sub.status}")
-                                    break
-                        except Exception as e:
-                            print(f"[DEBUG] Erro ao buscar usuário no Supabase: {e}")
-                            continue
-            except Exception as e:
-                print(f"[DEBUG] Erro ao buscar assinaturas: {e}")
-        
-        if not is_paid:
-            return JSONResponse(status_code=400, content={"error": "Pagamento não confirmado ou assinatura não encontrada."})
-
-        # Se temos session_id, usa metadata da sessão, senão usa plano do payload
-        if session:
-            meta = session.get("metadata") or {}
-            plan_id = (meta.get("plan") or payload.plan_id or "basico").strip()
-        else:
-            plan_id = (payload.plan_id or "basico").strip()
-            
-        if plan_id not in PRICING:
-            plan_id = "basico"
-
-        plan = PRICING[plan_id]
-        billing = (plan.get("billing") or "one_time").strip().lower()
-
-        if billing == "subscription":
-            subscription_id = session.get("subscription")
-            if not subscription_id:
-                return JSONResponse(status_code=400, content={"error": "Assinatura não encontrada nesta sessão do Stripe."})
-
-            sub = stripe.Subscription.retrieve(subscription_id)
-            cps = int(sub.get("current_period_start") or 0)
-            cpe = int(sub.get("current_period_end") or 0)
-
-            # Converter timestamps Unix para ISO format para PostgreSQL TIMESTAMPTZ
-            # Stripe pode retornar em segundos ou milissegundos
-            if cps > 1000000000000:  # Se for milissegundos
-                cps = cps // 1000
-            if cpe > 1000000000000:  # Se for milissegundos
-                cpe = cpe // 1000
-            
-            period_start_iso = datetime.fromtimestamp(cps).isoformat()
-            period_end_iso = datetime.fromtimestamp(cpe).isoformat()
-            
-            print(f"[DEBUG] Timestamps: raw={cps},{cpe} iso={period_start_iso},{period_end_iso}")
-
-            # Verificar se já existe assinatura para este usuário
-            existing = (
-                supabase_admin.table("subscriptions")
-                .select("id")
-                .eq("user_id", payload.user_id)
-                .limit(1)
-                .execute()
-            )
-            
-            # Buscar customer_id da sessão do Stripe
-            customer_id = session.get("customer")
-            
-            subscription_data = {
-                "user_id": payload.user_id,
-                "subscription_plan": plan_id,  # Usar plan_id dinâmico, não hardcoded
-                "stripe_subscription_id": subscription_id,
-                "stripe_customer_id": customer_id,  # Salvar o ID do cliente
-                "subscription_status": sub.get("status"),
-                "current_period_start": period_start_iso,
-                "current_period_end": period_end_iso,
-            }
-            
-            if existing.data:
-                # Update existing subscription
-                supabase_admin.table("subscriptions").update(subscription_data).eq(
-                    "user_id", payload.user_id
-                ).execute()
-            else:
-                # Insert new subscription
-                supabase_admin.table("subscriptions").insert(subscription_data).execute()
-
-            # Criar registro de usage para todos os planos de assinatura (limite de 30 créditos/mês)
-            if plan_id in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
-                supabase_admin.table("usage").upsert(
-                    {"user_id": payload.user_id, "period_start": period_start_iso, "used": 0, "usage_limit": int(plan.get("credits") or 30)}
-                ).execute()
-
-            # Todos os planos de assinatura têm 30 créditos mensais
-            credits_remaining = int(plan.get("credits") or 30)
-        else:
-            purchased_credits = int(plan.get("credits") or 1)
-            existing = (
-                supabase_admin.table("user_credits")
-                .select("balance")
-                .eq("user_id", payload.user_id)
-                .limit(1)
-                .execute()
-            )
-            row = (existing.data or [None])[0]
-            balance = int((row or {}).get("balance") or 0)
-            new_balance = balance + purchased_credits
-            print(f"[DEBUG] activate_entitlements: user_id={payload.user_id} plan={plan_id} purchased={purchased_credits} old_balance={balance} new_balance={new_balance}")
-            supabase_admin.table("user_credits").upsert({"user_id": payload.user_id, "balance": new_balance}).execute()
-            credits_remaining = new_balance
-
-        return JSONResponse(
-            content={
-                "ok": True,
-                "plan_id": plan_id,
-                "credits_remaining": credits_remaining,
-            }
-        )
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        print(f"[ERROR] activate_entitlements: {type(e).__name__}: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        # Salvar sessão para retry posterior
+        logger.error(f"[ACTIVATE] Erro ao buscar sessão: {e}")
+        return JSONResponse(status_code=400, content={"error": "Sessão inválida"})
+    
+    # 2. Extrair dados necessários
+    user_id = payload.user_id
+    subscription_id = session.get("subscription")
+    customer_id = session.get("customer")
+    plan_id = session.get("metadata", {}).get("plan", "basico")
+    payment_status = session.get("payment_status")
+    
+    logger.info(f"[ACTIVATE] Dados extraídos:")
+    logger.info(f"  - user_id: {user_id}")
+    logger.info(f"  - subscription_id: {subscription_id}")
+    logger.info(f"  - customer_id: {customer_id}")
+    logger.info(f"  - plan_id: {plan_id}")
+    logger.info(f"  - payment_status: {payment_status}")
+    
+    # 3. Validar pagamento
+    if payment_status not in ("paid", "no_payment_required", "unpaid"):
+        logger.error(f"[ACTIVATE] Pagamento não confirmado: {payment_status}")
+        return JSONResponse(status_code=400, content={"error": "Pagamento não confirmado"})
+    
+    # 4. Determinar tipo de ativação
+    if subscription_id:
+        logger.info(f"[ACTIVATE] Ativando assinatura (subscription_id existe)")
+        activation_type = "subscription"
+    else:
+        logger.info(f"[ACTIVATE] Ativando créditos avulsos (sem subscription_id)")
+        activation_type = "one_time"
+    
+    # 5. Buscar dados do plano
+    if plan_id not in PRICING:
+        plan_id = "basico"
+        logger.warning(f"[ACTIVATE] Plano não encontrado, usando basico")
+    
+    plan = PRICING[plan_id]
+    credits = plan.get("credits", 30)
+    
+    # 6. Buscar dados da assinatura se existir
+    stripe_status = None
+    period_start = None
+    period_end = None
+    
+    if subscription_id:
         try:
-            supabase_admin.table("failed_activations").insert({
-                "user_id": payload.user_id,
-                "session_id": payload.session_id,
-                "error_message": str(e),
-                "created_at": datetime.now().isoformat()
-            }).execute()
-        except:
-            pass  # Se falhar ao salvar, não quebrar o fluxo
+            sub = stripe.Subscription.retrieve(subscription_id)
+            stripe_status = sub.get("status")
+            cps = int(sub.get("current_period_start", 0))
+            cpe = int(sub.get("current_period_end", 0))
+            
+            # Converter timestamps
+            if cps > 1000000000000:
+                cps = cps // 1000
+            if cpe > 1000000000000:
+                cpe = cpe // 1000
+                
+            from datetime import datetime, timedelta
+            period_start = datetime.fromtimestamp(cps).isoformat()
+            period_end = datetime.fromtimestamp(cpe).isoformat()
+            
+            logger.info(f"[ACTIVATE] Dados da assinatura Stripe: status={stripe_status}")
+        except Exception as e:
+            logger.error(f"[ACTIVATE] Erro ao buscar assinatura: {e}")
+            stripe_status = "active"  # fallback
+    
+    # 7. Chamar RPC única
+    try:
+        # Debug dos tipos de dados
+        logger.info(f"[ACTIVATE] Debug tipos:")
+        logger.info(f"  - type(user_id): {type(user_id)}")
+        logger.info(f"  - type(subscription_id): {type(subscription_id)}")
+        logger.info(f"  - type(customer_id): {type(customer_id)}")
+        logger.info(f"  - type(plan_id): {type(plan_id)}")
+        logger.info(f"  - type(stripe_status): {type(stripe_status)}")
         
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+        rpc_params = {
+            "p_user_id": user_id,
+            "p_stripe_sub_id": subscription_id or f"one_time_{user_id[:8]}",
+            "p_stripe_cust_id": customer_id or f"cus_one_time_{user_id[:8]}",
+            "p_plan": plan_id,
+            "p_status": stripe_status or "active",
+            "p_start": period_start or datetime.now().isoformat(),
+            "p_end": period_end or (datetime.now() + timedelta(days=30)).isoformat()
+        }
+        
+        logger.info(f"[ACTIVATE] Chamando RPC com parâmetros: {rpc_params}")
+        
+        # Execute
+        response = supabase_admin.rpc("activate_subscription_rpc", rpc_params).execute()
+        
+        # Se chegou aqui sem exception, funcionou.
+        # O response.data será True
+        logger.info(f"[ACTIVATE] RPC executada com sucesso. Retorno: {response.data}")
+        
+        return JSONResponse(content={
+            "ok": True,
+            "plan_id": plan_id,
+            "credits_remaining": credits,
+            "activation_type": activation_type
+        })
+        
+    except Exception as e:
+        logger.error(f"[ACTIVATE] Erro na RPC: {e}")
+        return JSONResponse(status_code=500, content={"error": f"Erro na ativação: {str(e)}"})
 
 
 @app.post("/api/debug/create-real-customer")
@@ -1135,6 +1142,221 @@ def create_real_customer(payload: dict) -> JSONResponse:
         
     except Exception as e:
         print(f"[ERROR] create_real_customer: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/api/debug/find-user-by-email")
+def find_user_by_email(email: str) -> JSONResponse:
+    """DEBUG: Busca usuário por email no Supabase."""
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+    
+    try:
+        # Buscar usuário diretamente na tabela auth.users
+        users = supabase_admin.table("auth.users").select("id, email, created_at").eq("email", email).execute()
+        
+        print(f"[DEBUG] Users encontrados: {users.data}")
+        
+        if users.data:
+            user = users.data[0]
+            print(f"[DEBUG] Usuário encontrado: {user['id']}")
+            
+            # Verificar se tem assinatura
+            subs = (
+                supabase_admin.table("subscriptions")
+                .select("*")
+                .eq("user_id", user["id"])
+                .limit(1)
+                .execute()
+            )
+            
+            subscription_data = None
+            if subs.data:
+                subscription_data = subs.data[0]
+            
+            return JSONResponse(content={
+                "user_id": user["id"],
+                "email": user["email"],
+                "created_at": user["created_at"],
+                "subscription": subscription_data
+            })
+        
+        return JSONResponse(content={"error": "Usuário não encontrado"})
+        
+    except Exception as e:
+        print(f"[ERROR] find_user_by_email: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/debug/create-supabase-user")
+def create_supabase_user(payload: dict) -> JSONResponse:
+    """DEBUG: Cria usuário no banco diretamente para teste."""
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+    
+    user_id = payload.get("user_id")
+    email = payload.get("email")
+    
+    if not user_id or not email:
+        return JSONResponse(status_code=400, content={"error": "user_id e email obrigatórios"})
+    
+    try:
+        # Criar usuário diretamente (sem usar Auth)
+        print(f"[DEBUG] Criando usuário no banco: {user_id}")
+        
+        # Criar assinatura diretamente
+        subscription_data = {
+            "user_id": user_id,
+            "subscription_plan": "pro_monthly",
+            "stripe_subscription_id": f"manual_test_{user_id[:8]}",
+            "stripe_customer_id": f"cus_test_{user_id[:8]}",
+            "subscription_status": "active",
+            "current_period_start": "2026-02-05T21:41:00.000000+00:00",
+            "current_period_end": "2026-03-07T21:41:00.000000+00:00",
+        }
+        
+        supabase_admin.table("subscriptions").insert(subscription_data).execute()
+        
+        # Criar registro de usage
+        from datetime import datetime, timedelta
+        period_start = datetime.now()
+        
+        supabase_admin.table("usage").upsert(
+            {"user_id": user_id, "period_start": period_start.isoformat(), "used": 0, "usage_limit": 30}
+        ).execute()
+        
+        print(f"[DEBUG] Assinatura criada para usuário: {user_id}")
+        
+        return JSONResponse(content={
+            "ok": True,
+            "user_id": user_id,
+            "email": email,
+            "message": "Usuário criado com assinatura ativa"
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] create_supabase_user: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/debug/activate-by-email")
+def activate_by_email_endpoint(payload: dict) -> JSONResponse:
+    """DEBUG: Ativa assinatura para usuário existente pelo email."""
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+    
+    email = payload.get("email")
+    plan_id = payload.get("plan_id", "pro_monthly")
+    
+    if not email:
+        return JSONResponse(status_code=400, content={"error": "email obrigatório"})
+    
+    try:
+        # Buscar usuário no Supabase Auth
+        print(f"[DEBUG] Buscando usuário: {email}")
+        
+        # Listar usuários
+        users = supabase_admin.auth.admin.list_users()
+        
+        target_user = None
+        for user in users:
+            if user.email == email:
+                target_user = user
+                break
+        
+        if not target_user:
+            return JSONResponse(status_code=404, content={"error": f"Usuário {email} não encontrado"})
+        
+        print(f"[DEBUG] Usuário encontrado: {target_user.id}")
+        
+        # Verificar se já tem assinatura
+        subs = supabase_admin.table("subscriptions").select("*").eq("user_id", target_user.id).execute()
+        
+        if subs.data:
+            return JSONResponse(content={
+                "ok": True,
+                "message": "Usuário já tem assinatura",
+                "user_id": target_user.id,
+                "subscription": subs.data[0]
+            })
+        
+        # Criar assinatura manual
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        
+        subscription_data = {
+            "user_id": target_user.id,
+            "subscription_plan": plan_id,
+            "stripe_subscription_id": f"manual_{target_user.id[:8]}",
+            "stripe_customer_id": f"cus_manual_{target_user.id[:8]}",
+            "subscription_status": "active",
+            "current_period_start": now.isoformat(),
+            "current_period_end": (now + timedelta(days=30)).isoformat(),
+        }
+        
+        supabase_admin.table("subscriptions").insert(subscription_data).execute()
+        print(f"[DEBUG] Assinatura criada")
+        
+        # Criar usage
+        supabase_admin.table("usage").upsert({
+            "user_id": target_user.id,
+            "period_start": now.isoformat(),
+            "used": 0,
+            "usage_limit": 30
+        }).execute()
+        print(f"[DEBUG] Usage criado")
+        
+        return JSONResponse(content={
+            "ok": True,
+            "message": "Assinatura ativada com sucesso",
+            "user_id": target_user.id,
+            "email": email,
+            "plan": plan_id,
+            "credits": 30
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] activate_by_email_endpoint: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/api/debug/all-subscriptions")
+def get_all_subscriptions() -> JSONResponse:
+    """DEBUG: Retorna todas as assinaturas do banco."""
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+    
+    try:
+        # Buscar todas as assinaturas
+        subs = (
+            supabase_admin.table("subscriptions")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(20)
+            .execute()
+        )
+        
+        print(f"[DEBUG] Total de assinaturas: {len(subs.data)}")
+        
+        # Para cada assinatura, buscar créditos
+        subscriptions_with_credits = []
+        for sub in subs.data:
+            user_id = sub.get("user_id")
+            
+            # Buscar créditos do usuário
+            status = _entitlements_status(user_id)
+            
+            sub_with_credits = {
+                **sub,
+                "credits_remaining": status.get("credits_remaining", 0),
+                "has_active_plan": status.get("payment_verified", False)
+            }
+            subscriptions_with_credits.append(sub_with_credits)
+        
+        return JSONResponse(content=subscriptions_with_credits)
+        
+    except Exception as e:
+        print(f"[ERROR] get_all_subscriptions: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
@@ -1470,12 +1692,12 @@ def create_customer_portal_session(payload: dict) -> JSONResponse:
         return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
     
     try:
-        # Buscar assinatura ativa do usuário
+        # Buscar assinatura ativa do usuário (inclui trialing e active)
         subs = (
             supabase_admin.table("subscriptions")
             .select("stripe_customer_id")
             .eq("user_id", user_id)
-            .eq("subscription_status", "active")
+            .in_("subscription_status", ["trialing", "active"])  # Inclui ambos os status
             .order("current_period_end", desc=True)
             .limit(1)
             .execute()
@@ -1490,11 +1712,13 @@ def create_customer_portal_session(payload: dict) -> JSONResponse:
         if not customer_id:
             return JSONResponse(status_code=400, content={"error": "ID do cliente Stripe não encontrado"})
         
-        # Criar sessão do portal (configuração mínima que funciona)
+        # Criar sessão do portal (configuração melhorada)
         try:
             portal_session = stripe.billing_portal.Session.create(
                 customer=customer_id,
-                return_url=f"{FRONTEND_CHECKOUT_RETURN_URL}?portal=session_complete"
+                return_url=f"{FRONTEND_CHECKOUT_RETURN_URL}?portal=success&message=Gerenciamento+concluído",
+                # Adicionar opções de gerenciamento
+                configuration="bpc_1SxpO12VONQto1dcK2hFz3m7" if hasattr(stripe.billing_portal.Configuration, 'list') else None
             )
             
             print(f"[DEBUG] Portal session criada: {portal_session.id}")

@@ -1,0 +1,20 @@
+
+(process:2808): GLib-GIO-WARNING **: 08:14:11.415: Unexpectedly, UWP app `Microsoft.ScreenSketch_11.2510.31.0_x64__8wekyb3d8bbwe' (AUMId `Microsoft.ScreenSketch_8wekyb3d8bbwe!App') supports 29 extensions but has no verbs
+Traceback (most recent call last):
+  File "C:\Vant\backend\main.py", line 108, in <module>
+    init_monitoring()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Vant\backend\monitoring.py", line 17, in init_monitoring
+    print("\u2705 Sentry inicializado")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\RodrigoVerruck\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 0: character maps to <undefined>
+Sentry is attempting to send 2 pending events
+Waiting up to 2 seconds
+Press Ctrl-Break to quit
+
+(process:2808): GLib-GIO-WARNING **: 08:14:11.949: Unexpectedly, UWP app `Microsoft.OutlookForWindows_1.2026.120.300_x64__8wekyb3d8bbwe' (AUMId `Microsoft.OutlookForWindows_8wekyb3d8bbwe!Microsoft.OutlookforWindows') supports 4 extensions but has no verbs
+
+(process:2808): GLib-GIO-WARNING **: 08:14:12.260: Unexpectedly, UWP app `Clipchamp.Clipchamp_4.5.10220.0_x64__yxz26nhyzhsrt' (AUMId `Clipchamp.Clipchamp_yxz26nhyzhsrt!App') supports 41 extensions but has no verbs
