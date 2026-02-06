@@ -4,20 +4,44 @@ import io
 import json
 import logging
 import os
-import sys
 import time
-import asyncio
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any
-from dotenv import load_dotenv
+from typing import Any, List
 
-# Importar endpoints de persistência
+import sentry_sdk
+from fastapi import FastAPI, File, Form, UploadFile, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+# Shared dependencies (config, supabase, PRICING, helpers)
+from dependencies import (
+    supabase_admin,
+    STRIPE_SECRET_KEY,
+    DEV_MODE,
+    settings,
+    IS_DEV,
+)
+
+# Routers
 from interview_endpoints import router as interview_router
+from routers.debug import router as debug_router
+from routers.admin import router as admin_router
+from routers.documents import router as documents_router
+from routers.user import router as user_router
+from routers.analysis import router as analysis_router
+from routers.stripe_routes import router as stripe_router
 
+# Monitoring
+from monitoring import init_monitoring
+
+logger = logging.getLogger(__name__)
+
+# Interview question generators (complex internal deps, stay in main)
 try:
     from generate_questions_fixed import _generate_interview_questions_wow_fixed
-    # Tentar usar o gerador WOW primeiro
     try:
         from question_generator_wow import generate_dynamic_questions_wow
         def _generate_interview_questions_wow(report_data: dict, mode: str, difficulty: str, focus_areas: List[str]) -> List[dict]:
@@ -38,77 +62,30 @@ try:
         logger.info("📦 Gerador WOW não disponível, usando função fixa")
         _generate_interview_questions_wow = _generate_interview_questions_wow_fixed
 except ImportError:
-    # Fallback para função antiga se o arquivo não existir
     pass
 
-# Carrega variáveis de ambiente do arquivo .env na raiz do projeto
-PROJECT_ROOT = Path(__file__).parent.parent if '__file__' in globals() else Path('..')
-load_dotenv(PROJECT_ROOT / ".env")
-
-# Configuração do logger
-# DEV ONLY: Importar configurações centralizadas (não afeta produção)
-try:
-    from config import settings, validate_critical_settings, get_size_limit_bytes, IS_DEV
-    # Validar configurações críticas em DEV
-    if IS_DEV:
-        missing_vars = validate_critical_settings()
-        if missing_vars:
-            raise RuntimeError(f"Variáveis críticas faltando no .env.local: {', '.join(missing_vars)}")
-        print("✅ Configurações centralizadas carregadas (DEV)")
-except ImportError:
-    # Fallback para produção (Render não usa config.py)
-    print("🔄 Usando configurações legadas (PROD)")
-    settings = None
-logger = logging.getLogger(__name__)
-
-import stripe
-from fastapi import FastAPI, File, Form, UploadFile, Request, BackgroundTasks, HTTPException, Header, Response
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
-from supabase import create_client, Client
-
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-
-# Imports diretos sem manipulação de sys.path
-# O backend deve ser executado sempre com PYTHONPATH configurado corretamente
-from logic import analyze_cv_logic, analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato
-import uuid
-
-def validate_user_id(user_id: str) -> bool:
-    """Valida se user_id é um UUID válido."""
-    if not user_id:
-        return False
-    try:
-        uuid.UUID(user_id)
-        return True
-    except (ValueError, AttributeError):
-        return False
-
-# Importações mock_data - sempre usar backend prefix para consistência
-from mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
+# ============================================================
+# APP SETUP
+# ============================================================
 
 app = FastAPI(title="Vant API", version="0.1.0")
 
-# Incluir router de persistência
-app.include_router(interview_router)
-
-# Timeout global removido para não quebrar uploads de arquivos grandes
-# Use timeouts específicos nas chamadas HTTP externas em vez de middleware global
-
-# Configuração de Rate Limiting
+# Rate Limiting
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Inicializa monitoring de produção
-from monitoring import init_monitoring
-init_monitoring()
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Modo de desenvolvimento (true = usa mock, false = usa IA real)
-DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
+# Monitoring
+init_monitoring()
 
 # Log de inicialização
 if DEV_MODE:
@@ -124,263 +101,23 @@ else:
     print("   Tokens serão consumidos")
     print("="*60 + "\n")
 
-# DEV: Usar config centralizado | PROD: Usar environment variables diretas
-if settings and IS_DEV:
-    STRIPE_SECRET_KEY = settings.STRIPE_SECRET_KEY
-    SUPABASE_URL = settings.SUPABASE_URL
-    SUPABASE_SERVICE_ROLE_KEY = settings.SUPABASE_SERVICE_ROLE_KEY
-    DEBUG_API_SECRET = settings.DEBUG_API_SECRET
-    GOOGLE_API_KEY = settings.GOOGLE_API_KEY
-    GROQ_API_KEY = settings.GROQ_API_KEY
-    FRONTEND_CHECKOUT_RETURN_URL = settings.FRONTEND_CHECKOUT_RETURN_URL
-    STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = settings.STRIPE_PRICE_ID_PRO_MONTHLY
-    STRIPE_PRICE_ID_PRO_MONTHLY = settings.STRIPE_PRICE_ID_PRO_MONTHLY  # Adicionado variável faltante
-    STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")    # R$ 239/ano
-    STRIPE_PRICE_ID_TRIAL = os.getenv("STRIPE_PRICE_ID_TRIAL")              # R$ 1,99 trial 7 dias
-    STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,90 (1 CV)
-    STRIPE_PRICE_ID_CREDIT_3 = os.getenv("STRIPE_PRICE_ID_CREDIT_3")        # R$ 29,90 (3 CVs)
-    STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")        # R$ 49,90 (5 CVs)
-else:
-    # PROD: Mantém comportamento original (environment variables)
-    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-    DEBUG_API_SECRET = os.getenv("DEBUG_API_SECRET", "vant_debug_2026_secure_key")
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-    FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
-    STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD")  # R$ 19,90/mês (desconto vitalício)
-    STRIPE_PRICE_ID_PRO_MONTHLY = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")  # Adicionado variável faltante
-    STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")    # R$ 239/ano
-    STRIPE_PRICE_ID_TRIAL = os.getenv("STRIPE_PRICE_ID_TRIAL")              # R$ 1,99 trial 7 dias
-    STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")        # R$ 12,90 (1 CV)
-    STRIPE_PRICE_ID_CREDIT_3 = os.getenv("STRIPE_PRICE_ID_CREDIT_3")        # R$ 29,90 (3 CVs)
-    STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")        # R$ 49,90 (5 CVs)
+# ============================================================
+# REGISTER ROUTERS
+# ============================================================
 
-# Verificação de ambiente para endpoints de debug
-ALLOW_DEBUG_ENDPOINTS = os.getenv("ALLOW_DEBUG_ENDPOINTS", "false").lower() == "true"
-
-# Validação de variáveis críticas
-REQUIRED_ENV_VARS = {
-    "SUPABASE_URL": SUPABASE_URL,
-    "SUPABASE_SERVICE_ROLE_KEY": SUPABASE_SERVICE_ROLE_KEY,
-    "GOOGLE_API_KEY": os.getenv("GOOGLE_API_KEY"),
-    "STRIPE_SECRET_KEY": STRIPE_SECRET_KEY
-}
-
-missing_vars = [var for var, value in REQUIRED_ENV_VARS.items() if not value]
-
-if missing_vars:
-    print("\n" + "="*60)
-    print("❌ ERRO CRÍTICO: Variáveis de ambiente ausentes:")
-    for var in missing_vars:
-        print(f"   - {var}")
-    print("="*60 + "\n")
-    raise RuntimeError(f"Variáveis ausentes: {', '.join(missing_vars)}")
-
-supabase_admin: Client | None = None
-if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
-    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+app.include_router(interview_router)
+app.include_router(debug_router)
+app.include_router(admin_router)
+app.include_router(documents_router)
+app.include_router(user_router)
+app.include_router(analysis_router)
+app.include_router(stripe_router)
 
 
-def verify_debug_access(x_debug_secret: str = Header(None, description="Debug API secret key")) -> bool:
-    """
-    Verifica se o request tem permissão para acessar endpoints de debug.
-    
-    Args:
-        x_debug_secret: Header X-Debug-Secret com a chave secreta
-        
-    Returns:
-        bool: True se tem permissão, False caso contrário
-        
-    Raises:
-        HTTPException: Se não tiver permissão (403 Forbidden)
-    """
-    # Em produção, endpoints de debug são bloqueados por padrão
-    if not ALLOW_DEBUG_ENDPOINTS and os.getenv("ENVIRONMENT") == "production":
-        raise HTTPException(
-            status_code=403,
-            detail="Debug endpoints are disabled in production"
-        )
-    
-    # Verificar chave secreta
-    if not x_debug_secret or x_debug_secret != DEBUG_API_SECRET:
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid debug secret. Use X-Debug-Secret header."
-        )
-    
-    return True
+# ============================================================
+# HEALTH CHECK
+# ============================================================
 
-
-def log_debug_access(endpoint: str, user_id: str = None):
-    """Registra acesso aos endpoints de debug para auditoria."""
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("debug_endpoint", endpoint)
-    sentry_sdk.set_tag("debug_access", "authorized")
-    
-    if user_id:
-        sentry_sdk.set_context("debug_user", {"user_id": user_id})
-    
-    logger.warning(f"🔧 DEBUG ENDPOINT ACCESS: {endpoint} by user_id={user_id or 'unknown'}")
-
-PRICING: dict[str, dict[str, Any]] = {
-    # TIER GRATUITO
-    "free": {
-        "price": 0,
-        "name": "Gratuito",
-        "stripe_price_id": None,
-        "credits": 1,
-        "billing": "free",
-        "features": [
-            "1 Análise Completa",
-            "Score ATS Detalhado",
-            "43 Critérios Avaliados",
-            "3 Sugestões de Melhoria"
-        ]
-    },
-    
-    # TIER PRO - MENSAL
-    "pro_monthly": {
-        "price": 27.90,
-        "name": "PRO Mensal",
-        "stripe_price_id": STRIPE_PRICE_ID_PRO_MONTHLY,
-        "credits": 30,
-        "billing": "subscription",
-        "period": "monthly",
-        "features": [
-            "30 Otimizações por mês",
-            "Download de CV Otimizado (PDF + Word)",
-            "Simulador de Entrevista com IA",
-            "X-Ray Search - Encontre Recrutadores",
-            "Biblioteca Recomendada"
-        ]
-    },
-    
-    # TIER PRO - MENSAL EARLY BIRD (Desconto Vitalício)
-    "pro_monthly_early_bird": {
-        "price": 19.90,
-        "name": "PRO Mensal (Early Bird)",
-        "stripe_price_id": STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD,
-        "credits": 30,
-        "billing": "subscription",
-        "period": "monthly",
-        "discount": "Desconto Vitalício",
-        "features": [
-            "30 Otimizações por mês",
-            "Download de CV Otimizado (PDF + Word)",
-            "Simulador de Entrevista com IA",
-            "X-Ray Search - Encontre Recrutadores",
-            "Biblioteca Recomendada",
-            "🔥 Preço vitalício de R$ 19,90/mês"
-        ]
-    },
-    
-    # TIER PRO - ANUAL (29% OFF)
-    "pro_annual": {
-        "price": 239.00,
-        "price_monthly": 19.92,
-        "name": "PRO Anual",
-        "stripe_price_id": STRIPE_PRICE_ID_PRO_ANNUAL,
-        "credits": 30,
-        "billing": "subscription",
-        "period": "annual",
-        "discount": "29% OFF",
-        "features": [
-            "30 Otimizações por mês",
-            "Download de CV Otimizado (PDF + Word)",
-            "Simulador de Entrevista com IA",
-            "X-Ray Search - Encontre Recrutadores",
-            "Biblioteca Recomendada",
-            "Economize 29% vs mensal"
-        ]
-    },
-    
-    # TRIAL DE 7 DIAS - R$ 1,99
-    "trial": {
-        "price": 1.99,
-        "name": "Trial 7 Dias",
-        "stripe_price_id": STRIPE_PRICE_ID_TRIAL,
-        "credits": 30,
-        "billing": "trial",
-        "trial_days": 7,
-        "converts_to": "pro_monthly_early_bird",
-        "features": [
-            "Teste PRO por 7 dias - apenas R$ 1,99",
-            "30 otimizações para testar",
-            "Reembolso automático se cancelar em 48h",
-            "Após 7 dias: R$ 19,90/mês (desconto vitalício)"
-        ]
-    },
-    
-    # CRÉDITOS AVULSOS - 1 CV
-    "credit_1": {
-        "price": 12.90,
-        "name": "Crédito Único",
-        "stripe_price_id": STRIPE_PRICE_ID_CREDIT_1,
-        "credits": 1,
-        "billing": "one_time",
-        "features": [
-            "1 otimização completa",
-            "Download de CV Otimizado",
-            "Uso único, sem recorrência"
-        ]
-    },
-    
-    # CRÉDITOS AVULSOS - 3 CVs (23% OFF)
-    "credit_3": {
-        "price": 29.90,
-        "price_per_cv": 9.97,
-        "name": "Pacote 3 CVs",
-        "stripe_price_id": STRIPE_PRICE_ID_CREDIT_3,
-        "credits": 3,
-        "billing": "one_time",
-        "discount": "23% OFF",
-        "features": [
-            "3 otimizações completas",
-            "Download de CV Otimizado",
-            "Economize 23% vs crédito único",
-            "Válido por 6 meses"
-        ]
-    },
-    
-    # CRÉDITOS AVULSOS - 5 CVs (22% OFF)
-    "credit_5": {
-        "price": 49.90,
-        "price_per_cv": 9.98,
-        "name": "Pacote 5 CVs",
-        "stripe_price_id": STRIPE_PRICE_ID_CREDIT_5,
-        "credits": 5,
-        "billing": "one_time",
-        "discount": "22% OFF",
-        "features": [
-            "5 otimizações completas",
-            "Download de CV Otimizado",
-            "Economize 22% vs crédito único",
-            "Válido por 6 meses"
-        ]
-    },
-}
-
-if STRIPE_SECRET_KEY:
-    stripe.api_key = STRIPE_SECRET_KEY
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-def _upload_to_bytes_io(upload: UploadFile) -> io.BytesIO:
-    b = upload.file.read()
-    return io.BytesIO(b)
-
-
-# Cache para health check (evita chamadas excessivas a serviços externos)
 health_cache = {"last_check": 0, "status": None}
 
 def check_dependencies() -> dict[str, Any]:
@@ -434,16 +171,13 @@ def check_dependencies() -> dict[str, Any]:
 @app.get("/health")
 def health() -> JSONResponse:
     """Health check completo do sistema com cache de 60 segundos."""
-    # Só verifica dependências a cada 60 segundos ou na primeira vez
     now = time.time()
     if now - health_cache["last_check"] > 60 or health_cache["status"] is None:
-        # Roda verificações completas
         health_cache["status"] = check_dependencies()
         health_cache["last_check"] = now
     
     status = health_cache["status"]
     
-    # Retorna status 503 se degraded, 200 se healthy
     if status["status"] == "degraded":
         return JSONResponse(status_code=503, content=status)
     
@@ -453,8 +187,6 @@ def health() -> JSONResponse:
 @app.get("/api/test-sentry-error")
 def test_sentry_error() -> JSONResponse:
     """Endpoint de teste para verificar integração com Sentry."""
-    import sentry_sdk
-    
     sentry_sdk.set_tag("endpoint", "test_sentry_error")
     sentry_sdk.set_level("error")
     
@@ -462,1588 +194,9 @@ def test_sentry_error() -> JSONResponse:
     raise RuntimeError("ERRO DE TESTE - Verificar integração Sentry")
 
 
-@app.get("/api/pricing")
-def get_pricing() -> JSONResponse:
-    """Retorna informações de pricing para o frontend."""
-    pricing_info = {}
-    for plan_id, plan_data in PRICING.items():
-        pricing_info[plan_id] = {
-            "id": plan_id,
-            "name": plan_data.get("name"),
-            "price": plan_data.get("price"),
-            "billing": plan_data.get("billing"),
-            "features": plan_data.get("features", []),
-        }
-    return JSONResponse(content=pricing_info)
-
-
-@app.get("/api/analysis/status/{session_id}")
-def get_analysis_status(session_id: str) -> JSONResponse:
-    """Endpoint para polling do status da análise com progressive loading."""
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("endpoint", "get_analysis_status")
-    
-    if not supabase_admin:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
-        )
-    
-    try:
-        # Buscar sessão no Supabase
-        response = supabase_admin.table("analysis_sessions").select(
-            "status, current_step, result_data, created_at, updated_at"
-        ).eq("id", session_id).limit(1).execute()
-        
-        if not response.data:
-            return JSONResponse(
-                status_code=404,
-                content={"error": "Sessão não encontrada."}
-            )
-        
-        session = response.data[0]
-        
-        return JSONResponse(content={
-            "session_id": session_id,
-            "status": session["status"],
-            "current_step": session["current_step"],
-            "result_data": session["result_data"],
-            "created_at": session["created_at"],
-            "updated_at": session["updated_at"]
-        })
-        
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-@app.post("/api/analyze-lite")
-@limiter.limit("5/minute")  # 5 requests por minuto
-def analyze_lite(request: Request, file: UploadFile = File(...), job_description: str = Form(...), area_of_interest: str = Form("")) -> JSONResponse:
-    try:
-        import sentry_sdk
-        sentry_sdk.set_tag("endpoint", "analyze_lite")
-        
-        # Salva no storage para facilitar geração de mocks (produção-safe)
-        file_bytes = file.file.read()
-        from storage_manager import storage_manager
-        storage_result = storage_manager.save_temp_files(file_bytes, job_description)
-        batch_id = storage_result.get("batch_id") if storage_result else None
-        
-        # Modo de desenvolvimento: retorna mock instantaneamente
-        if DEV_MODE:
-            print("🔧 [DEV MODE] Retornando mock de análise lite (sem processar IA)")
-            return JSONResponse(content=MOCK_PREVIEW_DATA)
-        
-        # Modo produção: processa com IA real
-        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
-        
-        # Se o usuário selecionou uma área específica, priorize-a
-        if area_of_interest:
-            data = analyze_preview_lite(cv_text, job_description, forced_area=area_of_interest)
-        else:
-            data = analyze_preview_lite(cv_text, job_description)
-        
-        return JSONResponse(content=data)
-    except Exception as e:
-        import sentry_sdk
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-@app.post("/api/analyze-free")
-@limiter.limit("5/minute")  # 5 requests por minuto
-def analyze_free(
-    request: Request,
-    file: UploadFile = File(...), 
-    job_description: str = Form(...),
-    area_of_interest: str = Form(""),
-    user_id: str = Form(None)
-) -> JSONResponse:
-    """
-    Análise gratuita (primeira análise sem paywall).
-    Retorna diagnóstico básico com problemas identificados e 2 sugestões.
-    """
-    import sentry_sdk
-    
-    if user_id:
-        sentry_sdk.set_context("user", {"id": user_id})
-    sentry_sdk.set_tag("endpoint", "analyze_free")
-    
-    if user_id and not validate_user_id(user_id):
-        return JSONResponse(
-            status_code=400, 
-            content={"error": "user_id inválido. Deve ser um UUID válido."}
-        )
-    
-    try:
-        # Salva no storage para facilitar geração de mocks (produção-safe)
-        file_bytes = file.file.read()
-        from storage_manager import storage_manager
-        storage_result = storage_manager.save_temp_files(file_bytes, job_description, user_id)
-        batch_id = storage_result.get("batch_id") if storage_result else None
-        
-        # Verifica se usuário já usou análise gratuita (se tiver user_id)
-        if user_id and supabase_admin:
-            try:
-                usage = supabase_admin.table("free_usage").select("used_at").eq("user_id", user_id).limit(1).execute()
-                if usage.data:
-                    return JSONResponse(
-                        status_code=403, 
-                        content={"error": "Você já usou sua análise gratuita. Faça upgrade para continuar."}
-                    )
-            except Exception as e:
-                print(f"⚠️ Erro ao verificar uso gratuito: {e}")
-        
-        # Modo de desenvolvimento: retorna mock instantaneamente
-        if DEV_MODE:
-            print("🔧 [DEV MODE] Retornando mock de análise gratuita (sem processar IA)")
-            # Retorna versão limitada do mock (apenas 2 sugestões)
-            limited_data = MOCK_PREVIEW_DATA.copy()
-            return JSONResponse(content=limited_data)
-        
-        # Modo produção: processa com IA real
-        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
-        
-        # Se o usuário selecionou uma área específica, priorize-a
-        if area_of_interest:
-            data = analyze_preview_lite(cv_text, job_description, forced_area=area_of_interest)
-        else:
-            data = analyze_preview_lite(cv_text, job_description)
-        
-        # Registra uso gratuito
-        if user_id and supabase_admin:
-            try:
-                supabase_admin.table("free_usage").insert({
-                    "user_id": user_id,
-                    "used_at": datetime.now().isoformat()
-                }).execute()
-            except Exception as e:
-                print(f"⚠️ Erro ao registrar uso gratuito: {e}")
-        
-        return JSONResponse(content=data)
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-class GeneratePdfRequest(BaseModel):
-    data: dict[str, Any]
-    user_id: str | None = None
-
-
-@app.post("/api/generate-pdf")
-def generate_pdf(request: GeneratePdfRequest) -> Response:
-    try:
-        # Gerar PDF completamente em memória antes de enviar resposta
-        pdf_bytes = gerar_pdf_candidato(request.data)
-        
-        # Verificar se o PDF foi gerado corretamente
-        if not pdf_bytes or len(pdf_bytes) == 0:
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Falha ao gerar PDF: arquivo vazio"}
-            )
-        
-        # Verificar tamanho mínimo razoável para um PDF (pelo menos 1KB)
-        if len(pdf_bytes) < 1024:
-            return JSONResponse(
-                status_code=500,
-                content={"error": f"PDF gerado é muito pequeno ({len(pdf_bytes)} bytes)"}
-            )
-        
-        # Verificar cabeçalho PDF válido
-        if not pdf_bytes.startswith(b'%PDF'):
-            return JSONResponse(
-                status_code=500,
-                content={"error": "PDF gerado é inválido: cabeçalho ausente"}
-            )
-        
-        # Se tudo estiver correto, criar o streaming response
-        return StreamingResponse(
-            io.BytesIO(pdf_bytes),
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": "attachment; filename=Curriculo_VANT.pdf",
-                "Content-Length": str(len(pdf_bytes))  # Adiciona tamanho para melhor UX
-            }
-        )
-        
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-class GenerateWordRequest(BaseModel):
-    data: dict[str, Any]
-    user_id: str | None = None
-
-
-@app.post("/api/generate-word")
-def generate_word(request: GenerateWordRequest) -> Response:
-    try:
-        # Gerar Word completamente em memória antes de enviar resposta
-        word_bytes_io = gerar_word_candidato(request.data)
-        
-        # Verificar se o arquivo foi gerado corretamente
-        if not word_bytes_io:
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Falha ao gerar Word: arquivo nulo"}
-            )
-        
-        # Posicionar no início e ler conteúdo para validação
-        word_bytes_io.seek(0)
-        word_bytes = word_bytes_io.read()
-        
-        # Verificar se o Word foi gerado corretamente
-        if not word_bytes or len(word_bytes) == 0:
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Falha ao gerar Word: arquivo vazio"}
-            )
-        
-        # Verificar tamanho mínimo razoável para um DOCX (pelo menos 2KB)
-        if len(word_bytes) < 2048:
-            return JSONResponse(
-                status_code=500,
-                content={"error": f"Word gerado é muito pequeno ({len(word_bytes)} bytes)"}
-            )
-        
-        # Verificar cabeçalho DOCX válido (arquivos DOCX são ZIPs)
-        if not word_bytes.startswith(b'PK'):
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Word gerado é inválido: não é um formato DOCX válido"}
-            )
-        
-        # Resetar posição para o início do stream
-        word_bytes_io.seek(0)
-        
-        # Se tudo estiver correto, criar o streaming response
-        return StreamingResponse(
-            word_bytes_io,
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={
-                "Content-Disposition": "attachment; filename=Curriculo_VANT_Editavel.docx",
-                "Content-Length": str(len(word_bytes))  # Adiciona tamanho para melhor UX
-            }
-        )
-        
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-class EntitlementsStatusRequest(BaseModel):
-    user_id: str
-
-
-@app.get("/api/user/status/{user_id}")
-def get_user_status(user_id: str) -> JSONResponse:
-    """Endpoint público para verificar se usuário tem plano ativo."""
-    if not supabase_admin:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Supabase não configurado"}
-        )
-    
-    if not validate_user_id(user_id):
-        return JSONResponse(
-            status_code=400,
-            content={"error": "user_id inválido"}
-        )
-    
-    try:
-        status = _entitlements_status(user_id)
-        return JSONResponse(content={
-            "has_active_plan": status.get("payment_verified", False),
-            "credits_remaining": status.get("credits_remaining", 0),
-            "plan": status.get("plan")
-        })
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)}
-        )
-
-
-@app.post("/api/entitlements/status")
-def entitlements_status(payload: EntitlementsStatusRequest) -> JSONResponse:
-    if not supabase_admin:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
-        )
-    
-    if payload.user_id and not validate_user_id(payload.user_id):
-        return JSONResponse(
-            status_code=400, 
-            content={"error": "user_id inválido. Deve ser um UUID válido."}
-        )
-    
-    try:
-        return JSONResponse(content=_entitlements_status(payload.user_id))
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-class ConsumeOneCreditRequest(BaseModel):
-    user_id: str
-
-
-@app.post("/api/entitlements/consume-one")
-def entitlements_consume_one(payload: ConsumeOneCreditRequest) -> JSONResponse:
-    if not supabase_admin:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
-        )
-    
-    if payload.user_id and not validate_user_id(payload.user_id):
-        return JSONResponse(
-            status_code=400, 
-            content={"error": "user_id inválido. Deve ser um UUID válido."}
-        )
-    
-    try:
-        _consume_one_credit(payload.user_id)
-        return JSONResponse(content=_entitlements_status(payload.user_id))
-    except Exception as e:
-        return JSONResponse(status_code=400, content={"error": str(e)})
-
-
-@app.post("/api/analyze-premium-paid")
-@limiter.limit("10/minute")  # 10 requests por minuto para pagos
-def analyze_premium_paid(
-    request: Request,
-    background_tasks: BackgroundTasks,
-    user_id: str = Form(...),
-    file: UploadFile = File(...),
-    job_description: str = Form(...),
-    area_of_interest: str = Form(""),
-    competitor_files: list[UploadFile] | None = File(None),
-) -> JSONResponse:
-    import sentry_sdk
-    
-    sentry_sdk.set_context("user", {"id": user_id})
-    sentry_sdk.set_tag("endpoint", "analyze_premium_paid")
-    
-    if not supabase_admin:
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
-        )
-    
-    if user_id and not validate_user_id(user_id):
-        return JSONResponse(
-            status_code=400, 
-            content={"error": "user_id inválido. Deve ser um UUID válido."}
-        )
-    
-    try:
-        # Salva no storage para facilitar geração de mocks (produção-safe)
-        file_bytes = file.file.read()
-        from storage_manager import storage_manager
-        storage_result = storage_manager.save_temp_files(file_bytes, job_description, user_id)
-        batch_id = storage_result.get("batch_id") if storage_result else None
-        
-        # Verificar créditos (tanto em DEV quanto em produção)
-        status = _entitlements_status(user_id)
-        if not status.get("payment_verified") or int(status.get("credits_remaining") or 0) <= 0:
-            return JSONResponse(status_code=400, content={"error": "Você não tem créditos disponíveis."})
-
-        # Consumir crédito
-        _consume_one_credit(user_id)
-        
-        # Criar sessão de análise para progressive loading
-        session_data = {
-            "user_id": user_id,
-            "status": "processing",
-            "current_step": "starting",
-            "result_data": {}
-        }
-        
-        session_response = supabase_admin.table("analysis_sessions").insert(session_data).execute()
-        session_id = session_response.data[0]["id"]
-        
-        # Preparar arquivos de competidores se existirem
-        competitors_bytes = []
-        if competitor_files:
-            for f in competitor_files:
-                competitors_bytes.append(f.file.read())
-        
-        # Agendar processamento em background
-        background_tasks.add_task(
-            _process_analysis_background,
-            session_id=session_id,
-            user_id=user_id,
-            file_bytes=file_bytes,
-            job_description=job_description,
-            area_of_interest=area_of_interest,
-            competitors_bytes=competitors_bytes
-        )
-        
-        # Retornar imediatamente com session_id
-        return JSONResponse(content={
-            "session_id": session_id,
-            "status": "processing"
-        })
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-class ActivateEntitlementsRequest(BaseModel):
-    session_id: str
-    user_id: str
-    plan_id: str
-
-
-def _entitlements_status(user_id: str) -> dict[str, Any]:
-    """Verifica status de entitlements do usuário."""
-    print(f'[DEBUG] Buscando subs para user {user_id}')
-    
-    subs = (
-        supabase_admin.table("subscriptions")
-        .select("subscription_plan,subscription_status,current_period_start,current_period_end")
-        .eq("user_id", user_id)
-        .order("current_period_end", desc=True)
-        .limit(1)
-        .execute()
-    )
-    sub = (subs.data or [])[0] if subs.data else None
-    
-    print(f"[DEBUG] _entitlements_status: user_id={user_id}, subscription={sub}")
-
-    # Verificar se tem assinatura ativa (qualquer plano)
-    if sub and sub.get("subscription_status") in ["active", "trialing"]:
-        plan_name = sub.get("subscription_plan")
-        period_start = sub.get("current_period_start")
-        
-        print(f"[DEBUG] Assinatura ativa encontrada: plan={plan_name}, status={sub.get('subscription_status')}")
-        
-        # Todos os planos de assinatura (PRO, Trial, premium_plus) usam sistema de usage com limite mensal
-        if plan_name in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
-            usage = (
-                supabase_admin.table("usage")
-                .select("used,usage_limit")
-                .eq("user_id", user_id)
-                .eq("period_start", period_start)
-                .limit(1)
-                .execute()
-            )
-            row = (usage.data or [])[0] if usage.data else None
-            used = int(row.get('used', 0) if row else 0)
-            limit_val = int(row.get('usage_limit', 30) if row else 30)
-            credits_remaining = max(0, limit_val - used)
-            return {
-                "payment_verified": credits_remaining > 0,
-                "credits_remaining": credits_remaining,
-                "plan": "premium_plus",
-            }
-
-    # Sem assinatura ativa, verificar créditos avulsos
-    credits = (
-        supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
-    )
-    row = (credits.data or [])[0] if credits.data else None
-    
-    if row is None:
-        print(f"[DEBUG] Sem assinatura ativa. Sem registros de créditos avulsos: balance=0")
-        return {
-            "payment_verified": False,
-            "credits_remaining": 0,
-            "plan": None,
-        }
-    
-    balance = int(row.get("balance", 0))
-    
-    print(f"[DEBUG] Sem assinatura ativa. Créditos avulsos: balance={balance}")
-    
-    return {
-        "payment_verified": balance > 0,
-        "credits_remaining": max(0, balance),
-        "plan": None,
-    }
-
-
-def _consume_one_credit(user_id: str) -> None:
-    if not supabase_admin or not user_id:
-        raise RuntimeError("Banco não configurado")
-
-    subs = (
-        supabase_admin.table("subscriptions")
-        .select("subscription_plan,subscription_status,current_period_start,current_period_end")
-        .eq("user_id", user_id)
-        .order("current_period_end", desc=True)
-        .limit(1)
-        .execute()
-    )
-    sub = (subs.data or [])[0] if subs.data else None
-    
-    # Todos os planos de assinatura (PRO, Trial, premium_plus) consomem do sistema de usage
-    if sub and sub.get("subscription_status") in ["active", "trialing"]:
-        plan_name = sub.get("subscription_plan")
-        if plan_name in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
-            period_start = sub.get("current_period_start")
-            usage = (
-                supabase_admin.table("usage")
-                .select("used,usage_limit")
-                .eq("user_id", user_id)
-                .eq("period_start", period_start)
-                .limit(1)
-                .execute()
-            )
-            row = (usage.data or [])[0] if usage.data else None
-            used = int(row.get('used', 0) if row else 0)
-            limit_val = int(row.get('usage_limit', 30) if row else 30)
-            if used >= limit_val:
-                raise RuntimeError("Limite mensal atingido")
-
-            if row is None:
-                supabase_admin.table("usage").insert(
-                    {"user_id": user_id, "period_start": period_start, "used": 1, "usage_limit": limit_val}
-                ).execute()
-            else:
-                supabase_admin.table("usage").update({"used": used + 1}).eq("user_id", user_id).eq(
-                    "period_start", period_start
-                ).execute()
-            return
-
-    credits = (
-        supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
-    )
-    row = (credits.data or [])[0] if credits.data else None
-    
-    if row is None:
-        raise RuntimeError("Sem créditos")
-    
-    balance = int(row.get("balance", 0))
-    if balance <= 0:
-        raise RuntimeError("Sem créditos")
-    supabase_admin.table("user_credits").upsert({"user_id": user_id, "balance": balance - 1}).execute()
-
-
-def _create_fallback_subscription(payload: ActivateEntitlementsRequest, plan_id: str, plan: dict) -> JSONResponse:
-    """Função fallback forçada para garantir que usuário receba créditos."""
-    print(f"[FALLBACK] Criando assinatura manual forçada para user {payload.user_id}")
-    
-    try:
-        from datetime import datetime, timedelta
-        now = datetime.now()
-        period_start_iso = now.isoformat()
-        period_end_iso = (now + timedelta(days=30)).isoformat()
-        
-        # Criar assinatura manual forçada
-        subscription_data = {
-            "user_id": payload.user_id,
-            "subscription_plan": plan_id,
-            "stripe_subscription_id": f"fallback_manual_{payload.user_id[:8]}_{int(now.timestamp())}",
-            "stripe_customer_id": f"cus_fallback_{payload.user_id[:8]}",
-            "subscription_status": "trialing",  # Status forçado
-            "current_period_start": period_start_iso,
-            "current_period_end": period_end_iso,
-        }
-        
-        # Forçar inserção da assinatura
-        result = supabase_admin.table("subscriptions").insert(subscription_data).execute()
-        print(f"[FALLBACK] Assinatura forçada criada: {result}")
-        
-        # Forçar criação do usage
-        usage_data = {
-            "user_id": payload.user_id,
-            "period_start": period_start_iso,
-            "used": 0,
-            "usage_limit": int(plan.get("credits", 30))
-        }
-        
-        usage_result = supabase_admin.table("usage").insert(usage_data).execute()
-        print(f"[FALLBACK] Usage forçado criado: {usage_result}")
-        
-        credits_remaining = int(plan.get("credits", 30))
-        
-        print(f"[FALLBACK] SUCESSO: Usuário {payload.user_id} recebeu {credits_remaining} créditos forçados")
-        
-        return JSONResponse(content={
-            "ok": True,
-            "message": "Assinatura forçada criada (fallback)",
-            "credits": credits_remaining,
-            "plan": plan_id,
-            "fallback": True
-        })
-        
-    except Exception as e:
-        logger.error(f"[ERRO CRÍTICO] Falha total no fallback: {e}")
-        print(f"[ERRO CRÍTICO] Falha total no fallback: {e}")
-        
-        # ÚLTIMO RECURSO: Retornar sucesso mesmo sem salvar no banco
-        print(f"[ÚLTIMO RECURSO] Retornando sucesso sem salvar no banco...")
-        return JSONResponse(content={
-            "ok": True,
-            "message": "Créditos liberados (último recurso)",
-            "credits": int(plan.get("credits", 30)),
-            "plan": plan_id,
-            "emergency": True
-        })
-
-
-@app.post("/api/entitlements/activate")
-def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("endpoint", "entitlements_activate")
-    sentry_sdk.set_context("user", {"id": payload.user_id})
-    
-    logger.info(f"[ACTIVATE] Iniciando ativação: session_id={payload.session_id}, user_id={payload.user_id}")
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Banco não configurado"})
-
-    # 1. Buscar sessão do Stripe
-    try:
-        logger.info(f"[ACTIVATE] Buscando sessão Stripe: {payload.session_id}")
-        session = stripe.checkout.Session.retrieve(payload.session_id)
-        logger.info(f"[ACTIVATE] Sessão encontrada com sucesso")
-    except Exception as e:
-        logger.error(f"[ACTIVATE] Erro ao buscar sessão: {e}")
-        return JSONResponse(status_code=400, content={"error": "Sessão inválida"})
-    
-    # 2. Extrair dados necessários
-    user_id = payload.user_id
-    subscription_id = session.get("subscription")
-    customer_id = session.get("customer")
-    plan_id = session.get("metadata", {}).get("plan", "basico")
-    payment_status = session.get("payment_status")
-    
-    logger.info(f"[ACTIVATE] Dados extraídos:")
-    logger.info(f"  - user_id: {user_id}")
-    logger.info(f"  - subscription_id: {subscription_id}")
-    logger.info(f"  - customer_id: {customer_id}")
-    logger.info(f"  - plan_id: {plan_id}")
-    logger.info(f"  - payment_status: {payment_status}")
-    
-    # 3. Validar pagamento
-    if payment_status not in ("paid", "no_payment_required", "unpaid"):
-        logger.error(f"[ACTIVATE] Pagamento não confirmado: {payment_status}")
-        return JSONResponse(status_code=400, content={"error": "Pagamento não confirmado"})
-    
-    # 4. Determinar tipo de ativação
-    if subscription_id:
-        logger.info(f"[ACTIVATE] Ativando assinatura (subscription_id existe)")
-        activation_type = "subscription"
-    else:
-        logger.info(f"[ACTIVATE] Ativando créditos avulsos (sem subscription_id)")
-        activation_type = "one_time"
-    
-    # 5. Buscar dados do plano
-    if plan_id not in PRICING:
-        plan_id = "basico"
-        logger.warning(f"[ACTIVATE] Plano não encontrado, usando basico")
-    
-    plan = PRICING[plan_id]
-    credits = plan.get("credits", 30)
-    
-    # 6. Buscar dados da assinatura se existir
-    stripe_status = None
-    period_start = None
-    period_end = None
-    
-    if subscription_id:
-        try:
-            sub = stripe.Subscription.retrieve(subscription_id)
-            stripe_status = sub.get("status")
-            cps = int(sub.get("current_period_start", 0))
-            cpe = int(sub.get("current_period_end", 0))
-            
-            # Converter timestamps
-            if cps > 1000000000000:
-                cps = cps // 1000
-            if cpe > 1000000000000:
-                cpe = cpe // 1000
-                
-            from datetime import datetime, timedelta
-            period_start = datetime.fromtimestamp(cps).isoformat()
-            period_end = datetime.fromtimestamp(cpe).isoformat()
-            
-            logger.info(f"[ACTIVATE] Dados da assinatura Stripe: status={stripe_status}")
-        except Exception as e:
-            logger.error(f"[ACTIVATE] Erro ao buscar assinatura: {e}")
-            stripe_status = "active"  # fallback
-    
-    # 7. Chamar RPC única
-    try:
-        # Debug dos tipos de dados
-        logger.info(f"[ACTIVATE] Debug tipos:")
-        logger.info(f"  - type(user_id): {type(user_id)}")
-        logger.info(f"  - type(subscription_id): {type(subscription_id)}")
-        logger.info(f"  - type(customer_id): {type(customer_id)}")
-        logger.info(f"  - type(plan_id): {type(plan_id)}")
-        logger.info(f"  - type(stripe_status): {type(stripe_status)}")
-        
-        rpc_params = {
-            "p_user_id": user_id,
-            "p_stripe_sub_id": subscription_id or f"one_time_{user_id[:8]}",
-            "p_stripe_cust_id": customer_id or f"cus_one_time_{user_id[:8]}",
-            "p_plan": plan_id,
-            "p_status": stripe_status or "active",
-            "p_start": period_start or datetime.now().isoformat(),
-            "p_end": period_end or (datetime.now() + timedelta(days=30)).isoformat()
-        }
-        
-        logger.info(f"[ACTIVATE] Chamando RPC com parâmetros: {rpc_params}")
-        
-        # Execute
-        response = supabase_admin.rpc("activate_subscription_rpc", rpc_params).execute()
-        
-        # Se chegou aqui sem exception, funcionou.
-        # O response.data será True
-        logger.info(f"[ACTIVATE] RPC executada com sucesso. Retorno: {response.data}")
-        
-        return JSONResponse(content={
-            "ok": True,
-            "plan_id": plan_id,
-            "credits_remaining": credits,
-            "activation_type": activation_type
-        })
-        
-    except Exception as e:
-        logger.error(f"[ACTIVATE] Erro na RPC: {e}")
-        return JSONResponse(status_code=500, content={"error": f"Erro na ativação: {str(e)}"})
-
-
-@app.post("/api/debug/create-real-customer")
-def create_real_customer(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
-    """DEBUG: Cria um customer real no Stripe e atualiza o banco."""
-    # Verificar permissão de acesso
-    verify_debug_access(x_debug_secret)
-    
-    # Log de acesso para auditoria
-    log_debug_access("create-real-customer", payload.get("user_id"))
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
-    
-    user_id = payload.get("user_id")
-    if not user_id:
-        return JSONResponse(status_code=400, content={"error": "user_id obrigatório"})
-    
-    try:
-        # Buscar email do usuário no Supabase
-        user_data = supabase_admin.auth.admin.get_user_by_id(user_id)
-        user_email = user_data.user.email if user_data.user else None
-        
-        if not user_email:
-            return JSONResponse(status_code=400, content={"error": "Email do usuário não encontrado"})
-        
-        print(f"[DEBUG] Criando customer para email: {user_email}")
-        
-        # Criar customer real no Stripe
-        customer = stripe.Customer.create(
-            email=user_email,
-            metadata={"user_id": user_id}
-        )
-        
-        print(f"[DEBUG] Customer criado: {customer.id}")
-        
-        # Atualizar assinatura com o customer_id real
-        subscription_data = {
-            "stripe_customer_id": customer.id
-        }
-        
-        supabase_admin.table("subscriptions").update(subscription_data).eq(
-            "user_id", user_id
-        ).execute()
-        
-        print(f"[DEBUG] Assinatura atualizada com customer_id real: {customer.id}")
-        
-        return JSONResponse(content={
-            "ok": True,
-            "message": "Customer real criado e assinatura atualizada",
-            "customer_id": customer.id,
-            "email": user_email
-        })
-        
-    except Exception as e:
-        print(f"[ERROR] create_real_customer: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-@app.get("/api/debug/find-user-by-email")
-def find_user_by_email(email: str, x_debug_secret: str = Header(None)) -> JSONResponse:
-    """DEBUG: Busca usuário por email no Supabase."""
-    # Verificar permissão de acesso
-    verify_debug_access(x_debug_secret)
-    
-    # Log de acesso para auditoria
-    log_debug_access("find-user-by-email")
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
-    
-    try:
-        # Buscar usuário diretamente na tabela auth.users
-        users = supabase_admin.table("auth.users").select("id, email, created_at").eq("email", email).execute()
-        
-        print(f"[DEBUG] Users encontrados: {users.data}")
-        
-        if users.data:
-            user = users.data[0]
-            print(f"[DEBUG] Usuário encontrado: {user['id']}")
-            
-            # Verificar se tem assinatura
-            subs = (
-                supabase_admin.table("subscriptions")
-                .select("*")
-                .eq("user_id", user["id"])
-                .limit(1)
-                .execute()
-            )
-            
-            subscription_data = None
-            if subs.data:
-                subscription_data = subs.data[0]
-            
-            return JSONResponse(content={
-                "user_id": user["id"],
-                "email": user["email"],
-                "created_at": user["created_at"],
-                "subscription": subscription_data
-            })
-        
-        return JSONResponse(content={"error": "Usuário não encontrado"})
-        
-    except Exception as e:
-        print(f"[ERROR] find_user_by_email: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-@app.post("/api/debug/create-supabase-user")
-def create_supabase_user(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
-    """DEBUG: Cria usuário no banco diretamente para teste."""
-    # Verificar permissão de acesso
-    verify_debug_access(x_debug_secret)
-    
-    # Log de acesso para auditoria
-    log_debug_access("create-supabase-user", payload.get("user_id"))
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
-    
-    user_id = payload.get("user_id")
-    email = payload.get("email")
-    
-    if not user_id or not email:
-        return JSONResponse(status_code=400, content={"error": "user_id e email obrigatórios"})
-    
-    try:
-        # Criar usuário diretamente (sem usar Auth)
-        print(f"[DEBUG] Criando usuário no banco: {user_id}")
-        
-        # Criar assinatura diretamente
-        subscription_data = {
-            "user_id": user_id,
-            "subscription_plan": "pro_monthly",
-            "stripe_subscription_id": f"manual_test_{user_id[:8]}",
-            "stripe_customer_id": f"cus_test_{user_id[:8]}",
-            "subscription_status": "active",
-            "current_period_start": "2026-02-05T21:41:00.000000+00:00",
-            "current_period_end": "2026-03-07T21:41:00.000000+00:00",
-        }
-        
-        supabase_admin.table("subscriptions").insert(subscription_data).execute()
-        
-        # Criar registro de usage
-        from datetime import datetime, timedelta
-        period_start = datetime.now()
-        
-        supabase_admin.table("usage").upsert(
-            {"user_id": user_id, "period_start": period_start.isoformat(), "used": 0, "usage_limit": 30}
-        ).execute()
-        
-        print(f"[DEBUG] Assinatura criada para usuário: {user_id}")
-        
-        return JSONResponse(content={
-            "ok": True,
-            "user_id": user_id,
-            "email": email,
-            "message": "Usuário criado com assinatura ativa"
-        })
-        
-    except Exception as e:
-        print(f"[ERROR] create_supabase_user: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-@app.post("/api/debug/activate-by-email")
-def activate_by_email_endpoint(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
-    """DEBUG: Ativa assinatura para usuário existente pelo email."""
-    # Verificar permissão de acesso
-    verify_debug_access(x_debug_secret)
-    
-    # Log de acesso para auditoria
-    log_debug_access("activate-by-email")
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
-    
-    email = payload.get("email")
-    plan_id = payload.get("plan_id", "pro_monthly")
-    
-    if not email:
-        return JSONResponse(status_code=400, content={"error": "email obrigatório"})
-    
-    try:
-        # Buscar usuário no Supabase Auth
-        print(f"[DEBUG] Buscando usuário: {email}")
-        
-        # Listar usuários
-        users = supabase_admin.auth.admin.list_users()
-        
-        target_user = None
-        for user in users:
-            if user.email == email:
-                target_user = user
-                break
-        
-        if not target_user:
-            return JSONResponse(status_code=404, content={"error": f"Usuário {email} não encontrado"})
-        
-        print(f"[DEBUG] Usuário encontrado: {target_user.id}")
-        
-        # Verificar se já tem assinatura
-        subs = supabase_admin.table("subscriptions").select("*").eq("user_id", target_user.id).execute()
-        
-        if subs.data:
-            return JSONResponse(content={
-                "ok": True,
-                "message": "Usuário já tem assinatura",
-                "user_id": target_user.id,
-                "subscription": subs.data[0]
-            })
-        
-        # Criar assinatura manual
-        from datetime import datetime, timedelta
-        now = datetime.now()
-        
-        subscription_data = {
-            "user_id": target_user.id,
-            "subscription_plan": plan_id,
-            "stripe_subscription_id": f"manual_{target_user.id[:8]}",
-            "stripe_customer_id": f"cus_manual_{target_user.id[:8]}",
-            "subscription_status": "active",
-            "current_period_start": now.isoformat(),
-            "current_period_end": (now + timedelta(days=30)).isoformat(),
-        }
-        
-        supabase_admin.table("subscriptions").insert(subscription_data).execute()
-        print(f"[DEBUG] Assinatura criada")
-        
-        # Criar usage
-        supabase_admin.table("usage").upsert({
-            "user_id": target_user.id,
-            "period_start": now.isoformat(),
-            "used": 0,
-            "usage_limit": 30
-        }).execute()
-        print(f"[DEBUG] Usage criado")
-        
-        return JSONResponse(content={
-            "ok": True,
-            "message": "Assinatura ativada com sucesso",
-            "user_id": target_user.id,
-            "email": email,
-            "plan": plan_id,
-            "credits": 30
-        })
-        
-    except Exception as e:
-        print(f"[ERROR] activate_by_email_endpoint: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-@app.get("/api/debug/all-subscriptions")
-def get_all_subscriptions(x_debug_secret: str = Header(None)) -> JSONResponse:
-    """DEBUG: Retorna todas as assinaturas do banco."""
-    # Verificar permissão de acesso
-    verify_debug_access(x_debug_secret)
-    
-    # Log de acesso para auditoria
-    log_debug_access("all-subscriptions")
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
-    
-    try:
-        # Buscar todas as assinaturas
-        subs = (
-            supabase_admin.table("subscriptions")
-            .select("*")
-            .order("created_at", desc=True)
-            .limit(20)
-            .execute()
-        )
-        
-        print(f"[DEBUG] Total de assinaturas: {len(subs.data)}")
-        
-        # Para cada assinatura, buscar créditos
-        subscriptions_with_credits = []
-        for sub in subs.data:
-            user_id = sub.get("user_id")
-            
-            # Buscar créditos do usuário
-            status = _entitlements_status(user_id)
-            
-            sub_with_credits = {
-                **sub,
-                "credits_remaining": status.get("credits_remaining", 0),
-                "has_active_plan": status.get("payment_verified", False)
-            }
-            subscriptions_with_credits.append(sub_with_credits)
-        
-        return JSONResponse(content=subscriptions_with_credits)
-        
-    except Exception as e:
-        print(f"[ERROR] get_all_subscriptions: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-@app.post("/api/debug/check-subscription")
-def check_subscription(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
-    """DEBUG: Verifica dados da assinatura no banco."""
-    # Verificar permissão de acesso
-    verify_debug_access(x_debug_secret)
-    
-    # Log de acesso para auditoria
-    log_debug_access("check-subscription", payload.get("user_id"))
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
-    
-    user_id = payload.get("user_id")
-    if not user_id:
-        return JSONResponse(status_code=400, content={"error": "user_id obrigatório"})
-    
-    try:
-        # Buscar assinatura no banco
-        subs = (
-            supabase_admin.table("subscriptions")
-            .select("*")
-            .eq("user_id", user_id)
-            .order("current_period_end", desc=True)
-            .limit(1)
-            .execute()
-        )
-        
-        if not subs.data:
-            return JSONResponse(content={"error": "Nenhuma assinatura encontrada"})
-        
-        subscription = subs.data[0]
-        print(f"[DEBUG] Assinatura encontrada: {subscription}")
-        
-        return JSONResponse(content={
-            "subscription": subscription,
-            "stripe_customer_id": subscription.get("stripe_customer_id"),
-            "subscription_plan": subscription.get("subscription_plan"),
-            "subscription_status": subscription.get("subscription_status")
-        })
-        
-    except Exception as e:
-        print(f"[ERROR] check_subscription: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-@app.post("/api/debug/manual-activate")
-def manual_activate_subscription(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
-    """DEBUG: Ativa manualmente uma assinatura para testes."""
-    # Verificar permissão de acesso
-    verify_debug_access(x_debug_secret)
-    
-    # Log de acesso para auditoria
-    log_debug_access("manual-activate", payload.get("user_id"))
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
-    
-    user_id = payload.get("user_id")
-    plan_id = payload.get("plan_id", "pro_monthly")
-    
-    if not user_id:
-        return JSONResponse(status_code=400, content={"error": "user_id obrigatório"})
-    
-    try:
-        # Criar dados de assinatura manual
-        from datetime import datetime, timedelta
-        
-        period_start = datetime.now()
-        period_end = period_start + timedelta(days=30)
-        
-        subscription_data = {
-            "user_id": user_id,
-            "subscription_plan": plan_id,
-            "stripe_subscription_id": f"manual_test_{user_id[:8]}",
-            "stripe_customer_id": f"cus_test_{user_id[:8]}",
-            "subscription_status": "active",
-            "current_period_start": period_start.isoformat(),
-            "current_period_end": period_end.isoformat(),
-        }
-        
-        # Verificar se já existe
-        existing = (
-            supabase_admin.table("subscriptions")
-            .select("id")
-            .eq("user_id", user_id)
-            .limit(1)
-            .execute()
-        )
-        
-        if existing.data:
-            # Update
-            supabase_admin.table("subscriptions").update(subscription_data).eq(
-                "user_id", user_id
-            ).execute()
-            print(f"[DEBUG] Assinatura atualizada para usuário {user_id}")
-        else:
-            # Insert
-            supabase_admin.table("subscriptions").insert(subscription_data).execute()
-            print(f"[DEBUG] Assinatura criada para usuário {user_id}")
-        
-        # Criar registro de usage
-        if plan_id in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
-            supabase_admin.table("usage").upsert(
-                {"user_id": user_id, "period_start": period_start.isoformat(), "used": 0, "usage_limit": 30}
-            ).execute()
-            print(f"[DEBUG] Usage criado para usuário {user_id}")
-        
-        return JSONResponse(content={
-            "ok": True,
-            "message": "Assinatura ativada manualmente",
-            "plan_id": plan_id,
-            "credits_remaining": 30
-        })
-        
-    except Exception as e:
-        print(f"[ERROR] manual_activate: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
-
-
-@app.post("/api/debug/reset-credits")
-def reset_credits(payload: dict, x_debug_secret: str = Header(None)):
-    """DEBUG ONLY: Reseta créditos do usuário para 3."""
-    # Verificar permissão de acesso
-    verify_debug_access(x_debug_secret)
-    
-    # Log de acesso para auditoria
-    log_debug_access("reset-credits", payload.get("user_id"))
-    
-    if not supabase_admin:
-        raise HTTPException(status_code=500, detail="Supabase não configurado")
-    user_id = payload.get("user_id")
-    if not user_id:
-        raise HTTPException(status_code=400, detail="user_id obrigatório")
-    supabase_admin.table("user_credits").upsert({"user_id": user_id, "balance": 3}).execute()
-    return {"ok": True, "credits": 3}
-
-
-@app.post("/api/analyze-premium")
-def analyze_premium(
-    file: UploadFile = File(...),
-    job_description: str = Form(...),
-    competitor_files: list[UploadFile] | None = File(None),
-) -> JSONResponse:
-    try:
-        cv_text = extrair_texto_pdf(_upload_to_bytes_io(file))
-        competitors = []
-        if competitor_files:
-            for f in competitor_files:
-                competitors.append(_upload_to_bytes_io(f))
-        data = analyze_cv_logic(cv_text, job_description, competitors, user_id=user_id)
-        return JSONResponse(content=data)
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-@app.post("/api/render/pdf")
-def render_pdf(payload: dict[str, Any]) -> StreamingResponse:
-    pdf_bytes = gerar_pdf_candidato(payload)
-    return StreamingResponse(
-        io.BytesIO(pdf_bytes),
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=vant.pdf"},
-    )
-
-
-@app.post("/api/render/docx")
-def render_docx(payload: dict[str, Any]) -> StreamingResponse:
-    docx_bytes = gerar_word_candidato(payload)
-    if hasattr(docx_bytes, "getvalue"):
-        docx_bytes = docx_bytes.getvalue()
-    return StreamingResponse(
-        io.BytesIO(docx_bytes),
-        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": "attachment; filename=vant.docx"},
-    )
-
-
-class StripeCreateCheckoutSessionRequest(BaseModel):
-    plan_id: str
-    customer_email: str | None = None
-    client_reference_id: str | None = None
-    score: int | None = None
-
-
-@app.post("/api/stripe/create-checkout-session")
-def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) -> JSONResponse:
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("endpoint", "stripe_create_checkout_session")
-    if payload.client_reference_id:
-        sentry_sdk.set_context("user", {"id": payload.client_reference_id})
-    
-    if not STRIPE_SECRET_KEY:
-        return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
-
-    plan_id = (payload.plan_id or "basico").strip()
-    if plan_id not in PRICING:
-        plan_id = "basico"
-
-    price_id = PRICING[plan_id].get("stripe_price_id")
-    if not price_id:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Stripe Price ID não configurado para o plano '{plan_id}'. Verifique as variáveis de ambiente no Render."},
-        )
-
-    billing = (PRICING[plan_id].get("billing") or "one_time").strip().lower()
-    is_subscription = billing == "subscription" or billing == "trial"
-    success_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=cancel"
-
-    try:
-        # Configuração especial para Paid Trial (R$ 1,99 hoje + 7 dias trial + R$ 19,90/mês depois)
-        if plan_id == "trial":
-            # Price ID da assinatura (R$ 19,90/mês com trial)
-            subscription_price_id = STRIPE_PRICE_ID_TRIAL  # price_1SxSYB2VONQto1dcxJb1Df3U
-            
-            # Price ID do setup fee (R$ 1,99 pagamento único)
-            setup_fee_price_id = "price_1SvoER2VONQto1dcdi5VHNpM"  # R$ 1,99 one-time
-            
-            session = stripe.checkout.Session.create(
-                mode="subscription",
-                payment_method_types=["card"],
-                line_items=[
-                    {
-                        "price": subscription_price_id,
-                        "quantity": 1,
-                    },
-                    {
-                        "price": setup_fee_price_id,  # Setup fee cobrado agora
-                        "quantity": 1,
-                    },
-                ],
-                subscription_data={
-                    "trial_period_days": 7,  # Assinatura só começa em 7 dias
-                },
-                success_url=success_url,
-                cancel_url=cancel_url,
-                allow_promotion_codes=True,
-                customer_email=payload.customer_email,
-                client_reference_id=payload.client_reference_id,
-                metadata={
-                    "plan": plan_id,
-                    "score": str(int(payload.score or 0)),
-                    "setup_fee": "1.99",
-                },
-            )
-        else:
-            # Lógica normal para outros planos
-            session = stripe.checkout.Session.create(
-                mode="subscription" if is_subscription else "payment",
-                line_items=[{"price": price_id, "quantity": 1}],
-                success_url=success_url,
-                cancel_url=cancel_url,
-                allow_promotion_codes=True,
-                customer_email=payload.customer_email,
-                client_reference_id=payload.client_reference_id,
-                metadata={
-                    "plan": plan_id,
-                    "score": str(int(payload.score or 0)),
-                },
-            )
-        return JSONResponse(content={"id": session.get("id"), "url": session.get("url")})
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-class StripeVerifyCheckoutSessionRequest(BaseModel):
-    session_id: str
-
-
-@app.post("/api/stripe/verify-checkout-session")
-def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) -> JSONResponse:
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("endpoint", "stripe_verify_checkout_session")
-    
-    if not STRIPE_SECRET_KEY:
-        return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
-
-    try:
-        session = stripe.checkout.Session.retrieve(payload.session_id)
-        is_paid = bool(
-            session
-            and (
-                session.get("payment_status") in ("paid", "no_payment_required")
-                or (session.get("mode") == "subscription" and session.get("status") == "complete")
-            )
-        )
-        meta = session.get("metadata") or {}
-        plan_id = (meta.get("plan") or "basico").strip()
-        if plan_id not in PRICING:
-            plan_id = "basico"
-
-        return JSONResponse(
-            content={
-                "paid": is_paid,
-                "plan_id": plan_id,
-                "mode": session.get("mode"),
-                "payment_status": session.get("payment_status"),
-                "status": session.get("status"),
-                "customer_email": session.get("customer_details", {}).get("email"),
-            }
-        )
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-@app.get("/api/user/history/detail")
-def get_history_detail(id: str) -> JSONResponse:
-    """Retorna detalhes completos de uma análise específica."""
-    try:
-        from cache_manager import CacheManager
-        
-        cache_manager = CacheManager()
-        
-        # Busca o item completo pelo ID
-        response = cache_manager.supabase.table("cached_analyses").select("*").eq("id", id).execute()
-        
-        if not response.data or len(response.data) == 0:
-            return JSONResponse(status_code=404, content={"error": "Análise não encontrada"})
-        
-        item = response.data[0]
-        
-        return JSONResponse(content={"data": item["result_json"]})
-        
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-@app.post("/api/stripe/create-portal-session")
-def create_customer_portal_session(payload: dict) -> JSONResponse:
-    """Cria uma sessão do Stripe Customer Portal para gerenciamento de assinatura."""
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("endpoint", "stripe_create_portal_session")
-    
-    if not STRIPE_SECRET_KEY:
-        return JSONResponse(status_code=500, content={"error": "Stripe não configurado"})
-    
-    user_id = payload.get("user_id")
-    if not user_id:
-        return JSONResponse(status_code=400, content={"error": "user_id é obrigatório"})
-    
-    if not supabase_admin:
-        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
-    
-    try:
-        # Buscar assinatura ativa do usuário (inclui trialing e active)
-        subs = (
-            supabase_admin.table("subscriptions")
-            .select("stripe_customer_id")
-            .eq("user_id", user_id)
-            .in_("subscription_status", ["trialing", "active"])  # Inclui ambos os status
-            .order("current_period_end", desc=True)
-            .limit(1)
-            .execute()
-        )
-        
-        if not subs.data:
-            return JSONResponse(status_code=404, content={"error": "Nenhuma assinatura ativa encontrada"})
-        
-        subscription = subs.data[0]
-        customer_id = subscription.get("stripe_customer_id")
-        
-        if not customer_id:
-            return JSONResponse(status_code=400, content={"error": "ID do cliente Stripe não encontrado"})
-        
-        # Criar sessão do portal (configuração melhorada)
-        try:
-            portal_session = stripe.billing_portal.Session.create(
-                customer=customer_id,
-                return_url=f"{FRONTEND_CHECKOUT_RETURN_URL}?portal=success&message=Gerenciamento+concluído",
-                # Adicionar opções de gerenciamento
-                configuration="bpc_1SxpO12VONQto1dcK2hFz3m7" if hasattr(stripe.billing_portal.Configuration, 'list') else None
-            )
-            
-            print(f"[DEBUG] Portal session criada: {portal_session.id}")
-            print(f"[DEBUG] Portal URL: {portal_session.url}")
-            
-            return JSONResponse(content={"portal_url": portal_session.url})
-            
-        except Exception as config_error:
-            # Fallback: usar URL de teste direta se houver erro de configuração
-            print(f"[DEBUG] Erro na configuração: {config_error}")
-            print(f"[DEBUG] Usando fallback com URL de portal real")
-            
-            # URL do portal real com faturas (incluindo R$ 1,99)
-            final_portal_url = "https://billing.stripe.com/p/session/test_YWNjdF8xU3RBb3cyVk9OUXRvMWRjLF9UdlR6dkQ1NDl6dVhpZ21RZ0FLbHFBY2RXb1dWeWo50100QN8spZGJ"
-            
-            return JSONResponse(content={"portal_url": final_portal_url})
-        
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        logger.error(f"❌ Erro ao criar portal session: {e}")
-        return JSONResponse(status_code=500, content={"error": f"Erro ao criar portal: {str(e)}"})
-
-
-@app.get("/api/user/history")
-def get_user_history(user_id: str) -> JSONResponse:
-    try:
-        from cache_manager import CacheManager
-        
-        cache_manager = CacheManager()
-        history = cache_manager.get_user_history(user_id, limit=10)
-        
-        # Formata os dados para o frontend
-        formatted_history = []
-        for item in history:
-            formatted_history.append({
-                "id": item["id"],
-                "created_at": item["created_at"],
-                "job_description": item["job_description"][:100] + "..." if len(item["job_description"]) > 100 else item["job_description"],
-                "result_preview": {
-                    "veredito": item["result_json"].get("veredito", "N/A"),
-                    "score_ats": item["result_json"].get("score_ats", 0),
-                    "gaps_count": len(item["result_json"].get("gaps_fatais", []))
-                }
-            })
-        
-        return JSONResponse(content={"history": formatted_history})
-        
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
-
-
-@app.get("/api/admin/cache-stats")
-def get_cache_stats() -> JSONResponse:
-    """
-    Endpoint de admin para monitorar estatísticas do cache.
-    Retorna dados sobre áreas populares para análise de pre-warming.
-    """
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("endpoint", "admin_cache_stats")
-    
-    try:
-        from cache_manager import CacheManager
-        
-        cache_manager = CacheManager()
-        stats = cache_manager.get_cache_stats()
-        
-        return JSONResponse(content=stats)
-        
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        logger.error(f"❌ Erro ao buscar estatísticas do cache: {e}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"{type(e).__name__}: {e}"}
-        )
-
-
-def _process_analysis_background(
-    session_id: str,
-    user_id: str,
-    file_bytes: bytes,
-    job_description: str,
-    area_of_interest: str,
-    competitors_bytes: list[bytes] | None = None
-) -> None:
-    """
-    Função background para processamento assíncrono da análise.
-    Usa orquestrador streaming com progressive loading.
-    """
-    import sentry_sdk
-    
-    sentry_sdk.set_context("user", {"id": user_id})
-    sentry_sdk.set_tag("background_task", "process_analysis")
-    
-    try:
-        # Importar orquestrador streaming
-        from llm_core import analyze_cv_orchestrator_streaming
-        from logic import extrair_texto_pdf
-        import io
-        
-        # Etapa 1: Extrair texto do PDF
-        logger.info(f"🔍 Extrando texto do PDF para sessão {session_id}")
-        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
-        
-        if not cv_text or len(cv_text.strip()) < 100:
-            logger.error(f"❌ PDF vazio ou muito pequeno para sessão {session_id}")
-            from llm_core import update_session_progress
-            update_session_progress(session_id, {"error": "PDF vazio ou inválido"}, "failed")
-            return
-        
-        # Preparar competidores
-        competitors_text = None
-        if competitors_bytes:
-            competitors_texts = []
-            for comp_bytes in competitors_bytes:
-                comp_text = extrair_texto_pdf(io.BytesIO(comp_bytes))
-                if comp_text:
-                    competitors_texts.append(comp_text)
-            competitors_text = "\n\n---\n\n".join(competitors_texts) if competitors_texts else None
-        
-        # Carregar catálogo de livros
-        try:
-            import json
-            from pathlib import Path
-            books_file = Path(__file__).parent.parent / "data" / "books_catalog.json"
-            with open(books_file, 'r', encoding='utf-8') as f:
-                books_catalog = json.load(f)
-        except Exception as e:
-            logger.warning(f"⚠️ Erro ao carregar catálogo de livros: {e}")
-            books_catalog = []
-        
-        # Chamar orquestrador streaming
-        logger.info(f"🚀 Iniciando orquestrador streaming para sessão {session_id}")
-        analyze_cv_orchestrator_streaming(
-            session_id=session_id,
-            cv_text=cv_text,
-            job_description=job_description,
-            area_of_interest=area_of_interest,
-            books_catalog=books_catalog,
-            competitors_text=competitors_text
-        )
-        
-        logger.info(f"✅ Orquestrador concluído para sessão {session_id}")
-        
-    except Exception as e:
-        logger.error(f"❌ Erro fatal no background task {session_id}: {e}")
-        sentry_sdk.capture_exception(e)
-        
-        # Atualizar status para falha
-        try:
-            from llm_core import update_session_progress
-            error_data = {
-                "error": f"Erro fatal no processamento: {str(e)}",
-                "error_type": type(e).__name__
-            }
-            update_session_progress(session_id, error_data, "failed")
-        except Exception as update_error:
-            logger.error(f"❌ Erro ao atualizar status para failed: {update_error}")
-
+# ============================================================
+# INTERVIEW ENDPOINTS (complex internal deps, stay in main)
+# ============================================================
 
 @app.post("/api/interview/analyze")
 @limiter.limit("10/minute")
@@ -2058,8 +211,6 @@ async def analyze_interview_response(
     Endpoint principal para análise de resposta de entrevista.
     Transcreve o áudio e analisa a resposta usando IA.
     """
-    import sentry_sdk
-    
     sentry_sdk.set_tag("endpoint", "interview_analyze")
     
     try:
@@ -2145,8 +296,6 @@ async def generate_interview_questions(
     """
     Gera perguntas ultra-personalizadas baseadas na análise completa do CV.
     """
-    import sentry_sdk
-    
     sentry_sdk.set_tag("endpoint", "interview_generate_questions")
     
     try:
@@ -2204,8 +353,6 @@ async def pre_interview_analysis(
     """
     Analisa prontificação do candidato e gera plano de preparação.
     """
-    import sentry_sdk
-    
     sentry_sdk.set_tag("endpoint", "interview_pre_analysis")
     
     try:
@@ -2257,9 +404,6 @@ async def analyze_interview_advanced(
     """
     Análise avançada com contexto completo do CV e benchmark.
     """
-    import sentry_sdk
-    import json
-    
     sentry_sdk.set_tag("endpoint", "interview_analyze_advanced")
     
     try:
@@ -2345,6 +489,57 @@ async def analyze_interview_advanced(
             content={"error": f"{type(e).__name__}: {e}"}
         )
 
+
+@app.get("/api/interview/questions/{cv_analysis_id}")
+def get_interview_questions(cv_analysis_id: str) -> JSONResponse:
+    """
+    Gera perguntas personalizadas baseadas na análise do CV.
+    """
+    sentry_sdk.set_tag("endpoint", "interview_questions")
+    
+    try:
+        if not supabase_admin:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Database não configurada"}
+            )
+        
+        # Buscar análise do CV
+        result = supabase_admin.table("analysis_sessions")\
+            .select("result_data")\
+            .eq("id", cv_analysis_id)\
+            .single()\
+            .execute()
+        
+        if not result.data:
+            return JSONResponse(
+                status_code=404,
+                content={"error": "Análise não encontrada"}
+            )
+        
+        report_data = result.data["result_data"]
+        
+        # Gerar perguntas baseadas no CV e setor
+        questions = _generate_interview_questions(report_data)
+        
+        return JSONResponse(content={
+            "questions": questions,
+            "total_questions": len(questions),
+            "sector": report_data.get("setor_detectado", "Tecnologia")
+        })
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro ao gerar perguntas: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )
+
+
+# ============================================================
+# INTERVIEW HELPER FUNCTIONS
+# ============================================================
 
 def _generate_interview_questions_wow_old(report_data: dict, mode: str, difficulty: str, focus_areas: List[str]) -> List[dict]:
     """
@@ -2632,55 +827,6 @@ def _generate_next_level_insights(feedback: dict, cv_context: dict) -> dict:
     }
 
 
-@app.get("/api/interview/questions/{cv_analysis_id}")
-def get_interview_questions(cv_analysis_id: str) -> JSONResponse:
-    """
-    Gera perguntas personalizadas baseadas na análise do CV.
-    """
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("endpoint", "interview_questions")
-    
-    try:
-        if not supabase_admin:
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Database não configurada"}
-            )
-        
-        # Buscar análise do CV
-        result = supabase_admin.table("analysis_sessions")\
-            .select("result_data")\
-            .eq("id", cv_analysis_id)\
-            .single()\
-            .execute()
-        
-        if not result.data:
-            return JSONResponse(
-                status_code=404,
-                content={"error": "Análise não encontrada"}
-            )
-        
-        report_data = result.data["result_data"]
-        
-        # Gerar perguntas baseadas no CV e setor
-        questions = _generate_interview_questions(report_data)
-        
-        return JSONResponse(content={
-            "questions": questions,
-            "total_questions": len(questions),
-            "sector": report_data.get("setor_detectado", "Tecnologia")
-        })
-        
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        logger.error(f"❌ Erro ao gerar perguntas: {e}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"{type(e).__name__}: {e}"}
-        )
-
-
 def _generate_interview_questions(report_data: dict) -> list[dict]:
     """
     Gera perguntas personalizadas baseadas no CV do candidato.
@@ -2793,91 +939,6 @@ def _detect_experience_level(report_data: dict) -> str:
         return "pleno"
     else:
         return "junior"
-
-
-@app.post("/api/stripe/webhook")
-async def stripe_webhook(request: Request) -> JSONResponse:
-    """
-    Webhook do Stripe para garantir ativação de créditos independente do frontend.
-    CRÍTICO: Evita perda de pagamentos se usuário fechar navegador.
-    """
-    import sentry_sdk
-    
-    sentry_sdk.set_tag("endpoint", "stripe_webhook")
-    
-    # 1. Verificar se webhook secret está configurado
-    webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
-    if not webhook_secret:
-        logger.error("❌ STRIPE_WEBHOOK_SECRET não configurado")
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Webhook não configurado"}
-        )
-    
-    # 2. Ler payload
-    body = await request.body()
-    signature_header = request.headers.get("stripe-signature")
-    
-    if not signature_header:
-        logger.error("❌ Stripe signature header ausente")
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Assinatura ausente"}
-        )
-    
-    # 3. Verificar assinatura
-    try:
-        from stripe_webhooks import verify_webhook_signature
-        if not verify_webhook_signature(body, signature_header):
-            logger.error("❌ Assinatura do webhook inválida")
-            return JSONResponse(
-                status_code=401,
-                content={"error": "Assinatura inválida"}
-            )
-    except Exception as e:
-        logger.error(f"❌ Erro ao verificar assinatura: {e}")
-        return JSONResponse(
-            status_code=401,
-            content={"error": "Erro na verificação"}
-        )
-    
-    # 4. Processar evento
-    try:
-        event = json.loads(body)
-        event_type = event.get("type")
-        event_data = event.get("data", {})
-        
-        logger.info(f"🔥 [WEBHOOK] Recebido evento: {event_type}")
-        
-        # Importar processador de webhooks
-        from stripe_webhooks import process_webhook_event
-        
-        result = process_webhook_event(event_type, event_data)
-        
-        # Log resultado
-        if result["success"]:
-            logger.info(f"✅ [WEBHOOK] {result['message']}")
-            return JSONResponse(content=result)
-        else:
-            logger.error(f"❌ [WEBHOOK] {result['message']}")
-            return JSONResponse(
-                status_code=400,
-                content=result
-            )
-            
-    except json.JSONDecodeError as e:
-        logger.error(f"❌ JSON inválido no webhook: {e}")
-        return JSONResponse(
-            status_code=400,
-            content={"error": "JSON inválido"}
-        )
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        logger.error(f"❌ Erro crítico no webhook: {e}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Erro interno"}
-        )
 
 
 if __name__ == "__main__":

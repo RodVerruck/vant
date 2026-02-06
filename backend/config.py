@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     
     # Price IDs
     STRIPE_PRICE_ID_PRO_MONTHLY: str = Field(default="", description="Price ID PRO Mensal")
+    STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD: str = Field(default="", description="Price ID PRO Mensal Early Bird")
+    STRIPE_PRICE_ID_PRO_ANNUAL: str = Field(default="", description="Price ID PRO Anual")
+    STRIPE_PRICE_ID_TRIAL: str = Field(default="", description="Price ID Trial")
+    STRIPE_PRICE_ID_CREDIT_1: str = Field(default="", description="Price ID Crédito 1")
+    STRIPE_PRICE_ID_CREDIT_3: str = Field(default="", description="Price ID Crédito 3")
+    STRIPE_PRICE_ID_CREDIT_5: str = Field(default="", description="Price ID Crédito 5")
     
     # Frontend URLs
     FRONTEND_CHECKOUT_RETURN_URL: str = Field(default="http://localhost:3000/app", description="URL de retorno do checkout")
@@ -45,7 +51,7 @@ class Settings(BaseSettings):
     REQUEST_TIMEOUT_GLOBAL: int = Field(default=180, description="Timeout global em segundos")
     REQUEST_TIMEOUT_INDIVIDUAL: int = Field(default=120, description="Timeout individual em segundos")
     
-    model_config = {"env_file": ".env.local", "case_sensitive": True}
+    model_config = {"env_file": ".env.local", "case_sensitive": True, "extra": "ignore"}
 
 
 # Instância global para uso em toda aplicação

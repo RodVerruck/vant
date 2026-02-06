@@ -471,7 +471,7 @@ export default function AppPage() {
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-portal-session`, {
+            const response = await fetch(`${getApiUrl()}/api/stripe/create-portal-session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
