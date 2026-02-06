@@ -335,11 +335,12 @@ def create_customer_portal_session(payload: dict) -> JSONResponse:
             return JSONResponse(status_code=400, content={"error": "ID do cliente Stripe não encontrado"})
         
         # Criar sessão do portal
+        return_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?portal=success&message=Gerenciamento+concluido"
+        
         try:
             portal_session = stripe.billing_portal.Session.create(
                 customer=customer_id,
-                return_url=f"{FRONTEND_CHECKOUT_RETURN_URL}?portal=success&message=Gerenciamento+concluído",
-                configuration="bpc_1SxpO12VONQto1dcK2hFz3m7" if hasattr(stripe.billing_portal.Configuration, 'list') else None
+                return_url=return_url,
             )
             
             print(f"[DEBUG] Portal session criada: {portal_session.id}")
@@ -347,14 +348,9 @@ def create_customer_portal_session(payload: dict) -> JSONResponse:
             
             return JSONResponse(content={"portal_url": portal_session.url})
             
-        except Exception as config_error:
-            print(f"[DEBUG] Erro na configuração: {config_error}")
-            print(f"[DEBUG] Usando fallback com URL de portal real")
-            
-            # URL do portal real com faturas (incluindo R$ 1,99)
-            final_portal_url = "https://billing.stripe.com/p/session/test_YWNjdF8xU3RBb3cyVk9OUXRvMWRjLF9UdlR6dkQ1NDl6dVhpZ21RZ0FLbHFBY2RXb1dWeWo50100QN8spZGJ"
-            
-            return JSONResponse(content={"portal_url": final_portal_url})
+        except Exception as portal_error:
+            print(f"[DEBUG] Erro ao criar portal session: {portal_error}")
+            return JSONResponse(status_code=500, content={"error": f"Erro ao criar portal: {str(portal_error)}"})
         
     except Exception as e:
         sentry_sdk.capture_exception(e)
