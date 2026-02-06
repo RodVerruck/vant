@@ -82,17 +82,8 @@ app = FastAPI(title="Vant API", version="0.1.0")
 # Incluir router de persistência
 app.include_router(interview_router)
 
-@app.middleware("http")
-async def timeout_middleware(request: Request, call_next):
-    """Timeout global de 180 segundos para todas as requests."""
-    try:
-        return await asyncio.wait_for(call_next(request), timeout=180.0)
-    except asyncio.TimeoutError:
-        logger.error(f"⏱️ Timeout na rota: {request.url.path}")
-        return JSONResponse(
-            status_code=504,
-            content={"error": "Request timeout. Tente novamente em alguns instantes."}
-        )
+# Timeout global removido para não quebrar uploads de arquivos grandes
+# Use timeouts específicos nas chamadas HTTP externas em vez de middleware global
 
 # Configuração de Rate Limiting
 limiter = Limiter(key_func=get_remote_address)
