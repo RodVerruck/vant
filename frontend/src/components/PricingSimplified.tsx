@@ -378,55 +378,64 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
       <div className="pricing-header">
         <h2 className="pricing-title">Escolha seu plano</h2>
         <p className="pricing-subtitle">
-          Comece grátis. Faça upgrade quando precisar.
+          Comece com o Trial ou assine o PRO para otimizar seus CVs.
         </p>
-
-        <div className="billing-toggle">
-          <button
-            className={`billing-option ${billingPeriod === "monthly" ? "active" : ""}`}
-            onClick={() => setBillingPeriod("monthly")}
-          >
-            Mensal
-          </button>
-          <button
-            className={`billing-option ${billingPeriod === "annual" ? "active" : ""}`}
-            onClick={() => setBillingPeriod("annual")}
-          >
-            Anual
-            <span className="discount-badge">-29%</span>
-          </button>
-        </div>
       </div>
 
       <div className="pricing-grid">
-        {/* FREE TIER */}
-        <div className="tier-card" data-cy="plan-free" onClick={() => onSelectPlan("free")}>
-          <div className="tier-icon">🆓</div>
-          <h3 className="tier-name">Gratuito</h3>
-          <p className="tier-description">Teste Agora</p>
+        {/* TRIAL TIER */}
+        {showTrial && (
+          <div className="tier-card highlighted" data-cy="plan-trial" onClick={() => onSelectPlan("trial")}>
+            <div className="tier-badge">RECOMENDADO ⭐</div>
+            <div className="tier-icon">🚀</div>
+            <h3 className="tier-name">Trial 7 Dias</h3>
+            <p className="tier-description">Teste o PRO completo por 7 dias</p>
 
-          <div className="tier-price">
-            <div className="price-main">
-              <span className="price-amount">Grátis</span>
+            <div className="tier-price">
+              <div className="price-main">
+                <span className="price-currency">R$</span>
+                <span className="price-amount">1,99</span>
+              </div>
+              <div className="price-detail">Após 7 dias: R$ 19,90/mês (desconto vitalício)</div>
             </div>
+
+            <ul className="tier-features">
+              <li>30 Otimizações para testar</li>
+              <li>Download de CV Otimizado (PDF + Word)</li>
+              <li>Simulador de Entrevista com IA</li>
+              <li>X-Ray Search - Encontre Recrutadores</li>
+              <li>Biblioteca Recomendada</li>
+              <li>Reembolso automático se cancelar em 48h</li>
+            </ul>
+
+            <button className="tier-cta">COMEÇAR TRIAL R$ 1,99</button>
           </div>
-
-          <ul className="tier-features">
-            <li>1 Análise Completa</li>
-            <li>Score ATS Detalhado</li>
-            <li>43 Critérios Avaliados</li>
-            <li>3 Sugestões de Melhoria</li>
-          </ul>
-
-          <button className="tier-cta">ANALISAR MEU CV GRÁTIS</button>
-        </div>
+        )}
 
         {/* PRO TIER */}
-        <div className="tier-card highlighted" data-cy="plan-pro" onClick={() => onSelectPlan(billingPeriod === "monthly" ? "pro_monthly" : "pro_annual")}>
-          <div className="tier-badge">MAIS POPULAR ⭐</div>
-          <div className="tier-icon">🚀</div>
+        <div className={`tier-card ${!showTrial ? 'highlighted' : ''}`} data-cy="plan-pro" onClick={() => onSelectPlan(billingPeriod === "monthly" ? "pro_monthly" : "pro_annual")}>
+          {!showTrial && <div className="tier-badge">MAIS POPULAR ⭐</div>}
+          <div className="tier-icon">�</div>
           <h3 className="tier-name">PRO</h3>
           <p className="tier-description">Para quem busca oportunidades ativamente</p>
+
+          <div style={{ marginBottom: 16 }}>
+            <div className="billing-toggle">
+              <button
+                className={`billing-option ${billingPeriod === "monthly" ? "active" : ""}`}
+                onClick={(e) => { e.stopPropagation(); setBillingPeriod("monthly"); }}
+              >
+                Mensal
+              </button>
+              <button
+                className={`billing-option ${billingPeriod === "annual" ? "active" : ""}`}
+                onClick={(e) => { e.stopPropagation(); setBillingPeriod("annual"); }}
+              >
+                Anual
+                <span className="discount-badge">-29%</span>
+              </button>
+            </div>
+          </div>
 
           <div className="tier-price">
             {billingPeriod === "monthly" ? (
@@ -450,23 +459,21 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
           </div>
 
           <ul className="tier-features">
-            <li>Otimizações ILIMITADAS</li>
+            <li>30 Otimizações por mês</li>
             <li>Download de CV Otimizado (PDF + Word)</li>
             <li>Simulador de Entrevista com IA</li>
             <li>X-Ray Search - Encontre Recrutadores</li>
             <li>Biblioteca Recomendada</li>
           </ul>
 
-          <button className="tier-cta">
-            {showTrial ? "COMEÇAR TRIAL R$ 1,99" : "ASSINAR PRO"}
-          </button>
+          <button className="tier-cta">ASSINAR PRO</button>
         </div>
       </div>
 
       {/* CRÉDITOS AVULSOS */}
       <div className="credits-section">
         <div className="credits-header">
-          <h3 className="credits-title">💎 Precisa apenas de 1 otimização?</h3>
+          <h3 className="credits-title">💎 Precisa de poucas otimizações?</h3>
           <p className="credits-subtitle">Compre créditos avulsos sem compromisso mensal</p>
         </div>
 
@@ -478,7 +485,15 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
             <button className="credit-cta">COMPRAR CRÉDITO</button>
           </div>
 
-          <div className="credit-card popular" data-cy="plan-credit-5" onClick={() => onSelectPlan("credit_5")}>
+          <div className="credit-card popular" data-cy="plan-credit-3" onClick={() => onSelectPlan("credit_3")}>
+            <div className="credit-badge">ECONOMIZE 23%</div>
+            <div className="credit-name">Pacote 3 CVs</div>
+            <div className="credit-price">R$ 29,90</div>
+            <div className="credit-detail">R$ 9,97 por CV • Válido 6 meses</div>
+            <button className="credit-cta">COMPRAR PACOTE</button>
+          </div>
+
+          <div className="credit-card" data-cy="plan-credit-5" onClick={() => onSelectPlan("credit_5")}>
             <div className="credit-badge">ECONOMIZE 22%</div>
             <div className="credit-name">Pacote 5 CVs</div>
             <div className="credit-price">R$ 49,90</div>

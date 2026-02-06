@@ -2577,18 +2577,11 @@ export default function AppPage() {
 
             {stage === "pricing" && (
                 <div className="hero-container">
-                    <div style={{ textAlign: "center", marginBottom: 32 }}>
-                        <h2 style={{ color: "#F8FAFC", fontSize: "2rem", fontWeight: 700, marginBottom: 16 }}>
-                            Escolha seu plano
-                        </h2>
-                        <p style={{ color: "#CBD5E1", fontSize: "1.1rem" }}>
-                            Mais créditos para mais análises e otimizações
-                        </p>
-                    </div>
                     <PricingSimplified
                         onSelectPlan={(planId) => {
                             setSelectedPlan(planId);
-                            setStage("preview");
+                            if (!authUserId) setShowAuthModal(true);
+                            else setStage("checkout");
                         }}
                         currentPlan={selectedPlan}
                         showTrial={true}
