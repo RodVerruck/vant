@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import logging
 import os
 import sys
@@ -2743,6 +2744,91 @@ def _detect_experience_level(report_data: dict) -> str:
         return "pleno"
     else:
         return "junior"
+
+
+@app.post("/api/stripe/webhook")
+async def stripe_webhook(request: Request) -> JSONResponse:
+    """
+    Webhook do Stripe para garantir ativação de créditos independente do frontend.
+    CRÍTICO: Evita perda de pagamentos se usuário fechar navegador.
+    """
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "stripe_webhook")
+    
+    # 1. Verificar se webhook secret está configurado
+    webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+    if not webhook_secret:
+        logger.error("❌ STRIPE_WEBHOOK_SECRET não configurado")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Webhook não configurado"}
+        )
+    
+    # 2. Ler payload
+    body = await request.body()
+    signature_header = request.headers.get("stripe-signature")
+    
+    if not signature_header:
+        logger.error("❌ Stripe signature header ausente")
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Assinatura ausente"}
+        )
+    
+    # 3. Verificar assinatura
+    try:
+        from stripe_webhooks import verify_webhook_signature
+        if not verify_webhook_signature(body, signature_header):
+            logger.error("❌ Assinatura do webhook inválida")
+            return JSONResponse(
+                status_code=401,
+                content={"error": "Assinatura inválida"}
+            )
+    except Exception as e:
+        logger.error(f"❌ Erro ao verificar assinatura: {e}")
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Erro na verificação"}
+        )
+    
+    # 4. Processar evento
+    try:
+        event = json.loads(body)
+        event_type = event.get("type")
+        event_data = event.get("data", {})
+        
+        logger.info(f"🔥 [WEBHOOK] Recebido evento: {event_type}")
+        
+        # Importar processador de webhooks
+        from stripe_webhooks import process_webhook_event
+        
+        result = process_webhook_event(event_type, event_data)
+        
+        # Log resultado
+        if result["success"]:
+            logger.info(f"✅ [WEBHOOK] {result['message']}")
+            return JSONResponse(content=result)
+        else:
+            logger.error(f"❌ [WEBHOOK] {result['message']}")
+            return JSONResponse(
+                status_code=400,
+                content=result
+            )
+            
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ JSON inválido no webhook: {e}")
+        return JSONResponse(
+            status_code=400,
+            content={"error": "JSON inválido"}
+        )
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro crítico no webhook: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Erro interno"}
+        )
 
 
 if __name__ == "__main__":
