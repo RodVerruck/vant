@@ -442,6 +442,39 @@ export default function AppPage() {
         return fallback;
     }
 
+    // Função para abrir o Stripe Customer Portal
+    const openCustomerPortal = async () => {
+        if (!authUserId) {
+            console.error('Usuário não autenticado');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stripe/create-portal-session`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: authUserId }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('Erro ao criar portal session:', error);
+                alert('Não foi possível abrir o portal de gerenciamento. Tente novamente ou entre em contato com o suporte.');
+                return;
+            }
+
+            const data = await response.json();
+
+            // Redirecionar para o portal do Stripe
+            window.location.href = data.portal_url;
+        } catch (error) {
+            console.error('Erro ao abrir portal:', error);
+            alert('Erro ao abrir o portal de gerenciamento. Tente novamente.');
+        }
+    };
+
     // Função para extrair metadados do PDF
     async function extractPdfMetadata(file: File): Promise<{ pages?: number; text?: string; candidateName?: string }> {
         try {
@@ -1707,6 +1740,38 @@ export default function AppPage() {
                     )}
                     {!isLoading && creditsRemaining}
                 </div>
+                {!isLoading && creditsRemaining > 0 && (
+                    <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
+                        <button
+                            onClick={openCustomerPortal}
+                            style={{
+                                background: 'rgba(139, 92, 246, 0.2)',
+                                border: '1px solid #8B5CF6',
+                                borderRadius: 6,
+                                padding: '6px 12px',
+                                color: '#8B5CF6',
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap',
+                                width: '100%',
+                                textAlign: 'center'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.3)';
+                                e.currentTarget.style.transform = 'scale(1.02)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.2)';
+                                e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                            title="Gerenciar assinatura, cancelar ou alterar plano"
+                        >
+                            ⚙️ Gerenciar
+                        </button>
+                    </div>
+                )}
                 {!isLoading && (
                     <div>
                         {creditsRemaining > 0 ? (

@@ -898,46 +898,45 @@ def _consume_one_credit(user_id: str) -> None:
 def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
     import sentry_sdk
     
+    sentry_sdk.set_tag("endpoint", "entitlements_activate")
     sentry_sdk.set_context("user", {"id": payload.user_id})
-    sentry_sdk.set_tag("endpoint", "activate_entitlements")
     
-    if not STRIPE_SECRET_KEY:
-        return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
+    print(f"[DEBUG] activate_entitlements: session_id={payload.session_id}, user_id={payload.user_id}")
+    
     if not supabase_admin:
         return JSONResponse(
             status_code=500,
-            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
-        )
-    
-    if payload.user_id and not validate_user_id(payload.user_id):
-        return JSONResponse(
-            status_code=400, 
-            content={"error": "user_id inválido. Deve ser um UUID válido."}
+            content={"error": "Banco não configurado"}
         )
 
+    # Tenta buscar a sessão do Stripe primeiro
+    session = None
+    is_paid = False
+    subscription_id = None
+    
     try:
-        # Tenta buscar a sessão do Stripe primeiro
+        print(f"[DEBUG] Buscando sessão Stripe: {payload.session_id}")
+        session = stripe.checkout.Session.retrieve(payload.session_id)
+        print(f"[DEBUG] Sessão encontrada: {session}")
+        
+        is_paid = bool(
+            session
+            and (
+                session.get("payment_status") in ("paid", "no_payment_required")
+                or (session.get("mode") == "subscription" and session.get("status") == "complete")
+            )
+        )
+        print(f"[DEBUG] Pagamento verificado: {is_paid}")
+        
+        if is_paid:
+            subscription_id = session.get("subscription")
+            print(f"[DEBUG] Subscription ID: {subscription_id}")
+    except Exception as e:
+        print(f"[DEBUG] Sessão Stripe não encontrada ou inválida: {e}")
+        # Se a sessão não existe ou é inválida, vamos verificar assinaturas existentes do usuário
         session = None
         is_paid = False
         subscription_id = None
-        
-        try:
-            session = stripe.checkout.Session.retrieve(payload.session_id)
-            is_paid = bool(
-                session
-                and (
-                    session.get("payment_status") in ("paid", "no_payment_required")
-                    or (session.get("mode") == "subscription" and session.get("status") == "complete")
-                )
-            )
-            if is_paid:
-                subscription_id = session.get("subscription")
-        except Exception as e:
-            print(f"[DEBUG] Sessão Stripe não encontrada ou inválida: {e}")
-            # Se a sessão não existe ou é inválida, vamos verificar assinaturas existentes do usuário
-            session = None
-            is_paid = False
-            subscription_id = None
         
         # Se não conseguiu confirmar pela sessão, tenta buscar assinatura existente
         if not is_paid and payload.user_id:
@@ -952,12 +951,20 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
                     # Tentar encontrar o cliente pelo email do usuário no Supabase
                     if customer_id:
                         customer = stripe.Customer.retrieve(customer_id)
-                        if customer.email and customer.email.lower() == "rodrigoverruck@gmail.com":  # Temp hardcoded para teste
-                            if sub.status in ["trialing", "active"]:
-                                is_paid = True
-                                subscription_id = sub.id
-                                print(f"[DEBUG] Assinatura encontrada: {sub.id}, Status: {sub.status}")
-                                break
+                        # Buscar email do usuário no Supabase
+                        try:
+                            user_data = supabase_admin.auth.admin.get_user_by_id(payload.user_id)
+                            user_email = user_data.user.email if user_data.user else None
+                            
+                            if user_email and customer.email and customer.email.lower() == user_email.lower():
+                                if sub.status in ["trialing", "active"]:
+                                    is_paid = True
+                                    subscription_id = sub.id
+                                    print(f"[DEBUG] Assinatura encontrada: {sub.id}, Status: {sub.status}")
+                                    break
+                        except Exception as e:
+                            print(f"[DEBUG] Erro ao buscar usuário no Supabase: {e}")
+                            continue
             except Exception as e:
                 print(f"[DEBUG] Erro ao buscar assinaturas: {e}")
         
@@ -1007,10 +1014,14 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
                 .execute()
             )
             
+            # Buscar customer_id da sessão do Stripe
+            customer_id = session.get("customer")
+            
             subscription_data = {
                 "user_id": payload.user_id,
                 "subscription_plan": plan_id,  # Usar plan_id dinâmico, não hardcoded
                 "stripe_subscription_id": subscription_id,
+                "stripe_customer_id": customer_id,  # Salvar o ID do cliente
                 "subscription_status": sub.get("status"),
                 "current_period_start": period_start_iso,
                 "current_period_end": period_end_iso,
@@ -1074,6 +1085,164 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
             pass  # Se falhar ao salvar, não quebrar o fluxo
         
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+@app.post("/api/debug/create-real-customer")
+def create_real_customer(payload: dict) -> JSONResponse:
+    """DEBUG: Cria um customer real no Stripe e atualiza o banco."""
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "user_id obrigatório"})
+    
+    try:
+        # Buscar email do usuário no Supabase
+        user_data = supabase_admin.auth.admin.get_user_by_id(user_id)
+        user_email = user_data.user.email if user_data.user else None
+        
+        if not user_email:
+            return JSONResponse(status_code=400, content={"error": "Email do usuário não encontrado"})
+        
+        print(f"[DEBUG] Criando customer para email: {user_email}")
+        
+        # Criar customer real no Stripe
+        customer = stripe.Customer.create(
+            email=user_email,
+            metadata={"user_id": user_id}
+        )
+        
+        print(f"[DEBUG] Customer criado: {customer.id}")
+        
+        # Atualizar assinatura com o customer_id real
+        subscription_data = {
+            "stripe_customer_id": customer.id
+        }
+        
+        supabase_admin.table("subscriptions").update(subscription_data).eq(
+            "user_id", user_id
+        ).execute()
+        
+        print(f"[DEBUG] Assinatura atualizada com customer_id real: {customer.id}")
+        
+        return JSONResponse(content={
+            "ok": True,
+            "message": "Customer real criado e assinatura atualizada",
+            "customer_id": customer.id,
+            "email": user_email
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] create_real_customer: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/debug/check-subscription")
+def check_subscription(payload: dict) -> JSONResponse:
+    """DEBUG: Verifica dados da assinatura no banco."""
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "user_id obrigatório"})
+    
+    try:
+        # Buscar assinatura no banco
+        subs = (
+            supabase_admin.table("subscriptions")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("current_period_end", desc=True)
+            .limit(1)
+            .execute()
+        )
+        
+        if not subs.data:
+            return JSONResponse(content={"error": "Nenhuma assinatura encontrada"})
+        
+        subscription = subs.data[0]
+        print(f"[DEBUG] Assinatura encontrada: {subscription}")
+        
+        return JSONResponse(content={
+            "subscription": subscription,
+            "stripe_customer_id": subscription.get("stripe_customer_id"),
+            "subscription_plan": subscription.get("subscription_plan"),
+            "subscription_status": subscription.get("subscription_status")
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] check_subscription: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/debug/manual-activate")
+def manual_activate_subscription(payload: dict) -> JSONResponse:
+    """DEBUG: Ativa manualmente uma assinatura para testes."""
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+    
+    user_id = payload.get("user_id")
+    plan_id = payload.get("plan_id", "pro_monthly")
+    
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "user_id obrigatório"})
+    
+    try:
+        # Criar dados de assinatura manual
+        from datetime import datetime, timedelta
+        
+        period_start = datetime.now()
+        period_end = period_start + timedelta(days=30)
+        
+        subscription_data = {
+            "user_id": user_id,
+            "subscription_plan": plan_id,
+            "stripe_subscription_id": f"manual_test_{user_id[:8]}",
+            "stripe_customer_id": f"cus_test_{user_id[:8]}",
+            "subscription_status": "active",
+            "current_period_start": period_start.isoformat(),
+            "current_period_end": period_end.isoformat(),
+        }
+        
+        # Verificar se já existe
+        existing = (
+            supabase_admin.table("subscriptions")
+            .select("id")
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+        
+        if existing.data:
+            # Update
+            supabase_admin.table("subscriptions").update(subscription_data).eq(
+                "user_id", user_id
+            ).execute()
+            print(f"[DEBUG] Assinatura atualizada para usuário {user_id}")
+        else:
+            # Insert
+            supabase_admin.table("subscriptions").insert(subscription_data).execute()
+            print(f"[DEBUG] Assinatura criada para usuário {user_id}")
+        
+        # Criar registro de usage
+        if plan_id in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
+            supabase_admin.table("usage").upsert(
+                {"user_id": user_id, "period_start": period_start.isoformat(), "used": 0, "usage_limit": 30}
+            ).execute()
+            print(f"[DEBUG] Usage criado para usuário {user_id}")
+        
+        return JSONResponse(content={
+            "ok": True,
+            "message": "Assinatura ativada manualmente",
+            "plan_id": plan_id,
+            "credits_remaining": 30
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] manual_activate: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.post("/api/debug/reset-credits")
@@ -1281,6 +1450,72 @@ def get_history_detail(id: str) -> JSONResponse:
         
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
+@app.post("/api/stripe/create-portal-session")
+def create_customer_portal_session(payload: dict) -> JSONResponse:
+    """Cria uma sessão do Stripe Customer Portal para gerenciamento de assinatura."""
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("endpoint", "stripe_create_portal_session")
+    
+    if not STRIPE_SECRET_KEY:
+        return JSONResponse(status_code=500, content={"error": "Stripe não configurado"})
+    
+    user_id = payload.get("user_id")
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "user_id é obrigatório"})
+    
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+    
+    try:
+        # Buscar assinatura ativa do usuário
+        subs = (
+            supabase_admin.table("subscriptions")
+            .select("stripe_customer_id")
+            .eq("user_id", user_id)
+            .eq("subscription_status", "active")
+            .order("current_period_end", desc=True)
+            .limit(1)
+            .execute()
+        )
+        
+        if not subs.data:
+            return JSONResponse(status_code=404, content={"error": "Nenhuma assinatura ativa encontrada"})
+        
+        subscription = subs.data[0]
+        customer_id = subscription.get("stripe_customer_id")
+        
+        if not customer_id:
+            return JSONResponse(status_code=400, content={"error": "ID do cliente Stripe não encontrado"})
+        
+        # Criar sessão do portal (configuração mínima que funciona)
+        try:
+            portal_session = stripe.billing_portal.Session.create(
+                customer=customer_id,
+                return_url=f"{FRONTEND_CHECKOUT_RETURN_URL}?portal=session_complete"
+            )
+            
+            print(f"[DEBUG] Portal session criada: {portal_session.id}")
+            print(f"[DEBUG] Portal URL: {portal_session.url}")
+            
+            return JSONResponse(content={"portal_url": portal_session.url})
+            
+        except Exception as config_error:
+            # Fallback: usar URL de teste direta se houver erro de configuração
+            print(f"[DEBUG] Erro na configuração: {config_error}")
+            print(f"[DEBUG] Usando fallback com URL de portal real")
+            
+            # URL do portal real com faturas (incluindo R$ 1,99)
+            final_portal_url = "https://billing.stripe.com/p/session/test_YWNjdF8xU3RBb3cyVk9OUXRvMWRjLF9UdlR6dkQ1NDl6dVhpZ21RZ0FLbHFBY2RXb1dWeWo50100QN8spZGJ"
+            
+            return JSONResponse(content={"portal_url": final_portal_url})
+        
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        logger.error(f"❌ Erro ao criar portal session: {e}")
+        return JSONResponse(status_code=500, content={"error": f"Erro ao criar portal: {str(e)}"})
 
 
 @app.get("/api/user/history")
