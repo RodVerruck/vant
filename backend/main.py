@@ -49,7 +49,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 logger = logging.getLogger(__name__)
 
 import stripe
-from fastapi import FastAPI, File, Form, UploadFile, Request, BackgroundTasks
+from fastapi import FastAPI, File, Form, UploadFile, Request, BackgroundTasks, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -141,6 +141,12 @@ FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "htt
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
+# Chave secreta para proteger endpoints de debug
+DEBUG_API_SECRET = os.getenv("DEBUG_API_SECRET", "vant_debug_2026_secure_key")
+
+# Verificação de ambiente para endpoints de debug
+ALLOW_DEBUG_ENDPOINTS = os.getenv("ALLOW_DEBUG_ENDPOINTS", "false").lower() == "true"
+
 # Validação de variáveis críticas
 REQUIRED_ENV_VARS = {
     "SUPABASE_URL": SUPABASE_URL,
@@ -162,6 +168,49 @@ if missing_vars:
 supabase_admin = None
 if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+
+def verify_debug_access(x_debug_secret: str = Header(None, description="Debug API secret key")) -> bool:
+    """
+    Verifica se o request tem permissão para acessar endpoints de debug.
+    
+    Args:
+        x_debug_secret: Header X-Debug-Secret com a chave secreta
+        
+    Returns:
+        bool: True se tem permissão, False caso contrário
+        
+    Raises:
+        HTTPException: Se não tiver permissão (403 Forbidden)
+    """
+    # Em produção, endpoints de debug são bloqueados por padrão
+    if not ALLOW_DEBUG_ENDPOINTS and os.getenv("ENVIRONMENT") == "production":
+        raise HTTPException(
+            status_code=403,
+            detail="Debug endpoints are disabled in production"
+        )
+    
+    # Verificar chave secreta
+    if not x_debug_secret or x_debug_secret != DEBUG_API_SECRET:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid debug secret. Use X-Debug-Secret header."
+        )
+    
+    return True
+
+
+def log_debug_access(endpoint: str, user_id: str = None):
+    """Registra acesso aos endpoints de debug para auditoria."""
+    import sentry_sdk
+    
+    sentry_sdk.set_tag("debug_endpoint", endpoint)
+    sentry_sdk.set_tag("debug_access", "authorized")
+    
+    if user_id:
+        sentry_sdk.set_context("debug_user", {"user_id": user_id})
+    
+    logger.warning(f"🔧 DEBUG ENDPOINT ACCESS: {endpoint} by user_id={user_id or 'unknown'}")
 
 PRICING: dict[str, dict[str, Any]] = {
     # TIER GRATUITO
@@ -1081,8 +1130,14 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
 
 
 @app.post("/api/debug/create-real-customer")
-def create_real_customer(payload: dict) -> JSONResponse:
+def create_real_customer(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
     """DEBUG: Cria um customer real no Stripe e atualiza o banco."""
+    # Verificar permissão de acesso
+    verify_debug_access(x_debug_secret)
+    
+    # Log de acesso para auditoria
+    log_debug_access("create-real-customer", payload.get("user_id"))
+    
     if not supabase_admin:
         return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
     
@@ -1132,8 +1187,14 @@ def create_real_customer(payload: dict) -> JSONResponse:
 
 
 @app.get("/api/debug/find-user-by-email")
-def find_user_by_email(email: str) -> JSONResponse:
+def find_user_by_email(email: str, x_debug_secret: str = Header(None)) -> JSONResponse:
     """DEBUG: Busca usuário por email no Supabase."""
+    # Verificar permissão de acesso
+    verify_debug_access(x_debug_secret)
+    
+    # Log de acesso para auditoria
+    log_debug_access("find-user-by-email")
+    
     if not supabase_admin:
         return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
     
@@ -1175,8 +1236,14 @@ def find_user_by_email(email: str) -> JSONResponse:
 
 
 @app.post("/api/debug/create-supabase-user")
-def create_supabase_user(payload: dict) -> JSONResponse:
+def create_supabase_user(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
     """DEBUG: Cria usuário no banco diretamente para teste."""
+    # Verificar permissão de acesso
+    verify_debug_access(x_debug_secret)
+    
+    # Log de acesso para auditoria
+    log_debug_access("create-supabase-user", payload.get("user_id"))
+    
     if not supabase_admin:
         return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
     
@@ -1226,8 +1293,14 @@ def create_supabase_user(payload: dict) -> JSONResponse:
 
 
 @app.post("/api/debug/activate-by-email")
-def activate_by_email_endpoint(payload: dict) -> JSONResponse:
+def activate_by_email_endpoint(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
     """DEBUG: Ativa assinatura para usuário existente pelo email."""
+    # Verificar permissão de acesso
+    verify_debug_access(x_debug_secret)
+    
+    # Log de acesso para auditoria
+    log_debug_access("activate-by-email")
+    
     if not supabase_admin:
         return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
     
@@ -1307,8 +1380,14 @@ def activate_by_email_endpoint(payload: dict) -> JSONResponse:
 
 
 @app.get("/api/debug/all-subscriptions")
-def get_all_subscriptions() -> JSONResponse:
+def get_all_subscriptions(x_debug_secret: str = Header(None)) -> JSONResponse:
     """DEBUG: Retorna todas as assinaturas do banco."""
+    # Verificar permissão de acesso
+    verify_debug_access(x_debug_secret)
+    
+    # Log de acesso para auditoria
+    log_debug_access("all-subscriptions")
+    
     if not supabase_admin:
         return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
     
@@ -1347,8 +1426,14 @@ def get_all_subscriptions() -> JSONResponse:
 
 
 @app.post("/api/debug/check-subscription")
-def check_subscription(payload: dict) -> JSONResponse:
+def check_subscription(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
     """DEBUG: Verifica dados da assinatura no banco."""
+    # Verificar permissão de acesso
+    verify_debug_access(x_debug_secret)
+    
+    # Log de acesso para auditoria
+    log_debug_access("check-subscription", payload.get("user_id"))
+    
     if not supabase_admin:
         return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
     
@@ -1386,8 +1471,14 @@ def check_subscription(payload: dict) -> JSONResponse:
 
 
 @app.post("/api/debug/manual-activate")
-def manual_activate_subscription(payload: dict) -> JSONResponse:
+def manual_activate_subscription(payload: dict, x_debug_secret: str = Header(None)) -> JSONResponse:
     """DEBUG: Ativa manualmente uma assinatura para testes."""
+    # Verificar permissão de acesso
+    verify_debug_access(x_debug_secret)
+    
+    # Log de acesso para auditoria
+    log_debug_access("manual-activate", payload.get("user_id"))
+    
     if not supabase_admin:
         return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
     
@@ -1454,8 +1545,14 @@ def manual_activate_subscription(payload: dict) -> JSONResponse:
 
 
 @app.post("/api/debug/reset-credits")
-def reset_credits(payload: dict):
+def reset_credits(payload: dict, x_debug_secret: str = Header(None)):
     """DEBUG ONLY: Reseta créditos do usuário para 3."""
+    # Verificar permissão de acesso
+    verify_debug_access(x_debug_secret)
+    
+    # Log de acesso para auditoria
+    log_debug_access("reset-credits", payload.get("user_id"))
+    
     if not supabase_admin:
         raise HTTPException(status_code=500, detail="Supabase não configurado")
     user_id = payload.get("user_id")
