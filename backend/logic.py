@@ -1059,21 +1059,53 @@ VAGA ALVO:
 {job_description[:1500]}
 
 INSTRUÇÕES ESPECÍFICAS:
-1. Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV
+1. Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV para a área de {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
 2. **CRÍTICO**: Para exemplo_atual, copie EXATAMENTE um trecho real do CV (não modifique)
 3. **CRÍTICO**: Para exemplo_otimizado, use o MESMO trecho real mas apenas:
-   - Adicione palavras-chave da vaga que fazem sentido
-   - Melhore a linguagem profissional
+   - Adicione palavras-chave RELEVANTES PARA A ÁREA DE {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
+   - Melhore a linguagem profissional CONFORME A ÁREA
+   - **IMPORTANTE**: Se o gap for "Formatação inadequada", NÃO adicione termos técnicos de outras áreas. Foque APENAS em melhorar a estrutura e clareza.
    - NÃO invente números, porcentagens ou métricas
 4. **NÃO USE** "falta de métricas" ou "falta de números" como problema
-5. Foque APENAS nestes 4 tipos de problemas:
+5. Foque APENAS nestes 4 tipos de problemas RELEVANTES PARA A ÁREA:
    - Formatação inadequada (parágrafos longos, sem bullets, estrutura confusa)
    - Linguagem passiva (ex: "fui responsável por", "participei de" → "gerenciei", "implementei")
-   - Falta de palavras-chave técnicas da vaga
-   - Descrições genéricas sem especificidade ou detalhes relevantes
+   - Falta de palavras-chave ESPECÍFICAS DA ÁREA DE {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
+   - Descrições genéricas sem especificidade ou detalhes relevantes PARA A ÁREA
 6. Seja direto e objetivo
 7. **VERIFICAÇÃO OBRIGATÓRIA**: Não inclua "métricas", "números", "resultados quantitativos" em nenhum gap
 8. **VERIFICAÇÃO OBRIGATÓRIA**: Revise sua resposta antes de enviar para garantir que não há gaps sobre métricas
+9. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "rh_lideranca", foque em gaps como:
+   - Falta de termos de RH: "recrutamento", "seleção", "treinamento", "desenvolvimento", "gestão de pessoas"
+   - Experiências sem foco em liderança ou gestão
+   - Ausência de indicadores de RH (KPIs, metas, resultados com equipes)
+   - Descrições operacionais em vez de estratégicas
+10. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "ti_dev_gen", foque em gaps como:
+    - Falta de termos técnicos: "python", "java", "javascript", "react", "api", "microserviços"
+    - Tecnologias desatualizadas ou frameworks antigos
+    - Ausência de projetos ou GitHub/portfólio
+    - Descrições sem menção a arquitetura ou padrões
+11. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "ti_dados_ai", foque em gaps como:
+    - Falta de termos: "python", "sql", "machine learning", "analytics", "dashboard", "bi"
+    - Ausência de ferramentas: "pandas", "numpy", "tensorflow", "power bi", "tableau"
+    - Projetos sem resultados ou insights gerados
+    - Falta de estatística ou matemática aplicada
+12. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "marketing_growth", foque em gaps como:
+    - Falta de termos: "seo", "sem", "tráfego", "conversão", "funil", "crm", "mídias sociais"
+    - Ausência de métricas de marketing: "cpa", "roi", "cac", "ltv"
+    - Campanhas sem resultados ou KPIs
+    - Descrições sem menção a estratégias ou canais
+13. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "vendas_cs", foque em gaps como:
+    - Falta de termos: "negociação", "fechamento", "prospecção", "pipeline", "crm", "follow-up"
+    - Ausência de metas de vendas ou resultados
+    - Experiências sem menção a clientes ou contratos
+    - Falta de técnicas de vendas ou metodologias
+14. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "financeiro_corp", foque em gaps como:
+    - Falta de termos: "orçamento", "fluxo de caixa", "demonstrativos", "balanço", "kpis"
+    - Ausência de ferramentas: "excel", "sap", "erp", "sistema financeiro"
+    - Projetos sem impacto financeiro mensurável
+    - Descrições sem menção a controles ou auditoria
+
 5. DETECTE A ÁREA ESPECÍFICA:
    
    {"⚠️ ÁREA FORÇADA ESPECÍFICA: Use exatamente '" + forced_area.replace('_', ' ').upper() + "' como setor_detectado. Ignore outras detecções." if forced_area else ""}
