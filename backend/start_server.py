@@ -1,5 +1,5 @@
 import os
-from backend.server_config import run_server
+from server_config import run_server
 
 if __name__ == "__main__":
     # Detectar ambiente automaticamente

@@ -13,7 +13,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 # Importar endpoints de persistência
-from backend.interview_endpoints import router as interview_router
+from interview_endpoints import router as interview_router
 
 try:
     from generate_questions_fixed import _generate_interview_questions_wow_fixed
@@ -48,7 +48,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 # Configuração do logger
 # DEV ONLY: Importar configurações centralizadas (não afeta produção)
 try:
-    from backend.config import settings, validate_critical_settings, get_size_limit_bytes, IS_DEV
+    from config import settings, validate_critical_settings, get_size_limit_bytes, IS_DEV
     # Validar configurações críticas em DEV
     if IS_DEV:
         missing_vars = validate_critical_settings()
@@ -74,7 +74,7 @@ from slowapi.errors import RateLimitExceeded
 
 # Imports diretos sem manipulação de sys.path
 # O backend deve ser executado sempre com PYTHONPATH configurado corretamente
-from backend.logic import analyze_cv_logic, analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato
+from logic import analyze_cv_logic, analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato
 import uuid
 
 def validate_user_id(user_id: str) -> bool:
@@ -88,7 +88,7 @@ def validate_user_id(user_id: str) -> bool:
         return False
 
 # Importações mock_data - sempre usar backend prefix para consistência
-from backend.mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
+from mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
 
 app = FastAPI(title="Vant API", version="0.1.0")
 
@@ -104,7 +104,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Inicializa monitoring de produção
-from backend.monitoring import init_monitoring
+from monitoring import init_monitoring
 init_monitoring()
 
 # Modo de desenvolvimento (true = usa mock, false = usa IA real)
@@ -527,7 +527,7 @@ def analyze_lite(request: Request, file: UploadFile = File(...), job_description
         
         # Salva no storage para facilitar geração de mocks (produção-safe)
         file_bytes = file.file.read()
-        from backend.storage_manager import storage_manager
+        from storage_manager import storage_manager
         storage_result = storage_manager.save_temp_files(file_bytes, job_description)
         batch_id = storage_result.get("batch_id") if storage_result else None
         
@@ -580,7 +580,7 @@ def analyze_free(
     try:
         # Salva no storage para facilitar geração de mocks (produção-safe)
         file_bytes = file.file.read()
-        from backend.storage_manager import storage_manager
+        from storage_manager import storage_manager
         storage_result = storage_manager.save_temp_files(file_bytes, job_description, user_id)
         batch_id = storage_result.get("batch_id") if storage_result else None
         
@@ -843,7 +843,7 @@ def analyze_premium_paid(
     try:
         # Salva no storage para facilitar geração de mocks (produção-safe)
         file_bytes = file.file.read()
-        from backend.storage_manager import storage_manager
+        from storage_manager import storage_manager
         storage_result = storage_manager.save_temp_files(file_bytes, job_description, user_id)
         batch_id = storage_result.get("batch_id") if storage_result else None
         
@@ -1821,7 +1821,7 @@ def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) 
 def get_history_detail(id: str) -> JSONResponse:
     """Retorna detalhes completos de uma análise específica."""
     try:
-        from backend.cache_manager import CacheManager
+        from cache_manager import CacheManager
         
         cache_manager = CacheManager()
         
@@ -1910,7 +1910,7 @@ def create_customer_portal_session(payload: dict) -> JSONResponse:
 @app.get("/api/user/history")
 def get_user_history(user_id: str) -> JSONResponse:
     try:
-        from backend.cache_manager import CacheManager
+        from cache_manager import CacheManager
         
         cache_manager = CacheManager()
         history = cache_manager.get_user_history(user_id, limit=10)
@@ -1946,7 +1946,7 @@ def get_cache_stats() -> JSONResponse:
     sentry_sdk.set_tag("endpoint", "admin_cache_stats")
     
     try:
-        from backend.cache_manager import CacheManager
+        from cache_manager import CacheManager
         
         cache_manager = CacheManager()
         stats = cache_manager.get_cache_stats()
@@ -1981,8 +1981,8 @@ def _process_analysis_background(
     
     try:
         # Importar orquestrador streaming
-        from backend.llm_core import analyze_cv_orchestrator_streaming
-        from backend.logic import extrair_texto_pdf
+        from llm_core import analyze_cv_orchestrator_streaming
+        from logic import extrair_texto_pdf
         import io
         
         # Etapa 1: Extrair texto do PDF
@@ -1991,7 +1991,7 @@ def _process_analysis_background(
         
         if not cv_text or len(cv_text.strip()) < 100:
             logger.error(f"❌ PDF vazio ou muito pequeno para sessão {session_id}")
-            from backend.llm_core import update_session_progress
+            from llm_core import update_session_progress
             update_session_progress(session_id, {"error": "PDF vazio ou inválido"}, "failed")
             return
         
@@ -2035,7 +2035,7 @@ def _process_analysis_background(
         
         # Atualizar status para falha
         try:
-            from backend.llm_core import update_session_progress
+            from llm_core import update_session_progress
             error_data = {
                 "error": f"Erro fatal no processamento: {str(e)}",
                 "error_type": type(e).__name__
@@ -2095,7 +2095,7 @@ async def analyze_interview_response(
             )
         
         # Transcrever áudio com Gemini (mais econômico e integrado)
-        from backend.llm_core import transcribe_audio_gemini, analyze_interview_gemini
+        from llm_core import transcribe_audio_gemini, analyze_interview_gemini
         
         transcription = transcribe_audio_gemini(audio_bytes)
         
@@ -2295,7 +2295,7 @@ async def analyze_interview_advanced(
             )
         
         # Transcrever áudio com Gemini
-        from backend.llm_core import transcribe_audio_gemini
+        from llm_core import transcribe_audio_gemini
         
         transcription = transcribe_audio_gemini(audio_bytes)
         
@@ -2351,7 +2351,7 @@ def _generate_interview_questions_wow_old(report_data: dict, mode: str, difficul
     Gera perguntas ultra-personalizadas baseadas nos gaps do CV e contexto completo.
     Otimização: question_banks movido para constante externa em question_banks.py
     """
-    from backend.question_banks import QUESTION_BANKS, CHALLENGING_QUESTIONS
+    from question_banks import QUESTION_BANKS, CHALLENGING_QUESTIONS
     
     sector = report_data.get("setor_detectado", "Tecnologia")
     experience_level = _detect_experience_level(report_data)
@@ -2498,7 +2498,7 @@ def _analyze_interview_advanced(question: str, transcription: str, cv_context: d
     Análise avançada com benchmark e insights adicionais.
     """
     # Análise base usando função existente
-    from backend.llm_core import analyze_interview_gemini
+    from llm_core import analyze_interview_gemini
     
     base_feedback = analyze_interview_gemini(question, transcription, cv_context.get("setor_detectado", ""))
     

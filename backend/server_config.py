@@ -43,7 +43,7 @@ def get_server_config(environment: str = "development") -> Dict[str, Any]:
     
     # Configurações padrão para ambos ambientes
     base_config = {
-        "app": "backend.main:app",
+        "app": "main:app",
         "host": "0.0.0.0",
         "port": 8000,
         "loop": "asyncio",

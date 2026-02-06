@@ -13,7 +13,7 @@ from docx.oxml import OxmlElement
 from weasyprint import HTML, CSS
 
 # Sistema de logging unificado - importação direta sem fallback
-from backend.logging_config import setup_logger
+from logging_config import setup_logger
 logger = setup_logger("VANT_LOGIC")
 
 import html
@@ -133,7 +133,7 @@ def extract_date(text):
 # IMPORTA A INTELIGÊNCIA
 # ============================================================
 # Importação direta sem fallback - ambiente deve estar configurado corretamente
-from backend.llm_core import run_llm_orchestrator
+from llm_core import run_llm_orchestrator
 
 # ============================================================
 # CONFIG
@@ -571,7 +571,7 @@ import re
 import unicodedata
 
 # Importa constantes CSS centralizadas
-from backend.styles import CSS_V13, CSS_PDF
+from styles import CSS_V13, CSS_PDF
 # ==============================================================================
 # 1. PARSER ENGINE (Mantido para limpar seus dados brutos)
 # ==============================================================================

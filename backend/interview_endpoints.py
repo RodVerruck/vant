@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import logging
-from backend.interview_persistence import InterviewPersistenceManager
+from interview_persistence import InterviewPersistenceManager
 
 # Função temporária para get_current_user
 def get_current_user():

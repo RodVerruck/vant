@@ -9,7 +9,7 @@ from google import genai
 from google.genai import types
 from groq import Groq
 from anthropic import Anthropic
-from backend.cache_manager import CacheManager
+from cache_manager import CacheManager
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente
@@ -140,7 +140,7 @@ DEFAULT_MODEL = "models/gemini-2.5-flash-lite"
 # ============================================================
 # IMPORT PROMPTS
 # ============================================================
-from backend.prompts import (
+from prompts import (
     SYSTEM_AGENT_DIAGNOSIS,
     SYSTEM_AGENT_CV_WRITER_SEMANTIC,
     SYSTEM_AGENT_CV_FORMATTER,

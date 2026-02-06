@@ -8,7 +8,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from supabase import create_client
-from backend.llm_core import logger
+from llm_core import logger
 import os
 
 class InterviewPersistenceManager:
