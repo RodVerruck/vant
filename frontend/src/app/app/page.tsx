@@ -288,6 +288,13 @@ export default function AppPage() {
 
     // Estados principais
     const [stage, setStage] = useState<AppStage>("hero");
+    // Flag para evitar flash do hero ao abrir item do histórico vindo do Dashboard
+    const [loadingHistoryItem, setLoadingHistoryItem] = useState(() => {
+        if (typeof window !== "undefined" && localStorage.getItem("vant_dashboard_open_history_id")) {
+            return true;
+        }
+        return false;
+    });
     const [selectedPlan, setSelectedPlan] = useState<PlanType>("basico");
     const [jobDescription, setJobDescription] = useState("");
     const [useGenericJob, setUseGenericJob] = useState(false);
@@ -971,6 +978,8 @@ export default function AppPage() {
                 }
             } catch (err) {
                 console.error("[Dashboard→App] Erro ao carregar histórico:", err);
+            } finally {
+                setLoadingHistoryItem(false);
             }
         })();
     }, [authUserId]);
@@ -2004,6 +2013,37 @@ export default function AppPage() {
             </div>
         );
     };
+
+    if (loadingHistoryItem) {
+        return (
+            <main>
+                <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "100vh",
+                    background: "#0F172A",
+                    color: "#94A3B8",
+                    fontSize: "1rem",
+                    fontFamily: "'Outfit', sans-serif",
+                }}>
+                    <div style={{ textAlign: "center" }}>
+                        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                        <div style={{
+                            width: 36,
+                            height: 36,
+                            border: "3px solid rgba(56, 189, 248, 0.2)",
+                            borderTop: "3px solid #38BDF8",
+                            borderRadius: "50%",
+                            animation: "spin 0.8s linear infinite",
+                            margin: "0 auto 16px",
+                        }} />
+                        Carregando análise...
+                    </div>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main>
