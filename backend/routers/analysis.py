@@ -340,6 +340,25 @@ def analyze_premium_paid(
                 "updated_at": datetime.now().isoformat()
             }).eq("id", session_id).execute()
             
+            # Salvar no histórico (cached_analyses) para aparecer no Dashboard
+            try:
+                import hashlib
+                from cache_manager import CacheManager
+                cache_manager = CacheManager()
+                input_hash = hashlib.sha256(
+                    f"{job_description}{session_id}dev".encode()
+                ).hexdigest()
+                cache_manager.save_to_cache(
+                    input_hash=input_hash,
+                    user_id=user_id,
+                    cv_text="[DEV MODE]",
+                    job_description=job_description,
+                    result_json=MOCK_PREMIUM_DATA
+                )
+                print("💾 [DEV MODE] Mock salvo no histórico (cached_analyses)")
+            except Exception as cache_err:
+                print(f"⚠️ [DEV MODE] Erro ao salvar no histórico: {cache_err}")
+            
             return JSONResponse(content={
                 "session_id": session_id,
                 "status": "completed",

@@ -976,7 +976,8 @@ def analyze_cv_orchestrator_streaming(
     job_description: str,
     area_of_interest: str,
     books_catalog: list,
-    competitors_text: str | None = None
+    competitors_text: str | None = None,
+    user_id: str | None = None
 ) -> None:
     """
     Orquestrador com progressive loading para análise de CV.
@@ -1117,9 +1118,32 @@ def analyze_cv_orchestrator_streaming(
         if "kit_hacker" not in final_result:
             final_result["kit_hacker"] = {}
         
-        # Salvar resultado final
+        # Salvar resultado final na sessão
         update_session_progress(session_id, final_result, "completed")
         logger.info(f"🎉 Orquestração concluída com sucesso | Sessão: {session_id}")
+        
+        # Persistir no cache/histórico (cached_analyses) para o Dashboard
+        if user_id and final_result:
+            try:
+                from cache_manager import CacheManager
+                import hashlib
+                cache_manager = CacheManager()
+                input_hash = hashlib.sha256(
+                    f"{cv_text}{job_description}streaming".encode()
+                ).hexdigest()
+                cache_saved = cache_manager.save_to_cache(
+                    input_hash=input_hash,
+                    user_id=user_id,
+                    cv_text=cv_text,
+                    job_description=job_description,
+                    result_json=final_result
+                )
+                if cache_saved:
+                    logger.info(f"💾 Resultado salvo no histórico (cached_analyses) para usuário {user_id}")
+                else:
+                    logger.warning(f"⚠️ Falha ao salvar no histórico para usuário {user_id}")
+            except Exception as cache_err:
+                logger.error(f"❌ Erro ao salvar no histórico: {cache_err}")
         
     except Exception as e:
         logger.error(f"❌ Erro fatal no orquestrador streaming {session_id}: {e}")

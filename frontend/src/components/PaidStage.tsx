@@ -768,41 +768,24 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                             flex: 1
                         }}
                     >
-                        ← DASHBOARD
+                        ⬅️ Voltar ao Dashboard
                     </button>
-                    {onViewHistory && (
-                        <button
-                            onClick={onViewHistory}
-                            style={{
-                                background: "transparent",
-                                border: "2px solid #6B7280",
-                                color: "#94A3B8",
-                                padding: "12px 24px",
-                                borderRadius: 50,
-                                fontWeight: 800,
-                                textTransform: "uppercase",
-                                cursor: "pointer",
-                                flex: 1
-                            }}
-                        >
-                            📋 Meu Histórico
-                        </button>
-                    )}
                     <button
                         onClick={onNewOptimization}
                         style={{
-                            background: "transparent",
-                            border: "2px solid #F59E0B",
-                            color: "#F59E0B",
+                            background: "linear-gradient(to bottom, #FFD54F 0%, #FF8F00 50%, #EF6C00 100%)",
+                            border: "none",
+                            color: "#210B00",
                             padding: "12px 24px",
                             borderRadius: 50,
                             fontWeight: 800,
                             textTransform: "uppercase",
                             cursor: "pointer",
-                            flex: 1
+                            flex: 1,
+                            boxShadow: "0 4px 16px rgba(255, 143, 0, 0.4)"
                         }}
                     >
-                        🔄 NOVA OTIMIZAÇÃO
+                        ➡️ Nova Otimização
                     </button>
                 </div>
             </div>

@@ -540,7 +540,8 @@ def _process_analysis_background(
             job_description=job_description,
             area_of_interest=area_of_interest,
             books_catalog=books_catalog,
-            competitors_text=competitors_text
+            competitors_text=competitors_text,
+            user_id=user_id
         )
         
         logger.info(f"✅ Orquestrador concluído para sessão {session_id}")
