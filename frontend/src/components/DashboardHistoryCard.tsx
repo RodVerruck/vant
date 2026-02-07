@@ -7,6 +7,9 @@ interface HistoryCardItem {
     id: string;
     created_at: string;
     job_description: string;
+    target_role?: string;
+    target_company?: string;
+    category?: string;
     result_preview: {
         veredito: string;
         score_ats: number;
@@ -55,21 +58,70 @@ function formatRelativeDate(dateString: string): string {
     });
 }
 
-function getScoreBadgeClass(score: number): string {
-    if (score >= 71) return styles.scoreBadgeGood;
-    if (score >= 41) return styles.scoreBadgeWarning;
-    return styles.scoreBadgeCritical;
+/* ── Score Ring helpers ── */
+
+function getScoreColor(score: number): string {
+    if (score > 75) return "#22D3EE";
+    if (score > 50) return "#FBBF24";
+    return "#F97316";
 }
 
-function getVerdictStyle(veredito: string): React.CSSProperties {
-    const lower = veredito.toLowerCase();
-    if (lower.includes("aprov")) {
-        return { background: "rgba(16, 185, 129, 0.15)", color: "#10B981" };
-    }
-    if (lower.includes("reprov")) {
-        return { background: "rgba(239, 68, 68, 0.15)", color: "#EF4444" };
-    }
-    return { background: "rgba(148, 163, 184, 0.15)", color: "#94A3B8" };
+function getScoreGlow(score: number): string {
+    if (score > 75) return "drop-shadow(0 0 4px rgba(34, 211, 238, 0.5))";
+    if (score > 50) return "drop-shadow(0 0 4px rgba(251, 191, 36, 0.3))";
+    return "drop-shadow(0 0 4px rgba(249, 115, 22, 0.3))";
+}
+
+/* ── Avatar helpers ── */
+
+const AVATAR_COLORS = [
+    { bg: "rgba(139, 92, 246, 0.15)", text: "#A78BFA", border: "rgba(139, 92, 246, 0.25)" },
+    { bg: "rgba(56, 189, 248, 0.15)", text: "#38BDF8", border: "rgba(56, 189, 248, 0.25)" },
+    { bg: "rgba(16, 185, 129, 0.15)", text: "#34D399", border: "rgba(16, 185, 129, 0.25)" },
+    { bg: "rgba(251, 146, 60, 0.15)", text: "#FB923C", border: "rgba(251, 146, 60, 0.25)" },
+    { bg: "rgba(244, 114, 182, 0.15)", text: "#F472B6", border: "rgba(244, 114, 182, 0.25)" },
+    { bg: "rgba(250, 204, 21, 0.15)", text: "#FACC15", border: "rgba(250, 204, 21, 0.25)" },
+];
+
+function getAvatarColor(name: string) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+const CATEGORY_ICONS: Record<string, string> = {
+    "Tecnologia": "⌨️",
+    "Design": "🎨",
+    "Marketing": "📣",
+    "Vendas": "💼",
+    "Gestão": "📊",
+    "Financeiro": "💰",
+    "RH": "👥",
+    "Operações": "⚙️",
+    "Geral": "🔍",
+};
+
+function ScoreRing({ score }: { score: number }) {
+    const radius = 19;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (score / 100) * circumference;
+    const color = getScoreColor(score);
+
+    return (
+        <div className={styles.scoreRing}>
+            <svg width="48" height="48" className={styles.scoreRingSvg} style={{ filter: getScoreGlow(score) }}>
+                <circle cx="24" cy="24" r={radius} className={styles.scoreRingBg} />
+                <circle
+                    cx="24" cy="24" r={radius}
+                    className={styles.scoreRingFg}
+                    stroke={color}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                />
+            </svg>
+            <div className={styles.scoreRingLabel} style={{ color }}>{score}</div>
+        </div>
+    );
 }
 
 export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: DashboardHistoryCardProps) {
@@ -94,14 +146,12 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
         setDownloading(true);
         setMenuOpen(false);
         try {
-            // 1. Fetch full report data
             const detailResp = await fetch(
                 `${getApiUrl()}/api/user/history/detail?id=${item.id}`
             );
             if (!detailResp.ok) throw new Error("Erro ao buscar dados da análise");
             const detailData = await detailResp.json();
 
-            // 2. Generate PDF
             const pdfResp = await fetch(`${getApiUrl()}/api/generate-pdf`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -116,7 +166,6 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
                 throw new Error(err.error || "Erro ao gerar PDF");
             }
 
-            // 3. Download the blob
             const blob = await pdfResp.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -159,17 +208,38 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
     };
 
     const score = item.result_preview.score_ats;
-    const veredito = item.result_preview.veredito;
+    const targetRole = item.target_role || "Otimização Geral";
+    const targetCompany = item.target_company || "";
+    const category = item.category || "Geral";
+    const categoryIcon = CATEGORY_ICONS[category] || "🔍";
+
+    // Avatar: company letter if available, else category icon
+    const hasCompany = !!targetCompany;
+    const avatarColor = hasCompany ? getAvatarColor(targetCompany) : getAvatarColor(category);
+
+    // Hover border color matches score
+    const hoverBorderColor = score > 0 ? getScoreColor(score) : "rgba(56, 189, 248, 0.25)";
 
     return (
-        <div className={styles.card} onClick={() => !downloading && onOpen(item)} style={deleting ? { opacity: 0.5, pointerEvents: "none" } : undefined}>
+        <div
+            className={styles.card}
+            onClick={() => !downloading && onOpen(item)}
+            style={deleting ? { opacity: 0.4, pointerEvents: "none", transform: "scale(0.97)" } : undefined}
+            onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = hoverBorderColor;
+            }}
+            onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255, 255, 255, 0.05)";
+            }}
+        >
+            {/* Loading overlay for PDF download */}
             {downloading && (
                 <>
                     <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
                     <div style={{
                         position: "absolute",
                         inset: 0,
-                        background: "rgba(15, 23, 42, 0.85)",
+                        background: "rgba(15, 23, 42, 0.9)",
                         borderRadius: "inherit",
                         display: "flex",
                         flexDirection: "column",
@@ -177,7 +247,7 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
                         justifyContent: "center",
                         gap: 12,
                         zIndex: 10,
-                        backdropFilter: "blur(4px)",
+                        backdropFilter: "blur(6px)",
                     }}>
                         <div style={{
                             width: 32,
@@ -189,7 +259,7 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
                         }} />
                         <span style={{
                             color: "#38BDF8",
-                            fontSize: "0.85rem",
+                            fontSize: "0.82rem",
                             fontWeight: 700,
                             letterSpacing: "0.5px",
                         }}>
@@ -198,36 +268,44 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
                     </div>
                 </>
             )}
-            <div className={styles.header}>
-                <div className={styles.iconWrapper}>📄</div>
-                <div className={styles.titleBlock}>
-                    <h3 className={styles.jobTitle}>{item.job_description}</h3>
-                    <div className={styles.date}>{formatRelativeDate(item.created_at)}</div>
-                </div>
-            </div>
 
-            <div className={styles.body}>
-                <div className={getScoreBadgeClass(score)}>
-                    {score}
-                    <span className={styles.scoreLabel}>ATS</span>
+            {/* ── Header: Avatar + Title + Score Ring ── */}
+            <div className={styles.header}>
+                <div
+                    className={styles.avatar}
+                    style={{
+                        background: avatarColor.bg,
+                        color: avatarColor.text,
+                        border: `1px solid ${avatarColor.border}`,
+                    }}
+                >
+                    {hasCompany ? targetCompany.charAt(0).toUpperCase() : categoryIcon}
                 </div>
-                {veredito && veredito !== "N/A" && (
-                    <span className={styles.verdictBadge} style={getVerdictStyle(veredito)}>
-                        {veredito}
-                    </span>
+
+                <div className={styles.titleBlock}>
+                    <h3 className={styles.targetRole}>{targetRole}</h3>
+                    {hasCompany && (
+                        <p className={styles.targetCompany}>at {targetCompany}</p>
+                    )}
+                </div>
+
+                {/* Score Ring — Regra de Ouro: esconder se 0 ou null */}
+                {score > 0 && (
+                    <div className={styles.scoreRingWrapper}>
+                        <ScoreRing score={score} />
+                    </div>
                 )}
             </div>
 
+            {/* ── Category Badge ── */}
+            <div className={styles.categoryBadge}>
+                <span className={styles.categoryIcon}>{categoryIcon}</span>
+                {category}
+            </div>
+
+            {/* ── Footer: Date + Menu ── */}
             <div className={styles.footer}>
-                <button
-                    className={styles.openButton}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onOpen(item);
-                    }}
-                >
-                    Abrir
-                </button>
+                <span className={styles.date}>{formatRelativeDate(item.created_at)}</span>
 
                 <div className={styles.menuWrapper} ref={menuRef}>
                     <button

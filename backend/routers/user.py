@@ -140,6 +140,104 @@ def delete_history_item(item_id: str, user_id: str) -> JSONResponse:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
+def _extract_card_metadata_llm(job_description: str) -> dict | None:
+    """Usa Gemini Flash para extrair target_role, target_company e category da job description."""
+    import json
+    import os
+    try:
+        from google import genai
+        from google.genai import types
+
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            return None
+
+        client = genai.Client(api_key=api_key)
+
+        # Enviar apenas os primeiros 1500 chars para economizar tokens
+        jd_trimmed = job_description[:1500]
+
+        prompt = f"""Analise esta descrição de vaga e extraia EXATAMENTE 3 campos em JSON.
+Regras:
+- target_role: O título/cargo da vaga (ex: "Credit Risk Specialist", "Product Designer", "Analista de Dados"). Seja conciso, máximo 60 caracteres.
+- target_company: O nome da empresa que está contratando (ex: "Nubank", "Google", "TOTVS"). Se não encontrar, retorne string vazia.
+- category: Classifique em UMA destas categorias: Tecnologia, Design, Marketing, Vendas, Gestão, Financeiro, RH, Operações, Geral.
+
+Retorne APENAS o JSON, sem markdown, sem explicação.
+
+Descrição da vaga:
+{jd_trimmed}"""
+
+        response = client.models.generate_content(
+            model="models/gemini-2.0-flash-lite",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.0,
+                max_output_tokens=150,
+            ),
+        )
+
+        text = response.text.strip()
+        # Limpar possível markdown
+        if text.startswith("```"):
+            text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+
+        data = json.loads(text)
+        result = {
+            "target_role": str(data.get("target_role", ""))[:80],
+            "target_company": str(data.get("target_company", ""))[:60],
+            "category": str(data.get("category", "Geral")),
+        }
+
+        # Validar category
+        valid_categories = {"Tecnologia", "Design", "Marketing", "Vendas", "Gestão", "Financeiro", "RH", "Operações", "Geral"}
+        if result["category"] not in valid_categories:
+            result["category"] = "Geral"
+
+        return result
+
+    except Exception as e:
+        print(f"⚠️ [CardMetadata] LLM extraction failed: {type(e).__name__}: {e}")
+        return None
+
+
+def _extract_card_metadata_fallback(job_description: str) -> dict:
+    """Fallback simples caso a LLM falhe. Usa primeira linha significativa."""
+    jd = job_description.strip()
+    target_role = ""
+
+    for line in jd.split("\n"):
+        line = line.strip()
+        if not line or len(line) < 4:
+            continue
+        line_lower = line.lower()
+        if any(skip in line_lower for skip in [
+            "about us", "sobre a empresa", "quem somos", "about the company",
+            "busco oportunidades", "oportunidades profissionais",
+            "about", "benefits", "benefícios", "requirements", "requisitos",
+        ]):
+            continue
+        target_role = line[:80]
+        break
+
+    return {
+        "target_role": target_role or "Otimização Geral",
+        "target_company": "",
+        "category": "Geral",
+    }
+
+
+def _extract_card_metadata(job_description: str, result_json: dict) -> dict:
+    """Extrai metadados do card via LLM (Gemini Flash) com fallback simples."""
+    # Tentar LLM primeiro
+    result = _extract_card_metadata_llm(job_description)
+    if result and result.get("target_role"):
+        return result
+
+    # Fallback
+    return _extract_card_metadata_fallback(job_description)
+
+
 @router.get("/user/history")
 def get_user_history(user_id: str) -> JSONResponse:
     try:
@@ -151,14 +249,38 @@ def get_user_history(user_id: str) -> JSONResponse:
         # Formata os dados para o frontend
         formatted_history = []
         for item in history:
+            result_json = item.get("result_json", {}) or {}
+
+            # Verificar se já temos metadados cacheados no result_json
+            cached_meta = result_json.get("_card_metadata")
+            if cached_meta and cached_meta.get("target_role"):
+                meta = cached_meta
+            else:
+                # Extrair via LLM (com fallback) e persistir no DB
+                meta = _extract_card_metadata(item.get("job_description", ""), result_json)
+                try:
+                    result_json["_card_metadata"] = meta
+                    if supabase_admin:
+                        supabase_admin.table("cached_analyses").update({
+                            "result_json": result_json
+                        }).eq("id", item["id"]).execute()
+                        print(f"💾 [CardMetadata] Cached for item {item['id'][:8]}...: {meta.get('target_role', '?')} @ {meta.get('target_company', '?')}")
+                except Exception as persist_err:
+                    print(f"⚠️ [CardMetadata] Failed to persist: {persist_err}")
+
+            score = result_json.get("score_ats", 0) or result_json.get("nota_ats", 0) or 0
+
             formatted_history.append({
                 "id": item["id"],
                 "created_at": item["created_at"],
                 "job_description": item["job_description"][:100] + "..." if len(item["job_description"]) > 100 else item["job_description"],
+                "target_role": meta.get("target_role", "Otimização Geral"),
+                "target_company": meta.get("target_company", ""),
+                "category": meta.get("category", "Geral"),
                 "result_preview": {
-                    "veredito": item["result_json"].get("veredito", "N/A"),
-                    "score_ats": item["result_json"].get("score_ats", 0),
-                    "gaps_count": len(item["result_json"].get("gaps_fatais", []))
+                    "veredito": result_json.get("veredito", "N/A"),
+                    "score_ats": score,
+                    "gaps_count": len(result_json.get("gaps_fatais", []))
                 }
             })
         

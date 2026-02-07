@@ -158,6 +158,9 @@ export function DashboardClient() {
         id: string;
         created_at: string;
         job_description: string;
+        target_role?: string;
+        target_company?: string;
+        category?: string;
         result_preview: {
             veredito: string;
             score_ats: number;
