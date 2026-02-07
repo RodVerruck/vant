@@ -164,36 +164,39 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
     return (
         <div className={styles.card} onClick={() => !downloading && onOpen(item)} style={deleting ? { opacity: 0.5, pointerEvents: "none" } : undefined}>
             {downloading && (
-                <div style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "rgba(15, 23, 42, 0.85)",
-                    borderRadius: "inherit",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 12,
-                    zIndex: 10,
-                    backdropFilter: "blur(4px)",
-                }}>
+                <>
+                    <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
                     <div style={{
-                        width: 32,
-                        height: 32,
-                        border: "3px solid rgba(56, 189, 248, 0.2)",
-                        borderTop: "3px solid #38BDF8",
-                        borderRadius: "50%",
-                        animation: "spin 0.8s linear infinite",
-                    }} />
-                    <span style={{
-                        color: "#38BDF8",
-                        fontSize: "0.85rem",
-                        fontWeight: 700,
-                        letterSpacing: "0.5px",
+                        position: "absolute",
+                        inset: 0,
+                        background: "rgba(15, 23, 42, 0.85)",
+                        borderRadius: "inherit",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 12,
+                        zIndex: 10,
+                        backdropFilter: "blur(4px)",
                     }}>
-                        Gerando PDF...
-                    </span>
-                </div>
+                        <div style={{
+                            width: 32,
+                            height: 32,
+                            border: "3px solid rgba(56, 189, 248, 0.2)",
+                            borderTop: "3px solid #38BDF8",
+                            borderRadius: "50%",
+                            animation: "spin 0.8s linear infinite",
+                        }} />
+                        <span style={{
+                            color: "#38BDF8",
+                            fontSize: "0.85rem",
+                            fontWeight: 700,
+                            letterSpacing: "0.5px",
+                        }}>
+                            Gerando PDF...
+                        </span>
+                    </div>
+                </>
             )}
             <div className={styles.header}>
                 <div className={styles.iconWrapper}>📄</div>
