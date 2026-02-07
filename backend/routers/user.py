@@ -239,12 +239,14 @@ def _extract_card_metadata(job_description: str, result_json: dict) -> dict:
 
 
 @router.get("/user/history")
-def get_user_history(user_id: str) -> JSONResponse:
+def get_user_history(user_id: str, page: int = 1, page_size: int = 6) -> JSONResponse:
     try:
         from cache_manager import CacheManager
         
         cache_manager = CacheManager()
-        history = cache_manager.get_user_history(user_id, limit=10)
+        offset = (max(1, page) - 1) * page_size
+        total = cache_manager.get_user_history_count(user_id)
+        history = cache_manager.get_user_history(user_id, limit=page_size, offset=offset)
         
         # Formata os dados para o frontend
         formatted_history = []
@@ -284,7 +286,13 @@ def get_user_history(user_id: str) -> JSONResponse:
                 }
             })
         
-        return JSONResponse(content={"history": formatted_history})
+        return JSONResponse(content={
+            "history": formatted_history,
+            "total": total,
+            "page": max(1, page),
+            "page_size": page_size,
+            "has_more": (offset + page_size) < total,
+        })
         
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})

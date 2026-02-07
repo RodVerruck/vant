@@ -518,13 +518,14 @@ class CacheManager:
             logger.error(f"❌ Erro ao limpar cache: {e}")
             return False
     
-    def get_user_history(self, user_id: str, limit: int = 10) -> list:
+    def get_user_history(self, user_id: str, limit: int = 10, offset: int = 0) -> list:
         """
-        Retorna histórico de análises do usuário
+        Retorna histórico de análises do usuário com paginação.
         
         Args:
             user_id: ID do usuário
             limit: Número máximo de resultados
+            offset: Número de itens a pular (para paginação)
             
         Returns:
             Lista de análises recentes do usuário
@@ -532,13 +533,26 @@ class CacheManager:
         try:
             response = self.supabase.table("cached_analyses").select(
                 "id, created_at, job_description, result_json"
-            ).eq("user_id", user_id).order("created_at", desc=True).limit(limit).execute()
+            ).eq("user_id", user_id).order(
+                "created_at", desc=True
+            ).range(offset, offset + limit - 1).execute()
             
             return response.data if response.data else []
             
         except Exception as e:
             logger.error(f"Erro ao buscar histórico: {e}")
             return []
+
+    def get_user_history_count(self, user_id: str) -> int:
+        """Retorna o total de análises do usuário."""
+        try:
+            response = self.supabase.table("cached_analyses").select(
+                "id", count="exact"
+            ).eq("user_id", user_id).execute()
+            return response.count or 0
+        except Exception as e:
+            logger.error(f"Erro ao contar histórico: {e}")
+            return 0
     
     def get_cache_stats(self) -> Dict[str, Any]:
         """

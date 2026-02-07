@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { DashboardHistoryCard } from "./DashboardHistoryCard";
 import { EmptyState } from "./EmptyState";
 import styles from "./HistoryGrid.module.css";
+
+const PAGE_SIZE = 6;
 
 interface HistoryItem {
     id: string;
@@ -37,57 +39,79 @@ function getApiUrl(): string {
 
 export function HistoryGrid({ authUserId, onOpenItem, onNewOptimization }: HistoryGridProps) {
     const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const abortRef = useRef<AbortController | null>(null);
+    const requestIdRef = useRef(0);
 
-    const loadHistory = async () => {
-        if (abortRef.current) abortRef.current.abort();
-        abortRef.current = new AbortController();
+    const fetchPage = useCallback(async (pageNum: number, append: boolean) => {
+        const thisRequest = ++requestIdRef.current;
 
         try {
-            setLoading(true);
+            if (append) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
             setError(null);
 
             const resp = await fetch(
-                `${getApiUrl()}/api/user/history?user_id=${authUserId}`,
-                { signal: abortRef.current.signal }
+                `${getApiUrl()}/api/user/history?user_id=${authUserId}&page=${pageNum}&page_size=${PAGE_SIZE}`
             );
 
+            if (thisRequest !== requestIdRef.current) return;
             if (!resp.ok) throw new Error(`Erro ${resp.status}`);
 
             const data = await resp.json();
-            setHistory(data.history || []);
-        } catch (err: any) {
-            if (err.name === "AbortError") return;
-            setError(err.message || "Erro ao carregar histórico");
-        } finally {
+            if (thisRequest !== requestIdRef.current) return;
+
+            const items: HistoryItem[] = data.history || [];
+
+            if (append) {
+                setHistory((prev) => [...prev, ...items]);
+            } else {
+                setHistory(items);
+            }
+            setTotal(data.total || 0);
+            setHasMore(!!data.has_more);
+            setPage(pageNum);
             setLoading(false);
+            setLoadingMore(false);
+            setInitialLoadDone(true);
+        } catch (err: any) {
+            if (thisRequest !== requestIdRef.current) return;
+            setError(err.message || "Erro ao carregar histórico");
+            setLoading(false);
+            setLoadingMore(false);
+            setInitialLoadDone(true);
+        }
+    }, [authUserId]);
+
+    useEffect(() => {
+        fetchPage(1, false);
+        return () => { requestIdRef.current++; };
+    }, [authUserId, fetchPage]);
+
+    const handleLoadMore = () => {
+        if (!loadingMore && hasMore) {
+            fetchPage(page + 1, true);
         }
     };
 
-    useEffect(() => {
-        loadHistory();
-        return () => { abortRef.current?.abort(); };
-    }, [authUserId]);
-
-    if (loading) {
+    // Show spinner until initial load is fully done
+    if (loading || !initialLoadDone) {
         return (
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Suas Otimizações</h2>
                 </div>
-                <div className={styles.grid}>
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className={styles.skeletonCard}>
-                            <div>
-                                <div className={`${styles.skeletonLine} ${styles.skeletonLineLong}`} />
-                                <div className={`${styles.skeletonLine} ${styles.skeletonLineShort}`} style={{ marginTop: 8 }} />
-                            </div>
-                            <div className={styles.skeletonBadge} />
-                            <div className={styles.skeletonFooter} />
-                        </div>
-                    ))}
+                <div className={styles.loadingContainer}>
+                    <div className={styles.loadingSpinner} />
+                    <p className={styles.loadingText}>Carregando suas otimizações...</p>
                 </div>
             </div>
         );
@@ -100,7 +124,7 @@ export function HistoryGrid({ authUserId, onOpenItem, onNewOptimization }: Histo
                     <div className={styles.errorIcon}>⚠️</div>
                     <h3 className={styles.errorTitle}>Erro ao carregar histórico</h3>
                     <p className={styles.errorMessage}>{error}</p>
-                    <button className={styles.retryButton} onClick={loadHistory}>
+                    <button className={styles.retryButton} onClick={() => fetchPage(1, false)}>
                         Tentar novamente
                     </button>
                 </div>
@@ -121,22 +145,39 @@ export function HistoryGrid({ authUserId, onOpenItem, onNewOptimization }: Histo
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>
                     Suas Otimizações
-                    <span className={styles.count}>({history.length})</span>
+                    <span className={styles.count}>({total})</span>
                 </h2>
             </div>
             <div className={styles.grid}>
-                {history.map((item) => (
-                    <DashboardHistoryCard
+                {history.map((item, index) => (
+                    <div
                         key={item.id}
-                        item={item}
-                        authUserId={authUserId}
-                        onOpen={onOpenItem}
-                        onDelete={(itemId) => {
-                            setHistory((prev) => prev.filter((h) => h.id !== itemId));
-                        }}
-                    />
+                        className={styles.fadeIn}
+                        style={{ animationDelay: `${index * 120}ms` }}
+                    >
+                        <DashboardHistoryCard
+                            item={item}
+                            authUserId={authUserId}
+                            onOpen={onOpenItem}
+                            onDelete={(itemId) => {
+                                setHistory((prev) => prev.filter((h) => h.id !== itemId));
+                                setTotal((prev) => Math.max(0, prev - 1));
+                            }}
+                        />
+                    </div>
                 ))}
             </div>
+            {hasMore && (
+                <div className={styles.loadMoreWrapper}>
+                    <button
+                        className={styles.loadMoreButton}
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                    >
+                        {loadingMore ? "Carregando..." : `Ver mais (${history.length} de ${total})`}
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
