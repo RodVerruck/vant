@@ -126,7 +126,11 @@ export function HistoryGrid({ authUserId, onOpenItem, onNewOptimization }: Histo
                     <DashboardHistoryCard
                         key={item.id}
                         item={item}
+                        authUserId={authUserId}
                         onOpen={onOpenItem}
+                        onDelete={(itemId) => {
+                            setHistory((prev) => prev.filter((h) => h.id !== itemId));
+                        }}
                     />
                 ))}
             </div>

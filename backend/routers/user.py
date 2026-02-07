@@ -116,6 +116,30 @@ def get_history_detail(id: str) -> JSONResponse:
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
+@router.delete("/user/history/{item_id}")
+def delete_history_item(item_id: str, user_id: str) -> JSONResponse:
+    """Exclui uma análise do histórico do usuário."""
+    if not supabase_admin:
+        return JSONResponse(status_code=500, content={"error": "Supabase não configurado"})
+
+    if not validate_user_id(user_id):
+        return JSONResponse(status_code=400, content={"error": "user_id inválido"})
+
+    try:
+        # Verifica se o item pertence ao usuário antes de deletar
+        check = supabase_admin.table("cached_analyses").select("id").eq("id", item_id).eq("user_id", user_id).execute()
+
+        if not check.data or len(check.data) == 0:
+            return JSONResponse(status_code=404, content={"error": "Análise não encontrada ou não pertence a este usuário"})
+
+        supabase_admin.table("cached_analyses").delete().eq("id", item_id).eq("user_id", user_id).execute()
+
+        return JSONResponse(content={"success": True, "message": "Análise excluída com sucesso"})
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
+
+
 @router.get("/user/history")
 def get_user_history(user_id: str) -> JSONResponse:
     try:

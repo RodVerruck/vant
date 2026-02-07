@@ -16,7 +16,19 @@ interface HistoryCardItem {
 
 interface DashboardHistoryCardProps {
     item: HistoryCardItem;
+    authUserId: string;
     onOpen: (item: HistoryCardItem) => void;
+    onDelete: (itemId: string) => void;
+}
+
+function getApiUrl(): string {
+    if (typeof window !== "undefined") {
+        const isLocalhost =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1";
+        if (isLocalhost) return "http://127.0.0.1:8000";
+    }
+    return process.env.NEXT_PUBLIC_API_URL || "https://vant-vlgn.onrender.com";
 }
 
 function formatRelativeDate(dateString: string): string {
@@ -60,8 +72,10 @@ function getVerdictStyle(veredito: string): React.CSSProperties {
     return { background: "rgba(148, 163, 184, 0.15)", color: "#94A3B8" };
 }
 
-export function DashboardHistoryCard({ item, onOpen }: DashboardHistoryCardProps) {
+export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: DashboardHistoryCardProps) {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [downloading, setDownloading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -76,11 +90,79 @@ export function DashboardHistoryCard({ item, onOpen }: DashboardHistoryCardProps
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [menuOpen]);
 
+    const handleDownloadPdf = async () => {
+        setDownloading(true);
+        setMenuOpen(false);
+        try {
+            // 1. Fetch full report data
+            const detailResp = await fetch(
+                `${getApiUrl()}/api/user/history/detail?id=${item.id}`
+            );
+            if (!detailResp.ok) throw new Error("Erro ao buscar dados da análise");
+            const detailData = await detailResp.json();
+
+            // 2. Generate PDF
+            const pdfResp = await fetch(`${getApiUrl()}/api/generate-pdf`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    data: detailData.data,
+                    user_id: authUserId,
+                }),
+            });
+
+            if (!pdfResp.ok) {
+                const err = await pdfResp.json().catch(() => ({}));
+                throw new Error(err.error || "Erro ao gerar PDF");
+            }
+
+            // 3. Download the blob
+            const blob = await pdfResp.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Curriculo_VANT_${new Date().toISOString().slice(0, 10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (err: any) {
+            console.error("[HistoryCard] Erro ao baixar PDF:", err);
+            alert(err.message || "Erro ao baixar PDF");
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm("Tem certeza que deseja excluir esta análise? Esta ação não pode ser desfeita.")) {
+            return;
+        }
+        setDeleting(true);
+        setMenuOpen(false);
+        try {
+            const resp = await fetch(
+                `${getApiUrl()}/api/user/history/${item.id}?user_id=${authUserId}`,
+                { method: "DELETE" }
+            );
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.error || "Erro ao excluir");
+            }
+            onDelete(item.id);
+        } catch (err: any) {
+            console.error("[HistoryCard] Erro ao excluir:", err);
+            alert(err.message || "Erro ao excluir análise");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     const score = item.result_preview.score_ats;
     const veredito = item.result_preview.veredito;
 
     return (
-        <div className={styles.card} onClick={() => onOpen(item)}>
+        <div className={styles.card} onClick={() => onOpen(item)} style={deleting ? { opacity: 0.5, pointerEvents: "none" } : undefined}>
             <div className={styles.header}>
                 <div className={styles.iconWrapper}>📄</div>
                 <div className={styles.titleBlock}>
@@ -128,23 +210,21 @@ export function DashboardHistoryCard({ item, onOpen }: DashboardHistoryCardProps
                                 className={styles.menuItem}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setMenuOpen(false);
-                                    // TODO: implement PDF download
-                                    alert("Em breve: Download PDF");
+                                    handleDownloadPdf();
                                 }}
+                                disabled={downloading}
                             >
-                                📥 Baixar PDF
+                                {downloading ? "⏳ Gerando..." : "📥 Baixar PDF"}
                             </button>
                             <button
                                 className={styles.menuItemDanger}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setMenuOpen(false);
-                                    // TODO: implement delete
-                                    alert("Em breve: Excluir análise");
+                                    handleDelete();
                                 }}
+                                disabled={deleting}
                             >
-                                🗑️ Excluir
+                                {deleting ? "⏳ Excluindo..." : "🗑️ Excluir"}
                             </button>
                         </div>
                     )}
