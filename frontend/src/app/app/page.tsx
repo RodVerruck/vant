@@ -594,6 +594,7 @@ export default function AppPage() {
 
     // Flag para auto-start vindo do Dashboard modal
     const pendingAutoStart = useRef(false);
+    const pendingSkipPreview = useRef(false);
 
     // Restaurar jobDescription e file do localStorage ao montar
     useEffect(() => {
@@ -641,19 +642,16 @@ export default function AppPage() {
             pendingAutoStart.current = false;
 
             // Verificar se deve pular preview (vindo do modal do Dashboard)
-            const skipPreview = localStorage.getItem("vant_skip_preview") === "true";
-            if (skipPreview) {
+            const shouldSkip = localStorage.getItem("vant_skip_preview") === "true";
+            if (shouldSkip) {
                 localStorage.removeItem("vant_skip_preview");
+                pendingSkipPreview.current = true;
                 console.log("[AutoStart] Dados restaurados do Dashboard modal, pulando preview e indo direto para premium...");
-                // Pequeno delay e vai direto para premium
-                const timer = setTimeout(() => onStart(), 300);
-                return () => clearTimeout(timer);
             } else {
                 console.log("[AutoStart] Dados restaurados do Dashboard modal, iniciando análise normal...");
-                // Pequeno delay para garantir que todos os estados estão sincronizados
-                const timer = setTimeout(() => onStart(), 300);
-                return () => clearTimeout(timer);
             }
+            const timer = setTimeout(() => onStart(), 300);
+            return () => clearTimeout(timer);
         }
     }, [jobDescription, file, stage]);
 
@@ -1644,11 +1642,11 @@ export default function AppPage() {
             abortControllerRef.current = new AbortController();
 
             // Verificar se deve pular preview (vindo do modal do Dashboard)
-            const skipPreview = localStorage.getItem("vant_skip_preview") === "true";
+            const skipPreview = pendingSkipPreview.current;
+            pendingSkipPreview.current = false;
             const apiUrl = skipPreview ? "/api/analyze-premium-paid" : "/api/analyze-lite";
 
             if (skipPreview) {
-                localStorage.removeItem("vant_skip_preview");
                 console.log("[onStart] Pulando preview, usando API premium diretamente...");
             }
 
