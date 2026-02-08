@@ -50,6 +50,9 @@ export function NewOptimizationModal({
     // Animation state
     const [visible, setVisible] = useState(false);
 
+    // Confirmation slide state
+    const [showConfirmation, setShowConfirmation] = useState(false);
+
     // Animate in
     useEffect(() => {
         if (isOpen) {
@@ -93,6 +96,7 @@ export function NewOptimizationModal({
             setUseGenericJob(false);
             setSelectedArea("");
             setFile(null);
+            setShowConfirmation(false);
         }, 350);
     }, [onClose]);
 
@@ -152,6 +156,11 @@ export function NewOptimizationModal({
 
     const handleSubmit = () => {
         if (!canSubmit || !file) return;
+        setShowConfirmation(true);
+    };
+
+    const handleConfirmSubmit = () => {
+        if (!file) return;
 
         // 1. Store job description
         localStorage.setItem("vant_jobDescription", jobDescription);
@@ -172,8 +181,9 @@ export function NewOptimizationModal({
             localStorage.setItem("vant_file_name", file.name);
             localStorage.setItem("vant_file_type", file.type);
 
-            // 4. Set flag to auto-start analysis on /app
+            // 4. Set flag to auto-start analysis on /app and skip preview
             localStorage.setItem("vant_auto_start", "true");
+            localStorage.setItem("vant_skip_preview", "true"); // NEW: skip preview
             localStorage.setItem("vant_auth_return_stage", "hero");
 
             // 5. Navigate
@@ -348,6 +358,73 @@ export function NewOptimizationModal({
 
                     <div className={styles.keyboardHint}>
                         <span className={styles.kbd}>Ctrl</span>+<span className={styles.kbd}>Enter</span> para enviar
+                    </div>
+                </div>
+
+                {/* ─── Confirmation Slide ─── */}
+                <div className={`${styles.confirmationSlide} ${showConfirmation ? styles.confirmationSlideVisible : ""}`}>
+                    <div className={styles.confirmationHeader}>
+                        <div className={styles.confirmationIcon}>🎯</div>
+                        <h3 className={styles.confirmationTitle}>Confirme a Análise</h3>
+                        <p className={styles.confirmationSubtitle}>
+                            Revise os dados abaixo antes de iniciar a otimização
+                        </p>
+                    </div>
+
+                    <div className={styles.confirmationContent}>
+                        <div className={styles.confirmationCard}>
+                            <div className={styles.confirmationCardLabel}>
+                                <span className={styles.confirmationCardIcon}>1</span>
+                                Vaga
+                            </div>
+                            <div className={styles.confirmationJobTitle}>
+                                {useGenericJob
+                                    ? AREA_OPTIONS.find(opt => opt.value === selectedArea)?.label || "Área selecionada"
+                                    : "Vaga específica"
+                                }
+                            </div>
+                            <div className={styles.confirmationJobDesc}>
+                                {useGenericJob
+                                    ? "Análise de mercado para a área selecionada"
+                                    : jobDescription.length > 150
+                                        ? jobDescription.substring(0, 150) + "..."
+                                        : jobDescription
+                                }
+                            </div>
+                        </div>
+
+                        <div className={styles.confirmationCard}>
+                            <div className={styles.confirmationCardLabel}>
+                                <span className={styles.confirmationCardIcon}>2</span>
+                                Currículo
+                            </div>
+                            <div className={styles.confirmationFileInfo}>
+                                <div className={styles.confirmationFileIcon}>📄</div>
+                                <div className={styles.confirmationFileDetails}>
+                                    <div className={styles.confirmationFileName}>{file?.name}</div>
+                                    <div className={styles.confirmationFileSize}>
+                                        ✓ {file ? formatFileSize(file.size) : ""} — Pronto
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.confirmationActions}>
+                        <button
+                            className={styles.confirmationBack}
+                            onClick={() => setShowConfirmation(false)}
+                        >
+                            ← Voltar
+                        </button>
+                        <button
+                            className={styles.confirmationConfirm}
+                            onClick={handleConfirmSubmit}
+                        >
+                            {creditsRemaining > 0
+                                ? "Confirmar e Otimizar →"
+                                : "Confirmar e Analisar →"}
+                        </button>
                     </div>
                 </div>
             </div>

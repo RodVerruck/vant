@@ -301,6 +301,7 @@ export default function AppPage() {
     const [selectedArea, setSelectedArea] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [competitorFiles, setCompetitorFiles] = useState<File[]>([]);
+    const [skipPreview, setSkipPreview] = useState(false);
 
     const [authEmail, setAuthEmail] = useState("");
     const [authPassword, setAuthPassword] = useState("");
@@ -639,10 +640,25 @@ export default function AppPage() {
     useEffect(() => {
         if (pendingAutoStart.current && jobDescription.trim() && file && stage === "hero") {
             pendingAutoStart.current = false;
-            console.log("[AutoStart] Dados restaurados do Dashboard modal, iniciando análise automaticamente...");
-            // Pequeno delay para garantir que todos os estados estão sincronizados
-            const timer = setTimeout(() => onStart(), 300);
-            return () => clearTimeout(timer);
+
+            // Verificar se deve pular preview (vindo do modal do Dashboard)
+            const skipPreview = localStorage.getItem("vant_skip_preview") === "true";
+            if (skipPreview) {
+                localStorage.removeItem("vant_skip_preview");
+                console.log("[AutoStart] Dados restaurados do Dashboard modal, pulando preview e indo direto para premium...");
+                // Pequeno delay e vai direto para premium
+                const timer = setTimeout(() => {
+                    // Setar flag para pular preview no onStart
+                    setSkipPreview(true);
+                    onStart();
+                }, 300);
+                return () => clearTimeout(timer);
+            } else {
+                console.log("[AutoStart] Dados restaurados do Dashboard modal, iniciando análise normal...");
+                // Pequeno delay para garantir que todos os estados estão sincronizados
+                const timer = setTimeout(() => onStart(), 300);
+                return () => clearTimeout(timer);
+            }
         }
     }, [jobDescription, file, stage]);
 
@@ -1682,7 +1698,14 @@ export default function AppPage() {
             await sleep(500); // Pequena pausa para ler a conclusão
 
             setPreviewData(data as PreviewData);
-            setStage("preview");
+
+            // Se veio do modal do Dashboard, pular preview e ir direto para premium
+            if (skipPreview) {
+                setSkipPreview(false); // Reset flag
+                setStage("paid");
+            } else {
+                setStage("preview");
+            }
 
         } catch (e: unknown) {
             // Ignorar AbortError (navegação entre abas)
