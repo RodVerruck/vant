@@ -6,6 +6,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { OptimizationHero } from "@/components/OptimizationHero";
 import { HistoryGrid } from "@/components/HistoryGrid";
+import { NewOptimizationModal } from "@/components/NewOptimizationModal";
 
 function getApiUrl(): string {
     if (typeof window !== "undefined") {
@@ -34,6 +35,9 @@ export function DashboardClient() {
     // User status
     const [creditsRemaining, setCreditsRemaining] = useState(0);
     const [isPremium, setIsPremium] = useState(false);
+
+    // Modal state
+    const [showOptModal, setShowOptModal] = useState(false);
 
     // Supabase client (single instance)
     const supabase = useMemo((): SupabaseClient | null => {
@@ -140,10 +144,9 @@ export function DashboardClient() {
         }
     };
 
-    // Navigate to /app for new optimization
+    // Open modal for new optimization (no redirect)
     const handleNewOptimization = () => {
-        localStorage.setItem("vant_auth_return_stage", "hero");
-        router.push("/app");
+        setShowOptModal(true);
     };
 
     // Navigate to /app for pricing/upgrade
@@ -212,23 +215,31 @@ export function DashboardClient() {
     }
 
     return (
-        <DashboardLayout
-            authEmail={authEmail}
-            creditsRemaining={creditsRemaining}
-            isPremium={isPremium}
-            onLogout={handleLogout}
-            onUpgrade={handleUpgrade}
-        >
-            <OptimizationHero
-                onNewOptimization={handleNewOptimization}
+        <>
+            <DashboardLayout
+                authEmail={authEmail}
+                creditsRemaining={creditsRemaining}
+                isPremium={isPremium}
+                onLogout={handleLogout}
+                onUpgrade={handleUpgrade}
+            >
+                <OptimizationHero
+                    onNewOptimization={handleNewOptimization}
+                    creditsRemaining={creditsRemaining}
+                />
+
+                <HistoryGrid
+                    authUserId={authUserId}
+                    onOpenItem={handleOpenHistoryItem}
+                    onNewOptimization={handleNewOptimization}
+                />
+            </DashboardLayout>
+
+            <NewOptimizationModal
+                isOpen={showOptModal}
+                onClose={() => setShowOptModal(false)}
                 creditsRemaining={creditsRemaining}
             />
-
-            <HistoryGrid
-                authUserId={authUserId}
-                onOpenItem={handleOpenHistoryItem}
-                onNewOptimization={handleNewOptimization}
-            />
-        </DashboardLayout>
+        </>
     );
 }

@@ -1,0 +1,356 @@
+"use client";
+
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import styles from "./NewOptimizationModal.module.css";
+
+interface NewOptimizationModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    creditsRemaining: number;
+}
+
+const AREA_OPTIONS = [
+    { value: "", label: "Selecione uma área..." },
+    { value: "ti_dados_ai", label: "Tecnologia / Dados / IA" },
+    { value: "ti_dev_gen", label: "Desenvolvimento de Software" },
+    { value: "ti_suporte", label: "TI / Suporte Técnico" },
+    { value: "produto_agil", label: "Produto / Agile" },
+    { value: "marketing_growth", label: "Marketing / Growth" },
+    { value: "vendas_cs", label: "Vendas / Customer Success" },
+    { value: "rh_lideranca", label: "RH / Liderança" },
+    { value: "financeiro_corp", label: "Financeiro / Corporativo" },
+    { value: "global_soft_skills", label: "Geral / Soft Skills" },
+];
+
+const GENERIC_JOB_TEXT =
+    "Busco oportunidades profissionais que valorizem minhas habilidades e experiência. Estou aberto a posições desafiadoras que permitam meu crescimento e contribuição para os objetivos da empresa, com foco em resultados e inovação.";
+
+function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function NewOptimizationModal({
+    isOpen,
+    onClose,
+    creditsRemaining,
+}: NewOptimizationModalProps) {
+    const router = useRouter();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Form state
+    const [jobDescription, setJobDescription] = useState("");
+    const [useGenericJob, setUseGenericJob] = useState(false);
+    const [selectedArea, setSelectedArea] = useState("");
+    const [file, setFile] = useState<File | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+
+    // Animation state
+    const [visible, setVisible] = useState(false);
+
+    // Animate in
+    useEffect(() => {
+        if (isOpen) {
+            // Small delay for mount → animate
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => setVisible(true));
+            });
+        } else {
+            setVisible(false);
+        }
+    }, [isOpen]);
+
+    // Close with Escape
+    useEffect(() => {
+        if (!isOpen) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") handleClose();
+        };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+    }, [isOpen]);
+
+    // Prevent body scroll
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [isOpen]);
+
+    const handleClose = useCallback(() => {
+        setVisible(false);
+        setTimeout(() => {
+            onClose();
+            // Reset form
+            setJobDescription("");
+            setUseGenericJob(false);
+            setSelectedArea("");
+            setFile(null);
+        }, 350);
+    }, [onClose]);
+
+    const handleOverlayClick = (e: React.MouseEvent) => {
+        if (e.target === e.currentTarget) handleClose();
+    };
+
+    // Generic toggle
+    const handleGenericToggle = () => {
+        const newVal = !useGenericJob;
+        setUseGenericJob(newVal);
+        if (newVal) {
+            setJobDescription(GENERIC_JOB_TEXT);
+        } else {
+            setJobDescription("");
+            setSelectedArea("");
+        }
+    };
+
+    // File handling
+    const handleFile = (f: File | null) => {
+        if (!f) return;
+        const allowed = [
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ];
+        if (!allowed.includes(f.type) && !f.name.endsWith(".pdf") && !f.name.endsWith(".docx")) {
+            return;
+        }
+        if (f.size > 10 * 1024 * 1024) return; // 10MB
+        setFile(f);
+    };
+
+    // Drag & drop
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const droppedFile = e.dataTransfer.files?.[0];
+        if (droppedFile) handleFile(droppedFile);
+    };
+
+    // Submit → store data in localStorage & navigate to /app
+    const canSubmit = (jobDescription.trim().length > 0 || useGenericJob) && !!file;
+
+    const handleSubmit = () => {
+        if (!canSubmit || !file) return;
+
+        // 1. Store job description
+        localStorage.setItem("vant_jobDescription", jobDescription);
+
+        // 2. Store area if generic
+        if (useGenericJob && selectedArea) {
+            localStorage.setItem("vant_area_of_interest", selectedArea);
+            localStorage.setItem("vant_use_generic_job", "true");
+        } else {
+            localStorage.removeItem("vant_area_of_interest");
+            localStorage.removeItem("vant_use_generic_job");
+        }
+
+        // 3. Store file as base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            localStorage.setItem("vant_file_b64", reader.result as string);
+            localStorage.setItem("vant_file_name", file.name);
+            localStorage.setItem("vant_file_type", file.type);
+
+            // 4. Set flag to auto-start analysis on /app
+            localStorage.setItem("vant_auto_start", "true");
+            localStorage.setItem("vant_auth_return_stage", "hero");
+
+            // 5. Navigate
+            router.push("/app");
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // Keyboard: Ctrl+Enter to submit
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && canSubmit) {
+            e.preventDefault();
+            handleSubmit();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div
+            className={`${styles.overlay} ${visible ? styles.overlayVisible : ""}`}
+            onClick={handleOverlayClick}
+            onKeyDown={handleKeyDown}
+        >
+            <div className={`${styles.modal} ${visible ? styles.modalVisible : ""}`}>
+                <div className={styles.glowOrb} />
+                <div className={styles.glowOrbBottom} />
+
+                <button
+                    className={styles.closeBtn}
+                    onClick={handleClose}
+                    aria-label="Fechar"
+                >
+                    ✕
+                </button>
+
+                <div className={styles.content}>
+                    {/* ─── Header ─── */}
+                    <div className={styles.header}>
+                        <div className={styles.iconCircle}>🚀</div>
+                        <h2 className={styles.title}>Nova Otimização</h2>
+                        <p className={styles.subtitle}>
+                            Cole a vaga e envie seu CV. A IA faz o resto.
+                        </p>
+                        {creditsRemaining > 0 && (
+                            <div className={styles.creditsBadge}>
+                                ✦ {creditsRemaining} crédito{creditsRemaining !== 1 ? "s" : ""} disponível{creditsRemaining !== 1 ? "is" : ""}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ─── Section 1: Vaga ─── */}
+                    <div className={styles.section}>
+                        <div className={styles.sectionLabel}>
+                            <span className={styles.sectionNumber}>1</span>
+                            Vaga Alvo
+                        </div>
+
+                        <label className={styles.genericToggle} onClick={handleGenericToggle}>
+                            <input
+                                type="checkbox"
+                                checked={useGenericJob}
+                                onChange={handleGenericToggle}
+                                className={styles.toggleCheckbox}
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                            <span className={styles.toggleText}>
+                                <span className={styles.toggleTextBold}>Não tenho uma vaga específica</span>
+                                {" "}— Analisar contra o mercado
+                            </span>
+                        </label>
+
+                        {useGenericJob && (
+                            <select
+                                value={selectedArea}
+                                onChange={(e) => setSelectedArea(e.target.value)}
+                                className={styles.areaSelector}
+                            >
+                                {AREA_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+
+                        <textarea
+                            value={jobDescription}
+                            onChange={(e) => setJobDescription(e.target.value)}
+                            placeholder="Cole aqui a descrição completa da vaga (Título, Requisitos e Responsabilidades)..."
+                            disabled={useGenericJob}
+                            className={`${styles.textarea} ${useGenericJob ? styles.textareaDisabled : ""}`}
+                        />
+                        <div className={styles.charCount}>
+                            <span className={jobDescription.length >= 500 ? styles.charCountGood : ""}>
+                                {jobDescription.length}/5000
+                            </span>
+                            <span>
+                                {useGenericJob
+                                    ? "Análise de mercado ativada"
+                                    : "Quanto mais detalhes, melhor o resultado"}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* ─── Section 2: CV ─── */}
+                    <div className={styles.section}>
+                        <div className={styles.sectionLabel}>
+                            <span className={styles.sectionNumber}>2</span>
+                            Seu Currículo
+                        </div>
+
+                        {file ? (
+                            <div className={styles.fileLoaded}>
+                                <div className={styles.fileIcon}>📄</div>
+                                <div className={styles.fileInfo}>
+                                    <div className={styles.fileName}>{file.name}</div>
+                                    <div className={styles.fileSize}>
+                                        ✓ {formatFileSize(file.size)} — Pronto
+                                    </div>
+                                </div>
+                                <button
+                                    className={styles.fileRemove}
+                                    onClick={() => setFile(null)}
+                                >
+                                    Remover
+                                </button>
+                            </div>
+                        ) : (
+                            <div
+                                className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ""}`}
+                                onClick={() => fileInputRef.current?.click()}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
+                                <div className={styles.dropIcon}>
+                                    {isDragging ? "⬇️" : "📎"}
+                                </div>
+                                <div className={styles.dropText}>
+                                    Arraste seu CV aqui ou{" "}
+                                    <span className={styles.browseLink}>procure no computador</span>
+                                </div>
+                                <div className={styles.dropHint}>
+                                    PDF ou DOCX · Máximo 10 MB
+                                </div>
+                            </div>
+                        )}
+
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="application/pdf,.pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            style={{ display: "none" }}
+                            onChange={(e) => handleFile(e.target.files?.[0] || null)}
+                        />
+                    </div>
+
+                    {/* ─── Divider ─── */}
+                    <div className={styles.divider} />
+
+                    {/* ─── CTA ─── */}
+                    <button
+                        className={`${styles.ctaButton} ${canSubmit ? styles.ctaButtonReady : ""}`}
+                        disabled={!canSubmit}
+                        onClick={handleSubmit}
+                    >
+                        {creditsRemaining > 0
+                            ? "Otimizar Meu Currículo →"
+                            : "Ver Meu Score ATS →"}
+                    </button>
+
+                    <div className={styles.keyboardHint}>
+                        <span className={styles.kbd}>Ctrl</span>+<span className={styles.kbd}>Enter</span> para enviar
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
