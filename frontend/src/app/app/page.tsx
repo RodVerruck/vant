@@ -592,6 +592,9 @@ export default function AppPage() {
         }
     }
 
+    // Flag para auto-start vindo do Dashboard modal
+    const pendingAutoStart = useRef(false);
+
     // Restaurar jobDescription e file do localStorage ao montar
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -599,6 +602,24 @@ export default function AppPage() {
             const savedFileName = localStorage.getItem("vant_file_name");
             const savedFileType = localStorage.getItem("vant_file_type");
             const savedFileB64 = localStorage.getItem("vant_file_b64");
+
+            // Restaurar flags de vaga genérica (vindas do modal do Dashboard)
+            const savedGeneric = localStorage.getItem("vant_use_generic_job");
+            const savedArea = localStorage.getItem("vant_area_of_interest");
+            if (savedGeneric === "true") {
+                setUseGenericJob(true);
+                if (savedArea) setSelectedArea(savedArea);
+            }
+
+            // Detectar auto-start flag (modal do Dashboard)
+            const autoStart = localStorage.getItem("vant_auto_start");
+            if (autoStart === "true") {
+                pendingAutoStart.current = true;
+                localStorage.removeItem("vant_auto_start");
+                localStorage.removeItem("vant_use_generic_job");
+                localStorage.removeItem("vant_area_of_interest");
+            }
+
             // Só restaurar se for a primeira montagem (estado ainda vazio)
             if (savedJob && jobDescription === "") {
                 setJobDescription(savedJob);
@@ -613,6 +634,17 @@ export default function AppPage() {
             }
         }
     }, []); // Removido jobDescription e file das dependências
+
+    // Auto-start: dispara onStart() quando dados estão prontos (vindo do Dashboard modal)
+    useEffect(() => {
+        if (pendingAutoStart.current && jobDescription.trim() && file && stage === "hero") {
+            pendingAutoStart.current = false;
+            console.log("[AutoStart] Dados restaurados do Dashboard modal, iniciando análise automaticamente...");
+            // Pequeno delay para garantir que todos os estados estão sincronizados
+            const timer = setTimeout(() => onStart(), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [jobDescription, file, stage]);
 
     // Salvar jobDescription e file em localStorage quando mudarem
     useEffect(() => {

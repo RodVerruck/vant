@@ -1,0 +1,525 @@
+/* ─── Overlay ─── */
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    transition: background 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                backdrop-filter 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 24px;
+}
+
+.overlayVisible {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+}
+
+/* ─── Modal Shell ─── */
+.modal {
+    position: relative;
+    width: 100%;
+    max-width: 680px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: linear-gradient(170deg, #0F172A 0%, #1A2332 40%, #0F172A 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 24px;
+    box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    opacity: 0;
+    transform: scale(0.92) translateY(30px);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalVisible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+/* ─── Inner glow orb ─── */
+.glowOrb {
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.glowOrbBottom {
+    position: absolute;
+    bottom: -40px;
+    left: -40px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ─── Close button ─── */
+.closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 2;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: #64748B;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.closeBtn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #CBD5E1;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Content ─── */
+.content {
+    position: relative;
+    z-index: 1;
+    padding: 40px 36px 32px;
+}
+
+/* ─── Header ─── */
+.header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.iconCircle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(255, 143, 0, 0.1));
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+}
+
+.title {
+    color: #F8FAFC;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+}
+
+.subtitle {
+    color: #94A3B8;
+    font-size: 0.88rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.creditsBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 12px;
+    padding: 5px 14px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 20px;
+    color: #10B981;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+/* ─── Sections ─── */
+.section {
+    margin-bottom: 24px;
+}
+
+.sectionLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #CBD5E1;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 10px;
+}
+
+.sectionNumber {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    color: #38BDF8;
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+/* ─── Generic toggle ─── */
+.genericToggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.genericToggle:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.toggleCheckbox {
+    accent-color: #38BDF8;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.toggleText {
+    color: #CBD5E1;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.toggleTextBold {
+    color: #F8FAFC;
+    font-weight: 700;
+}
+
+/* ─── Area selector ─── */
+.areaSelector {
+    width: 100%;
+    padding: 10px 14px;
+    background: #1E293B;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    color: #E2E8F0;
+    font-size: 0.88rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+    margin-bottom: 12px;
+    cursor: pointer;
+    appearance: auto;
+}
+
+.areaSelector:focus {
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+/* ─── Textarea ─── */
+.textarea {
+    width: 100%;
+    min-height: 130px;
+    padding: 14px 16px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: #E2E8F0;
+    font-size: 0.9rem;
+    font-family: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    box-sizing: border-box;
+}
+
+.textarea:focus {
+    border-color: rgba(56, 189, 248, 0.35);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.08);
+}
+
+.textarea::placeholder {
+    color: #475569;
+}
+
+.textareaDisabled {
+    opacity: 0.5;
+    background: #1E293B;
+    cursor: not-allowed;
+}
+
+.charCount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    color: #64748B;
+}
+
+.charCountGood {
+    color: #10B981;
+}
+
+/* ─── Drop zone ─── */
+.dropZone {
+    position: relative;
+    border: 2px dashed rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(15, 23, 42, 0.3);
+}
+
+.dropZone:hover {
+    border-color: rgba(56, 189, 248, 0.3);
+    background: rgba(56, 189, 248, 0.03);
+}
+
+.dropZoneActive {
+    border-color: #38BDF8 !important;
+    background: rgba(56, 189, 248, 0.06) !important;
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.08);
+    transform: scale(1.01);
+}
+
+.dropIcon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    opacity: 0.7;
+    transition: transform 0.3s ease;
+}
+
+.dropZone:hover .dropIcon {
+    transform: translateY(-2px);
+}
+
+.dropText {
+    color: #94A3B8;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.dropHint {
+    color: #475569;
+    font-size: 0.75rem;
+}
+
+.browseLink {
+    color: #38BDF8;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.browseLink:hover {
+    color: #7DD3FC;
+    text-decoration: underline;
+}
+
+/* ─── File loaded ─── */
+.fileLoaded {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: rgba(16, 185, 129, 0.06);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+}
+
+.fileIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.12);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.fileInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.fileName {
+    color: #E2E8F0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fileSize {
+    color: #10B981;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.fileRemove {
+    background: none;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #94A3B8;
+    font-size: 0.72rem;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.fileRemove:hover {
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #EF4444;
+    background: rgba(239, 68, 68, 0.06);
+}
+
+/* ─── Divider ─── */
+.divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    margin: 24px 0;
+}
+
+/* ─── CTA Button ─── */
+.ctaButton {
+    width: 100%;
+    padding: 16px 24px;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #FFD54F 0%, #FF8F00 50%, #EF6C00 100%);
+    color: #210B00;
+    box-shadow: 0 4px 20px rgba(255, 143, 0, 0.4),
+                inset 0 2px 1px rgba(255, 255, 255, 0.5);
+}
+
+.ctaButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(255, 143, 0, 0.6),
+                inset 0 2px 1px rgba(255, 255, 255, 0.5);
+}
+
+.ctaButton:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.ctaButton:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.ctaButtonReady {
+    animation: ctaPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes ctaPulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(255, 143, 0, 0.4), inset 0 2px 1px rgba(255, 255, 255, 0.5); }
+    50% { box-shadow: 0 4px 35px rgba(255, 143, 0, 0.65), inset 0 2px 1px rgba(255, 255, 255, 0.5); }
+}
+
+/* ─── Keyboard hint ─── */
+.keyboardHint {
+    text-align: center;
+    margin-top: 14px;
+    color: #475569;
+    font-size: 0.7rem;
+    letter-spacing: 0.3px;
+}
+
+.kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.68rem;
+    color: #64748B;
+    margin: 0 2px;
+}
+
+/* ─── Scrollbar ─── */
+.modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+    .overlay {
+        padding: 12px;
+        align-items: flex-end;
+    }
+
+    .modal {
+        max-height: 92vh;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .content {
+        padding: 32px 20px 24px;
+    }
+
+    .title {
+        font-size: 1.3rem;
+    }
+
+    .textarea {
+        min-height: 100px;
+    }
+}
