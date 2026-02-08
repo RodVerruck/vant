@@ -1612,6 +1612,19 @@ export default function AppPage() {
             return;
         }
 
+        // Se skipPreview ativo (modal Dashboard), pular lite inteiro e ir direto para premium
+        if (pendingSkipPreview.current) {
+            pendingSkipPreview.current = false;
+            console.log("[onStart] skipPreview ativo, pulando analyze-lite e indo direto para processing_premium...");
+            setApiError("");
+            setReportData(null);
+            setPremiumError("");
+            setProgress(0);
+            setStatusText("");
+            setStage("processing_premium");
+            return;
+        }
+
         console.log("[onStart] Iniciando análise (diagnóstico) para todos os usuários...");
 
         // 1. Resetar estados visuais
@@ -1693,17 +1706,7 @@ export default function AppPage() {
             await sleep(500); // Pequena pausa para ler a conclusão
 
             setPreviewData(data as PreviewData);
-
-            // Se veio do modal do Dashboard, pular preview e ir direto para premium
-            if (pendingSkipPreview.current) {
-                pendingSkipPreview.current = false;
-                console.log("[onStart] skipPreview ativo, pulando preview e disparando premium automaticamente...");
-                setStage("preview"); // Setar preview brevemente para onUseCreditFromPreview funcionar
-                // Chamar onUseCreditFromPreview no próximo tick
-                setTimeout(() => onUseCreditFromPreview(), 100);
-            } else {
-                setStage("preview");
-            }
+            setStage("preview");
 
         } catch (e: unknown) {
             // Ignorar AbortError (navegação entre abas)
