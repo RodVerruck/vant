@@ -1108,6 +1108,10 @@ def analyze_cv_orchestrator_streaming(
         # Merge final com diagnóstico
         final_result = {**diag_result, **results}
         
+        # Persistir área de interesse selecionada pelo usuário
+        if area_of_interest:
+            final_result["_user_area"] = area_of_interest
+        
         # Garantir campos mínimos
         if "perguntas_entrevista" not in final_result:
             final_result["perguntas_entrevista"] = []

@@ -227,15 +227,69 @@ def _extract_card_metadata_fallback(job_description: str) -> dict:
     }
 
 
+_USER_AREA_TO_CATEGORY = {
+    "ti_dados_ai": "Tecnologia",
+    "ti_dev_gen": "Tecnologia",
+    "ti_suporte": "Tecnologia",
+    "produto_agil": "Gestão",
+    "marketing_growth": "Marketing",
+    "vendas_cs": "Vendas",
+    "rh_lideranca": "RH",
+    "financeiro_corp": "Financeiro",
+    "global_soft_skills": "Geral",
+}
+
+
+_JD_AREA_KEYWORDS_TO_CATEGORY = {
+    "financeiro": "Financeiro",
+    "finanças": "Financeiro",
+    "corporativo": "Financeiro",
+    "tecnologia": "Tecnologia",
+    "dados": "Tecnologia",
+    "software": "Tecnologia",
+    "suporte técnico": "Tecnologia",
+    "ti/suporte": "Tecnologia",
+    "produto": "Gestão",
+    "agile": "Gestão",
+    "marketing": "Marketing",
+    "growth": "Marketing",
+    "vendas": "Vendas",
+    "customer success": "Vendas",
+    "rh": "RH",
+    "liderança": "RH",
+    "recursos humanos": "RH",
+}
+
+
+def _detect_area_from_jd(job_description: str) -> str:
+    """Detect user-selected area from job_description text patterns.
+    The orchestrator prepends 'Vaga na área de X' to generic job descriptions."""
+    jd_lower = job_description[:200].lower()
+    for keyword, cat in _JD_AREA_KEYWORDS_TO_CATEGORY.items():
+        if keyword in jd_lower:
+            return cat
+    return ""
+
+
 def _extract_card_metadata(job_description: str, result_json: dict) -> dict:
-    """Extrai metadados do card via LLM (Gemini Flash) com fallback simples."""
+    """Extrai metadados do card via LLM (Gemini Flash) com fallback simples.
+    Prioriza a área selecionada pelo usuário (_user_area) se disponível."""
     # Tentar LLM primeiro
     result = _extract_card_metadata_llm(job_description)
-    if result and result.get("target_role"):
-        return result
+    if not result or not result.get("target_role"):
+        result = _extract_card_metadata_fallback(job_description)
 
-    # Fallback
-    return _extract_card_metadata_fallback(job_description)
+    # Sobrescrever category com a área explícita do usuário, se existir
+    user_area = result_json.get("_user_area", "")
+    if user_area and user_area in _USER_AREA_TO_CATEGORY:
+        result["category"] = _USER_AREA_TO_CATEGORY[user_area]
+    elif result.get("category", "Geral") == "Geral":
+        # Fallback: detect area from job_description text for legacy items
+        detected = _detect_area_from_jd(job_description)
+        if detected:
+            result["category"] = detected
+
+    return result
 
 
 @router.get("/user/history")
@@ -255,7 +309,19 @@ def get_user_history(user_id: str, page: int = 1, page_size: int = 6) -> JSONRes
 
             # Verificar se já temos metadados cacheados no result_json
             cached_meta = result_json.get("_card_metadata")
-            if cached_meta and cached_meta.get("target_role"):
+            # Re-extract if cached category is wrong
+            needs_reextract = False
+            if cached_meta:
+                cached_cat = cached_meta.get("category", "Geral")
+                # Check 1: _user_area exists and doesn't match cached category
+                user_area = result_json.get("_user_area", "")
+                expected_cat = _USER_AREA_TO_CATEGORY.get(user_area, "")
+                if expected_cat and cached_cat != expected_cat:
+                    needs_reextract = True
+                # Check 2: Legacy items — cached "Geral" but JD has area keywords
+                elif cached_cat == "Geral" and _detect_area_from_jd(item.get("job_description", "")):
+                    needs_reextract = True
+            if cached_meta and cached_meta.get("target_role") and not needs_reextract:
                 meta = cached_meta
             else:
                 # Extrair via LLM (com fallback) e persistir no DB
