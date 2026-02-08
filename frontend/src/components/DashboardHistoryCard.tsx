@@ -10,6 +10,7 @@ interface HistoryCardItem {
     target_role?: string;
     target_company?: string;
     category?: string;
+    company_domain?: string;
     result_preview: {
         veredito: string;
         score_ats: number;
@@ -139,6 +140,63 @@ function getCategoryTheme(category: string): CategoryTheme {
     return CATEGORY_THEMES[category] || DEFAULT_THEME;
 }
 
+/* ── Company Logo with multi-source + Fallback ── */
+
+function CompanyLogo({ companyName, domain, theme }: {
+    companyName: string;
+    domain: string;
+    theme: CategoryTheme;
+}) {
+    // 0 = trying Clearbit, 1 = trying Google Favicons, 2 = all failed
+    const [sourceIndex, setSourceIndex] = useState(0);
+    const hasCompany = !!companyName;
+
+    const logoUrl = domain ? `https://logo.clearbit.com/${domain}` : "";
+    const showLogo = !!logoUrl && sourceIndex === 0;
+
+    if (showLogo) {
+        return (
+            <div
+                className={styles.avatar}
+                style={{
+                    background: "rgba(255, 255, 255, 0.06)",
+                    border: `1px solid ${theme.border}`,
+                    padding: 4,
+                    overflow: "hidden",
+                }}
+            >
+                <img
+                    src={logoUrl}
+                    alt={companyName}
+                    width={32}
+                    height={32}
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        borderRadius: 6,
+                    }}
+                    onError={() => setSourceIndex(1)}
+                />
+            </div>
+        );
+    }
+
+    // Fallback: letter or category icon
+    return (
+        <div
+            className={styles.avatar}
+            style={{
+                background: theme.bg,
+                color: theme.color,
+                border: `1px solid ${theme.border}`,
+            }}
+        >
+            {hasCompany ? companyName.charAt(0).toUpperCase() : theme.icon}
+        </div>
+    );
+}
+
 function ScoreRing({ score }: { score: number }) {
     const radius = 19;
     const circumference = 2 * Math.PI * radius;
@@ -258,6 +316,7 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
     const score = item.result_preview.score_ats;
     const targetRole = item.target_role || "Otimização Geral";
     const targetCompany = item.target_company || "";
+    const companyDomain = item.company_domain || "";
     const category = item.category || "Geral";
     const theme = getCategoryTheme(category);
 
@@ -321,16 +380,11 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
 
             {/* ── Header: Avatar + Title + Score Ring ── */}
             <div className={styles.header}>
-                <div
-                    className={styles.avatar}
-                    style={{
-                        background: theme.bg,
-                        color: theme.color,
-                        border: `1px solid ${theme.border}`,
-                    }}
-                >
-                    {hasCompany ? targetCompany.charAt(0).toUpperCase() : theme.icon}
-                </div>
+                <CompanyLogo
+                    companyName={targetCompany}
+                    domain={companyDomain}
+                    theme={theme}
+                />
 
                 <div className={styles.titleBlock}>
                     <h3 className={styles.targetRole}>{targetRole}</h3>

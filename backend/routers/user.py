@@ -144,6 +144,7 @@ def _extract_card_metadata_llm(job_description: str) -> dict | None:
     """Usa Gemini Flash para extrair target_role, target_company e category da job description."""
     import json
     import os
+    import concurrent.futures
     try:
         from google import genai
         from google.genai import types
@@ -157,25 +158,40 @@ def _extract_card_metadata_llm(job_description: str) -> dict | None:
         # Enviar apenas os primeiros 1500 chars para economizar tokens
         jd_trimmed = job_description[:1500]
 
-        prompt = f"""Analise esta descrição de vaga e extraia EXATAMENTE 3 campos em JSON.
+        prompt = f"""Analise esta descrição de vaga e extraia EXATAMENTE 4 campos em JSON.
 Regras:
 - target_role: O título/cargo da vaga (ex: "Credit Risk Specialist", "Product Designer", "Analista de Dados"). Seja conciso, máximo 60 caracteres.
 - target_company: O nome da empresa que está contratando (ex: "Nubank", "Google", "TOTVS"). Se não encontrar, retorne string vazia.
-- category: Classifique em UMA destas categorias: Tecnologia, Design, Marketing, Vendas, Gestão, Financeiro, RH, Operações, Geral.
+- category: Classifique em UMA destas categorias com base na área da vaga:
+  Tecnologia (dev, dados, IA, suporte técnico, TI, infra, DevOps, QA, helpdesk)
+  Design (UX, UI, product design, design gráfico)
+  Marketing (marketing, growth, conteúdo, mídia, branding)
+  Vendas (vendas, comercial, SDR, BDR, customer success, representação comercial)
+  Gestão (product manager, gestão de projetos, scrum master, coordenação)
+  Financeiro (finanças, contabilidade, fiscal, tesouraria, auditoria, crédito, risco)
+  RH (recursos humanos, recrutamento, DP, gestão de pessoas)
+  Operações (logística, supply chain, operações, produção)
+  Geral (APENAS se não se encaixar em nenhuma acima)
+- company_domain: O domínio do site oficial da empresa (ex: "nubank.com.br", "google.com", "totvs.com", "advicehealth.com.br"). Apenas o domínio, sem https://. Tente inferir o domínio a partir do nome da empresa. Se não conseguir, retorne null.
 
 Retorne APENAS o JSON, sem markdown, sem explicação.
 
 Descrição da vaga:
 {jd_trimmed}"""
 
-        response = client.models.generate_content(
-            model="models/gemini-2.0-flash-lite",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.0,
-                max_output_tokens=150,
-            ),
-        )
+        def _call_gemini():
+            return client.models.generate_content(
+                model="models/gemini-2.0-flash-lite",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.0,
+                    max_output_tokens=200,
+                ),
+            )
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_call_gemini)
+            response = future.result(timeout=10)
 
         text = response.text.strip()
         # Limpar possível markdown
@@ -183,10 +199,22 @@ Descrição da vaga:
             text = text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
 
         data = json.loads(text)
+        raw_domain = data.get("company_domain") or ""
+        # Sanitize domain: strip protocol, paths, whitespace
+        clean_domain = str(raw_domain).strip().lower()
+        for prefix in ["https://", "http://", "www."]:
+            if clean_domain.startswith(prefix):
+                clean_domain = clean_domain[len(prefix):]
+        clean_domain = clean_domain.split("/")[0].strip()
+        if not clean_domain or "." not in clean_domain:
+            clean_domain = ""
+
         result = {
             "target_role": str(data.get("target_role", ""))[:80],
             "target_company": str(data.get("target_company", ""))[:60],
             "category": str(data.get("category", "Geral")),
+            "company_domain": clean_domain[:80],
+            "_v": 2,
         }
 
         # Validar category
@@ -224,6 +252,8 @@ def _extract_card_metadata_fallback(job_description: str) -> dict:
         "target_role": target_role or "Otimização Geral",
         "target_company": "",
         "category": "Geral",
+        "company_domain": "",
+        "_v": 2,
     }
 
 
@@ -240,37 +270,6 @@ _USER_AREA_TO_CATEGORY = {
 }
 
 
-_JD_AREA_KEYWORDS_TO_CATEGORY = {
-    "financeiro": "Financeiro",
-    "finanças": "Financeiro",
-    "corporativo": "Financeiro",
-    "tecnologia": "Tecnologia",
-    "dados": "Tecnologia",
-    "software": "Tecnologia",
-    "suporte técnico": "Tecnologia",
-    "ti/suporte": "Tecnologia",
-    "produto": "Gestão",
-    "agile": "Gestão",
-    "marketing": "Marketing",
-    "growth": "Marketing",
-    "vendas": "Vendas",
-    "customer success": "Vendas",
-    "rh": "RH",
-    "liderança": "RH",
-    "recursos humanos": "RH",
-}
-
-
-def _detect_area_from_jd(job_description: str) -> str:
-    """Detect user-selected area from job_description text patterns.
-    The orchestrator prepends 'Vaga na área de X' to generic job descriptions."""
-    jd_lower = job_description[:200].lower()
-    for keyword, cat in _JD_AREA_KEYWORDS_TO_CATEGORY.items():
-        if keyword in jd_lower:
-            return cat
-    return ""
-
-
 def _extract_card_metadata(job_description: str, result_json: dict) -> dict:
     """Extrai metadados do card via LLM (Gemini Flash) com fallback simples.
     Prioriza a área selecionada pelo usuário (_user_area) se disponível."""
@@ -283,12 +282,8 @@ def _extract_card_metadata(job_description: str, result_json: dict) -> dict:
     user_area = result_json.get("_user_area", "")
     if user_area and user_area in _USER_AREA_TO_CATEGORY:
         result["category"] = _USER_AREA_TO_CATEGORY[user_area]
-    elif result.get("category", "Geral") == "Geral":
-        # Fallback: detect area from job_description text for legacy items
-        detected = _detect_area_from_jd(job_description)
-        if detected:
-            result["category"] = detected
 
+    result["_v"] = 2
     return result
 
 
@@ -304,26 +299,34 @@ def get_user_history(user_id: str, page: int = 1, page_size: int = 6) -> JSONRes
         
         # Formata os dados para o frontend
         formatted_history = []
+        llm_extractions = 0  # Limit LLM calls per request to avoid slow responses
+        MAX_LLM_PER_REQUEST = 2
         for item in history:
             result_json = item.get("result_json", {}) or {}
 
             # Verificar se já temos metadados cacheados no result_json
             cached_meta = result_json.get("_card_metadata")
-            # Re-extract if cached category is wrong
+            # Re-extract if metadata is outdated or wrong
             needs_reextract = False
             if cached_meta:
-                cached_cat = cached_meta.get("category", "Geral")
-                # Check 1: _user_area exists and doesn't match cached category
-                user_area = result_json.get("_user_area", "")
-                expected_cat = _USER_AREA_TO_CATEGORY.get(user_area, "")
-                if expected_cat and cached_cat != expected_cat:
+                # Check 1: metadata version outdated (prompt was improved)
+                if cached_meta.get("_v", 0) < 2:
                     needs_reextract = True
-                # Check 2: Legacy items — cached "Geral" but JD has area keywords
-                elif cached_cat == "Geral" and _detect_area_from_jd(item.get("job_description", "")):
-                    needs_reextract = True
+                # Check 2: _user_area exists and doesn't match cached category
+                else:
+                    user_area = result_json.get("_user_area", "")
+                    expected_cat = _USER_AREA_TO_CATEGORY.get(user_area, "")
+                    if expected_cat and cached_meta.get("category", "Geral") != expected_cat:
+                        needs_reextract = True
+
+            # Skip LLM re-extraction if we've hit the limit for this request
+            if needs_reextract and llm_extractions >= MAX_LLM_PER_REQUEST:
+                needs_reextract = False
+
             if cached_meta and cached_meta.get("target_role") and not needs_reextract:
                 meta = cached_meta
             else:
+                llm_extractions += 1
                 # Extrair via LLM (com fallback) e persistir no DB
                 meta = _extract_card_metadata(item.get("job_description", ""), result_json)
                 try:
@@ -345,6 +348,7 @@ def get_user_history(user_id: str, page: int = 1, page_size: int = 6) -> JSONRes
                 "target_role": meta.get("target_role", "Otimização Geral"),
                 "target_company": meta.get("target_company", ""),
                 "category": meta.get("category", "Geral"),
+                "company_domain": meta.get("company_domain", ""),
                 "result_preview": {
                     "veredito": result_json.get("veredito", "N/A"),
                     "score_ats": score,
