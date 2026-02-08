@@ -182,17 +182,22 @@ function CompanyLogo({ companyName, domain, theme }: {
         );
     }
 
-    // Fallback: letter or category icon
+    // Fallback: letter or sparkle icon for generic optimizations
     return (
         <div
             className={styles.avatar}
             style={{
-                background: theme.bg,
-                color: theme.color,
-                border: `1px solid ${theme.border}`,
+                background: hasCompany ? theme.bg : "linear-gradient(135deg, rgba(56,189,248,0.15), rgba(168,85,247,0.15))",
+                color: hasCompany ? theme.color : "#a78bfa",
+                border: `1px solid ${hasCompany ? theme.border : "rgba(168,85,247,0.3)"}`,
             }}
         >
-            {hasCompany ? companyName.charAt(0).toUpperCase() : theme.icon}
+            {hasCompany ? companyName.charAt(0).toUpperCase() : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                    <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
+                </svg>
+            )}
         </div>
     );
 }
@@ -388,8 +393,12 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
 
                 <div className={styles.titleBlock}>
                     <h3 className={styles.targetRole}>{targetRole}</h3>
-                    {hasCompany && (
+                    {hasCompany ? (
                         <p className={styles.targetCompany}>at {targetCompany}</p>
+                    ) : (
+                        <p className={styles.targetCompany} style={{ color: "rgba(168,85,247,0.7)", fontStyle: "italic" }}>
+                            CV otimizado para {category}
+                        </p>
                     )}
                 </div>
 
