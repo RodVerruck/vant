@@ -650,6 +650,7 @@ def run_llm_orchestrator(
     area,
     competitors_text=None,
     user_id=None,
+    original_filename=None,
 ):
     logger.info(f"🚀 Iniciando VANT | Área: {area}")
     
@@ -845,7 +846,8 @@ def run_llm_orchestrator(
             user_id=user_id,
             cv_text=cv_text,
             job_description=job_description,
-            result_json=result
+            result_json=result,
+            original_filename=original_filename
         )
         if cache_saved:
             logger.info(f"💾 Resultado salvo no cache para usuário {user_id}")
@@ -977,7 +979,8 @@ def analyze_cv_orchestrator_streaming(
     area_of_interest: str,
     books_catalog: list,
     competitors_text: str | None = None,
-    user_id: str | None = None
+    user_id: str | None = None,
+    original_filename: str = None
 ) -> None:
     """
     Orquestrador com progressive loading para análise de CV.
@@ -1140,7 +1143,8 @@ def analyze_cv_orchestrator_streaming(
                     user_id=user_id,
                     cv_text=cv_text,
                     job_description=job_description,
-                    result_json=final_result
+                    result_json=final_result,
+                    original_filename=original_filename
                 )
                 if cache_saved:
                     logger.info(f"💾 Resultado salvo no histórico (cached_analyses) para usuário {user_id}")

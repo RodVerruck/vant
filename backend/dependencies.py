@@ -484,10 +484,12 @@ def _create_fallback_subscription(payload: ActivateEntitlementsRequest, plan_id:
 def _process_analysis_background(
     session_id: str,
     user_id: str,
-    file_bytes: bytes,
+    file_bytes: bytes | None,
     job_description: str,
     area_of_interest: str,
-    competitors_bytes: list[bytes] | None = None
+    competitors_bytes: list[bytes] | None = None,
+    filename: str = None,
+    cv_text_preextracted: str | None = None
 ) -> None:
     """
     Função background para processamento assíncrono da análise.
@@ -501,9 +503,15 @@ def _process_analysis_background(
         from llm_core import analyze_cv_orchestrator_streaming
         from logic import extrair_texto_pdf
         
-        # Etapa 1: Extrair texto do PDF
-        logger.info(f"🔍 Extrando texto do PDF para sessão {session_id}")
-        cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
+        # Etapa 1: Extrair texto do PDF (ou usar texto pré-extraído)
+        if cv_text_preextracted and len(cv_text_preextracted.strip()) >= 100:
+            cv_text = cv_text_preextracted
+            logger.info(f"♻️ Usando cv_text pré-extraído para sessão {session_id} ({len(cv_text)} chars)")
+        elif file_bytes:
+            logger.info(f"🔍 Extraindo texto do PDF para sessão {session_id}")
+            cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
+        else:
+            cv_text = None
         
         if not cv_text or len(cv_text.strip()) < 100:
             logger.error(f"❌ PDF vazio ou muito pequeno para sessão {session_id}")
@@ -541,7 +549,8 @@ def _process_analysis_background(
             area_of_interest=area_of_interest,
             books_catalog=books_catalog,
             competitors_text=competitors_text,
-            user_id=user_id
+            user_id=user_id,
+            original_filename=filename
         )
         
         logger.info(f"✅ Orquestrador concluído para sessão {session_id}")

@@ -448,7 +448,8 @@ class CacheManager:
                      cv_text: str,
                      job_description: str,
                      result_json: Dict[str, Any],
-                     model_version: str = "gemini-2.0-flash") -> bool:
+                     model_version: str = "gemini-2.0-flash",
+                     original_filename: str = None) -> bool:
         """
         Salva resultado no cache
         
@@ -459,11 +460,16 @@ class CacheManager:
             job_description: Descrição da vaga
             result_json: Resultado completo da análise
             model_version: Versão do modelo usado
+            original_filename: Nome original do arquivo (para funcionalidade de último CV)
             
         Returns:
             True se salvou com sucesso, False caso contrário
         """
         try:
+            # Adicionar nome do arquivo original ao result_json para funcionalidade de último CV
+            if original_filename and "_original_filename" not in result_json:
+                result_json["_original_filename"] = original_filename
+            
             cache_data = {
                 "input_hash": input_hash,
                 "user_id": user_id,

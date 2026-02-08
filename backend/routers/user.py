@@ -287,6 +287,117 @@ def _extract_card_metadata(job_description: str, result_json: dict) -> dict:
     return result
 
 
+@router.get("/user/last-cv/{user_id}")
+def get_last_cv(user_id: str) -> JSONResponse:
+    """Retorna informações do último CV analisado pelo usuário."""
+    if not supabase_admin:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Supabase não configurado"}
+        )
+    
+    if not validate_user_id(user_id):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "user_id inválido"}
+        )
+    
+    try:
+        from cache_manager import CacheManager
+        from datetime import datetime, timedelta
+        
+        cache_manager = CacheManager()
+        
+        # Busca o histórico mais recente do usuário (limit=1)
+        history = cache_manager.get_user_history(user_id, limit=1, offset=0)
+        
+        if not history:
+            return JSONResponse(content={
+                "has_last_cv": False,
+                "message": "Nenhum CV encontrado no histórico"
+            })
+        
+        # Pega o item mais recente
+        last_analysis = history[0]
+        created_at = datetime.fromisoformat(last_analysis["created_at"].replace('Z', '+00:00'))
+        now = datetime.now(created_at.tzinfo)
+        
+        # Calcula tempo decorrido
+        time_diff = now - created_at
+        hours_ago = time_diff.total_seconds() / 3600
+        
+        # Considera "recente" se tiver menos de 24 horas
+        is_recent = hours_ago < 24
+        
+        # Extrai nome do arquivo do result_json se disponível
+        result_json = last_analysis.get("result_json", {})
+        filename = result_json.get("_original_filename", "CV analisado")
+        
+        # Formata tempo relativo
+        if hours_ago < 1:
+            time_ago = "há menos de 1 hora"
+        elif hours_ago < 24:
+            hours = int(hours_ago)
+            time_ago = f"há {hours} hora{'s' if hours > 1 else ''}"
+        else:
+            days = int(hours_ago / 24)
+            time_ago = f"há {days} dia{'s' if days > 1 else ''}"
+        
+        return JSONResponse(content={
+            "has_last_cv": True,
+            "filename": filename,
+            "created_at": last_analysis["created_at"],
+            "time_ago": time_ago,
+            "hours_ago": round(hours_ago, 1),
+            "is_recent": is_recent,
+            "job_description": last_analysis.get("job_description", "")[:100],
+            "analysis_id": last_analysis["id"]
+        })
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )
+
+
+@router.get("/user/last-cv-file/{analysis_id}")
+def get_last_cv_file(analysis_id: str, user_id: str) -> JSONResponse:
+    """Retorna o cv_text_original de uma análise para reutilização."""
+    if not supabase_admin:
+        return JSONResponse(
+            status_code=500,
+            content={"error": "Supabase não configurado"}
+        )
+    
+    if not validate_user_id(user_id):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "user_id inválido"}
+        )
+    
+    try:
+        response = supabase_admin.table("cached_analyses").select(
+            "cv_text_original"
+        ).eq("id", analysis_id).eq("user_id", user_id).single().execute()
+        
+        if not response.data or not response.data.get("cv_text_original"):
+            return JSONResponse(
+                status_code=404,
+                content={"error": "CV não encontrado"}
+            )
+        
+        return JSONResponse(content={
+            "cv_text": response.data["cv_text_original"]
+        })
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"{type(e).__name__}: {e}"}
+        )
+
+
 @router.get("/user/history")
 def get_user_history(user_id: str, page: int = 1, page_size: int = 6) -> JSONResponse:
     try:

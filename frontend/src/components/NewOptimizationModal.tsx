@@ -4,10 +4,30 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./NewOptimizationModal.module.css";
 
+function getApiUrl(): string {
+    if (typeof window !== "undefined") {
+        const isLocalhost =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1";
+        if (isLocalhost) return "http://127.0.0.1:8000";
+    }
+    return process.env.NEXT_PUBLIC_API_URL || "https://vant-vlgn.onrender.com";
+}
+
 interface NewOptimizationModalProps {
     isOpen: boolean;
     onClose: () => void;
     creditsRemaining: number;
+    authUserId?: string | null;
+    // Props para último CV mágico
+    lastCV?: {
+        has_last_cv: boolean;
+        filename?: string;
+        time_ago?: string;
+        is_recent?: boolean;
+        analysis_id?: string;
+        job_description?: string;
+    } | null;
 }
 
 const AREA_OPTIONS = [
@@ -36,6 +56,8 @@ export function NewOptimizationModal({
     isOpen,
     onClose,
     creditsRemaining,
+    authUserId,
+    lastCV,
 }: NewOptimizationModalProps) {
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +68,38 @@ export function NewOptimizationModal({
     const [selectedArea, setSelectedArea] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+
+    // Estado para carregamento do último CV
+    const [loadingLastCV, setLoadingLastCV] = useState(false);
+
+    // Função para usar último CV: busca cv_text do backend e salva no localStorage
+    const handleUseLastCV = async () => {
+        if (!lastCV?.analysis_id || !authUserId) return;
+        setLoadingLastCV(true);
+        try {
+            console.log("[LastCV] Buscando texto do CV:", lastCV.analysis_id);
+            const resp = await fetch(
+                `${getApiUrl()}/api/user/last-cv-file/${lastCV.analysis_id}?user_id=${authUserId}`
+            );
+            if (!resp.ok) {
+                console.error("[LastCV] Erro ao buscar CV:", resp.status);
+                setLoadingLastCV(false);
+                return;
+            }
+            const data = await resp.json();
+            if (data.cv_text) {
+                // Salva o texto pré-extraído no localStorage
+                localStorage.setItem("vant_cv_text_preextracted", data.cv_text);
+                // Cria um File placeholder apenas para a UI (não será enviado como PDF)
+                const placeholder = new File(["placeholder"], lastCV.filename || "cv.pdf", { type: "text/plain" });
+                setFile(placeholder);
+                console.log("[LastCV] CV texto carregado com sucesso:", lastCV.filename, `(${data.cv_text.length} chars)`);
+            }
+        } catch (error) {
+            console.error("[LastCV] Erro ao buscar texto do CV:", error);
+        }
+        setLoadingLastCV(false);
+    };
 
     // Animation state
     const [visible, setVisible] = useState(false);
@@ -174,7 +228,25 @@ export function NewOptimizationModal({
             localStorage.removeItem("vant_use_generic_job");
         }
 
-        // 3. Store file as base64
+        // Verificar se é CV pré-extraído (último CV reutilizado)
+        const hasPreextracted = !!localStorage.getItem("vant_cv_text_preextracted");
+
+        if (hasPreextracted) {
+            // CV pré-extraído: não precisa salvar file como base64
+            localStorage.setItem("vant_file_name", file.name);
+            localStorage.setItem("vant_file_type", "text/plain");
+            localStorage.removeItem("vant_file_b64");
+
+            // Set flags
+            localStorage.setItem("vant_auto_start", "true");
+            localStorage.setItem("vant_skip_preview", "true");
+            localStorage.setItem("vant_auth_return_stage", "hero");
+
+            router.push("/app");
+            return;
+        }
+
+        // 3. Store file as base64 (fluxo normal)
         const reader = new FileReader();
         reader.onloadend = () => {
             localStorage.setItem("vant_file_b64", reader.result as string);
@@ -330,6 +402,40 @@ export function NewOptimizationModal({
                                 <div className={styles.dropHint}>
                                     PDF ou DOCX · Máximo 10 MB
                                 </div>
+
+                                {lastCV && lastCV.has_last_cv && lastCV.is_recent && (
+                                    <div
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleUseLastCV();
+                                        }}
+                                        style={{
+                                            marginTop: 12,
+                                            padding: "8px 14px",
+                                            background: "rgba(16, 185, 129, 0.1)",
+                                            border: "1px solid rgba(16, 185, 129, 0.3)",
+                                            borderRadius: 8,
+                                            cursor: "pointer",
+                                            transition: "all 0.2s",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: 6,
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = "rgba(16, 185, 129, 0.2)";
+                                            e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+                                            e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                                        }}
+                                    >
+                                        <span style={{ fontSize: "0.85rem" }}>✨</span>
+                                        <span style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600 }}>
+                                            {loadingLastCV ? "Carregando..." : `Usar ${lastCV.filename} · ${lastCV.time_ago}`}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         )}
 

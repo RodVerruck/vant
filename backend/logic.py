@@ -932,7 +932,7 @@ def _curate_books(area_detected):
 # ============================================================
 # ORQUESTRADOR BLINDADO (ATUALIZADO)
 # ============================================================
-def analyze_cv_logic(cv_text, job_description, competitor_files=None, user_id=None):
+def analyze_cv_logic(cv_text, job_description, competitor_files=None, user_id=None, original_filename=None):
     
     # Sanitizar inputs
     cv_text = sanitize_input(cv_text)
@@ -1001,7 +1001,9 @@ def analyze_cv_logic(cv_text, job_description, competitor_files=None, user_id=No
             # PASSANDO OS CONCORRENTES PARA O LLM
             competitors_text=competitors_text if competitors_text else None,
             # PASSANDO USER_ID PARA O CACHE
-            user_id=user_id
+            user_id=user_id,
+            # PASSANDO NOME DO ARQUIVO ORIGINAL
+            original_filename=original_filename
         )
         return data
     except Exception as e:

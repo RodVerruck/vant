@@ -39,6 +39,9 @@ export function DashboardClient() {
     // Modal state
     const [showOptModal, setShowOptModal] = useState(false);
 
+    // Last CV state
+    const [lastCV, setLastCV] = useState<{ has_last_cv: boolean; filename?: string; time_ago?: string; is_recent?: boolean; analysis_id?: string; job_description?: string } | null>(null);
+
     // Supabase client (single instance)
     const supabase = useMemo((): SupabaseClient | null => {
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -108,6 +111,31 @@ export function DashboardClient() {
         return () => subscription.unsubscribe();
     }, [supabase, router]);
 
+    // Função para buscar último CV do usuário
+    const fetchLastCV = async () => {
+        if (!authUserId) return;
+        try {
+            console.log("[LastCV] Buscando último CV para usuário:", authUserId);
+            const response = await fetch(`${getApiUrl()}/api/user/last-cv/${authUserId}`);
+            if (!response.ok) {
+                console.log("[LastCV] Nenhum CV encontrado ou erro na busca");
+                setLastCV(null);
+                return;
+            }
+            const data = await response.json();
+            console.log("[LastCV] Dados recebidos:", data);
+            setLastCV(data);
+            try {
+                localStorage.setItem('vant_last_cv', JSON.stringify(data));
+            } catch (e) {
+                console.error("[LastCV] Erro ao salvar no localStorage:", e);
+            }
+        } catch (error) {
+            console.error("[LastCV] Erro ao buscar último CV:", error);
+            setLastCV(null);
+        }
+    };
+
     // Fetch user status from backend
     useEffect(() => {
         if (!authUserId) return;
@@ -134,6 +162,13 @@ export function DashboardClient() {
         };
 
         fetchStatus();
+    }, [authUserId]);
+
+    // Carregar último CV quando usuário for autenticado
+    useEffect(() => {
+        if (authUserId) {
+            fetchLastCV();
+        }
     }, [authUserId]);
 
     // Handle logout
@@ -239,6 +274,8 @@ export function DashboardClient() {
                 isOpen={showOptModal}
                 onClose={() => setShowOptModal(false)}
                 creditsRemaining={creditsRemaining}
+                authUserId={authUserId}
+                lastCV={lastCV}
             />
         </>
     );

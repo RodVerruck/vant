@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type SupabaseClient } from "@supabase/supabase-js";
 
 interface AuthModalProps {
@@ -9,9 +7,19 @@ interface AuthModalProps {
     onClose: () => void;
     selectedPlan?: string;
     supabase: SupabaseClient | null;
+    // Props para último CV mágico
+    lastCV?: {
+        has_last_cv: boolean;
+        filename?: string;
+        time_ago?: string;
+        is_recent?: boolean;
+        analysis_id?: string;
+        job_description?: string;
+    } | null;
+    onUseLastCV?: () => void;
 }
 
-export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }: AuthModalProps) {
+export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, lastCV, onUseLastCV }: AuthModalProps) {
     const [showEmailForm, setShowEmailForm] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(false);
     const [authEmail, setAuthEmail] = useState("");
@@ -19,6 +27,38 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
     const [authPasswordConfirm, setAuthPasswordConfirm] = useState("");
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [error, setError] = useState("");
+
+    // Estado local para último CV mágico
+    const [localLastCV, setLocalLastCV] = useState<{
+        has_last_cv: boolean;
+        filename?: string;
+        time_ago?: string;
+        is_recent?: boolean;
+        analysis_id?: string;
+        job_description?: string;
+    } | null>(null);
+
+    // useEffect para carregar lastCV do localStorage quando modal abrir
+    useEffect(() => {
+        if (isOpen) {
+            // Primeiro tenta usar a prop passada
+            if (lastCV) {
+                setLocalLastCV(lastCV);
+            } else {
+                // Se não tiver prop, tenta carregar do localStorage
+                try {
+                    const cachedLastCV = localStorage.getItem('vant_last_cv');
+                    if (cachedLastCV) {
+                        const parsed = JSON.parse(cachedLastCV);
+                        setLocalLastCV(parsed);
+                        console.log("[AuthModal] LastCV carregado do localStorage:", parsed);
+                    }
+                } catch (error) {
+                    console.error("[AuthModal] Erro ao carregar lastCV do localStorage:", error);
+                }
+            }
+        }
+    }, [isOpen, lastCV]);
 
     if (!isOpen) return null;
 
@@ -162,6 +202,57 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase }
                         {isLoginMode ? "Entre para acessar seu dossiê profissional" : "Desbloqueie seu dossiê profissional completo"}
                     </p>
                 </div>
+
+                {/* Último CV Mágico no Modal - Aparece antes dos botões de login */}
+                {localLastCV && localLastCV.has_last_cv && localLastCV.is_recent && (
+                    <div style={{
+                        background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05))",
+                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        borderRadius: 12,
+                        padding: "16px",
+                        marginBottom: 24,
+                        textAlign: "center"
+                    }}>
+                        <div style={{ fontSize: "1.2rem", marginBottom: 8 }}>✨</div>
+                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
+                            Continuar com seu último CV?
+                        </div>
+                        <div style={{ color: "#94A3B8", fontSize: "0.8rem", marginBottom: 12 }}>
+                            {localLastCV.filename} • {localLastCV.time_ago}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (onUseLastCV) {
+                                    onUseLastCV();
+                                    onClose();
+                                }
+                            }}
+                            style={{
+                                background: "linear-gradient(135deg, #10B981, #059669)",
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: 8,
+                                padding: "10px 20px",
+                                fontSize: "0.85rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                width: "100%"
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-2px)";
+                                e.currentTarget.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.3)";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "none";
+                            }}
+                        >
+                            Sim, usar {localLastCV.filename}
+                        </button>
+                    </div>
+                )}
 
                 {!showEmailForm ? (
                     <>

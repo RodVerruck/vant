@@ -624,7 +624,14 @@ export default function AppPage() {
             if (savedJob && jobDescription === "") {
                 setJobDescription(savedJob);
             }
-            if (savedFileName && savedFileType && savedFileB64 && !file) {
+
+            // Verificar se há cv_text pré-extraído (último CV reutilizado do Dashboard)
+            const savedCvText = localStorage.getItem("vant_cv_text_preextracted");
+            if (savedCvText && savedFileName && !file) {
+                // Criar File placeholder para a UI
+                const placeholder = new File(["placeholder"], savedFileName, { type: "text/plain" });
+                setFile(placeholder);
+            } else if (savedFileName && savedFileType && savedFileB64 && !file) {
                 fetch(savedFileB64)
                     .then(res => res.blob())
                     .then(blob => {
@@ -1530,7 +1537,16 @@ export default function AppPage() {
                 const form = new FormData();
                 form.append("user_id", authUserId);
                 form.append("job_description", jobDescription);
-                form.append("file", file);
+
+                // Verificar se há cv_text pré-extraído (último CV reutilizado)
+                const cvTextPreextracted = typeof window !== "undefined" ? localStorage.getItem("vant_cv_text_preextracted") : null;
+                if (cvTextPreextracted) {
+                    form.append("cv_text", cvTextPreextracted);
+                    localStorage.removeItem("vant_cv_text_preextracted");
+                    console.log("[LastCV] Enviando cv_text pré-extraído ao invés de arquivo PDF");
+                } else {
+                    form.append("file", file);
+                }
 
                 // Adicionar área de interesse se for vaga genérica
                 if (useGenericJob && selectedArea) {

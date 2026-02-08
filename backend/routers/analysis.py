@@ -267,8 +267,9 @@ def analyze_premium_paid(
     request: Request,
     background_tasks: BackgroundTasks,
     user_id: str = Form(...),
-    file: UploadFile = File(...),
+    file: UploadFile | None = File(None),
     job_description: str = Form(...),
+    cv_text: str = Form(""),
     area_of_interest: str = Form(""),
     competitor_files: list[UploadFile] | None = File(None),
 ) -> JSONResponse:
@@ -288,9 +289,14 @@ def analyze_premium_paid(
         )
     
     try:
-        file_bytes = file.file.read()
-        from storage_manager import storage_manager
-        storage_manager.save_temp_files(file_bytes, job_description, user_id)
+        # Se cv_text foi fornecido (reutilização de CV), não precisa de file
+        file_bytes = None
+        if file and file.filename:
+            file_bytes = file.file.read()
+            from storage_manager import storage_manager
+            storage_manager.save_temp_files(file_bytes, job_description, user_id)
+        elif not cv_text:
+            return JSONResponse(status_code=400, content={"error": "Envie um arquivo PDF/DOCX ou forneça cv_text."})
         
         # Verificar créditos (tanto em DEV quanto em produção)
         status = _entitlements_status(user_id)
@@ -374,7 +380,9 @@ def analyze_premium_paid(
             file_bytes,
             job_description,
             area_of_interest,
-            competitors_bytes
+            competitors_bytes,
+            file.filename if file and file.filename else "cv_reused.pdf",
+            cv_text if cv_text else None  # Texto pré-extraído do CV
         )
         
         return JSONResponse(content={
