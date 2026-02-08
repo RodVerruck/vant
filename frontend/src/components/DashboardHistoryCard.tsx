@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import styles from "./HistoryCard.module.css";
 
 interface HistoryCardItem {
@@ -72,43 +72,91 @@ function getScoreGlow(score: number): string {
     return "drop-shadow(0 0 4px rgba(249, 115, 22, 0.3))";
 }
 
-/* ── Avatar helpers ── */
+/* ── Category Theme System ── */
 
-const AVATAR_COLORS = [
-    { bg: "rgba(139, 92, 246, 0.15)", text: "#A78BFA", border: "rgba(139, 92, 246, 0.25)" },
-    { bg: "rgba(56, 189, 248, 0.15)", text: "#38BDF8", border: "rgba(56, 189, 248, 0.25)" },
-    { bg: "rgba(16, 185, 129, 0.15)", text: "#34D399", border: "rgba(16, 185, 129, 0.25)" },
-    { bg: "rgba(251, 146, 60, 0.15)", text: "#FB923C", border: "rgba(251, 146, 60, 0.25)" },
-    { bg: "rgba(244, 114, 182, 0.15)", text: "#F472B6", border: "rgba(244, 114, 182, 0.25)" },
-    { bg: "rgba(250, 204, 21, 0.15)", text: "#FACC15", border: "rgba(250, 204, 21, 0.25)" },
-];
-
-function getAvatarColor(name: string) {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+interface CategoryTheme {
+    color: string;       // Primary neon color
+    bg: string;          // Background with opacity
+    border: string;      // Border with opacity
+    glow: string;        // Box-shadow glow for hover
+    borderHover: string; // Border color on hover
+    icon: React.ReactNode; // Inline SVG icon (16×16)
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-    "Tecnologia": "⌨️",
-    "Design": "🎨",
-    "Marketing": "📣",
-    "Vendas": "💼",
-    "Gestão": "📊",
-    "Financeiro": "💰",
-    "RH": "👥",
-    "Operações": "⚙️",
-    "Geral": "🔍",
+const iconProps = { width: 14, height: 14, strokeWidth: 2, fill: "none", stroke: "currentColor", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
+const CATEGORY_THEMES: Record<string, CategoryTheme> = {
+    "Tecnologia": {
+        color: "#22D3EE", bg: "rgba(34, 211, 238, 0.12)", border: "rgba(34, 211, 238, 0.2)",
+        glow: "0 0 20px rgba(34, 211, 238, 0.15)", borderHover: "rgba(34, 211, 238, 0.45)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></svg>,
+    },
+    "Design": {
+        color: "#E879F9", bg: "rgba(232, 121, 249, 0.12)", border: "rgba(232, 121, 249, 0.2)",
+        glow: "0 0 20px rgba(232, 121, 249, 0.15)", borderHover: "rgba(232, 121, 249, 0.45)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0 0 20 2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h1a2 2 0 0 0 2-2 10 10 0 0 0-7-13Z" /><circle cx="8" cy="10" r="1.5" fill="currentColor" /><circle cx="12" cy="7" r="1.5" fill="currentColor" /><circle cx="16" cy="10" r="1.5" fill="currentColor" /></svg>,
+    },
+    "Marketing": {
+        color: "#FB923C", bg: "rgba(251, 146, 60, 0.12)", border: "rgba(251, 146, 60, 0.2)",
+        glow: "0 0 20px rgba(251, 146, 60, 0.15)", borderHover: "rgba(251, 146, 60, 0.45)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 13v-2z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></svg>,
+    },
+    "Vendas": {
+        color: "#FBBF24", bg: "rgba(251, 191, 36, 0.12)", border: "rgba(251, 191, 36, 0.2)",
+        glow: "0 0 20px rgba(251, 191, 36, 0.15)", borderHover: "rgba(251, 191, 36, 0.45)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" /></svg>,
+    },
+    "Gestão": {
+        color: "#818CF8", bg: "rgba(129, 140, 248, 0.12)", border: "rgba(129, 140, 248, 0.2)",
+        glow: "0 0 20px rgba(129, 140, 248, 0.15)", borderHover: "rgba(129, 140, 248, 0.45)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>,
+    },
+    "Financeiro": {
+        color: "#34D399", bg: "rgba(52, 211, 153, 0.12)", border: "rgba(52, 211, 153, 0.2)",
+        glow: "0 0 20px rgba(52, 211, 153, 0.15)", borderHover: "rgba(52, 211, 153, 0.45)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg>,
+    },
+    "RH": {
+        color: "#A78BFA", bg: "rgba(167, 139, 250, 0.12)", border: "rgba(167, 139, 250, 0.2)",
+        glow: "0 0 20px rgba(167, 139, 250, 0.15)", borderHover: "rgba(167, 139, 250, 0.45)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+    },
+    "Operações": {
+        color: "#F472B6", bg: "rgba(244, 114, 182, 0.12)", border: "rgba(244, 114, 182, 0.2)",
+        glow: "0 0 20px rgba(244, 114, 182, 0.15)", borderHover: "rgba(244, 114, 182, 0.45)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>,
+    },
+    "Geral": {
+        color: "#94A3B8", bg: "rgba(148, 163, 184, 0.12)", border: "rgba(148, 163, 184, 0.2)",
+        glow: "0 0 20px rgba(148, 163, 184, 0.1)", borderHover: "rgba(148, 163, 184, 0.35)",
+        icon: <svg {...iconProps} viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg>,
+    },
 };
+
+const DEFAULT_THEME = CATEGORY_THEMES["Geral"];
+
+function getCategoryTheme(category: string): CategoryTheme {
+    return CATEGORY_THEMES[category] || DEFAULT_THEME;
+}
 
 function ScoreRing({ score }: { score: number }) {
     const radius = 19;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (score / 100) * circumference;
     const color = getScoreColor(score);
+    const isHighScore = score > 90;
+    const [shouldPulse, setShouldPulse] = useState(isHighScore);
+
+    useEffect(() => {
+        if (isHighScore) {
+            setShouldPulse(true);
+            const timer = setTimeout(() => setShouldPulse(false), 1200);
+            return () => clearTimeout(timer);
+        }
+    }, [isHighScore]);
 
     return (
-        <div className={styles.scoreRing}>
+        <div className={`${styles.scoreRing} ${shouldPulse ? styles.scoreRingHighScore : ''}`}>
             <svg width="48" height="48" className={styles.scoreRingSvg} style={{ filter: getScoreGlow(score) }}>
                 <circle cx="24" cy="24" r={radius} className={styles.scoreRingBg} />
                 <circle
@@ -211,25 +259,27 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
     const targetRole = item.target_role || "Otimização Geral";
     const targetCompany = item.target_company || "";
     const category = item.category || "Geral";
-    const categoryIcon = CATEGORY_ICONS[category] || "🔍";
+    const theme = getCategoryTheme(category);
 
-    // Avatar: company letter if available, else category icon
     const hasCompany = !!targetCompany;
-    const avatarColor = hasCompany ? getAvatarColor(targetCompany) : getAvatarColor(category);
-
-    // Hover border color matches score
-    const hoverBorderColor = score > 0 ? getScoreColor(score) : "rgba(56, 189, 248, 0.25)";
 
     return (
         <div
             className={styles.card}
             onClick={() => !downloading && onOpen(item)}
-            style={deleting ? { opacity: 0.4, pointerEvents: "none", transform: "scale(0.97)" } : undefined}
+            style={{
+                borderColor: theme.border,
+                ...(deleting ? { opacity: 0.4, pointerEvents: "none" as const, transform: "scale(0.97)" } : {}),
+            }}
             onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = hoverBorderColor;
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = theme.borderHover;
+                el.style.boxShadow = `0 8px 32px rgba(0,0,0,0.3), ${theme.glow}`;
             }}
             onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255, 255, 255, 0.05)";
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = theme.border;
+                el.style.boxShadow = "";
             }}
         >
             {/* Loading overlay for PDF download */}
@@ -274,12 +324,12 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
                 <div
                     className={styles.avatar}
                     style={{
-                        background: avatarColor.bg,
-                        color: avatarColor.text,
-                        border: `1px solid ${avatarColor.border}`,
+                        background: theme.bg,
+                        color: theme.color,
+                        border: `1px solid ${theme.border}`,
                     }}
                 >
-                    {hasCompany ? targetCompany.charAt(0).toUpperCase() : categoryIcon}
+                    {hasCompany ? targetCompany.charAt(0).toUpperCase() : theme.icon}
                 </div>
 
                 <div className={styles.titleBlock}>
@@ -298,8 +348,15 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
             </div>
 
             {/* ── Category Badge ── */}
-            <div className={styles.categoryBadge}>
-                <span className={styles.categoryIcon}>{categoryIcon}</span>
+            <div
+                className={styles.categoryBadge}
+                style={{
+                    color: theme.color,
+                    background: theme.bg,
+                    borderColor: theme.border,
+                }}
+            >
+                <span className={styles.categoryIcon}>{theme.icon}</span>
                 {category}
             </div>
 
