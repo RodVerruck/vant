@@ -301,7 +301,6 @@ export default function AppPage() {
     const [selectedArea, setSelectedArea] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [competitorFiles, setCompetitorFiles] = useState<File[]>([]);
-    const [skipPreview, setSkipPreview] = useState(false);
 
     const [authEmail, setAuthEmail] = useState("");
     const [authPassword, setAuthPassword] = useState("");
@@ -647,11 +646,7 @@ export default function AppPage() {
                 localStorage.removeItem("vant_skip_preview");
                 console.log("[AutoStart] Dados restaurados do Dashboard modal, pulando preview e indo direto para premium...");
                 // Pequeno delay e vai direto para premium
-                const timer = setTimeout(() => {
-                    // Setar flag para pular preview no onStart
-                    setSkipPreview(true);
-                    onStart();
-                }, 300);
+                const timer = setTimeout(() => onStart(), 300);
                 return () => clearTimeout(timer);
             } else {
                 console.log("[AutoStart] Dados restaurados do Dashboard modal, iniciando análise normal...");
@@ -1648,7 +1643,16 @@ export default function AppPage() {
             }
             abortControllerRef.current = new AbortController();
 
-            const apiRequestPromise = fetch(`${getApiUrl()}/api/analyze-lite`, {
+            // Verificar se deve pular preview (vindo do modal do Dashboard)
+            const skipPreview = localStorage.getItem("vant_skip_preview") === "true";
+            const apiUrl = skipPreview ? "/api/analyze-premium-paid" : "/api/analyze-lite";
+
+            if (skipPreview) {
+                localStorage.removeItem("vant_skip_preview");
+                console.log("[onStart] Pulando preview, usando API premium diretamente...");
+            }
+
+            const apiRequestPromise = fetch(`${getApiUrl()}${apiUrl}`, {
                 method: "POST",
                 body: form,
                 signal: abortControllerRef.current.signal
@@ -1697,13 +1701,14 @@ export default function AppPage() {
             setProgress(100);
             await sleep(500); // Pequena pausa para ler a conclusão
 
-            setPreviewData(data as PreviewData);
-
-            // Se veio do modal do Dashboard, pular preview e ir direto para premium
+            // Lidar com diferentes formatos de resposta
             if (skipPreview) {
-                setSkipPreview(false); // Reset flag
+                // Veio do modal do Dashboard: resposta premium
+                setReportData(data as ReportData);
                 setStage("paid");
             } else {
+                // Fluxo normal: resposta lite
+                setPreviewData(data as PreviewData);
                 setStage("preview");
             }
 
