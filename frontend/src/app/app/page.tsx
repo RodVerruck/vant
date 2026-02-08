@@ -594,7 +594,6 @@ export default function AppPage() {
 
     // Flag para auto-start vindo do Dashboard modal
     const pendingAutoStart = useRef(false);
-    const pendingSkipPreview = useRef(false);
 
     // Restaurar jobDescription e file do localStorage ao montar
     useEffect(() => {
@@ -646,9 +645,9 @@ export default function AppPage() {
             if (shouldSkip) {
                 localStorage.removeItem("vant_skip_preview");
                 pendingSkipPreview.current = true;
-                console.log("[AutoStart] Dados restaurados do Dashboard modal, pulando preview e indo direto para premium...");
+                console.log("[AutoStart] skipPreview=true, vai pular preview após lite...");
             } else {
-                console.log("[AutoStart] Dados restaurados do Dashboard modal, iniciando análise normal...");
+                console.log("[AutoStart] Fluxo normal (com preview)...");
             }
             const timer = setTimeout(() => onStart(), 300);
             return () => clearTimeout(timer);
@@ -1602,8 +1601,11 @@ export default function AppPage() {
         })();
     }, [authUserId, competitorFiles, stage, jobDescription, file]);
 
+    // Ref para auto-trigger premium após lite (skip preview do modal Dashboard)
+    const pendingSkipPreview = useRef(false);
+
     async function onStart() {
-        console.log("[onStart] Chamado. Todos os usuários passam pelo diagnóstico.");
+        console.log("[onStart] Chamado.");
 
         if (!jobDescription.trim() || !file) {
             console.warn("[onStart] Retorno antecipado: jobDescription ou file vazios.");
@@ -1641,16 +1643,7 @@ export default function AppPage() {
             }
             abortControllerRef.current = new AbortController();
 
-            // Verificar se deve pular preview (vindo do modal do Dashboard)
-            const skipPreview = pendingSkipPreview.current;
-            pendingSkipPreview.current = false;
-            const apiUrl = skipPreview ? "/api/analyze-premium-paid" : "/api/analyze-lite";
-
-            if (skipPreview) {
-                console.log("[onStart] Pulando preview, usando API premium diretamente...");
-            }
-
-            const apiRequestPromise = fetch(`${getApiUrl()}${apiUrl}`, {
+            const apiRequestPromise = fetch(`${getApiUrl()}/api/analyze-lite`, {
                 method: "POST",
                 body: form,
                 signal: abortControllerRef.current.signal
@@ -1699,14 +1692,16 @@ export default function AppPage() {
             setProgress(100);
             await sleep(500); // Pequena pausa para ler a conclusão
 
-            // Lidar com diferentes formatos de resposta
-            if (skipPreview) {
-                // Veio do modal do Dashboard: resposta premium
-                setReportData(data as ReportData);
-                setStage("paid");
+            setPreviewData(data as PreviewData);
+
+            // Se veio do modal do Dashboard, pular preview e ir direto para premium
+            if (pendingSkipPreview.current) {
+                pendingSkipPreview.current = false;
+                console.log("[onStart] skipPreview ativo, pulando preview e disparando premium automaticamente...");
+                setStage("preview"); // Setar preview brevemente para onUseCreditFromPreview funcionar
+                // Chamar onUseCreditFromPreview no próximo tick
+                setTimeout(() => onUseCreditFromPreview(), 100);
             } else {
-                // Fluxo normal: resposta lite
-                setPreviewData(data as PreviewData);
                 setStage("preview");
             }
 
