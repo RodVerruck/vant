@@ -25,6 +25,37 @@
     font-weight: 500;
 }
 
+/* Empty Filtered State */
+.emptyFilteredContainer {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94A3B8;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.emptyFilteredIcon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+}
+
+.emptyFilteredTitle {
+    color: #F8FAFC;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+}
+
+.emptyFilteredMessage {
+    color: #94A3B8;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
 .grid {
     display: grid;
     grid-template-columns: 1fr;
