@@ -6,12 +6,42 @@ import { PlanType } from '../types';
 
 interface PricingSimplifiedProps {
   onSelectPlan: (planId: PlanType) => void;
+  onCheckout?: (planId: PlanType) => void;
   currentPlan?: PlanType;
   showTrial?: boolean;
+  authUserId?: string | null;
 }
 
-export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true }: PricingSimplifiedProps) {
+export function PricingSimplified({ onSelectPlan, onCheckout, currentPlan, showTrial = true, authUserId }: PricingSimplifiedProps) {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+
+  // Função para capturar intenção de compra
+  const captureCheckoutIntent = (planId: PlanType, amount?: number) => {
+    if (typeof window !== "undefined") {
+      const checkoutData = {
+        plan: planId,
+        amount: amount,
+        timestamp: Date.now(),
+        source: 'pricing_page'
+      };
+      localStorage.setItem('checkout_pending', JSON.stringify(checkoutData));
+      console.log('[PricingSimplified] Intenção de compra capturada:', checkoutData);
+    }
+  };
+
+  // Função para lidar com clique de checkout
+  const handleCheckout = (planId: PlanType, amount?: number) => {
+    // Selecionar o plano
+    onSelectPlan(planId);
+
+    // Capturar intenção
+    captureCheckoutIntent(planId, amount);
+
+    // Executar callback de checkout
+    if (onCheckout) {
+      onCheckout(planId);
+    }
+  };
 
   return (
     <div className="pricing-container" data-cy="pricing-container">
@@ -408,7 +438,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
               <li>Reembolso automático se cancelar em 48h</li>
             </ul>
 
-            <button className="tier-cta">COMEÇAR TRIAL R$ 1,99</button>
+            <button className="tier-cta" onClick={() => handleCheckout("trial", 1.99)}>COMEÇAR TRIAL R$ 1,99</button>
           </div>
         )}
 
@@ -466,7 +496,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
             <li>Biblioteca Recomendada</li>
           </ul>
 
-          <button className="tier-cta">ASSINAR PRO</button>
+          <button className="tier-cta" onClick={() => handleCheckout(billingPeriod === "monthly" ? "pro_monthly" : "pro_annual", billingPeriod === "monthly" ? 27.90 : 239.00)}>ASSINAR PRO</button>
         </div>
       </div>
 
@@ -482,7 +512,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
             <div className="credit-name">Crédito Único</div>
             <div className="credit-price">R$ 12,90</div>
             <div className="credit-detail">1 otimização completa</div>
-            <button className="credit-cta">COMPRAR CRÉDITO</button>
+            <button className="credit-cta" onClick={() => handleCheckout("credit_1", 12.90)}>COMPRAR CRÉDITO</button>
           </div>
 
           <div className="credit-card popular" data-cy="plan-credit-3" onClick={() => onSelectPlan("credit_3")}>
@@ -490,7 +520,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
             <div className="credit-name">Pacote 3 CVs</div>
             <div className="credit-price">R$ 29,90</div>
             <div className="credit-detail">R$ 9,97 por CV • Válido 6 meses</div>
-            <button className="credit-cta">COMPRAR PACOTE</button>
+            <button className="credit-cta" onClick={() => handleCheckout("credit_3", 29.90)}>COMPRAR PACOTE</button>
           </div>
 
           <div className="credit-card" data-cy="plan-credit-5" onClick={() => onSelectPlan("credit_5")}>
@@ -498,7 +528,7 @@ export function PricingSimplified({ onSelectPlan, currentPlan, showTrial = true 
             <div className="credit-name">Pacote 5 CVs</div>
             <div className="credit-price">R$ 49,90</div>
             <div className="credit-detail">R$ 9,98 por CV • Válido 6 meses</div>
-            <button className="credit-cta">COMPRAR PACOTE</button>
+            <button className="credit-cta" onClick={() => handleCheckout("credit_5", 49.90)}>COMPRAR PACOTE</button>
           </div>
         </div>
       </div>

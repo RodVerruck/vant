@@ -13,6 +13,61 @@ import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
 
+// IndexedDB helpers for file storage (localStorage has 5MB limit, IndexedDB doesn't)
+const IDB_NAME = "vant_files";
+const IDB_STORE = "files";
+
+function openIDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function saveFileToIDB(file: File): Promise<void> {
+    const db = await openIDB();
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    tx.objectStore(IDB_STORE).put({ blob: file, name: file.name, type: file.type }, "pending_cv");
+    return new Promise((resolve, reject) => {
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+}
+
+async function getFileFromIDB(): Promise<File | null> {
+    try {
+        const db = await openIDB();
+        const tx = db.transaction(IDB_STORE, "readonly");
+        const req = tx.objectStore(IDB_STORE).get("pending_cv");
+        return new Promise((resolve) => {
+            req.onsuccess = () => {
+                db.close();
+                const data = req.result;
+                if (data?.blob) {
+                    resolve(new File([data.blob], data.name || "cv.pdf", { type: data.type || "application/pdf" }));
+                } else {
+                    resolve(null);
+                }
+            };
+            req.onerror = () => { db.close(); resolve(null); };
+        });
+    } catch { return null; }
+}
+
+async function clearFileFromIDB(): Promise<void> {
+    try {
+        const db = await openIDB();
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).delete("pending_cv");
+        return new Promise((resolve) => {
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); resolve(); };
+        });
+    } catch { /* ignore */ }
+}
+
 // Detecta se está em desenvolvimento (localhost) e usa backend local
 // Chamada em cada requisição para garantir que window existe
 function getApiUrl(): string {
@@ -955,18 +1010,22 @@ export default function AppPage() {
         // Verificar se há fluxo ativo que impede redirect ao Dashboard
         const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
         const hasReturnStage = !!returnStage;
-        const hasActiveFlow = returnPlan || hasReturnStage || hasHistoryItem;
+        const checkoutPending = localStorage.getItem("checkout_pending");
+        const hasCheckoutPending = !!checkoutPending;
+        const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
+        // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
+        const hasNonHeroStage = stage !== "hero";
+        const hasActiveFlow = returnPlan || hasReturnStage || hasHistoryItem || hasCheckoutPending || hasNonHeroStage || hasAutoProcess;
+
+        console.log("[Auth] Verificando fluxo:", { returnPlan: !!returnPlan, hasReturnStage, hasCheckoutPending, hasNonHeroStage, stage });
 
         if (!hasActiveFlow) {
-            // Sem fluxo ativo → redirecionar para Dashboard
-            console.log("[Auth] Usuário autenticado sem fluxo ativo, redirecionando para /dashboard");
+            console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
             window.location.href = "/dashboard";
             return;
         }
 
         // Processar fluxo ativo normalmente (pagamento, history, etc.)
-        console.log("[Auth] Fluxo ativo detectado, mantendo em /app");
-
         if (returnPlan) {
             console.log("[Restoration] Restaurando plano e indo para checkout...");
             setSelectedPlan(returnPlan as PlanType);
@@ -978,9 +1037,42 @@ export default function AppPage() {
             if (returnStage !== "hero") {
                 console.log("[Restoration] Restaurando stage:", returnStage);
                 setStage(returnStage as AppStage);
-            } else {
-                console.log("[Restoration] Retorno ao hero (default) via Dashboard");
             }
+        } else if (hasCheckoutPending) {
+            try {
+                const data = JSON.parse(checkoutPending!);
+                localStorage.removeItem("checkout_pending");
+                console.log("[Auth] Processando checkout_pending:", data);
+                setSelectedPlan(data.plan);
+                setStage("checkout");
+            } catch (error) {
+                console.error("[Auth] Erro ao processar checkout_pending:", error);
+                localStorage.removeItem("checkout_pending");
+            }
+        } else if (hasAutoProcess) {
+            // Veio do dashboard após pagamento — restaurar CV/vaga e iniciar processamento
+            localStorage.removeItem("vant_auto_process");
+            const savedJob = localStorage.getItem("vant_jobDescription");
+
+            if (savedJob) {
+                setJobDescription(savedJob);
+            }
+
+            // Restaurar arquivo do IndexedDB (async)
+            (async () => {
+                const restoredFile = await getFileFromIDB();
+                console.log("[Auth] Auto-process: dados encontrados:", { hasJob: !!savedJob, hasFile: !!restoredFile });
+
+                if (savedJob && restoredFile) {
+                    setFile(restoredFile);
+                    await clearFileFromIDB();
+                    console.log("[Auth] Auto-process: arquivo restaurado do IndexedDB, iniciando processing_premium");
+                    setStage("processing_premium");
+                } else {
+                    console.log("[Auth] Auto-process: dados incompletos, indo para hero com vaga preenchida");
+                    setStage("hero");
+                }
+            })();
         }
         // hasHistoryItem é tratado pelo useEffect dedicado abaixo
 
@@ -992,7 +1084,9 @@ export default function AppPage() {
                     const data = await resp.json();
                     if (data.credits_remaining > 0) {
                         setCreditsRemaining(data.credits_remaining);
+                        localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
                         setSelectedPlan("premium_plus");
+                        console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
                     }
                 }
             } catch (e) {
@@ -1079,65 +1173,31 @@ export default function AppPage() {
                     throw new Error(err);
                 }
 
-                // Sucesso! Se response.ok for true, considere sucesso independente do conteúdo de data
+                // Sucesso!
                 console.log("[needsActivation] Ativação bem-sucedida! Status:", resp.status, "Data:", data);
 
                 // Limpar sessão pendente após ativação bem-sucedida
                 window.localStorage.removeItem("vant_pending_stripe_session_id");
-
                 setCheckoutError("");
 
-                // Atualizar créditos com valor retornado pelo backend (se disponível)
+                // Atualizar créditos com valor retornado pelo backend
                 if (typeof data.credits_remaining === "number") {
                     setCreditsRemaining(data.credits_remaining as number);
                     localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
+                    console.log("[needsActivation] Créditos cacheados:", data.credits_remaining);
                 }
 
-                // 🔥 ATUALIZAÇÃO IMEDIATA APÓS ATIVAÇÃO
-                console.log("[needsActivation] Ativação bem-sucedida! Sincronizando créditos...");
-
-                // Chamar syncEntitlements imediatamente
+                // Sincronizar entitlements para garantir
                 if (authUserId) {
                     await syncEntitlements(authUserId);
-
-                    // Verificar se tem créditos após sincronização
-                    if (creditsRemaining > 0) {
-                        console.log("[needsActivation] Créditos detectados:", creditsRemaining);
-
-                        // Mostrar toast de sucesso (mensagem adequada ao tipo de compra)
-                        const isAvulso = data.activation_type === "one_time";
-                        alert(isAvulso ? "Créditos adicionados com sucesso!" : "Assinatura ativada com sucesso!");
-
-                        // Verificar se já tem relatório salvo
-                        const hasReport = localStorage.getItem('vant_last_report');
-                        if (hasReport) {
-                            console.log("[needsActivation] Relatório encontrado, indo para paid");
-                            setStage("paid");
-                        } else {
-                            console.log("[needsActivation] Sem relatório, indo para hero");
-                            setStage("hero");
-                        }
-                    } else {
-                        console.log("[needsActivation] Nenhum crédito detectado, indo para processing_premium");
-                        setStage("processing_premium");
-                    }
-
-                    // 🔥 SEGUNDA SINCRONIZAÇÃO APÓS 1s (garantia)
-                    setTimeout(async () => {
-                        console.log("[needsActivation] Segunda sincronização de segurança...");
-                        await syncEntitlements(authUserId);
-
-                        // Verificar novamente se tem créditos
-                        if (creditsRemaining > 0 && stage === "processing_premium") {
-                            console.log("[needsActivation] Créditos confirmados na segunda verificação, atualizando stage");
-                            const hasReport = localStorage.getItem('vant_last_report');
-                            setStage(hasReport ? "paid" : "hero");
-                        }
-                    }, 1000);
-                } else {
-                    // Fallback caso não tenha authUserId
-                    setStage("processing_premium");
                 }
+
+                // Sinalizar que acabou de pagar (dashboard vai detectar)
+                localStorage.setItem('vant_just_paid', 'true');
+
+                // Redirecionar para dashboard — créditos já estão no cache
+                console.log("[needsActivation] Redirecionando para /dashboard...");
+                window.location.href = "/dashboard";
             } catch (e: unknown) {
                 setCheckoutError(getErrorMessage(e, "Falha ao ativar plano"));
                 // Em caso de erro, resetar o flag para permitir nova tentativa
@@ -1232,24 +1292,22 @@ export default function AppPage() {
                 throw new Error("URL de checkout não retornada pelo backend");
             }
 
-            // Salvar dados no localStorage antes de redirecionar para o pagamento
+            // Salvar dados antes de redirecionar para o pagamento
             if (typeof window !== "undefined" && jobDescription && file) {
-                console.log("[startCheckout] Salvando dados no localStorage antes do pagamento...");
+                console.log("[startCheckout] Salvando dados antes do pagamento...");
                 localStorage.setItem("vant_jobDescription", jobDescription);
+                localStorage.setItem("vant_file_name", file.name);
+                localStorage.setItem("vant_file_type", file.type);
 
-                // Converter arquivo para base64 e aguardar conclusão
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const base64 = reader.result as string;
-                    localStorage.setItem("vant_file_b64", base64);
-                    localStorage.setItem("vant_file_name", file.name);
-                    localStorage.setItem("vant_file_type", file.type);
-                    console.log("[startCheckout] Dados salvos com sucesso. Redirecionando...");
-                    window.location.href = checkoutUrl;
-                };
-                reader.readAsDataURL(file);
+                // Salvar arquivo no IndexedDB (sem limite de tamanho)
+                try {
+                    await saveFileToIDB(file);
+                    console.log("[startCheckout] Arquivo salvo no IndexedDB. Redirecionando...");
+                } catch (err) {
+                    console.warn("[startCheckout] Falha ao salvar arquivo no IndexedDB:", err);
+                }
+                window.location.href = checkoutUrl;
             } else {
-                // Se não houver dados para salvar, redireciona imediatamente
                 window.location.href = checkoutUrl;
             }
             return; // Evita que o redirecionamento abaixo execute antes da hora

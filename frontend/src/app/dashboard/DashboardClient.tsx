@@ -38,6 +38,9 @@ export function DashboardClient() {
 
     // Modal state
     const [showOptModal, setShowOptModal] = useState(false);
+    const [showContinueModal, setShowContinueModal] = useState(false);
+    const [savedJobDescription, setSavedJobDescription] = useState<string | null>(null);
+    const [savedFileName, setSavedFileName] = useState<string | null>(null);
 
     // Last CV state
     const [lastCV, setLastCV] = useState<{ has_last_cv: boolean; filename?: string; time_ago?: string; is_recent?: boolean; analysis_id?: string; job_description?: string } | null>(null);
@@ -79,6 +82,40 @@ export function DashboardClient() {
                 if (cached) {
                     const n = parseInt(cached);
                     if (!isNaN(n)) setCreditsRemaining(n);
+                }
+
+                // 🚀 Sincronizar créditos ao entrar no dashboard
+                console.log("[Dashboard] Sincronizando créditos na entrada...");
+                try {
+                    const resp = await fetch(`${getApiUrl()}/api/user/status/${user.id}`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        console.log("[Dashboard] user/status response:", data);
+                        if (data.credits_remaining > 0) {
+                            setCreditsRemaining(data.credits_remaining);
+                            localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
+                            console.log("[Dashboard] Créditos atualizados:", data.credits_remaining);
+                        }
+                    } else {
+                        // Tentar syncEntitlements se user/status falhar
+                        console.log("[Dashboard] user/status falhou, tentando entitlements...");
+                        const entitlementResp = await fetch(`${getApiUrl()}/api/entitlements/status`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ user_id: user.id })
+                        });
+                        if (entitlementResp.ok) {
+                            const entitlementData = await entitlementResp.json();
+                            console.log("[Dashboard] entitlements response:", entitlementData);
+                            if (entitlementData.credits_remaining > 0) {
+                                setCreditsRemaining(entitlementData.credits_remaining);
+                                localStorage.setItem('vant_cached_credits', String(entitlementData.credits_remaining));
+                                console.log("[Dashboard] Créditos atualizados via entitlements:", entitlementData.credits_remaining);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("[Dashboard] Erro ao sincronizar créditos:", error);
                 }
             } else {
                 // Not authenticated — redirect to app (landing)
@@ -170,6 +207,53 @@ export function DashboardClient() {
             fetchLastCV();
         }
     }, [authUserId]);
+
+    // Detectar se acabou de pagar e tem CV/vaga salvos → mostrar modal "Continuar Análise?"
+    useEffect(() => {
+        if (!authUserId || loading) return;
+
+        const justPaid = localStorage.getItem('vant_just_paid');
+        const jobDesc = localStorage.getItem('vant_jobDescription');
+        const fileName = localStorage.getItem('vant_file_name');
+
+        if (justPaid && jobDesc && fileName) {
+            console.log("[Dashboard] Pagamento recente detectado com CV/vaga salvos:", fileName);
+            setSavedJobDescription(jobDesc);
+            setSavedFileName(fileName);
+            setShowContinueModal(true);
+            localStorage.removeItem('vant_just_paid');
+        } else if (justPaid) {
+            localStorage.removeItem('vant_just_paid');
+        }
+    }, [authUserId, loading]);
+
+    // Continuar análise com CV/vaga salvos
+    const handleContinueAnalysis = () => {
+        // Sinalizar para /app que deve iniciar processamento premium automaticamente
+        localStorage.setItem('vant_auto_process', 'true');
+        setShowContinueModal(false);
+        router.push("/app");
+    };
+
+    // Modificar — ir para /app no hero para alterar CV/vaga
+    const handleModifyAnalysis = () => {
+        // Limpar dados salvos para que o usuário possa enviar novos
+        localStorage.removeItem('vant_jobDescription');
+        localStorage.removeItem('vant_file_name');
+        localStorage.removeItem('vant_file_type');
+        // Limpar arquivo do IndexedDB
+        try {
+            const req = indexedDB.open("vant_files", 1);
+            req.onsuccess = () => {
+                const db = req.result;
+                const tx = db.transaction("files", "readwrite");
+                tx.objectStore("files").delete("pending_cv");
+                tx.oncomplete = () => db.close();
+            };
+        } catch { /* ignore */ }
+        setShowContinueModal(false);
+        router.push("/app");
+    };
 
     // Handle logout
     const handleLogout = async () => {
@@ -277,6 +361,81 @@ export function DashboardClient() {
                 authUserId={authUserId}
                 lastCV={lastCV}
             />
+
+            {/* Modal "Continuar Análise?" — aparece após pagamento com CV/vaga salvos */}
+            {showContinueModal && (
+                <div style={{
+                    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                    background: "rgba(0, 0, 0, 0.75)", zIndex: 9999,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontFamily: "'Outfit', sans-serif",
+                }}>
+                    <div style={{
+                        background: "linear-gradient(135deg, #1E293B 0%, #0F172A 100%)",
+                        border: "1px solid rgba(56, 189, 248, 0.3)",
+                        borderRadius: 16, padding: "32px 28px", maxWidth: 440, width: "90%",
+                        boxShadow: "0 25px 50px rgba(0,0,0,0.5)",
+                    }}>
+                        <div style={{ textAlign: "center", marginBottom: 24 }}>
+                            <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
+                            <h2 style={{ color: "#F8FAFC", fontSize: "1.3rem", fontWeight: 700, margin: "0 0 8px" }}>
+                                Pagamento confirmado!
+                            </h2>
+                            <p style={{ color: "#94A3B8", fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>
+                                Seus créditos já estão disponíveis. Deseja prosseguir com a análise do seu CV?
+                            </p>
+                        </div>
+
+                        <div style={{
+                            background: "rgba(15, 23, 42, 0.6)", borderRadius: 10, padding: "14px 16px",
+                            marginBottom: 24, border: "1px solid rgba(148, 163, 184, 0.1)",
+                        }}>
+                            <div style={{ color: "#CBD5E1", fontSize: "0.8rem", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                                Dados salvos
+                            </div>
+                            <div style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, marginBottom: 4 }}>
+                                📄 {savedFileName}
+                            </div>
+                            {savedJobDescription && (
+                                <div style={{ color: "#94A3B8", fontSize: "0.8rem", lineHeight: 1.4 }}>
+                                    💼 {savedJobDescription.length > 80 ? savedJobDescription.substring(0, 80) + "..." : savedJobDescription}
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: 12 }}>
+                            <button
+                                onClick={handleModifyAnalysis}
+                                style={{
+                                    flex: 1, padding: "12px 16px", borderRadius: 10,
+                                    background: "rgba(148, 163, 184, 0.1)",
+                                    border: "1px solid rgba(148, 163, 184, 0.2)",
+                                    color: "#CBD5E1", fontSize: "0.9rem", fontWeight: 600,
+                                    cursor: "pointer", transition: "all 0.2s",
+                                }}
+                                onMouseOver={(e) => (e.currentTarget.style.background = "rgba(148, 163, 184, 0.2)")}
+                                onMouseOut={(e) => (e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)")}
+                            >
+                                Modificar
+                            </button>
+                            <button
+                                onClick={handleContinueAnalysis}
+                                style={{
+                                    flex: 1, padding: "12px 16px", borderRadius: 10,
+                                    background: "linear-gradient(135deg, #3B82F6, #2563EB)",
+                                    border: "none", color: "#FFFFFF", fontSize: "0.9rem",
+                                    fontWeight: 700, cursor: "pointer", transition: "all 0.2s",
+                                    boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)",
+                                }}
+                                onMouseOver={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
+                                onMouseOut={(e) => (e.currentTarget.style.transform = "translateY(0)")}
+                            >
+                                Prosseguir ✨
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
