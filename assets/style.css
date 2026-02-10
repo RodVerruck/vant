@@ -1452,8 +1452,8 @@ h5 {
 
 /* Payment Methods Section */
 .payment-methods-section {
-    margin-top: 32px !important;
-    padding: 24px !important;
+    margin-top: 20px !important;
+    padding: 20px !important;
     background: rgba(15, 23, 42, 0.3);
     border-radius: 16px;
     border: 1px solid rgba(56, 189, 248, 0.1);
@@ -1470,6 +1470,17 @@ h5 {
 
 .payment-icons-container:hover {
     transform: translateY(-2px);
+}
+
+.payment-icons-container img {
+    height: 24px;
+    width: auto;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.payment-icons-container:hover img {
+    opacity: 1;
 }
 
 .payment-icon-wrapper {
@@ -1597,20 +1608,6 @@ h5 {
         font-size: 1.5rem;
     }
 
-    .payment-methods-section {
-        margin-top: 24px !important;
-        padding: 20px !important;
-    }
-
-    .payment-icons-container {
-        gap: 16px;
-        flex-wrap: wrap;
-        margin-bottom: 12px;
-    }
-
-    .checkout-order-summary {
-        padding: 20px;
-    }
 }
 
 /* Melhoria: Skeleton Loading */

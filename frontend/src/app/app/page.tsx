@@ -4386,12 +4386,12 @@ export default function AppPage() {
                                             </form>
                                         )}
 
-                                        <div className="payment-methods-section" style={{ marginTop: "32px", padding: "24px" }}>
+                                        <div className="payment-methods-section" style={{ marginTop: "24px", padding: "24px" }}>
                                             <div className="payment-icons-container">
-                                                <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto" }} />
-                                                <img src="/icons/visa.svg" alt="Visa" style={{ height: "16px", width: "auto" }} />
-                                                <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto" }} />
-                                                <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto" }} />
+                                                <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto", opacity: "0.7" }} />
+                                                <img src="/icons/visa.svg" alt="Visa" style={{ height: "24px", width: "auto", opacity: "0.7" }} />
+                                                <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto", opacity: "0.7" }} />
+                                                <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto", opacity: "0.7" }} />
                                             </div>
                                         </div>
 
