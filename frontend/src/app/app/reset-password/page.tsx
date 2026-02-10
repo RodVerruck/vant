@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from 'next/navigation';
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
@@ -24,6 +24,7 @@ export default function ResetPasswordPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [isSuccess, setIsSuccess] = useState(false);
+    const [passwordStrength, setPasswordStrength] = useState(0);
 
     // Efeito para capturar o contexto da URL e salvar na sessão atual
     useEffect(() => {
@@ -53,9 +54,19 @@ export default function ResetPasswordPage() {
             return;
         }
 
-        // Sessão já é restaurada automaticamente pelo Supabase com os tokens na URL
         console.log("[ResetPassword] Tokens detectados na URL");
     }, [supabase]);
+
+    // Calcular força da senha
+    useEffect(() => {
+        let strength = 0;
+        if (newPassword.length >= 8) strength += 25;
+        if (newPassword.length >= 12) strength += 25;
+        if (/[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword)) strength += 25;
+        if (/[0-9]/.test(newPassword)) strength += 12.5;
+        if (/[^a-zA-Z0-9]/.test(newPassword)) strength += 12.5;
+        setPasswordStrength(strength);
+    }, [newPassword]);
 
     async function handleResetPassword(e: React.FormEvent) {
         e.preventDefault();
@@ -88,18 +99,13 @@ export default function ResetPasswordPage() {
             setIsSuccess(true);
             setMessage("✅ Senha atualizada com sucesso! Redirecionando...");
 
-            // Verificar se deve retornar para o checkout
             setTimeout(() => {
                 const returnTo = localStorage.getItem("vant_reset_return_to");
                 const returnPlan = localStorage.getItem("vant_reset_return_plan");
 
-                // Não limpar flags aqui - deixar a página principal limpar após restaurar
-
                 if (returnTo === "checkout") {
-                    // Retornar para o checkout com o plano selecionado
                     window.location.href = `/app?stage=checkout${returnPlan ? `&plan=${returnPlan}` : ""}`;
                 } else {
-                    // Redirecionamento padrão para o app
                     window.location.href = "/app";
                 }
             }, 2000);
@@ -133,12 +139,36 @@ export default function ResetPasswordPage() {
                     width: "100%",
                     textAlign: "center"
                 }}>
-                    <div style={{ fontSize: "3rem", marginBottom: 16 }}>🔐</div>
-                    <h2 style={{ color: "#F8FAFC", fontSize: "1.5rem", marginBottom: 8 }}>
+                    <div style={{
+                        width: 64,
+                        height: 64,
+                        background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: "0 auto 24px",
+                        fontSize: "1.5rem",
+                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)"
+                    }}>
+                        ✓
+                    </div>
+                    <h2 style={{
+                        color: "#F8FAFC",
+                        fontSize: "1.5rem",
+                        fontWeight: 600,
+                        marginBottom: 8
+                    }}>
                         Senha Atualizada!
                     </h2>
-                    <p style={{ color: "#94A3B8", marginBottom: 24 }}>
-                        Sua senha foi atualizada com sucesso.
+                    <p style={{
+                        color: "#94A3B8",
+                        fontSize: "0.95rem",
+                        lineHeight: 1.5,
+                        marginBottom: 24
+                    }}>
+                        Sua senha foi atualizada com sucesso.<br />
+                        Você será redirecionado em instantes.
                     </p>
                     <div style={{
                         background: "rgba(16, 185, 129, 0.1)",
@@ -172,21 +202,54 @@ export default function ResetPasswordPage() {
                 borderRadius: 16,
                 padding: 40,
                 maxWidth: 400,
-                width: "100%"
+                width: "100%",
+                boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)"
             }}>
+                {/* Icon */}
+                <div style={{
+                    width: 64,
+                    height: 64,
+                    background: "linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 32px",
+                    fontSize: "1.5rem",
+                    boxShadow: "0 4px 12px rgba(59, 130, 246, 0.4)"
+                }}>
+                    🔐
+                </div>
+
+                {/* Header */}
                 <div style={{ textAlign: "center", marginBottom: 32 }}>
-                    <div style={{ fontSize: "3rem", marginBottom: 16 }}>🔐</div>
-                    <h1 style={{ color: "#F8FAFC", fontSize: "1.8rem", marginBottom: 8 }}>
+                    <h1 style={{
+                        color: "#F8FAFC",
+                        fontSize: "1.75rem",
+                        fontWeight: 600,
+                        marginBottom: 8
+                    }}>
                         Nova Senha
                     </h1>
-                    <p style={{ color: "#94A3B8", fontSize: "0.95rem" }}>
-                        Digite sua nova senha abaixo
+                    <p style={{
+                        color: "#94A3B8",
+                        fontSize: "0.95rem",
+                        lineHeight: 1.5
+                    }}>
+                        Crie uma senha segura para sua conta
                     </p>
                 </div>
 
                 <form onSubmit={handleResetPassword} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                    {/* Nova Senha */}
                     <div>
-                        <label style={{ color: "#E2E8F0", fontSize: "0.9rem", marginBottom: 8, display: "block" }}>
+                        <label style={{
+                            color: "#E2E8F0",
+                            fontSize: "0.9rem",
+                            fontWeight: 500,
+                            marginBottom: 8,
+                            display: "block"
+                        }}>
                             Nova Senha
                         </label>
                         <input
@@ -205,13 +268,55 @@ export default function ResetPasswordPage() {
                                 color: "#F8FAFC",
                                 fontSize: "1rem",
                                 outline: "none",
-                                boxSizing: "border-box"
+                                boxSizing: "border-box",
+                                transition: "all 0.2s"
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.borderColor = "#3B82F6";
+                                e.target.style.background = "rgba(15, 23, 42, 0.9)";
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.borderColor = "rgba(148, 163, 184, 0.3)";
+                                e.target.style.background = "rgba(15, 23, 42, 0.8)";
                             }}
                         />
+
+                        {/* Password strength indicator */}
+                        {newPassword && (
+                            <div style={{ marginTop: 8 }}>
+                                <div style={{
+                                    height: 4,
+                                    background: "rgba(148, 163, 184, 0.2)",
+                                    borderRadius: 2,
+                                    overflow: "hidden"
+                                }}>
+                                    <div style={{
+                                        height: "100%",
+                                        width: `${passwordStrength}%`,
+                                        background: passwordStrength < 50 ? "#EF4444" : passwordStrength < 75 ? "#F59E0B" : "#10B981",
+                                        transition: "all 0.3s"
+                                    }} />
+                                </div>
+                                <p style={{
+                                    color: "#64748B",
+                                    fontSize: "0.75rem",
+                                    marginTop: 4
+                                }}>
+                                    {passwordStrength < 50 ? "Fraca" : passwordStrength < 75 ? "Média" : "Forte"}
+                                </p>
+                            </div>
+                        )}
                     </div>
 
+                    {/* Confirmar Senha */}
                     <div>
-                        <label style={{ color: "#E2E8F0", fontSize: "0.9rem", marginBottom: 8, display: "block" }}>
+                        <label style={{
+                            color: "#E2E8F0",
+                            fontSize: "0.9rem",
+                            fontWeight: 500,
+                            marginBottom: 8,
+                            display: "block"
+                        }}>
                             Confirmar Nova Senha
                         </label>
                         <input
@@ -225,21 +330,54 @@ export default function ResetPasswordPage() {
                                 width: "100%",
                                 padding: "14px 16px",
                                 background: "rgba(15, 23, 42, 0.8)",
-                                border: "1px solid rgba(148, 163, 184, 0.3)",
+                                border: confirmPassword && confirmPassword !== newPassword
+                                    ? "1px solid #EF4444"
+                                    : "1px solid rgba(148, 163, 184, 0.3)",
                                 borderRadius: 8,
                                 color: "#F8FAFC",
                                 fontSize: "1rem",
                                 outline: "none",
-                                boxSizing: "border-box"
+                                boxSizing: "border-box",
+                                transition: "all 0.2s"
+                            }}
+                            onFocus={(e) => {
+                                if (confirmPassword !== newPassword) {
+                                    e.target.style.borderColor = "#EF4444";
+                                } else {
+                                    e.target.style.borderColor = "#3B82F6";
+                                }
+                                e.target.style.background = "rgba(15, 23, 42, 0.9)";
+                            }}
+                            onBlur={(e) => {
+                                if (confirmPassword !== newPassword) {
+                                    e.target.style.borderColor = "rgba(239, 68, 68, 0.5)";
+                                } else {
+                                    e.target.style.borderColor = "rgba(148, 163, 184, 0.3)";
+                                }
+                                e.target.style.background = "rgba(15, 23, 42, 0.8)";
                             }}
                         />
+                        {confirmPassword && confirmPassword !== newPassword && (
+                            <p style={{
+                                color: "#EF4444",
+                                fontSize: "0.75rem",
+                                marginTop: 4
+                            }}>
+                                As senhas não coincidem
+                            </p>
+                        )}
                     </div>
 
+                    {/* Message */}
                     {message && (
                         <div style={{
                             padding: 12,
-                            background: message.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                            border: `1px solid ${message.startsWith("✅") ? "#10B981" : "#EF4444"}`,
+                            background: message.startsWith("✅")
+                                ? "rgba(16, 185, 129, 0.1)"
+                                : "rgba(239, 68, 68, 0.1)",
+                            border: `1px solid ${message.startsWith("✅")
+                                ? "#10B981"
+                                : "#EF4444"}`,
                             borderRadius: 8,
                             color: message.startsWith("✅") ? "#10B981" : "#EF4444",
                             fontSize: "0.9rem",
@@ -249,20 +387,27 @@ export default function ResetPasswordPage() {
                         </div>
                     )}
 
+                    {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
                         style={{
                             width: "100%",
                             height: 56,
                             fontSize: "1.1rem",
-                            background: isLoading ? "#64748B" : "#10B981",
+                            background: isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword
+                                ? "#64748B"
+                                : "#10B981",
                             color: "#fff",
                             border: "none",
                             borderRadius: 10,
                             fontWeight: 700,
-                            cursor: isLoading ? "wait" : "pointer",
-                            boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)",
+                            cursor: isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword
+                                ? "not-allowed"
+                                : "pointer",
+                            boxShadow: !isLoading && newPassword && confirmPassword && newPassword === confirmPassword
+                                ? "0 4px 12px rgba(16, 185, 129, 0.4)"
+                                : "none",
                             transition: "all 0.2s"
                         }}
                     >
@@ -270,6 +415,7 @@ export default function ResetPasswordPage() {
                     </button>
                 </form>
 
+                {/* Back Link */}
                 <div style={{ textAlign: "center", marginTop: 24 }}>
                     <a
                         href="/app"
@@ -279,7 +425,14 @@ export default function ResetPasswordPage() {
                             textDecoration: "none",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: 6
+                            gap: 6,
+                            transition: "color 0.2s"
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.color = "#CBD5E1";
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.color = "#94A3B8";
                         }}
                     >
                         ← Voltar para o app
