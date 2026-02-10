@@ -4010,9 +4010,41 @@ export default function AppPage() {
                                                     <strong style={{ color: "#F8FAFC", fontSize: "1.1rem" }}>{plan.name}</strong>
                                                     <div style={{ color: "#64748B", fontSize: "0.85rem", marginTop: "4px" }}>{plan.desc}</div>
                                                 </div>
-                                                <div style={{ textAlign: "right" }}>
-                                                    <div style={{ color: "#10B981", fontSize: "1.5rem", fontWeight: "800" }}>R$ {plan.price.toFixed(2).replace('.', ',')}</div>
-                                                    {isSubscription ? <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>/mês</div> : ''}
+                                                <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
+                                                    <div style={{ textAlign: "right" }}>
+                                                        <div style={{ color: "#10B981", fontSize: "1.5rem", fontWeight: "700", lineHeight: "1" }}>
+                                                            R$ {plan.price.toFixed(2).replace(".", ",")}
+                                                        </div>
+                                                        <div style={{ color: "#64748B", fontSize: "0.75rem", marginTop: "2px" }}>
+                                                            {plan.billing === "subscription" ? "/mês" : "único"}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setStage("preview")}
+                                                        style={{
+                                                            background: "none",
+                                                            border: "none",
+                                                            color: "#94A3B8",
+                                                            fontSize: "0.8rem",
+                                                            cursor: "pointer",
+                                                            padding: "4px 8px",
+                                                            borderRadius: "6px",
+                                                            textDecoration: "underline",
+                                                            transition: "all 0.2s ease",
+                                                            whiteSpace: "nowrap"
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.color = "#CBD5E1";
+                                                            e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.color = "#94A3B8";
+                                                            e.currentTarget.style.background = "none";
+                                                        }}
+                                                    >
+                                                        Alterar
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "16px 0" }}></div>
@@ -4353,12 +4385,6 @@ export default function AppPage() {
                                                 </button>
                                             </form>
                                         )}
-
-                                        <div className="checkout-change-plan" style={{ marginBottom: "24px" }}>
-                                            <button type="button" onClick={() => setStage("preview")}>
-                                                ← Alterar plano
-                                            </button>
-                                        </div>
 
                                         <div className="payment-methods-section" style={{ marginTop: "32px", padding: "24px" }}>
                                             <div className="payment-icons-container">
