@@ -1096,6 +1096,45 @@ export default function AppPage() {
         })();
     }, [authUserId]);
 
+    // -------------------------------------------------------------------------
+    // DEBUG: Restauração do Contexto de Reset de Senha
+    // -------------------------------------------------------------------------
+    useEffect(() => {
+        console.log("🔍 [RESTORE DEBUG] useEffect de restauração foi chamado!");
+
+        // Leitura "crua" do LocalStorage para debug
+        const storedStage = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_to") : null;
+        const storedPlan = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_plan") : null;
+
+        console.log("🕵️ [RESTORE DEBUG] Rodou o efeito de restauração.");
+        console.log("🕵️ [RESTORE DEBUG] LocalStorage cru:", {
+            vant_reset_return_to: storedStage,
+            vant_reset_return_plan: storedPlan,
+            authUserId: authUserId,
+            currentStage: stage
+        });
+
+        if (storedStage === "checkout") {
+            console.log("✅ [RESTORE DEBUG] Contexto de checkout encontrado!");
+
+            if (storedPlan) {
+                console.log(`🔄 [RESTORE DEBUG] Restaurando plano: ${storedPlan}`);
+                setSelectedPlan(storedPlan as PlanType);
+            }
+
+            console.log("🚀 [RESTORE DEBUG] Forçando stage para 'checkout'");
+            setStage("checkout");
+
+            if (authUserId) {
+                console.log("🧹 [RESTORE DEBUG] Usuário autenticado, limpando flags de reset.");
+                localStorage.removeItem("vant_reset_return_to");
+                localStorage.removeItem("vant_reset_return_plan");
+            }
+        } else {
+            console.log("ℹ️ [RESTORE DEBUG] Nenhum contexto de retorno encontrado.");
+        }
+    }, [authUserId]); // Re-rodar quando authUserId mudar
+
     // Smallpdf flow: quando auth completa durante checkout, ir direto pro Stripe
     const checkoutAuthPending = useRef(false);
     useEffect(() => {
@@ -1405,15 +1444,39 @@ export default function AppPage() {
             setCheckoutError("Digite seu e-mail acima para receber o link de recuperação.");
             return;
         }
-        const client = supabase as SupabaseClient;
+
         try {
+            setIsAuthenticating(true); // Feedback visual
+
+            // 1. Determina a URL base correta (Localhost ou Produção)
+            const origin = window.location.origin;
+            const redirectUrl = new URL(`${origin}/app/reset-password`);
+
+            // 2. Anexa o contexto do checkout (O Pulo do Gato 🐈)
+            // Isso garante que o link no email já saiba para onde voltar
+            if (stage === "checkout") {
+                redirectUrl.searchParams.set("return_to", "checkout");
+                if (selectedPlan) {
+                    redirectUrl.searchParams.set("return_plan", selectedPlan);
+                }
+            }
+
+            // ADICIONE ESTE LOG PARA CONFERÊNCIA
+            console.log("🚀 URL Gerada para Redirect:", redirectUrl.toString());
+
+            const client = supabase as SupabaseClient;
             const { error } = await client.auth.resetPasswordForEmail(authEmail, {
-                redirectTo: typeof window !== "undefined" ? `${window.location.origin}/app/reset-password` : undefined,
+                redirectTo: redirectUrl.toString(),
             });
+
             if (error) throw error;
-            setCheckoutError("✅ Link de recuperação enviado para " + authEmail);
-        } catch (e: unknown) {
-            setCheckoutError(e instanceof Error ? e.message : "Erro ao enviar link de recuperação.");
+            setCheckoutError("✅ Link enviado! Verifique seu email.");
+
+        } catch (e: any) {
+            console.error("Erro no reset:", e);
+            setCheckoutError(e.message || "Erro ao enviar email.");
+        } finally {
+            setIsAuthenticating(false);
         }
     }
 
