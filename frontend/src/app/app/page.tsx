@@ -1408,7 +1408,7 @@ export default function AppPage() {
         const client = supabase as SupabaseClient;
         try {
             const { error } = await client.auth.resetPasswordForEmail(authEmail, {
-                redirectTo: typeof window !== "undefined" ? `${window.location.origin}/app` : undefined,
+                redirectTo: typeof window !== "undefined" ? `${window.location.origin}/app/reset-password` : undefined,
             });
             if (error) throw error;
             setCheckoutError("✅ Link de recuperação enviado para " + authEmail);
