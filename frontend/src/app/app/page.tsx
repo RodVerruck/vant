@@ -4164,7 +4164,7 @@ export default function AppPage() {
                                                 </div>
                                             </>
                                         ) : (
-                                            <form onSubmit={(e) => { e.preventDefault(); handleCheckoutWithAuth(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                            <form onSubmit={(e) => { e.preventDefault(); handleCheckoutWithAuth(); }} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                                                 <div style={{ color: "#94A3B8", fontSize: "0.8rem", textAlign: "center", marginBottom: 16, marginTop: 8 }}>
                                                     Crie sua conta ou faça login para salvar seus créditos
                                                 </div>
@@ -4267,66 +4267,56 @@ export default function AppPage() {
                                                         </button>
                                                     </div>
                                                     {checkoutError === "__WRONG_PASSWORD__" && (
-                                                        <div style={{ marginTop: 12 }}>
+                                                        <div style={{ marginTop: 8 }}>
                                                             <div style={{
                                                                 padding: 12,
                                                                 background: "rgba(239, 68, 68, 0.1)",
                                                                 border: "1px solid rgba(239, 68, 68, 0.3)",
                                                                 borderRadius: 8,
-                                                                marginBottom: 12
+                                                                marginBottom: 8,
+                                                                display: "flex",
+                                                                justifyContent: "space-between",
+                                                                alignItems: "center"
                                                             }}>
                                                                 <p style={{
                                                                     color: "#EF4444",
                                                                     fontSize: "0.85rem",
                                                                     margin: 0,
-                                                                    lineHeight: 1.4
+                                                                    lineHeight: 1.4,
+                                                                    flex: 1
                                                                 }}>
                                                                     😅 Ops! Essa não é a senha correta para este e-mail.
                                                                 </p>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleForgotPassword}
+                                                                    disabled={isAuthenticating}
+                                                                    style={{
+                                                                        background: "none",
+                                                                        border: "none",
+                                                                        color: "#3B82F6",
+                                                                        fontSize: "0.8rem",
+                                                                        cursor: isAuthenticating ? "wait" : "pointer",
+                                                                        textDecoration: "underline",
+                                                                        padding: "2px 4px",
+                                                                        borderRadius: "4px",
+                                                                        transition: "all 0.2s",
+                                                                        whiteSpace: "nowrap"
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        if (!isAuthenticating) {
+                                                                            e.currentTarget.style.color = "#2563EB";
+                                                                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                                                                        }
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.color = "#3B82F6";
+                                                                        e.currentTarget.style.background = "none";
+                                                                    }}
+                                                                >
+                                                                    Esqueci minha senha
+                                                                </button>
                                                             </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleForgotPassword}
-                                                                disabled={isAuthenticating}
-                                                                style={{
-                                                                    width: "100%",
-                                                                    padding: "12px 16px",
-                                                                    background: "rgba(59, 130, 246, 0.1)",
-                                                                    border: "1px solid rgba(59, 130, 246, 0.3)",
-                                                                    borderRadius: 8,
-                                                                    color: "#3B82F6",
-                                                                    fontSize: "0.9rem",
-                                                                    fontWeight: 500,
-                                                                    cursor: isAuthenticating ? "wait" : "pointer",
-                                                                    textDecoration: "none",
-                                                                    transition: "all 0.2s",
-                                                                    display: "flex",
-                                                                    alignItems: "center",
-                                                                    justifyContent: "center",
-                                                                    gap: 8
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    if (!isAuthenticating) {
-                                                                        e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)";
-                                                                        e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.5)";
-                                                                    }
-                                                                }}
-                                                                onMouseLeave={(e) => {
-                                                                    e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-                                                                    e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)";
-                                                                }}
-                                                            >
-                                                                🔑 Esqueci minha senha
-                                                            </button>
-                                                            <p style={{
-                                                                color: "#64748B",
-                                                                fontSize: "0.75rem",
-                                                                textAlign: "center",
-                                                                marginTop: 8,
-                                                                margin: 0
-                                                            }}>
-                                                                Vamos te ajudar a criar uma nova
-                                                            </p>
                                                         </div>
                                                     )}
                                                 </div>
