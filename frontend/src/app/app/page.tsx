@@ -370,6 +370,8 @@ export default function AppPage() {
     const [isAuthenticating, setIsAuthenticating] = useState(false);  // ← NOVO
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [timeRemaining, setTimeRemaining] = useState({ hours: 23, minutes: 45, seconds: 12 });
+    const [emailSent, setEmailSent] = useState(false);
+    const [resendCountdown, setResendCountdown] = useState(0);
 
     // Cleanup ao desmontar componente
     useEffect(() => {
@@ -1470,7 +1472,22 @@ export default function AppPage() {
             });
 
             if (error) throw error;
-            setCheckoutError("✅ Link enviado! Verifique seu email.");
+
+            // Ativar estado de espera ativa
+            setEmailSent(true);
+            setCheckoutError(""); // Limpar erro anterior
+
+            // Iniciar countdown para reenvio
+            setResendCountdown(30);
+            const countdownInterval = setInterval(() => {
+                setResendCountdown((prev: number) => {
+                    if (prev <= 1) {
+                        clearInterval(countdownInterval);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
 
         } catch (e: any) {
             console.error("Erro no reset:", e);
@@ -3922,7 +3939,131 @@ export default function AppPage() {
 
                                         <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
 
-                                        {authUserId ? (
+                                        {emailSent ? (
+                                            /* ESTADO DE ESPERA ATIVA - EMAIL ENVIADO */
+                                            <div style={{
+                                                width: "100%",
+                                                height: "400px",
+                                                display: "flex",
+                                                justifyContent: "center",
+                                                alignItems: "center",
+                                                marginTop: "20px"  // Pequeno respiro superior
+                                            }}>
+                                                <div style={{
+                                                    background: "rgba(30, 41, 59, 0.8)",
+                                                    backdropFilter: "blur(10px)",
+                                                    border: "1px solid rgba(148, 163, 184, 0.2)",
+                                                    borderRadius: 16,
+                                                    padding: 40,
+                                                    maxWidth: 400,
+                                                    width: "100%",
+                                                    textAlign: "center"
+                                                }}>
+                                                    <div style={{
+                                                        width: 64,
+                                                        height: 64,
+                                                        background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                                                        borderRadius: "50%",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        margin: "0 auto 24px",
+                                                        fontSize: "1.5rem",
+                                                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)"
+                                                    }}>
+                                                        📬
+                                                    </div>
+
+                                                    <h2 style={{
+                                                        color: "#F8FAFC",
+                                                        fontSize: "1.5rem",
+                                                        fontWeight: 600,
+                                                        marginBottom: 8
+                                                    }}>
+                                                        Enviamos um e-mail para você!
+                                                    </h2>
+
+                                                    <p style={{
+                                                        color: "#94A3B8",
+                                                        fontSize: "0.95rem",
+                                                        lineHeight: 1.5,
+                                                        marginBottom: 24
+                                                    }}>
+                                                        Para sua segurança, enviamos um link de recuperação para <strong>{authEmail}</strong>.<br />
+                                                        Clique no link do e-mail e nós traremos você de volta para finalizar sua compra automaticamente.
+                                                    </p>
+
+                                                    <div style={{
+                                                        background: "rgba(16, 185, 129, 0.1)",
+                                                        border: "1px solid #10B981",
+                                                        borderRadius: 8,
+                                                        padding: 12,
+                                                        color: "#10B981",
+                                                        fontSize: "0.9rem",
+                                                        marginBottom: 20
+                                                    }}>
+                                                        ✅ Link enviado com sucesso!
+                                                    </div>
+
+                                                    {resendCountdown > 0 ? (
+                                                        <p style={{
+                                                            color: "#64748B",
+                                                            fontSize: "0.8rem",
+                                                            margin: 0
+                                                        }}>
+                                                            Não recebeu? Reenviar em {resendCountdown}s
+                                                        </p>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEmailSent(false);
+                                                                setResendCountdown(0);
+                                                                handleForgotPassword();
+                                                            }}
+                                                            style={{
+                                                                background: "rgba(59, 130, 246, 0.1)",
+                                                                border: "1px solid rgba(59, 130, 246, 0.3)",
+                                                                borderRadius: 8,
+                                                                color: "#3B82F6",
+                                                                fontSize: "0.9rem",
+                                                                fontWeight: 500,
+                                                                cursor: "pointer",
+                                                                padding: "8px 16px",
+                                                                transition: "all 0.2s"
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)";
+                                                                e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.5)";
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                                                                e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)";
+                                                            }}
+                                                        >
+                                                            🔄 Reenviar e-mail
+                                                        </button>
+                                                    )}
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEmailSent(false)}
+                                                        style={{
+                                                            background: "none",
+                                                            border: "none",
+                                                            color: "#94A3B8",
+                                                            fontSize: "0.8rem",
+                                                            cursor: "pointer",
+                                                            textDecoration: "underline",
+                                                            marginTop: 16,
+                                                            padding: 0
+                                                        }}
+                                                    >
+                                                        ← Voltar para o formulário
+                                                    </button>
+                                                </div>
+                                            </div >
+                                        ) : authUserId ? (
                                             <>
                                                 <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
                                                     <div style={{ fontSize: "1.2rem" }}>👤</div>
@@ -4153,6 +4294,6 @@ export default function AppPage() {
                 }}
                 onClose={() => setShowAuthModal(false)}
             />
-        </main>
+        </main >
     );
 }
