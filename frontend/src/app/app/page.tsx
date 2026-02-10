@@ -4134,7 +4134,7 @@ export default function AppPage() {
                                             </>
                                         ) : (
                                             <form onSubmit={(e) => { e.preventDefault(); handleCheckoutWithAuth(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.8rem", textAlign: "center", marginBottom: 4 }}>
+                                                <div style={{ color: "#94A3B8", fontSize: "0.8rem", textAlign: "center", marginBottom: 16, marginTop: 8 }}>
                                                     Crie sua conta ou faça login para salvar seus créditos
                                                 </div>
                                                 <input
