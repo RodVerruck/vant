@@ -1368,20 +1368,41 @@ export default function AppPage() {
 
     // Smallpdf approach: auth inline no checkout — tenta login, se não existe cria conta, depois vai direto pro Stripe
     async function handleCheckoutWithAuth() {
+        // Limpar erros anteriores
         setCheckoutError("");
 
+        // Validações melhoradas
         if (!supabase) {
-            setCheckoutError("Supabase não configurado.");
+            setCheckoutError("Erro de configuração. Tente recarregar a página.");
             return;
         }
 
-        if (!authEmail || !authEmail.includes("@")) {
-            setCheckoutError("Digite um e-mail válido.");
+        // Validação de email mais robusta
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!authEmail || !emailRegex.test(authEmail)) {
+            setCheckoutError("Digite um e-mail válido (ex: nome@dominio.com).");
             return;
         }
 
-        if (!authPassword || authPassword.length < 6) {
+        // Validação de senha mais específica
+        if (!authPassword) {
+            setCheckoutError("Digite uma senha.");
+            return;
+        }
+
+        if (authPassword.length < 6) {
             setCheckoutError("A senha deve ter no mínimo 6 caracteres.");
+            return;
+        }
+
+        if (authPassword.length > 72) {
+            setCheckoutError("Senha muito longa. Use no máximo 72 caracteres.");
+            return;
+        }
+
+        // Verificar se a senha é apenas números (fraca)
+        if (/^\d+$/.test(authPassword)) {
+            setCheckoutError("Use uma senha com letras e números para mais segurança.");
             return;
         }
 
@@ -1391,9 +1412,9 @@ export default function AppPage() {
 
         try {
             // 1. Tentar criar conta primeiro (caso seja usuário novo)
-            console.log("[CheckoutAuth] Tentando criar conta...");
+            console.log("[CheckoutAuth] Tentando criar conta para:", authEmail);
             const { data: signupData, error: signupError } = await client.auth.signUp({
-                email: authEmail,
+                email: authEmail.trim().toLowerCase(), // Normalizar email
                 password: authPassword,
             });
 
@@ -1402,14 +1423,14 @@ export default function AppPage() {
                 setAuthUserId(signupData.user.id);
                 setAuthEmail(signupData.user.email || authEmail);
                 setAuthPassword("");
-                console.log("[CheckoutAuth] Conta criada, indo para Stripe...");
+                console.log("[CheckoutAuth] ✅ Conta criada com sucesso, ID:", signupData.user.id);
                 return;
             }
 
             // 2. Signup falhou ou usuário já existe — tentar login
             console.log("[CheckoutAuth] Usuário já existe, tentando login...");
             const { data: loginData, error: loginError } = await client.auth.signInWithPassword({
-                email: authEmail,
+                email: authEmail.trim().toLowerCase(),
                 password: authPassword,
             });
 
@@ -1418,21 +1439,42 @@ export default function AppPage() {
                 setAuthUserId(loginData.user.id);
                 setAuthEmail(loginData.user.email || authEmail);
                 setAuthPassword("");
-                console.log("[CheckoutAuth] Login OK, indo para Stripe...");
+                console.log("[CheckoutAuth] ✅ Login realizado com sucesso, ID:", loginData.user.id);
                 return;
             }
 
-            // 3. Login falhou — senha errada para conta existente
+            // 3. Login falhou — analisar o erro específico
             throw loginError;
+
         } catch (e: unknown) {
             checkoutAuthPending.current = false;
-            const msg = e instanceof Error ? e.message : "Erro na autenticação";
-            if (msg.includes("Invalid login credentials")) {
-                setCheckoutError("__WRONG_PASSWORD__");
-            } else if (msg.includes("Email not confirmed")) {
-                setCheckoutError("Confirme seu e-mail antes de continuar.");
+
+            // Tratamento de erros mais específico
+            if (e instanceof Error) {
+                const errorMsg = e.message.toLowerCase();
+
+                if (errorMsg.includes("invalid login credentials") || errorMsg.includes("wrong password")) {
+                    setCheckoutError("__WRONG_PASSWORD__");
+                } else if (errorMsg.includes("email not confirmed") || errorMsg.includes("email confirmation")) {
+                    setCheckoutError("Por favor, confirme seu e-mail antes de continuar. Verifique sua caixa de entrada.");
+                } else if (errorMsg.includes("too many requests") || errorMsg.includes("rate limit")) {
+                    setCheckoutError("Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.");
+                } else if (errorMsg.includes("user already registered") || errorMsg.includes("already registered")) {
+                    // Este caso já é tratado no fluxo de login, mas mantemos como fallback
+                    setCheckoutError("Este e-mail já está cadastrado. Tente fazer login.");
+                } else if (errorMsg.includes("invalid email") || errorMsg.includes("email format")) {
+                    setCheckoutError("Formato de e-mail inválido. Verifique o endereço digitado.");
+                } else if (errorMsg.includes("weak password") || errorMsg.includes("password should be")) {
+                    setCheckoutError("Senha muito fraca. Use letras, números e pelo menos 6 caracteres.");
+                } else {
+                    // Erro genérico mas mais amigável
+                    console.error("[CheckoutAuth] Erro não tratado:", e);
+                    setCheckoutError("Ocorreu um erro na autenticação. Tente novamente em alguns instantes.");
+                }
             } else {
-                setCheckoutError(msg);
+                // Erro que não é instância de Error
+                console.error("[CheckoutAuth] Erro desconhecido:", e);
+                setCheckoutError("Erro inesperado. Tente novamente ou entre em contato com o suporte.");
             }
         } finally {
             setIsAuthenticating(false);
@@ -1441,9 +1483,15 @@ export default function AppPage() {
 
     // Recuperar senha inline (sem sair da página)
     async function handleForgotPassword() {
-        if (!supabase) return;
-        if (!authEmail || !authEmail.includes("@")) {
-            setCheckoutError("Digite seu e-mail acima para receber o link de recuperação.");
+        if (!supabase) {
+            setCheckoutError("Erro de configuração. Tente recarregar a página.");
+            return;
+        }
+
+        // Validação de email mais robusta
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!authEmail || !emailRegex.test(authEmail)) {
+            setCheckoutError("Digite um e-mail válido para receber o link de recuperação (ex: nome@dominio.com).");
             return;
         }
 
@@ -1463,11 +1511,10 @@ export default function AppPage() {
                 }
             }
 
-            // ADICIONE ESTE LOG PARA CONFERÊNCIA
-            console.log("🚀 URL Gerada para Redirect:", redirectUrl.toString());
+            console.log("🚀 [ForgotPassword] URL Gerada para Redirect:", redirectUrl.toString());
 
             const client = supabase as SupabaseClient;
-            const { error } = await client.auth.resetPasswordForEmail(authEmail, {
+            const { error } = await client.auth.resetPasswordForEmail(authEmail.trim().toLowerCase(), {
                 redirectTo: redirectUrl.toString(),
             });
 
@@ -1477,7 +1524,7 @@ export default function AppPage() {
             setEmailSent(true);
             setCheckoutError(""); // Limpar erro anterior
 
-            // Iniciar countdown para reenvio
+            // Iniciar countdown para reenvio (30 segundos)
             setResendCountdown(30);
             const countdownInterval = setInterval(() => {
                 setResendCountdown((prev: number) => {
@@ -1489,9 +1536,27 @@ export default function AppPage() {
                 });
             }, 1000);
 
-        } catch (e: any) {
-            console.error("Erro no reset:", e);
-            setCheckoutError(e.message || "Erro ao enviar email.");
+            console.log("✅ [ForgotPassword] Email de recuperação enviado para:", authEmail);
+
+        } catch (e: unknown) {
+            console.error("[ForgotPassword] Erro ao enviar email:", e);
+
+            // Tratamento de erros mais específico
+            if (e instanceof Error) {
+                const errorMsg = e.message.toLowerCase();
+
+                if (errorMsg.includes("too many requests") || errorMsg.includes("rate limit")) {
+                    setCheckoutError("Muitas tentativas de recuperação. Aguarde 10 minutos antes de tentar novamente.");
+                } else if (errorMsg.includes("user not found") || errorMsg.includes("not found")) {
+                    setCheckoutError("Este e-mail não está cadastrado em nosso sistema.");
+                } else if (errorMsg.includes("invalid email") || errorMsg.includes("email format")) {
+                    setCheckoutError("Formato de e-mail inválido. Verifique o endereço digitado.");
+                } else {
+                    setCheckoutError("Erro ao enviar email de recuperação. Tente novamente em alguns instantes.");
+                }
+            } else {
+                setCheckoutError("Erro inesperado ao enviar email. Tente novamente ou contate o suporte.");
+            }
         } finally {
             setIsAuthenticating(false);
         }
@@ -3928,49 +3993,38 @@ export default function AppPage() {
 
                                 return (
                                     <>
-                                        <div style={{ textAlign: "center", marginBottom: 24 }}>
-                                            <div style={{ color: "#E2E8F0", fontSize: "1.5rem", fontWeight: 800 }}>
+                                        <div className="checkout-header">
+                                            <div className="checkout-title">
                                                 Finalizar Compra
                                             </div>
-                                            <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 4 }}>
+                                            <div className="checkout-subtitle">
                                                 Ambiente seguro e criptografado
                                             </div>
                                         </div>
 
-                                        <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
+                                        <div className="checkout-order-summary">
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
+                                                <div>
+                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Resumo do Pedido</div>
+                                                    <strong style={{ color: "#F8FAFC", fontSize: "1.1rem" }}>{plan.name}</strong>
+                                                    <div style={{ color: "#64748B", fontSize: "0.85rem", marginTop: "4px" }}>{plan.desc}</div>
+                                                </div>
+                                                <div style={{ textAlign: "right" }}>
+                                                    <div style={{ color: "#10B981", fontSize: "1.5rem", fontWeight: "800" }}>R$ {plan.price.toFixed(2).replace('.', ',')}</div>
+                                                    {isSubscription ? <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>/mês</div> : ''}
+                                                </div>
+                                            </div>
+                                            <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "16px 0" }}></div>
+                                            <div style={{ color: "#E2E8F0", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                                {billingLine}
+                                            </div>
+                                        </div>
 
                                         {emailSent ? (
                                             /* ESTADO DE ESPERA ATIVA - EMAIL ENVIADO */
-                                            <div style={{
-                                                width: "100%",
-                                                height: "400px",
-                                                display: "flex",
-                                                justifyContent: "center",
-                                                alignItems: "center",
-                                                marginTop: "20px"  // Pequeno respiro superior
-                                            }}>
-                                                <div style={{
-                                                    background: "rgba(30, 41, 59, 0.8)",
-                                                    backdropFilter: "blur(10px)",
-                                                    border: "1px solid rgba(148, 163, 184, 0.2)",
-                                                    borderRadius: 16,
-                                                    padding: 40,
-                                                    maxWidth: 400,
-                                                    width: "100%",
-                                                    textAlign: "center"
-                                                }}>
-                                                    <div style={{
-                                                        width: 64,
-                                                        height: 64,
-                                                        background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-                                                        borderRadius: "50%",
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        margin: "0 auto 24px",
-                                                        fontSize: "1.5rem",
-                                                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)"
-                                                    }}>
+                                            <div className="checkout-email-sent">
+                                                <div className="checkout-email-card">
+                                                    <div className="checkout-email-icon">
                                                         📬
                                                     </div>
 
@@ -4062,7 +4116,7 @@ export default function AppPage() {
                                                         ← Voltar para o formulário
                                                     </button>
                                                 </div>
-                                            </div >
+                                            </div>
                                         ) : authUserId ? (
                                             <>
                                                 <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
@@ -4228,51 +4282,28 @@ export default function AppPage() {
                                             </form>
                                         )}
 
-                                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", opacity: 0.6 }}>
-                                            <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                            <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                            <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>📍</div>
-                                            <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                        </div>
-                                        <div style={{ textAlign: "center", marginTop: 4, color: "#64748B", fontSize: "0.75rem" }}>
-                                            Aceitamos Visa, Mastercard, PIX e Amex
+                                        <div className="checkout-change-plan" style={{ marginBottom: "24px" }}>
+                                            <button type="button" onClick={() => setStage("preview")}>
+                                                ← Alterar plano
+                                            </button>
                                         </div>
 
-                                        {/* TRUST SIGNALS - SVGs OFICIAIS & BLINDAGEM */}
-                                        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-
-                                            {/* Ícones de Pagamento (Grayscale -> Color on Hover) */}
-                                            <div
-                                                style={{ display: "flex", alignItems: "center", gap: 20, opacity: 0.7, filter: "grayscale(100%)", transition: "all 0.3s ease" }}
-                                                onMouseEnter={(e) => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.opacity = "1"; }}
-                                                onMouseLeave={(e) => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.opacity = "0.7"; }}
-                                            >
-                                                {/* PIX (Logo Oficial) */}
+                                        <div className="payment-methods-section" style={{ marginTop: "32px", padding: "24px" }}>
+                                            <div className="payment-icons-container">
                                                 <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto" }} />
-
-                                                {/* VISA (Logo Oficial) */}
                                                 <img src="/icons/visa.svg" alt="Visa" style={{ height: "16px", width: "auto" }} />
-
-                                                {/* MASTERCARD (Logo Oficial) */}
                                                 <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto" }} />
-
-                                                {/* AMEX (Logo Oficial) */}
                                                 <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto" }} />
                                             </div>
+                                        </div>
 
-                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                        <div className="trust-signals-section">
+                                            <div className="trust-security-text">
                                                 <span style={{ fontSize: "0.9rem" }}>🔒</span>
-                                                <span style={{ color: "#64748B", fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.3px" }}>
+                                                <span>
                                                     Pagamento processado via Stripe • Dados Criptografados
                                                 </span>
                                             </div>
-                                        </div>
-
-
-                                        <div style={{ textAlign: "center", marginTop: 24 }}>
-                                            <button type="button" onClick={() => setStage("preview")} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                                                ← Alterar plano
-                                            </button>
                                         </div>
                                     </>
                                 );
