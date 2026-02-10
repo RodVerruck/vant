@@ -4015,36 +4015,34 @@ export default function AppPage() {
                                                         <div style={{ color: "#10B981", fontSize: "1.5rem", fontWeight: "700", lineHeight: "1" }}>
                                                             R$ {plan.price.toFixed(2).replace(".", ",")}
                                                         </div>
-                                                        <div style={{ color: "#64748B", fontSize: "0.75rem", marginTop: "2px" }}>
-                                                            {plan.billing === "subscription" ? "/mês" : "único"}
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setStage("preview")}
+                                                            style={{
+                                                                background: "none",
+                                                                border: "none",
+                                                                color: "#94A3B8",
+                                                                fontSize: "0.75rem",
+                                                                cursor: "pointer",
+                                                                padding: "2px 4px",
+                                                                borderRadius: "4px",
+                                                                textDecoration: "underline",
+                                                                transition: "all 0.2s ease",
+                                                                whiteSpace: "nowrap",
+                                                                marginLeft: "8px"
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.currentTarget.style.color = "#F8FAFC";
+                                                                e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.currentTarget.style.color = "#94A3B8";
+                                                                e.currentTarget.style.background = "none";
+                                                            }}
+                                                        >
+                                                            Alterar
+                                                        </button>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setStage("preview")}
-                                                        style={{
-                                                            background: "none",
-                                                            border: "none",
-                                                            color: "#94A3B8",
-                                                            fontSize: "0.75rem",
-                                                            cursor: "pointer",
-                                                            padding: "2px 4px",
-                                                            borderRadius: "4px",
-                                                            textDecoration: "underline",
-                                                            transition: "all 0.2s ease",
-                                                            whiteSpace: "nowrap"
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.color = "#F8FAFC";
-                                                            e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.color = "#94A3B8";
-                                                            e.currentTarget.style.background = "none";
-                                                        }}
-                                                    >
-                                                        Alterar
-                                                    </button>
                                                 </div>
                                             </div>
                                             <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "16px 0" }}></div>
