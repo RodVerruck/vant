@@ -25,6 +25,8 @@ export default function ResetPasswordPage() {
     const [message, setMessage] = useState("");
     const [isSuccess, setIsSuccess] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Efeito para capturar o contexto da URL e salvar na sessão atual
     useEffect(() => {
@@ -60,13 +62,25 @@ export default function ResetPasswordPage() {
     // Calcular força da senha
     useEffect(() => {
         let strength = 0;
-        if (newPassword.length >= 8) strength += 25;
-        if (newPassword.length >= 12) strength += 25;
-        if (/[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword)) strength += 25;
-        if (/[0-9]/.test(newPassword)) strength += 12.5;
-        if (/[^a-zA-Z0-9]/.test(newPassword)) strength += 12.5;
-        setPasswordStrength(strength);
+        if (newPassword.length >= 6) strength += 33;
+        if (newPassword.length >= 8) strength += 33;
+        if (/[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword)) strength += 17;
+        if (/[0-9]/.test(newPassword)) strength += 8.5;
+        if (/[^a-zA-Z0-9]/.test(newPassword)) strength += 8.5;
+        setPasswordStrength(Math.min(strength, 100));
     }, [newPassword]);
+
+    // Determinar categoria de força
+    const getPasswordCategory = () => {
+        if (newPassword.length < 6) return { label: "Fraca", color: "#EF4444", width: "33%" };
+        if (passwordStrength < 50) return { label: "Fraca", color: "#EF4444", width: "33%" };
+        if (passwordStrength < 75) return { label: "Média", color: "#F59E0B", width: "66%" };
+        return { label: "Forte", color: "#10B981", width: "100%" };
+    };
+
+    const passwordCategory = getPasswordCategory();
+    const isPasswordValid = newPassword.length >= 6 && passwordStrength >= 50;
+    const isFormValid = isPasswordValid && newPassword === confirmPassword && newPassword && confirmPassword;
 
     async function handleResetPassword(e: React.FormEvent) {
         e.preventDefault();
@@ -252,34 +266,76 @@ export default function ResetPasswordPage() {
                         }}>
                             Nova Senha
                         </label>
-                        <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Mínimo 6 caracteres"
-                            autoComplete="new-password"
-                            required
-                            style={{
-                                width: "100%",
-                                padding: "14px 16px",
-                                background: "rgba(15, 23, 42, 0.8)",
-                                border: "1px solid rgba(148, 163, 184, 0.3)",
-                                borderRadius: 8,
-                                color: "#F8FAFC",
-                                fontSize: "1rem",
-                                outline: "none",
-                                boxSizing: "border-box",
-                                transition: "all 0.2s"
-                            }}
-                            onFocus={(e) => {
-                                e.target.style.borderColor = "#3B82F6";
-                                e.target.style.background = "rgba(15, 23, 42, 0.9)";
-                            }}
-                            onBlur={(e) => {
-                                e.target.style.borderColor = "rgba(148, 163, 184, 0.3)";
-                                e.target.style.background = "rgba(15, 23, 42, 0.8)";
-                            }}
-                        />
+                        <div style={{ position: "relative", width: "100%" }}>
+                            <input
+                                type={showNewPassword ? "text" : "password"}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Mínimo 6 caracteres"
+                                autoComplete="new-password"
+                                required
+                                style={{
+                                    width: "100%",
+                                    padding: "14px 48px 14px 16px",
+                                    background: "rgba(15, 23, 42, 0.8)",
+                                    border: "1px solid rgba(148, 163, 184, 0.3)",
+                                    borderRadius: 8,
+                                    color: "#F8FAFC",
+                                    fontSize: "1rem",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                    transition: "all 0.2s"
+                                }}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = "#3B82F6";
+                                    e.target.style.background = "rgba(15, 23, 42, 0.9)";
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = "rgba(148, 163, 184, 0.3)";
+                                    e.target.style.background = "rgba(15, 23, 42, 0.8)";
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                style={{
+                                    position: "absolute",
+                                    right: "12px",
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    background: "none",
+                                    border: "none",
+                                    color: "#94A3B8",
+                                    cursor: "pointer",
+                                    padding: "4px",
+                                    borderRadius: "4px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    transition: "all 0.2s ease"
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.color = "#F8FAFC";
+                                    e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.color = "#94A3B8";
+                                    e.currentTarget.style.background = "none";
+                                }}
+                            >
+                                {showNewPassword ? (
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                ) : (
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
 
                         {/* Password strength indicator */}
                         {newPassword && (
@@ -292,18 +348,27 @@ export default function ResetPasswordPage() {
                                 }}>
                                     <div style={{
                                         height: "100%",
-                                        width: `${passwordStrength}%`,
-                                        background: passwordStrength < 50 ? "#EF4444" : passwordStrength < 75 ? "#F59E0B" : "#10B981",
-                                        transition: "all 0.3s"
+                                        width: passwordCategory.width,
+                                        background: passwordCategory.color,
+                                        transition: "all 0.3s ease"
                                     }} />
                                 </div>
-                                <p style={{
-                                    color: "#64748B",
-                                    fontSize: "0.75rem",
+                                <div style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
                                     marginTop: 4
                                 }}>
-                                    {passwordStrength < 50 ? "Fraca" : passwordStrength < 75 ? "Média" : "Forte"}
-                                </p>
+                                    <div></div>
+                                    <p style={{
+                                        color: passwordCategory.color,
+                                        fontSize: "0.75rem",
+                                        margin: 0,
+                                        fontWeight: 500
+                                    }}>
+                                        {passwordCategory.label}
+                                    </p>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -319,44 +384,86 @@ export default function ResetPasswordPage() {
                         }}>
                             Confirmar Nova Senha
                         </label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Digite novamente"
-                            autoComplete="new-password"
-                            required
-                            style={{
-                                width: "100%",
-                                padding: "14px 16px",
-                                background: "rgba(15, 23, 42, 0.8)",
-                                border: confirmPassword && confirmPassword !== newPassword
-                                    ? "1px solid #EF4444"
-                                    : "1px solid rgba(148, 163, 184, 0.3)",
-                                borderRadius: 8,
-                                color: "#F8FAFC",
-                                fontSize: "1rem",
-                                outline: "none",
-                                boxSizing: "border-box",
-                                transition: "all 0.2s"
-                            }}
-                            onFocus={(e) => {
-                                if (confirmPassword !== newPassword) {
-                                    e.target.style.borderColor = "#EF4444";
-                                } else {
-                                    e.target.style.borderColor = "#3B82F6";
-                                }
-                                e.target.style.background = "rgba(15, 23, 42, 0.9)";
-                            }}
-                            onBlur={(e) => {
-                                if (confirmPassword !== newPassword) {
-                                    e.target.style.borderColor = "rgba(239, 68, 68, 0.5)";
-                                } else {
-                                    e.target.style.borderColor = "rgba(148, 163, 184, 0.3)";
-                                }
-                                e.target.style.background = "rgba(15, 23, 42, 0.8)";
-                            }}
-                        />
+                        <div style={{ position: "relative", width: "100%" }}>
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Digite novamente"
+                                autoComplete="new-password"
+                                required
+                                style={{
+                                    width: "100%",
+                                    padding: "14px 48px 14px 16px",
+                                    background: "rgba(15, 23, 42, 0.8)",
+                                    border: confirmPassword && confirmPassword !== newPassword
+                                        ? "1px solid #EF4444"
+                                        : "1px solid rgba(148, 163, 184, 0.3)",
+                                    borderRadius: 8,
+                                    color: "#F8FAFC",
+                                    fontSize: "1rem",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                    transition: "all 0.2s"
+                                }}
+                                onFocus={(e) => {
+                                    if (confirmPassword !== newPassword) {
+                                        e.target.style.borderColor = "#EF4444";
+                                    } else {
+                                        e.target.style.borderColor = "#3B82F6";
+                                    }
+                                    e.target.style.background = "rgba(15, 23, 42, 0.9)";
+                                }}
+                                onBlur={(e) => {
+                                    if (confirmPassword !== newPassword) {
+                                        e.target.style.borderColor = "rgba(239, 68, 68, 0.5)";
+                                    } else {
+                                        e.target.style.borderColor = "rgba(148, 163, 184, 0.3)";
+                                    }
+                                    e.target.style.background = "rgba(15, 23, 42, 0.8)";
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                style={{
+                                    position: "absolute",
+                                    right: "12px",
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    background: "none",
+                                    border: "none",
+                                    color: "#94A3B8",
+                                    cursor: "pointer",
+                                    padding: "4px",
+                                    borderRadius: "4px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    transition: "all 0.2s ease"
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.color = "#F8FAFC";
+                                    e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.color = "#94A3B8";
+                                    e.currentTarget.style.background = "none";
+                                }}
+                            >
+                                {showConfirmPassword ? (
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                ) : (
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
                         {confirmPassword && confirmPassword !== newPassword && (
                             <p style={{
                                 color: "#EF4444",
@@ -390,22 +497,23 @@ export default function ResetPasswordPage() {
                     {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                        disabled={isLoading || !isFormValid}
                         style={{
                             width: "100%",
                             height: 56,
                             fontSize: "1.1rem",
-                            background: isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword
+                            background: isLoading || !isFormValid
                                 ? "#64748B"
                                 : "#10B981",
                             color: "#fff",
                             border: "none",
                             borderRadius: 10,
                             fontWeight: 700,
-                            cursor: isLoading || !newPassword || !confirmPassword || newPassword !== confirmPassword
+                            cursor: isLoading || !isFormValid
                                 ? "not-allowed"
                                 : "pointer",
-                            boxShadow: !isLoading && newPassword && confirmPassword && newPassword === confirmPassword
+                            opacity: isLoading || !isFormValid ? 0.5 : 1,
+                            boxShadow: !isLoading && isFormValid
                                 ? "0 4px 12px rgba(16, 185, 129, 0.4)"
                                 : "none",
                             transition: "all 0.2s"
