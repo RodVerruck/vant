@@ -83,7 +83,8 @@ function getApiUrl(): string {
     return url;
 }
 
-const HERO_INNER_HTML = `
+// V3 Layout: Split into separate sections for above-the-fold CRO optimization
+const HERO_HEADER_HTML = `
     <div class="hero-section">
         <div class="badge-live">
             <span class="vant-tooltip" 
@@ -106,32 +107,10 @@ const HERO_INNER_HTML = `
             e chegar direto no recrutador.
         </div>
     </div>
+`;
 
-    <!-- Preview Gratuito - Foco na Ação -->
-    <div class="hero-section" style="margin-top: 60px;">
-        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(74, 158, 255, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 32px; text-align: center; max-width: 700px; margin: 0 auto;">
-            <div style="font-size: 2rem; margin-bottom: 16px;">🎯</div>
-            <h3 style="color: #F8FAFC; font-size: 1.3rem; font-weight: 700; margin: 0 0 12px 0;">Análise Instantânea</h3>
-            <p style="color: #E2E8F0; font-size: 1rem; line-height: 1.6; margin: 0 0 20px 0;">
-                Descubra seu score ATS e os erros que estão te eliminando.<br>
-                <strong>Sem compromisso. Sem cartão.</strong>
-            </p>
-            <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 24px;">
-                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
-                    <span style="color: #10B981;">✓</span> Score ATS em segundos
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
-                    <span style="color: #10B981;">✓</span> Erros críticos detectados
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
-                    <span style="color: #10B981;">✓</span> Dados destruídos após análise
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Estatísticas Simplificadas -->
-    <div class="hero-section" style="margin-top: 60px;">
+const TRUST_BAR_HTML = `
+    <div class="hero-section" style="margin-top: 24px;">
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">+34%</div>
@@ -164,9 +143,10 @@ const HERO_INNER_HTML = `
             </div>
         </div>
     </div>
+`;
 
-    <!-- Por que funciona - MOVIDO PARA DEPOIS DA AÇÃO -->
-    <div class="hero-section" style="margin-top: 80px;">
+const VALUE_PROP_HTML = `
+    <div class="hero-section" style="margin-top: 60px;">
         <div style="text-align: center; margin-bottom: 32px;">
             <h3 style="color: #F8FAFC; font-size: 1.5rem; font-weight: 700; margin: 0 0 8px 0;">Por que funciona</h3>
             <p style="color: #CBD5E1; font-size: 0.9rem; margin: 0;">Tecnologia baseada em dados reais de mercado</p>
@@ -205,6 +185,30 @@ const HERO_INNER_HTML = `
         </div>
         <div style="text-align: center; margin-top: 20px; color: #94A3B8; font-size: 0.8rem; font-style: italic;">
             Baseado em 50.000+ processamentos reais
+        </div>
+    </div>
+`;
+
+const ANALYSIS_CARD_HTML = `
+    <div class="hero-section" style="margin-top: 48px;">
+        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(74, 158, 255, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 32px; text-align: center; max-width: 700px; margin: 0 auto;">
+            <div style="font-size: 2rem; margin-bottom: 16px;">🎯</div>
+            <h3 style="color: #F8FAFC; font-size: 1.3rem; font-weight: 700; margin: 0 0 12px 0;">Análise Instantânea</h3>
+            <p style="color: #E2E8F0; font-size: 1rem; line-height: 1.6; margin: 0 0 20px 0;">
+                Descubra seu score ATS e os erros que estão te eliminando.<br>
+                <strong>Sem compromisso. Sem cartão.</strong>
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; margin-top: 24px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
+                    <span style="color: #10B981;">✓</span> Score ATS em segundos
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
+                    <span style="color: #10B981;">✓</span> Erros críticos detectados
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; color: #CBD5E1; font-size: 0.85rem;">
+                    <span style="color: #10B981;">✓</span> Dados destruídos após análise
+                </div>
+            </div>
         </div>
     </div>
 `;
@@ -2599,8 +2603,10 @@ export default function AppPage() {
                     )}
 
                     <div className="hero-container">
-                        <div dangerouslySetInnerHTML={{ __html: HERO_INNER_HTML }} />
+                        {/* V3 Layout: 1. Hero Header */}
+                        <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
 
+                        {/* V3 Layout: 2. Main Action Container (above the fold) */}
                         <div className="action-island-container">
                             <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
                                 <div style={{ flex: "1 1 380px" }}>
@@ -3009,6 +3015,15 @@ export default function AppPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* V3 Layout: 3. Trust Bar (tight spacing below CTA) */}
+                        <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
+
+                        {/* V3 Layout: 4. Value Proposition - "Por que funciona" */}
+                        <div dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
+
+                        {/* V3 Layout: 5. Footer/Informational - "Análise Instantânea" */}
+                        <div dangerouslySetInnerHTML={{ __html: ANALYSIS_CARD_HTML }} />
                     </div>
                 </>
 
