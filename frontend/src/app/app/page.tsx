@@ -4010,8 +4010,8 @@ export default function AppPage() {
                                                     <strong style={{ color: "#F8FAFC", fontSize: "1.1rem" }}>{plan.name}</strong>
                                                     <div style={{ color: "#64748B", fontSize: "0.85rem", marginTop: "4px" }}>{plan.desc}</div>
                                                 </div>
-                                                <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
-                                                    <div style={{ textAlign: "right" }}>
+                                                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                                    <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                                                         <div style={{ color: "#10B981", fontSize: "1.5rem", fontWeight: "700", lineHeight: "1" }}>
                                                             R$ {plan.price.toFixed(2).replace(".", ",")}
                                                         </div>
@@ -4026,16 +4026,16 @@ export default function AppPage() {
                                                             background: "none",
                                                             border: "none",
                                                             color: "#94A3B8",
-                                                            fontSize: "0.8rem",
+                                                            fontSize: "0.75rem",
                                                             cursor: "pointer",
-                                                            padding: "4px 8px",
-                                                            borderRadius: "6px",
+                                                            padding: "2px 4px",
+                                                            borderRadius: "4px",
                                                             textDecoration: "underline",
                                                             transition: "all 0.2s ease",
                                                             whiteSpace: "nowrap"
                                                         }}
                                                         onMouseEnter={(e) => {
-                                                            e.currentTarget.style.color = "#CBD5E1";
+                                                            e.currentTarget.style.color = "#F8FAFC";
                                                             e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
                                                         }}
                                                         onMouseLeave={(e) => {
@@ -4388,10 +4388,10 @@ export default function AppPage() {
 
                                         <div className="payment-methods-section" style={{ marginTop: "24px", padding: "24px" }}>
                                             <div className="payment-icons-container">
-                                                <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto", opacity: "0.7" }} />
-                                                <img src="/icons/visa.svg" alt="Visa" style={{ height: "24px", width: "auto", opacity: "0.7" }} />
-                                                <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto", opacity: "0.7" }} />
-                                                <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto", opacity: "0.7" }} />
+                                                <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
+                                                <img src="/icons/visa.svg" alt="Visa" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
+                                                <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
+                                                <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
                                             </div>
                                         </div>
 
