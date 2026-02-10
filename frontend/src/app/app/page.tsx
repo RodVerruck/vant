@@ -4138,24 +4138,48 @@ export default function AppPage() {
                                                 <div style={{ color: "#94A3B8", fontSize: "0.8rem", textAlign: "center", marginBottom: 16, marginTop: 8 }}>
                                                     Crie sua conta ou faça login para salvar seus créditos
                                                 </div>
-                                                <input
-                                                    type="email"
-                                                    placeholder="Seu e-mail"
-                                                    value={authEmail}
-                                                    onChange={(e) => setAuthEmail(e.target.value)}
-                                                    autoComplete="email"
-                                                    style={{
-                                                        width: "100%", padding: "14px 16px", background: "rgba(15, 23, 42, 0.8)",
-                                                        border: "1px solid rgba(148, 163, 184, 0.3)", borderRadius: 8,
-                                                        color: "#F8FAFC", fontSize: "1rem", outline: "none",
-                                                        boxSizing: "border-box",
-                                                    }}
-                                                />
                                                 <div>
+                                                    <label style={{
+                                                        display: "block",
+                                                        color: "#94A3B8",
+                                                        fontSize: "0.75rem",
+                                                        fontWeight: 600,
+                                                        marginBottom: "6px",
+                                                        letterSpacing: "0.5px",
+                                                        textTransform: "uppercase"
+                                                    }}>
+                                                        E-mail
+                                                    </label>
+                                                    <input
+                                                        type="email"
+                                                        placeholder="seu@email.com"
+                                                        value={authEmail}
+                                                        onChange={(e) => setAuthEmail(e.target.value)}
+                                                        autoComplete="email"
+                                                        style={{
+                                                            width: "100%", padding: "14px 16px", background: "rgba(15, 23, 42, 0.8)",
+                                                            border: "1px solid rgba(148, 163, 184, 0.3)", borderRadius: 8,
+                                                            color: "#F8FAFC", fontSize: "1rem", outline: "none",
+                                                            boxSizing: "border-box",
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label style={{
+                                                        display: "block",
+                                                        color: "#94A3B8",
+                                                        fontSize: "0.75rem",
+                                                        fontWeight: 600,
+                                                        marginBottom: "6px",
+                                                        letterSpacing: "0.5px",
+                                                        textTransform: "uppercase"
+                                                    }}>
+                                                        Senha
+                                                    </label>
                                                     <div style={{ position: "relative", width: "100%" }}>
                                                         <input
                                                             type={showPassword ? "text" : "password"}
-                                                            placeholder="Crie uma senha (mín. 6 caracteres)"
+                                                            placeholder="mínimo 6 caracteres"
                                                             value={authPassword}
                                                             onChange={(e) => setAuthPassword(e.target.value)}
                                                             autoComplete="new-password"
