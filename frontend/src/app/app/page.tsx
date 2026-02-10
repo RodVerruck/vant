@@ -935,10 +935,11 @@ export default function AppPage() {
             setStripeSessionId(pendingSid);
             setNeedsActivation(true);
         } else if (pendingSid && !authUserId) {
-            // Se tem sessão pendente mas SEM usuário, pedir login
+            // Se tem sessão pendente mas SEM usuário, abrir modal de auth
             setStripeSessionId(pendingSid);
-            setStage("checkout");
-            setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
+            setNeedsActivation(true);
+            setShowAuthModal(true);
+            setCheckoutError("✅ Pagamento confirmado! Crie sua conta para acessar seus créditos.");
         }
 
         // Retorno do Stripe após pagamento
@@ -969,11 +970,11 @@ export default function AppPage() {
                         setStripeSessionId(sessionId);
 
                         if (!authUserId) {
-                            // Sem usuário: salvar e pedir login
+                            // Sem usuário: salvar sessão e abrir modal de auth para vincular créditos
                             window.localStorage.setItem("vant_pending_stripe_session_id", sessionId);
                             setNeedsActivation(true);
-                            setCheckoutError("Pagamento confirmado. Faça login para finalizar a ativação do seu plano.");
-                            setStage("checkout");
+                            setShowAuthModal(true);
+                            setCheckoutError("✅ Pagamento confirmado! Crie sua conta para acessar seus créditos.");
                         } else {
                             // Com usuário: ativar imediatamente via useEffect
                             setNeedsActivation(true);
@@ -1094,6 +1095,16 @@ export default function AppPage() {
             }
         })();
     }, [authUserId]);
+
+    // Smallpdf flow: quando auth completa durante checkout, ir direto pro Stripe
+    const checkoutAuthPending = useRef(false);
+    useEffect(() => {
+        if (authUserId && stage === "checkout" && isAuthenticating === false && checkoutAuthPending.current) {
+            checkoutAuthPending.current = false;
+            console.log("[CheckoutAuth] Auth completa no checkout, chamando startCheckout...");
+            startCheckout();
+        }
+    }, [authUserId, stage, isAuthenticating]);
 
     // NOVO: useEffect para abrir item do histórico vindo do Dashboard
     useEffect(() => {
@@ -1259,17 +1270,15 @@ export default function AppPage() {
         activationAttempted.current = false;
 
         const planId = (selectedPlan || "basico").trim();
-        if (!authEmail || !authEmail.includes("@")) {
-            setCheckoutError("Digite um e-mail válido.");
-            return;
-        }
 
         try {
             const body: Record<string, unknown> = {
                 plan_id: planId,
-                customer_email: authEmail,
                 score: typeof previewData?.nota_ats === "number" ? previewData.nota_ats : 0,
             };
+            if (authEmail && authEmail.includes("@")) {
+                body.customer_email = authEmail;
+            }
             if (authUserId) {
                 body.client_reference_id = authUserId;
             }
@@ -1313,6 +1322,98 @@ export default function AppPage() {
             return; // Evita que o redirecionamento abaixo execute antes da hora
         } catch (e: unknown) {
             setCheckoutError(getErrorMessage(e, "Erro ao iniciar checkout"));
+        }
+    }
+
+    // Smallpdf approach: auth inline no checkout — tenta login, se não existe cria conta, depois vai direto pro Stripe
+    async function handleCheckoutWithAuth() {
+        setCheckoutError("");
+
+        if (!supabase) {
+            setCheckoutError("Supabase não configurado.");
+            return;
+        }
+
+        if (!authEmail || !authEmail.includes("@")) {
+            setCheckoutError("Digite um e-mail válido.");
+            return;
+        }
+
+        if (!authPassword || authPassword.length < 6) {
+            setCheckoutError("A senha deve ter no mínimo 6 caracteres.");
+            return;
+        }
+
+        setIsAuthenticating(true);
+        checkoutAuthPending.current = true;
+        const client = supabase as SupabaseClient;
+
+        try {
+            // 1. Tentar criar conta primeiro (caso seja usuário novo)
+            console.log("[CheckoutAuth] Tentando criar conta...");
+            const { data: signupData, error: signupError } = await client.auth.signUp({
+                email: authEmail,
+                password: authPassword,
+            });
+
+            if (!signupError && signupData.user && signupData.user.identities && signupData.user.identities.length > 0) {
+                // Conta criada com sucesso — usuário novo
+                setAuthUserId(signupData.user.id);
+                setAuthEmail(signupData.user.email || authEmail);
+                setAuthPassword("");
+                console.log("[CheckoutAuth] Conta criada, indo para Stripe...");
+                return;
+            }
+
+            // 2. Signup falhou ou usuário já existe — tentar login
+            console.log("[CheckoutAuth] Usuário já existe, tentando login...");
+            const { data: loginData, error: loginError } = await client.auth.signInWithPassword({
+                email: authEmail,
+                password: authPassword,
+            });
+
+            if (!loginError && loginData.user) {
+                // Login OK
+                setAuthUserId(loginData.user.id);
+                setAuthEmail(loginData.user.email || authEmail);
+                setAuthPassword("");
+                console.log("[CheckoutAuth] Login OK, indo para Stripe...");
+                return;
+            }
+
+            // 3. Login falhou — senha errada para conta existente
+            throw loginError;
+        } catch (e: unknown) {
+            checkoutAuthPending.current = false;
+            const msg = e instanceof Error ? e.message : "Erro na autenticação";
+            if (msg.includes("Invalid login credentials")) {
+                setCheckoutError("__WRONG_PASSWORD__");
+            } else if (msg.includes("Email not confirmed")) {
+                setCheckoutError("Confirme seu e-mail antes de continuar.");
+            } else {
+                setCheckoutError(msg);
+            }
+        } finally {
+            setIsAuthenticating(false);
+        }
+    }
+
+    // Recuperar senha inline (sem sair da página)
+    async function handleForgotPassword() {
+        if (!supabase) return;
+        if (!authEmail || !authEmail.includes("@")) {
+            setCheckoutError("Digite seu e-mail acima para receber o link de recuperação.");
+            return;
+        }
+        const client = supabase as SupabaseClient;
+        try {
+            const { error } = await client.auth.resetPasswordForEmail(authEmail, {
+                redirectTo: typeof window !== "undefined" ? `${window.location.origin}/app` : undefined,
+            });
+            if (error) throw error;
+            setCheckoutError("✅ Link de recuperação enviado para " + authEmail);
+        } catch (e: unknown) {
+            setCheckoutError(e instanceof Error ? e.message : "Erro ao enviar link de recuperação.");
         }
     }
 
@@ -2791,8 +2892,7 @@ export default function AppPage() {
                             onSelectPlan={(planId) => setSelectedPlan(planId)}
                             onCheckout={(planId) => {
                                 setSelectedPlan(planId);
-                                if (!authUserId) setShowAuthModal(true);
-                                else setStage("checkout");
+                                setStage("checkout");
                             }}
                             authUserId={authUserId}
                             creditsRemaining={creditsRemaining}
@@ -3623,8 +3723,7 @@ export default function AppPage() {
                                                 onSelectPlan={(planId) => setSelectedPlan(planId)}
                                                 onCheckout={(planId) => {
                                                     setSelectedPlan(planId);
-                                                    if (!authUserId) setShowAuthModal(true);
-                                                    else setStage("checkout");
+                                                    setStage("checkout");
                                                 }}
                                                 authUserId={authUserId}
                                                 creditsRemaining={creditsRemaining}
@@ -3760,46 +3859,7 @@ export default function AppPage() {
 
                                         <div dangerouslySetInnerHTML={{ __html: boxHtml }} />
 
-                                        {!authUserId ? (
-                                            <>
-                                                <div style={{ marginBottom: 20, padding: 16, background: "rgba(56, 189, 248, 0.05)", border: "1px solid rgba(56, 189, 248, 0.2)", borderRadius: 8, textAlign: "center" }}>
-                                                    <div style={{ color: "#38BDF8", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
-                                                        🔒 Identifique-se para salvar seu acesso
-                                                    </div>
-                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem" }}>
-                                                        Seus créditos ficarão vinculados à sua conta.
-                                                    </div>
-                                                </div>
-
-                                                <div data-testid="stButton" className="stButton" style={{ width: "100%", marginBottom: 16 }}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleGoogleLogin}
-                                                        disabled={isAuthenticating}
-                                                        style={{
-                                                            width: "100%", height: 52, background: "#fff", color: "#1f2937",
-                                                            border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
-                                                            fontSize: "1rem", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-                                                            cursor: isAuthenticating ? "not-allowed" : "pointer", opacity: isAuthenticating ? 0.6 : 1
-                                                        }}
-                                                    >
-                                                        <svg width="20" height="20" viewBox="0 0 18 18">
-                                                            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
-                                                            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
-                                                            <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
-                                                            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
-                                                        </svg>
-                                                        {isAuthenticating ? "Autenticando..." : "Continuar com Google"}
-                                                    </button>
-                                                </div>
-
-                                                <div style={{ textAlign: "center" }}>
-                                                    <button type="button" onClick={() => setShowAuthModal(true)} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", textDecoration: "underline", cursor: "pointer" }}>
-                                                        Prefiro usar e-mail e senha
-                                                    </button>
-                                                </div>
-                                            </>
-                                        ) : (
+                                        {authUserId ? (
                                             <>
                                                 <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
                                                     <div style={{ fontSize: "1.2rem" }}>👤</div>
@@ -3808,60 +3868,151 @@ export default function AppPage() {
                                                         <div style={{ color: "#E2E8F0", fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{authEmail}</div>
                                                     </div>
                                                 </div>
-
                                                 <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
                                                     <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%", height: 56, fontSize: "1.1rem", background: "#10B981", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)" }}>
                                                         IR PARA PAGAMENTO SEGURO
                                                     </button>
                                                 </div>
-
-                                                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", opacity: 0.6 }}>
-                                                    <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                                    <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                                    <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>📍</div>
-                                                    <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
-                                                </div>
-                                                <div style={{ textAlign: "center", marginTop: 4, color: "#64748B", fontSize: "0.75rem" }}>
-                                                    Aceitamos Visa, Mastercard, PIX e Amex
-                                                </div>
-
-                                                {/* TRUST SIGNALS - SVGs OFICIAIS & BLINDAGEM */}
-                                                <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-
-                                                    {/* Ícones de Pagamento (Grayscale -> Color on Hover) */}
-                                                    <div
-                                                        style={{ display: "flex", alignItems: "center", gap: 20, opacity: 0.7, filter: "grayscale(100%)", transition: "all 0.3s ease" }}
-                                                        onMouseEnter={(e) => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.opacity = "1"; }}
-                                                        onMouseLeave={(e) => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.opacity = "0.7"; }}
-                                                    >
-                                                        {/* PIX (Logo Oficial) */}
-                                                        <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto" }} />
-
-                                                        {/* VISA (Logo Oficial) */}
-                                                        <img src="/icons/visa.svg" alt="Visa" style={{ height: "16px", width: "auto" }} />
-
-                                                        {/* MASTERCARD (Logo Oficial) */}
-                                                        <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto" }} />
-
-                                                        {/* AMEX (Logo Oficial) */}
-                                                        <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto" }} />
-                                                    </div>
-
-                                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                        <span style={{ fontSize: "0.9rem" }}>🔒</span>
-                                                        <span style={{ color: "#64748B", fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.3px" }}>
-                                                            Pagamento processado via Stripe • Dados Criptografados
-                                                        </span>
-                                                    </div>
-                                                </div>
                                             </>
+                                        ) : (
+                                            <form onSubmit={(e) => { e.preventDefault(); handleCheckoutWithAuth(); }} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                                <div style={{ color: "#94A3B8", fontSize: "0.8rem", textAlign: "center", marginBottom: 4 }}>
+                                                    Crie sua conta ou faça login para salvar seus créditos
+                                                </div>
+                                                <input
+                                                    type="email"
+                                                    placeholder="Seu e-mail"
+                                                    value={authEmail}
+                                                    onChange={(e) => setAuthEmail(e.target.value)}
+                                                    autoComplete="email"
+                                                    style={{
+                                                        width: "100%", padding: "14px 16px", background: "rgba(15, 23, 42, 0.8)",
+                                                        border: "1px solid rgba(148, 163, 184, 0.3)", borderRadius: 8,
+                                                        color: "#F8FAFC", fontSize: "1rem", outline: "none",
+                                                        boxSizing: "border-box",
+                                                    }}
+                                                />
+                                                <div>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Crie uma senha (mín. 6 caracteres)"
+                                                        value={authPassword}
+                                                        onChange={(e) => setAuthPassword(e.target.value)}
+                                                        autoComplete="new-password"
+                                                        style={{
+                                                            width: "100%", padding: "14px 16px", background: "rgba(15, 23, 42, 0.8)",
+                                                            border: `1px solid ${checkoutError === "__WRONG_PASSWORD__" ? "#EF4444" : "rgba(148, 163, 184, 0.3)"}`, borderRadius: 8,
+                                                            color: "#F8FAFC", fontSize: "1rem", outline: "none",
+                                                            boxSizing: "border-box",
+                                                        }}
+                                                    />
+                                                    {checkoutError === "__WRONG_PASSWORD__" && (
+                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+                                                            <span style={{ color: "#EF4444", fontSize: "0.8rem" }}>Senha incorreta para este e-mail.</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleForgotPassword}
+                                                                style={{ background: "none", border: "none", color: "#38BDF8", fontSize: "0.8rem", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                                                            >
+                                                                Esqueci minha senha
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {checkoutError && checkoutError !== "__WRONG_PASSWORD__" && (
+                                                    <div style={{ padding: 10, background: checkoutError.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", border: `1px solid ${checkoutError.startsWith("✅") ? "#10B981" : "#EF4444"}`, borderRadius: 8, color: checkoutError.startsWith("✅") ? "#10B981" : "#EF4444", fontSize: "0.85rem", textAlign: "center" }}>
+                                                        {checkoutError}
+                                                    </div>
+                                                )}
+                                                <button
+                                                    type="submit"
+                                                    disabled={isAuthenticating}
+                                                    style={{
+                                                        width: "100%", height: 56, fontSize: "1.1rem",
+                                                        background: isAuthenticating ? "#64748B" : "#10B981",
+                                                        color: "#fff", border: "none", borderRadius: 10,
+                                                        fontWeight: 700, cursor: isAuthenticating ? "wait" : "pointer",
+                                                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)",
+                                                        transition: "all 0.2s",
+                                                    }}
+                                                >
+                                                    {isAuthenticating ? "Processando..." : "IR PARA PAGAMENTO SEGURO"}
+                                                </button>
+
+                                                <div style={{ color: "#64748B", fontSize: "0.7rem", textAlign: "center", lineHeight: 1.4 }}>
+                                                    Ao continuar, você concorda com nossos <a href="/termos" target="_blank" style={{ color: "#94A3B8", textDecoration: "underline" }}>Termos de Uso</a> e <a href="/privacidade" target="_blank" style={{ color: "#94A3B8", textDecoration: "underline" }}>Política de Privacidade</a>. Uma conta será criada automaticamente se você ainda não tiver uma.
+                                                </div>
+
+                                                <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0" }}>
+                                                    <div style={{ flex: 1, height: 1, background: "rgba(148, 163, 184, 0.2)" }} />
+                                                    <span style={{ color: "#64748B", fontSize: "0.8rem" }}>ou</span>
+                                                    <div style={{ flex: 1, height: 1, background: "rgba(148, 163, 184, 0.2)" }} />
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={handleGoogleLogin}
+                                                    disabled={isAuthenticating}
+                                                    style={{
+                                                        width: "100%", height: 48, background: "#fff", color: "#1f2937",
+                                                        border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
+                                                        fontSize: "0.95rem", fontWeight: 600, display: "flex",
+                                                        alignItems: "center", justifyContent: "center", gap: 10,
+                                                        cursor: isAuthenticating ? "not-allowed" : "pointer",
+                                                        opacity: isAuthenticating ? 0.6 : 1,
+                                                    }}
+                                                >
+                                                    <svg width="18" height="18" viewBox="0 0 18 18">
+                                                        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
+                                                        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
+                                                        <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
+                                                        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
+                                                    </svg>
+                                                    Continuar com Google
+                                                </button>
+                                            </form>
                                         )}
 
-                                        {checkoutError && (
-                                            <div style={{ marginTop: 16, padding: 12, background: checkoutError.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", border: `1px solid ${checkoutError.startsWith("✅") ? "#10B981" : "#EF4444"}`, borderRadius: 8, color: checkoutError.startsWith("✅") ? "#10B981" : "#EF4444", fontSize: "0.85rem", textAlign: "center" }}>
-                                                {checkoutError}
+                                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "16px", opacity: 0.6 }}>
+                                            <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                            <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                            <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>📍</div>
+                                            <div style={{ fontSize: "1.5rem", filter: "grayscale(100%)", opacity: 0.7 }}>💳</div>
+                                        </div>
+                                        <div style={{ textAlign: "center", marginTop: 4, color: "#64748B", fontSize: "0.75rem" }}>
+                                            Aceitamos Visa, Mastercard, PIX e Amex
+                                        </div>
+
+                                        {/* TRUST SIGNALS - SVGs OFICIAIS & BLINDAGEM */}
+                                        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+
+                                            {/* Ícones de Pagamento (Grayscale -> Color on Hover) */}
+                                            <div
+                                                style={{ display: "flex", alignItems: "center", gap: 20, opacity: 0.7, filter: "grayscale(100%)", transition: "all 0.3s ease" }}
+                                                onMouseEnter={(e) => { e.currentTarget.style.filter = "grayscale(0%)"; e.currentTarget.style.opacity = "1"; }}
+                                                onMouseLeave={(e) => { e.currentTarget.style.filter = "grayscale(100%)"; e.currentTarget.style.opacity = "0.7"; }}
+                                            >
+                                                {/* PIX (Logo Oficial) */}
+                                                <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto" }} />
+
+                                                {/* VISA (Logo Oficial) */}
+                                                <img src="/icons/visa.svg" alt="Visa" style={{ height: "16px", width: "auto" }} />
+
+                                                {/* MASTERCARD (Logo Oficial) */}
+                                                <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto" }} />
+
+                                                {/* AMEX (Logo Oficial) */}
+                                                <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto" }} />
                                             </div>
-                                        )}
+
+                                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                <span style={{ fontSize: "0.9rem" }}>🔒</span>
+                                                <span style={{ color: "#64748B", fontSize: "0.75rem", fontWeight: 500, letterSpacing: "0.3px" }}>
+                                                    Pagamento processado via Stripe • Dados Criptografados
+                                                </span>
+                                            </div>
+                                        </div>
+
 
                                         <div style={{ textAlign: "center", marginTop: 24 }}>
                                             <button type="button" onClick={() => setStage("preview")} style={{ background: "none", border: "none", color: "#64748B", fontSize: "0.85rem", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
