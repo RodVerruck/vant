@@ -3970,15 +3970,66 @@ export default function AppPage() {
                                                         }}
                                                     />
                                                     {checkoutError === "__WRONG_PASSWORD__" && (
-                                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
-                                                            <span style={{ color: "#EF4444", fontSize: "0.8rem" }}>Senha incorreta para este e-mail.</span>
+                                                        <div style={{ marginTop: 12 }}>
+                                                            <div style={{
+                                                                padding: 12,
+                                                                background: "rgba(239, 68, 68, 0.1)",
+                                                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                                borderRadius: 8,
+                                                                marginBottom: 12
+                                                            }}>
+                                                                <p style={{
+                                                                    color: "#EF4444",
+                                                                    fontSize: "0.85rem",
+                                                                    margin: 0,
+                                                                    lineHeight: 1.4
+                                                                }}>
+                                                                    😅 Ops! Essa não é a senha correta para este e-mail.
+                                                                </p>
+                                                            </div>
                                                             <button
                                                                 type="button"
                                                                 onClick={handleForgotPassword}
-                                                                style={{ background: "none", border: "none", color: "#38BDF8", fontSize: "0.8rem", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                                                                disabled={isAuthenticating}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    padding: "12px 16px",
+                                                                    background: "rgba(59, 130, 246, 0.1)",
+                                                                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                                                                    borderRadius: 8,
+                                                                    color: "#3B82F6",
+                                                                    fontSize: "0.9rem",
+                                                                    fontWeight: 500,
+                                                                    cursor: isAuthenticating ? "wait" : "pointer",
+                                                                    textDecoration: "none",
+                                                                    transition: "all 0.2s",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "center",
+                                                                    gap: 8
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    if (!isAuthenticating) {
+                                                                        e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)";
+                                                                        e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.5)";
+                                                                    }
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                                                                    e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)";
+                                                                }}
                                                             >
-                                                                Esqueci minha senha
+                                                                🔑 Esqueci minha senha
                                                             </button>
+                                                            <p style={{
+                                                                color: "#64748B",
+                                                                fontSize: "0.75rem",
+                                                                textAlign: "center",
+                                                                marginTop: 8,
+                                                                margin: 0
+                                                            }}>
+                                                                Vamos te ajudar a criar uma nova
+                                                            </p>
                                                         </div>
                                                     )}
                                                 </div>
