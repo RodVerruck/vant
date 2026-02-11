@@ -2603,24 +2603,27 @@ export default function AppPage() {
                     )}
 
                     <div className="hero-container">
-                        {/* V3 Layout: 1. Hero Header */}
-                        <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
+                        {/* V4 Split-Screen: 2-column grid */}
+                        <div className="hero-split-grid">
 
-                        {/* V3 Layout: 2. Main Action Container (above the fold) */}
-                        <div className="action-island-container">
-                            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
-                                <div style={{ flex: "1 1 380px" }}>
-                                    <h5>🎯 VAGA</h5>
+                            {/* ===== LEFT COLUMN: Text + Trust ===== */}
+                            <div className="hero-left-col">
+                                <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
+                                <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
+                            </div>
 
-                                    {/* Opção para usar vaga genérica */}
-                                    <div style={{ marginBottom: 12 }}>
+                            {/* ===== RIGHT COLUMN: Form ===== */}
+                            <div className="hero-right-col">
+                                <div className="action-island-container">
+                                    {/* Checkbox: Sem vaga específica */}
+                                    <div style={{ marginBottom: 14 }}>
                                         <label style={{
                                             display: "flex",
-                                            alignItems: "flex-start",
+                                            alignItems: "center",
                                             gap: 8,
                                             cursor: "pointer",
-                                            fontSize: "0.9rem",
-                                            color: "#E2E8F0"
+                                            fontSize: "0.85rem",
+                                            color: "#CBD5E1"
                                         }}>
                                             <input
                                                 type="checkbox"
@@ -2628,33 +2631,58 @@ export default function AppPage() {
                                                 onChange={(e) => {
                                                     setUseGenericJob(e.target.checked);
                                                     if (e.target.checked) {
-                                                        // Define descrição genérica quando marcado
                                                         setJobDescription("Busco oportunidades profissionais que valorizem minhas habilidades e experiência. Estou aberto a posições desafiadoras que permitam meu crescimento e contribuição para os objetivos da empresa, com foco em resultados e inovação.");
                                                     } else {
-                                                        // Limpa quando desmarcado
                                                         setJobDescription("");
                                                         setSelectedArea("");
                                                     }
                                                 }}
-                                                style={{ marginTop: 2 }}
+                                                style={{ accentColor: "#10B981", width: 16, height: 16 }}
                                             />
-                                            <span>
-                                                <strong>Análise geral</strong> -
-                                                Sem vaga específica
-                                            </span>
+                                            <span>Não tenho uma vaga específica</span>
                                         </label>
                                     </div>
 
-                                    {/* Seleção de área de interesse (aparece quando vaga genérica) */}
-                                    {useGenericJob && (
-                                        <div style={{ marginBottom: 12 }}>
-                                            <label style={{
-                                                display: "block",
-                                                marginBottom: 6,
-                                                fontSize: "0.85rem",
-                                                color: "#CBD5E1",
-                                                fontWeight: 500
+                                    {/* Vaga textarea — hidden when useGenericJob */}
+                                    {!useGenericJob && (
+                                        <div style={{ marginBottom: 16 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                                                <span style={{ color: "#38BDF8", fontSize: "0.75rem", fontWeight: 700, background: "rgba(56, 189, 248, 0.1)", borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>1</span>
+                                                <span style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Cole a descrição da vaga</span>
+                                            </div>
+                                            <div className="stTextArea">
+                                                <textarea
+                                                    value={jobDescription}
+                                                    onChange={(e) => setJobDescription(e.target.value)}
+                                                    placeholder="Cole a descrição da vaga aqui..."
+                                                    disabled={useGenericJob}
+                                                    style={{
+                                                        height: 100,
+                                                        width: "100%",
+                                                        boxSizing: "border-box"
+                                                    }}
+                                                />
+                                            </div>
+                                            <div style={{
+                                                marginTop: 4,
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
+                                                color: jobDescription && jobDescription.length >= 500 ? "#10B981" : "#64748B",
+                                                fontSize: "0.75rem"
                                             }}>
+                                                <span>{jobDescription ? jobDescription.length : 0}/5000</span>
+                                                <span style={{ color: "#94A3B8", fontSize: "0.7rem" }}>
+                                                    Descrição completa = melhor resultado
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Area selector — only when generic job */}
+                                    {useGenericJob && (
+                                        <div style={{ marginBottom: 16 }}>
+                                            <label style={{ display: "block", marginBottom: 6, fontSize: "0.8rem", color: "#CBD5E1", fontWeight: 500 }}>
                                                 Área de interesse (opcional):
                                             </label>
                                             <select
@@ -2667,7 +2695,7 @@ export default function AppPage() {
                                                     border: "1px solid rgba(255, 255, 255, 0.1)",
                                                     borderRadius: "6px",
                                                     color: "#E2E8F0",
-                                                    fontSize: "0.9rem"
+                                                    fontSize: "0.85rem"
                                                 }}
                                             >
                                                 <option value="">Selecione uma área...</option>
@@ -2681,348 +2709,171 @@ export default function AppPage() {
                                                 <option value="financeiro_corp">Financeiro/Corporativo</option>
                                                 <option value="global_soft_skills">Geral/Soft Skills</option>
                                             </select>
-                                            <div style={{
-                                                marginTop: 4,
-                                                fontSize: "0.75rem",
-                                                color: "#94A3B8"
-                                            }}>
-                                                💡 Isso ajuda a personalizar a análise para sua área
-                                            </div>
                                         </div>
                                     )}
 
-                                    <div className="stTextArea">
-                                        <textarea
-                                            value={jobDescription}
-                                            onChange={(e) => setJobDescription(e.target.value)}
-                                            placeholder={useGenericJob
-                                                ? "Descrição automática..."
-                                                : "Cole a descrição da vaga aqui..."
-                                            }
-                                            disabled={useGenericJob}
-                                            style={{
-                                                height: 185,
-                                                width: "100%",
-                                                boxSizing: "border-box",
-                                                opacity: useGenericJob ? 0.6 : 1,
-                                                backgroundColor: useGenericJob ? "#1E293B" : "transparent"
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{
-                                        marginTop: 8,
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        color: jobDescription && jobDescription.length >= 500 ? "#10B981" : "#64748B",
-                                        fontSize: "0.8rem"
-                                    }}>
-                                        <span>Caracteres: {jobDescription ? jobDescription.length : 0}/5000</span>
-                                        <span style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
-                                            💡 {useGenericJob
-                                                ? "Análise de mercado"
-                                                : "Descrição completa = melhor resultado"
-                                            }
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div style={{ flex: "1 1 380px" }}>
-                                    <h5>📄 CURRÍCULO</h5>
-                                    {file ? (
-                                        <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 16, textAlign: "center" }}>
-                                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>✅ Arquivo carregado</div>
-                                            <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>{file.name}</div>
-
-                                            {/* Exibir metadados extraídos */}
-                                            {pdfMetadata && (
-                                                <div style={{
-                                                    background: "rgba(245, 158, 11, 0.08)",
-                                                    border: "1px solid rgba(245, 158, 11, 0.25)",
-                                                    borderRadius: 6,
-                                                    padding: 10,
-                                                    marginTop: 8
-                                                }}>
-                                                    <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
-                                                        📊 DETALHES DETECTADOS:
+                                    {/* CV Upload */}
+                                    <div style={{ marginBottom: 14 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                                            <span style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, background: "rgba(16, 185, 129, 0.1)", borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{useGenericJob ? "1" : "2"}</span>
+                                            <span style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Seu Currículo (PDF)</span>
+                                        </div>
+                                        {file ? (
+                                            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                                                <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>✅ Arquivo carregado</div>
+                                                <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>{file.name}</div>
+                                                {pdfMetadata && (
+                                                    <div style={{ background: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.25)", borderRadius: 6, padding: 8, marginTop: 6 }}>
+                                                        <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 700, marginBottom: 2 }}>📊 DETALHES:</div>
+                                                        {pdfMetadata.pages && (
+                                                            <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>
+                                                                <strong>Páginas:</strong> {pdfMetadata.pages}
+                                                                {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6, color: "#10B981" }}>- Otimizaremos para 1-2 ✓</span>}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    {pdfMetadata.pages && (
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", marginBottom: 2 }}>
-                                                            <strong>Páginas:</strong> {pdfMetadata.pages}
-                                                            {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6, color: "#10B981" }}>- Vamos otimizar para 1-2 páginas ideais ✓</span>}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            <button type="button" onClick={() => setFile(null)} style={{ marginTop: 12, fontSize: "0.75rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                                                Remover
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div data-testid="stFileUploader" data-cy="cv-upload-area">
-                                            <section
-                                                onClick={openFileDialog}
-                                                data-cy="cv-upload-section"
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' || e.key === ' ') {
-                                                        e.preventDefault();
-                                                        openFileDialog();
-                                                    }
-                                                }}
-                                                style={{ cursor: "pointer" }}
-                                                tabIndex={0}
-                                            >
-                                                <div>
-                                                    <div>
-                                                        <span>Arraste ou clique para enviar</span>
-                                                    </div>
-                                                    <small>✓ PDF ou DOCX • Máx. 10MB</small>
-                                                    <button
-                                                        type="button"
-                                                        onClick={openFileDialog}
-                                                        style={{ marginTop: "8px", fontSize: "0.8rem", opacity: 0.7 }}
-                                                    >Escolher arquivo</button>
-                                                    <input
-                                                        ref={uploaderInputRef}
-                                                        type="file"
-                                                        accept="application/pdf"
-                                                        data-cy="cv-file-input"
-                                                        style={{ display: "none" }}
-                                                        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                                                    />
-                                                </div>
-                                            </section>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div style={{ height: 16 }} />
-
-                                {/* Toggle Top Performer - Agora visível como vantagem */}
-                                <div style={{
-                                    background: "linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(16, 185, 129, 0.05))",
-                                    border: "1px solid rgba(245, 158, 11, 0.25)",
-                                    borderRadius: 12,
-                                    padding: "16px 20px",
-                                    marginBottom: 16
-                                }}>
-                                    <div style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "space-between",
-                                        gap: 12,
-                                        marginBottom: competitorFiles.length > 0 ? 16 : 0
-                                    }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
-                                            <div style={{ fontSize: "1.8rem" }}>🎯</div>
-                                            <div>
-                                                <div style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 700, letterSpacing: "0.3px" }}>
-                                                    Referência Ideal <span style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 400 }}>(Opcional)</span>
-                                                </div>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.8rem", marginTop: 2 }}>
-                                                    {competitorFiles.length > 0
-                                                        ? `Usando ${competitorFiles.length} referência(s)`
-                                                        : "Padrão automático"
-                                                    }
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* SUBSTITUA O CÓDIGO DO BOTÃO (button) POR ESTA LÓGICA CONDICIONAL: */}
-
-                                        {competitorFiles.length > 0 ? (
-                                            // ESTADO DE SUCESSO (Apenas visual/Label)
-                                            <div style={{
-                                                marginTop: 8,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 8,
-                                                color: "#10B981", // Verde sucesso
-                                                fontWeight: 700,
-                                                fontSize: "0.9rem",
-                                                padding: "8px 0" // Espaçamento leve
-                                            }}>
-                                                <div style={{
-                                                    width: 24,
-                                                    height: 24,
-                                                    borderRadius: "50%",
-                                                    background: "rgba(16, 185, 129, 0.2)", // Fundo circular sutil
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    fontSize: "0.8rem"
-                                                }}>
-                                                    ✓
-                                                </div>
-                                                Pronto para análise
+                                                )}
+                                                <button type="button" onClick={() => setFile(null)} style={{ marginTop: 8, fontSize: "0.7rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                    Remover
+                                                </button>
                                             </div>
                                         ) : (
-                                            // ESTADO PADRÃO (Botão de Adicionar)
-                                            <button
-                                                type="button"
-                                                onClick={openCompetitorFileDialog}
-                                                style={{
-                                                    background: "transparent",
-                                                    color: "#94A3B8",
-                                                    border: "1px solid rgba(148, 163, 184, 0.4)",
-                                                    borderRadius: 20,
-                                                    padding: "8px 16px",
-                                                    fontSize: "0.8rem",
-                                                    fontWeight: 600,
-                                                    cursor: "pointer",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    gap: 6,
-                                                    whiteSpace: "nowrap",
-                                                    transition: "all 0.2s ease"
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.borderColor = "#10B981";
-                                                    e.currentTarget.style.color = "#10B981";
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)";
-                                                    e.currentTarget.style.color = "#94A3B8";
-                                                }}
-                                            >
-                                                + ADICIONAR REFERÊNCIA
-                                            </button>
-                                        )}
-
-                                        {/* Input invisível continua aqui */}
-                                        <input
-                                            ref={competitorUploaderInputRef}
-                                            type="file"
-                                            accept="application/pdf"
-                                            multiple
-                                            style={{ display: "none" }}
-                                            onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))}
-                                        />
-                                    </div>
-
-                                    {competitorFiles.length > 0 && (
-                                        <div style={{
-                                            background: "rgba(16, 185, 129, 0.1)",
-                                            border: "1px solid rgba(16, 185, 129, 0.3)",
-                                            borderRadius: 8,
-                                            padding: 12,
-                                            marginTop: 12
-                                        }}>
-                                            <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginBottom: 8 }}>
-                                                ✅ Referência carregada
-                                            </div>
-                                            <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>
-                                                {competitorFiles.map((f, i) => (
-                                                    <div key={i} style={{ marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
-                                                        <span style={{ color: "#64748B" }}>📄</span>
-                                                        {f.name}
+                                            <div data-testid="stFileUploader" data-cy="cv-upload-area">
+                                                <section
+                                                    onClick={openFileDialog}
+                                                    data-cy="cv-upload-section"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' || e.key === ' ') {
+                                                            e.preventDefault();
+                                                            openFileDialog();
+                                                        }
+                                                    }}
+                                                    style={{ cursor: "pointer" }}
+                                                    tabIndex={0}
+                                                >
+                                                    <div>
+                                                        <div><span>Arraste ou clique para enviar</span></div>
+                                                        <small>✓ PDF ou DOCX • Máx. 10MB</small>
+                                                        <button type="button" onClick={openFileDialog} style={{ marginTop: "6px", fontSize: "0.8rem", opacity: 0.7 }}>Escolher arquivo</button>
+                                                        <input ref={uploaderInputRef} type="file" accept="application/pdf" data-cy="cv-file-input" style={{ display: "none" }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
                                                     </div>
-                                                ))}
+                                                </section>
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setCompetitorFiles([])}
-                                                style={{
-                                                    marginTop: 8,
-                                                    fontSize: "0.75rem",
-                                                    color: "#94A3B8",
-                                                    background: "none",
-                                                    border: "none",
-                                                    cursor: "pointer",
-                                                    textDecoration: "underline"
-                                                }}
-                                            >
-                                                Remover e usar padrão
-                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Advanced Options: Referência Ideal (hidden by default) */}
+                                    <details className="advanced-options-toggle">
+                                        <summary>Configurações Avançadas (Opcional)</summary>
+                                        <div className="details-content">
+                                            <div style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                gap: 12,
+                                                marginBottom: competitorFiles.length > 0 ? 12 : 0
+                                            }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+                                                    <div style={{ fontSize: "1.4rem" }}>🎯</div>
+                                                    <div>
+                                                        <div style={{ color: "#F8FAFC", fontSize: "0.85rem", fontWeight: 700 }}>
+                                                            Referência Ideal
+                                                        </div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 2 }}>
+                                                            {competitorFiles.length > 0 ? `${competitorFiles.length} referência(s)` : "Padrão automático"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {competitorFiles.length > 0 ? (
+                                                    <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#10B981", fontWeight: 700, fontSize: "0.8rem" }}>
+                                                        <span>✓</span> Pronto
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={openCompetitorFileDialog}
+                                                        style={{
+                                                            background: "transparent", color: "#94A3B8",
+                                                            border: "1px solid rgba(148, 163, 184, 0.4)",
+                                                            borderRadius: 16, padding: "6px 12px",
+                                                            fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
+                                                            whiteSpace: "nowrap", transition: "all 0.2s ease"
+                                                        }}
+                                                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
+                                                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                    >
+                                                        + Adicionar
+                                                    </button>
+                                                )}
+                                                <input ref={competitorUploaderInputRef} type="file" accept="application/pdf" multiple style={{ display: "none" }} onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))} />
+                                            </div>
+                                            {competitorFiles.length > 0 && (
+                                                <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, padding: 10, marginTop: 8 }}>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.75rem" }}>
+                                                        {competitorFiles.map((f, i) => (
+                                                            <div key={i} style={{ marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                                                                <span style={{ color: "#64748B" }}>📄</span>{f.name}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <button type="button" onClick={() => setCompetitorFiles([])} style={{ marginTop: 6, fontSize: "0.7rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                        Remover
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </details>
+
+                                    {/* Credits indicator */}
+                                    {authUserId && creditsRemaining > 0 && (
+                                        <div style={{
+                                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
+                                            border: "1px solid rgba(16, 185, 129, 0.3)",
+                                            borderRadius: 8, padding: "10px", marginTop: 14, textAlign: "center"
+                                        }}>
+                                            <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 700 }}>
+                                                ✅ {creditsRemaining} crédito(s) disponível(is)
+                                            </div>
                                         </div>
                                     )}
 
-                                    {competitorFiles.length === 0 && (
-                                        <div style={{
-                                            marginTop: 12,
-                                            padding: "10px 12px",
-                                            background: "rgba(15, 23, 42, 0.4)",
-                                            borderRadius: 6,
-                                            border: "1px dashed rgba(148, 163, 184, 0.2)"
-                                        }}>
-                                            <p style={{
-                                                color: "#94A3B8",
-                                                fontSize: "0.8rem",
-                                                margin: 0,
-                                                lineHeight: 1.5
-                                            }}>
-                                                💡 <strong style={{ color: "#E2E8F0" }}>Bônus:</strong> Aplicamos padrões de quem foi contratado.
-                                                Quer calibrar com perfil específico? Clique acima.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                                {authUserId && creditsRemaining > 0 && (
-                                    <div style={{
-                                        background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
-                                        border: "1px solid rgba(16, 185, 129, 0.3)",
-                                        borderRadius: 8,
-                                        padding: "12px",
-                                        marginBottom: 16,
-                                        textAlign: "center"
-                                    }}>
-                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
-                                            ✅ {creditsRemaining} crédito(s) disponível(is)
-                                        </div>
-                                        <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
-                                            Clique para usar seu crédito
-                                        </div>
+                                    {/* CTA Button */}
+                                    <div data-testid="stButton" className="stButton" style={{ width: "100%", marginTop: 14 }}>
+                                        <button
+                                            type="button"
+                                            data-kind="primary"
+                                            data-cy="main-cta"
+                                            onClick={onStart}
+                                            style={{
+                                                width: "100%",
+                                                transition: "all 0.2s ease",
+                                                cursor: "pointer",
+                                                background: "linear-gradient(to bottom, #FFD54F 0%, #FF8F00 50%, #EF6C00 100%)",
+                                                boxShadow: "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)",
+                                                fontWeight: 600, letterSpacing: "1px", color: "#210B00",
+                                                border: "none", borderRadius: "50px", padding: "12px 20px", fontSize: "1rem"
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.transform = "translateY(-2px)";
+                                                e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 8px 30px rgba(255, 143, 0, 0.7), 0 4px 10px rgba(255, 87, 34, 0.6)";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = "translateY(0)";
+                                                e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)";
+                                            }}
+                                            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.98)"; }}
+                                            onMouseUp={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+                                        >
+                                            {authUserId && creditsRemaining > 0 ? "OTIMIZAR MEU CV" : "ANALISAR CV GRÁTIS"}
+                                        </button>
                                     </div>
-                                )}
-                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                    <button
-                                        type="button"
-                                        data-kind="primary"
-                                        data-cy="main-cta"
-                                        onClick={onStart}
-                                        style={{
-                                            width: "100%",
-                                            transition: "all 0.2s ease",
-                                            cursor: "pointer",
-                                            background: "linear-gradient(to bottom, #FFD54F 0%, #FF8F00 50%, #EF6C00 100%)",
-                                            boxShadow: "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)",
-                                            fontWeight: 600,
-                                            letterSpacing: "1px",
-                                            color: "#210B00",
-                                            border: "none",
-                                            borderRadius: "50px",
-                                            padding: "12px 20px",
-                                            fontSize: "1rem"
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.transform = "translateY(-2px)";
-                                            e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 8px 30px rgba(255, 143, 0, 0.7), 0 4px 10px rgba(255, 87, 34, 0.6)";
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform = "translateY(0)";
-                                            e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)";
-                                        }}
-                                        onMouseDown={(e) => {
-                                            e.currentTarget.style.transform = "scale(0.98)";
-                                        }}
-                                        onMouseUp={(e) => {
-                                            e.currentTarget.style.transform = "translateY(-2px)";
-                                        }}
-                                    >
-                                        {authUserId && creditsRemaining > 0 ? "OTIMIZAR MEU CV" : "ANALISAR CV GRÁTIS"}
-                                    </button>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* V3 Layout: 3. Trust Bar (tight spacing below CTA) */}
-                        <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
+                        </div>{/* end hero-split-grid */}
 
-                        {/* V3 Layout: 4. Value Proposition - "Por que funciona" */}
+                        {/* Full-width sections below the fold */}
                         <div dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
-
-                        {/* V3 Layout: 5. Footer/Informational - "Análise Instantânea" */}
                         <div dangerouslySetInnerHTML={{ __html: ANALYSIS_CARD_HTML }} />
                     </div>
                 </>

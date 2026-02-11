@@ -119,6 +119,83 @@ body,
     padding: 20px 0;
 }
 
+/* V5 Split-Screen Hero Grid — proper 12-col */
+.hero-split-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: center;
+    min-height: 85vh;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 20px;
+}
+
+@media (min-width: 1024px) {
+    .hero-split-grid {
+        grid-template-columns: repeat(12, 1fr);
+        gap: 3rem;
+    }
+
+    .hero-left-col {
+        grid-column: span 6;
+        text-align: left;
+    }
+
+    .hero-right-col {
+        grid-column: span 6;
+    }
+
+    .hero-left-col .badge-live {
+        justify-content: flex-start;
+    }
+
+    .hero-left-col .logo-text {
+        font-size: 4rem;
+    }
+
+    .hero-left-col .headline {
+        font-size: 2rem;
+    }
+
+    .hero-left-col .subheadline {
+        margin-left: 0;
+        margin-right: 0;
+        max-width: 100%;
+        margin-bottom: 24px;
+    }
+
+    /* Stats: compact horizontal row */
+    .hero-left-col .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 0;
+    }
+
+    .hero-left-col .stat-card {
+        padding: 10px 8px;
+        background: transparent;
+        border: none;
+        text-align: left;
+    }
+
+    .hero-left-col .stat-card:hover {
+        transform: none;
+        border-color: transparent;
+        box-shadow: none;
+    }
+
+    .hero-left-col .stat-number {
+        font-size: 1.5rem;
+        margin-bottom: 2px;
+    }
+
+    .hero-left-col .stat-label {
+        font-size: 0.75rem;
+    }
+}
+
 /* Badge de Prova Social */
 .badge {
     display: inline-flex;
@@ -1058,11 +1135,12 @@ body,
     color: var(--primary-blue);
 }
 
-/* Remove a borda padrão feia do Streamlit quando focado */
 [data-testid="stExpander"] summary:focus {
     outline: none;
     color: var(--primary-blue);
 }
+
+/* Remove a borda padrão feia do Streamlit quando focado */
 
 /* ============================================================
    5. UI POLISH & ACCESSIBILITY (INPUTS & TOOLTIPS)
@@ -1264,17 +1342,13 @@ img {
 /* 1. Ilha de Ação (Separa inputs da proposta de valor) */
 .action-island-container {
     background: rgba(15, 23, 42, 0.4);
-    /* Fundo sutil */
-    border: 1px solid rgba(56, 189, 248, 0.1);
-    /* Borda Glass */
-    border-radius: 24px;
-    padding: 48px;
-    margin-top: 16px;
+    border: 1px solid rgba(56, 189, 248, 0.08);
+    border-radius: 20px;
+    padding: 28px;
+    margin-top: 0;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-    /* Profundidade */
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 100%;
+    width: 100%;
 }
 
 /* 2. Micro-CTA "Como Funciona" (Link discreto) */
@@ -1406,8 +1480,8 @@ h5 {
     }
 
     .action-island-container {
-        padding: 32px 24px;
-        margin: 16px 12px;
+        padding: 24px 18px;
+        margin: 16px 0;
         max-width: none;
     }
 }

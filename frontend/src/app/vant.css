@@ -101,10 +101,86 @@ body,
    2. HERO SECTION & MARKETING ELEMENTS (NOVO)
    ============================================================ */
 .hero-container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto 40px auto;
     text-align: center;
-    padding: 20px 0;
+    padding: 0;
+}
+
+/* V5 Split-Screen Hero Grid — 12-col */
+.hero-split-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: center;
+    min-height: 85vh;
+    width: 100%;
+    margin: 0 auto;
+    padding: 3rem 20px;
+}
+
+@media (min-width: 1024px) {
+    .hero-split-grid {
+        grid-template-columns: repeat(12, 1fr);
+        gap: 3rem;
+    }
+
+    .hero-left-col {
+        grid-column: span 6;
+        text-align: left;
+    }
+
+    .hero-right-col {
+        grid-column: span 6;
+    }
+
+    .hero-left-col .badge-live {
+        justify-content: flex-start;
+    }
+
+    .hero-left-col .logo-text {
+        font-size: 4rem;
+    }
+
+    .hero-left-col .headline {
+        font-size: 2.2rem;
+    }
+
+    .hero-left-col .subheadline {
+        margin-left: 0;
+        margin-right: 0;
+        max-width: 100%;
+        margin-bottom: 24px;
+    }
+
+    .hero-left-col .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 0;
+        max-width: 100%;
+    }
+
+    .hero-left-col .stat-card {
+        padding: 10px 6px;
+        background: transparent;
+        border: none;
+        text-align: left;
+    }
+
+    .hero-left-col .stat-card:hover {
+        transform: none;
+        border-color: transparent;
+        box-shadow: none;
+    }
+
+    .hero-left-col .stat-number {
+        font-size: 1.5rem;
+        margin-bottom: 2px;
+    }
+
+    .hero-left-col .stat-label {
+        font-size: 0.75rem;
+    }
 }
 
 /* Badge de Prova Social */
@@ -1268,14 +1344,58 @@ img {
 /* 1. Ilha de Ação (Separa inputs da proposta de valor) */
 .action-island-container {
     background: rgba(15, 23, 42, 0.4);
-    /* Fundo sutil */
-    border: 1px solid rgba(56, 189, 248, 0.1);
-    /* Borda Glass */
-    border-radius: 24px;
+    border: 1px solid rgba(56, 189, 248, 0.08);
+    border-radius: 20px;
     padding: 24px;
-    margin-top: 20px;
+    margin-top: 0;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-    /* Profundidade */
+    width: 100%;
+}
+
+/* Advanced options accordion */
+.advanced-options-toggle {
+    width: 100%;
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 10px;
+    background: transparent;
+    margin-top: 12px;
+    font-family: inherit;
+}
+
+.advanced-options-toggle summary {
+    cursor: pointer;
+    padding: 10px 14px;
+    color: #94A3B8;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s;
+}
+
+.advanced-options-toggle summary::-webkit-details-marker {
+    display: none;
+}
+
+.advanced-options-toggle summary::before {
+    content: '\25B6';
+    font-size: 0.6rem;
+    transition: transform 0.2s;
+}
+
+.advanced-options-toggle[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.advanced-options-toggle summary:hover {
+    color: #CBD5E1;
+}
+
+.advanced-options-toggle .details-content {
+    padding: 0 14px 14px;
 }
 
 /* Layout Lado a Lado para Planos */
