@@ -154,32 +154,44 @@ body,
 
     .hero-left-col .stats-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
+        gap: 10px;
         margin: 0;
         max-width: 100%;
     }
 
     .hero-left-col .stat-card {
-        padding: 10px 6px;
-        background: transparent;
-        border: none;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
         text-align: left;
     }
 
     .hero-left-col .stat-card:hover {
-        transform: none;
-        border-color: transparent;
-        box-shadow: none;
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .hero-left-col .stat-number {
-        font-size: 1.5rem;
-        margin-bottom: 2px;
+        font-size: 1.2rem;
+        margin-bottom: 1px;
     }
 
     .hero-left-col .stat-label {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
+}
+
+/* Stat icon circle */
+.stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 /* Scroll Indicator — styled pill, inside left column, desktop only */
