@@ -2515,65 +2515,43 @@ export default function AppPage() {
                         </div>
                     )}
 
-                    {/* Botão de Login para Usuários Não Logados */}
+                    {/* Compact header login — top-right */}
                     {!authUserId && (
                         <div style={{
-                            background: "linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(99, 102, 241, 0.1))",
-                            border: "1px solid rgba(56, 189, 248, 0.3)",
-                            borderRadius: 12,
-                            padding: "16px 20px",
-                            margin: "0 auto 20px",
-                            maxWidth: "100%",
-                            textAlign: "center"
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            padding: "12px 20px 0"
                         }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-                                <div style={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: "50%",
-                                    background: "rgba(56, 189, 248, 0.2)",
+                            <button
+                                type="button"
+                                onClick={() => setShowAuthModal(true)}
+                                data-cy="login-button"
+                                style={{
+                                    background: "rgba(56, 189, 248, 0.1)",
+                                    color: "#38BDF8",
+                                    border: "1px solid rgba(56, 189, 248, 0.25)",
+                                    borderRadius: 50,
+                                    padding: "7px 18px",
+                                    fontSize: "0.8rem",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
                                     display: "flex",
                                     alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: "1.2rem"
-                                }}>
-                                    🔐
-                                </div>
-                                <div style={{ flex: 1, textAlign: "left" }}>
-                                    <div style={{ color: "#38BDF8", fontSize: "0.9rem", fontWeight: 700, marginBottom: 2 }}>
-                                        Faça login para salvar suas análises
-                                    </div>
-                                    <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
-                                        Acesse seu histórico e acompanhe suas otimizações
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAuthModal(true)}
-                                    data-cy="login-button"
-                                    style={{
-                                        background: "linear-gradient(135deg, #38BDF8, #6366F1)",
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: 6,
-                                        padding: "8px 16px",
-                                        fontSize: "0.8rem",
-                                        fontWeight: 600,
-                                        cursor: "pointer",
-                                        transition: "all 0.2s"
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = "translateY(-2px)";
-                                        e.currentTarget.style.boxShadow = "0 4px 12px rgba(56, 189, 248, 0.3)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = "translateY(0)";
-                                        e.currentTarget.style.boxShadow = "none";
-                                    }}
-                                >
-                                    Entrar
-                                </button>
-                            </div>
+                                    gap: 6
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "rgba(56, 189, 248, 0.2)";
+                                    e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.5)";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "rgba(56, 189, 248, 0.1)";
+                                    e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.25)";
+                                }}
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
+                                Entrar
+                            </button>
                         </div>
                     )}
 
