@@ -1236,11 +1236,11 @@ body,
     /* Levemente mais claro */
 }
 
-/* Placeholder (Legibilidade WCAG AA) */
+/* Placeholder (Legibilidade WCAG AAA) */
 .stTextArea textarea::placeholder,
 .stTextInput input::placeholder {
-    color: #94A3B8 !important;
-    /* Slate 400 - Contraste seguro */
+    color: #CBD5E1 !important;
+    /* Slate 200 - Alto contraste contra fundo escuro */
     opacity: 1;
     /* Garante renderização correta em todos browsers */
 }

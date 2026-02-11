@@ -2628,32 +2628,72 @@ export default function AppPage() {
                             {/* ===== RIGHT COLUMN: Form ===== */}
                             <div className="hero-right-col">
                                 <div className="action-island-container">
-                                    {/* Checkbox: Sem vaga específica */}
-                                    <div style={{ marginBottom: 14 }}>
-                                        <label style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 8,
-                                            cursor: "pointer",
-                                            fontSize: "0.85rem",
-                                            color: "#CBD5E1"
-                                        }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={useGenericJob}
-                                                onChange={(e) => {
-                                                    setUseGenericJob(e.target.checked);
-                                                    if (e.target.checked) {
-                                                        setJobDescription("Busco oportunidades profissionais que valorizem minhas habilidades e experiência. Estou aberto a posições desafiadoras que permitam meu crescimento e contribuição para os objetivos da empresa, com foco em resultados e inovação.");
-                                                    } else {
-                                                        setJobDescription("");
-                                                        setSelectedArea("");
-                                                    }
-                                                }}
-                                                style={{ accentColor: "#10B981", width: 16, height: 16 }}
-                                            />
-                                            <span>Não tenho uma vaga específica</span>
-                                        </label>
+                                    {/* Tab Switcher: Com Vaga / Análise Geral */}
+                                    <div style={{
+                                        display: "flex",
+                                        background: "rgba(15, 23, 42, 0.6)",
+                                        borderRadius: 8,
+                                        padding: 3,
+                                        marginBottom: 16,
+                                        border: "1px solid rgba(255,255,255,0.06)"
+                                    }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setUseGenericJob(false);
+                                                setJobDescription("");
+                                                setSelectedArea("");
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: "7px 12px",
+                                                borderRadius: 6,
+                                                border: "none",
+                                                cursor: "pointer",
+                                                fontSize: "0.8rem",
+                                                fontWeight: 600,
+                                                letterSpacing: "0.2px",
+                                                transition: "all 0.2s ease",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                gap: 1,
+                                                background: !useGenericJob ? "rgba(56, 189, 248, 0.15)" : "transparent",
+                                                color: !useGenericJob ? "#38BDF8" : "#94A3B8",
+                                                boxShadow: !useGenericJob ? "0 1px 3px rgba(0,0,0,0.2)" : "none"
+                                            }}
+                                        >
+                                            <span>Tenho uma vaga</span>
+                                            <span style={{ fontSize: "0.6rem", opacity: 0.6, fontWeight: 400 }}>colar descrição</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setUseGenericJob(true);
+                                                setJobDescription("Busco oportunidades profissionais que valorizem minhas habilidades e experiência. Estou aberto a posições desafiadoras que permitam meu crescimento e contribuição para os objetivos da empresa, com foco em resultados e inovação.");
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: "7px 12px",
+                                                borderRadius: 6,
+                                                border: "none",
+                                                cursor: "pointer",
+                                                fontSize: "0.8rem",
+                                                fontWeight: 600,
+                                                letterSpacing: "0.2px",
+                                                transition: "all 0.2s ease",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                gap: 1,
+                                                background: useGenericJob ? "rgba(16, 185, 129, 0.15)" : "transparent",
+                                                color: useGenericJob ? "#10B981" : "#94A3B8",
+                                                boxShadow: useGenericJob ? "0 1px 3px rgba(0,0,0,0.2)" : "none"
+                                            }}
+                                        >
+                                            <span>Não tenho uma vaga</span>
+                                            <span style={{ fontSize: "0.6rem", opacity: 0.6, fontWeight: 400 }}>selecionar área</span>
+                                        </button>
                                     </div>
 
                                     {/* Vaga textarea — hidden when useGenericJob */}
