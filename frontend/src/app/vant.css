@@ -139,16 +139,6 @@ body,
         justify-content: flex-start;
     }
 
-    .hero-left-col .logo-text {
-        font-size: 1.5rem;
-        letter-spacing: 2px;
-        margin-bottom: 8px;
-        background: none;
-        -webkit-text-fill-color: #60A5FA;
-        font-weight: 800;
-        animation: none;
-    }
-
     .hero-left-col .headline {
         font-size: 2.6rem;
         margin-bottom: 14px;

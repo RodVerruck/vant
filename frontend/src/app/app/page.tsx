@@ -86,7 +86,9 @@ function getApiUrl(): string {
 // V3 Layout: Split into separate sections for above-the-fold CRO optimization
 const HERO_HEADER_HTML = `
     <div class="hero-section">
-        <div class="badge-live">
+        <div class="badge-live" data-cy="main-heading">
+            <span style="font-weight: 800; letter-spacing: 1.5px; color: #60A5FA;">VANT</span>
+            <span style="opacity: 0.4; margin: 0 6px;">·</span>
             <span class="vant-tooltip" 
                   tabindex="0" 
                   style="border-bottom: none; cursor: help;" 
@@ -94,8 +96,6 @@ const HERO_HEADER_HTML = `
                 50K+ Currículos Otimizados
             </span>
         </div>
-
-        <div class="logo-text" data-cy="main-heading">VANT</div>
 
         <div class="headline">
             Vença o algoritmo ATS.<br>
