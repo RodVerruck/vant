@@ -182,39 +182,54 @@ body,
     }
 }
 
-/* Scroll Indicator — inside left column, desktop only */
+/* Scroll Indicator — styled pill, inside left column, desktop only */
 .scroll-indicator {
     display: none;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
-    margin-top: 2.5rem;
-    padding: 8px 0;
-    opacity: 0.45;
-    transition: opacity 0.3s;
+    margin-top: 2rem;
+    padding: 10px 18px;
+    border-radius: 50px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(148, 163, 184, 0.06);
+    width: fit-content;
+    opacity: 0.8;
+    transition: all 0.3s ease;
 }
 
 @media (min-width: 1024px) {
     .scroll-indicator {
-        display: flex;
+        display: inline-flex;
     }
 }
 
 .scroll-indicator:hover {
     opacity: 1;
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(56, 189, 248, 0.08);
+}
+
+.scroll-indicator:hover svg {
+    color: #38BDF8;
+}
+
+.scroll-indicator:hover span {
+    color: #E2E8F0;
 }
 
 .scroll-indicator svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     color: #94A3B8;
     animation: hero-bounce 2s infinite;
+    flex-shrink: 0;
 }
 
 .scroll-indicator span {
-    font-size: 0.8rem;
-    color: #94A3B8;
-    letter-spacing: 0.3px;
+    font-size: 0.85rem;
+    color: #CBD5E1;
+    letter-spacing: 0.2px;
     font-weight: 500;
 }
 
@@ -226,7 +241,7 @@ body,
     }
 
     50% {
-        transform: translateY(4px);
+        transform: translateY(3px);
     }
 }
 
