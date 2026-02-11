@@ -105,18 +105,20 @@ body,
     margin: 0 auto 40px auto;
     text-align: center;
     padding: 0;
+    position: relative;
 }
 
 /* V5 Split-Screen Hero Grid — 12-col */
 .hero-split-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
     align-items: center;
     min-height: 85vh;
     width: 100%;
     margin: 0 auto;
-    padding: 3rem 20px;
+    padding: 2rem 20px 4rem;
+    position: relative;
 }
 
 @media (min-width: 1024px) {
@@ -139,18 +141,26 @@ body,
     }
 
     .hero-left-col .logo-text {
-        font-size: 4rem;
+        font-size: 1.5rem;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+        background: none;
+        -webkit-text-fill-color: #60A5FA;
+        font-weight: 800;
+        animation: none;
     }
 
     .hero-left-col .headline {
-        font-size: 2.2rem;
+        font-size: 2.6rem;
+        margin-bottom: 14px;
     }
 
     .hero-left-col .subheadline {
         margin-left: 0;
         margin-right: 0;
         max-width: 100%;
-        margin-bottom: 24px;
+        margin-bottom: 20px;
+        font-size: 1.05rem;
     }
 
     .hero-left-col .stats-grid {
@@ -181,6 +191,65 @@ body,
     .hero-left-col .stat-label {
         font-size: 0.75rem;
     }
+}
+
+/* Scroll Indicator — bouncing arrow at bottom of hero */
+.scroll-indicator {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    z-index: 10;
+    animation: hero-bounce 2s infinite;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.scroll-indicator:hover {
+    opacity: 1;
+}
+
+.scroll-indicator svg {
+    width: 28px;
+    height: 28px;
+    color: #94A3B8;
+}
+
+.scroll-indicator span {
+    font-size: 0.7rem;
+    color: #94A3B8;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+@keyframes hero-bounce {
+
+    0%,
+    100% {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    50% {
+        transform: translateX(-50%) translateY(-10px);
+    }
+}
+
+/* Hero bottom gradient — depth cue */
+.hero-split-grid::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, rgba(15, 23, 42, 0.4));
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* Badge de Prova Social */

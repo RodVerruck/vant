@@ -2870,10 +2870,22 @@ export default function AppPage() {
                                 </div>
                             </div>
 
+                            {/* Scroll Indicator — bouncing arrow */}
+                            <div
+                                className="scroll-indicator"
+                                onClick={() => document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' })}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter') document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' }); }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                                <span>Veja por que funciona</span>
+                            </div>
+
                         </div>{/* end hero-split-grid */}
 
                         {/* Full-width sections below the fold */}
-                        <div dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
+                        <div id="por-que-funciona" dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
                         <div dangerouslySetInnerHTML={{ __html: ANALYSIS_CARD_HTML }} />
                     </div>
                 </>
