@@ -112,13 +112,12 @@ body,
 .hero-split-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 2rem;
     align-items: center;
     min-height: 85vh;
     width: 100%;
     margin: 0 auto;
-    padding: 2rem 20px 4rem;
-    position: relative;
+    padding: 2rem 20px;
 }
 
 @media (min-width: 1024px) {
@@ -193,21 +192,22 @@ body,
     }
 }
 
-/* Scroll Indicator — bouncing arrow at bottom of hero */
+/* Scroll Indicator — inside left column, desktop only */
 .scroll-indicator {
-    position: absolute;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
+    display: none;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     cursor: pointer;
-    z-index: 10;
-    animation: hero-bounce 2s infinite;
-    opacity: 0.7;
-    transition: opacity 0.2s;
+    margin-top: 2.5rem;
+    padding: 8px 0;
+    opacity: 0.45;
+    transition: opacity 0.3s;
+}
+
+@media (min-width: 1024px) {
+    .scroll-indicator {
+        display: flex;
+    }
 }
 
 .scroll-indicator:hover {
@@ -215,15 +215,16 @@ body,
 }
 
 .scroll-indicator svg {
-    width: 28px;
-    height: 28px;
+    width: 16px;
+    height: 16px;
     color: #94A3B8;
+    animation: hero-bounce 2s infinite;
 }
 
 .scroll-indicator span {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     color: #94A3B8;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     font-weight: 500;
 }
 
@@ -231,25 +232,12 @@ body,
 
     0%,
     100% {
-        transform: translateX(-50%) translateY(0);
+        transform: translateY(0);
     }
 
     50% {
-        transform: translateX(-50%) translateY(-10px);
+        transform: translateY(4px);
     }
-}
-
-/* Hero bottom gradient — depth cue */
-.hero-split-grid::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent, rgba(15, 23, 42, 0.4));
-    pointer-events: none;
-    z-index: 1;
 }
 
 /* Badge de Prova Social */

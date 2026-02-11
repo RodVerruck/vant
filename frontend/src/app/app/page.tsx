@@ -389,6 +389,7 @@ export default function AppPage() {
     }, []);
 
 
+
     // Estados de processamento
     const [progress, setProgress] = useState(0);
     const [statusText, setStatusText] = useState("");
@@ -2608,8 +2609,20 @@ export default function AppPage() {
 
                             {/* ===== LEFT COLUMN: Text + Trust ===== */}
                             <div className="hero-left-col">
-                                <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
-                                <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
+                                <div>
+                                    <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
+                                    <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
+                                </div>
+                                <div
+                                    className="scroll-indicator"
+                                    onClick={() => document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' })}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' }); }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 16, height: 16 }}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                                    <span>Veja por que funciona</span>
+                                </div>
                             </div>
 
                             {/* ===== RIGHT COLUMN: Form ===== */}
@@ -2870,24 +2883,13 @@ export default function AppPage() {
                                 </div>
                             </div>
 
-                            {/* Scroll Indicator — bouncing arrow */}
-                            <div
-                                className="scroll-indicator"
-                                onClick={() => document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' })}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => { if (e.key === 'Enter') document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' }); }}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                                <span>Veja por que funciona</span>
-                            </div>
-
                         </div>{/* end hero-split-grid */}
 
                         {/* Full-width sections below the fold */}
                         <div id="por-que-funciona" dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
                         <div dangerouslySetInnerHTML={{ __html: ANALYSIS_CARD_HTML }} />
                     </div>
+
                 </>
 
             )}
