@@ -1035,7 +1035,18 @@ export default function AppPage() {
         if (!authUserId || typeof window === "undefined") return;
 
         const returnStage = localStorage.getItem("vant_auth_return_stage");
-        const returnPlan = localStorage.getItem("vant_auth_return_plan");
+        let returnPlan = localStorage.getItem("vant_auth_return_plan");
+
+        // CRITICAL: Se returnStage é "hero" ou ausente, qualquer returnPlan é stale
+        // (o usuário estava no hero, não num fluxo de checkout real)
+        if (!returnStage || returnStage === "hero") {
+            if (returnPlan) {
+                console.log("[Auth] Limpando returnPlan stale (stage era hero):", returnPlan);
+                localStorage.removeItem("vant_auth_return_plan");
+                returnPlan = null;
+            }
+            localStorage.removeItem("vant_auth_return_stage");
+        }
 
         // Verificar se há fluxo ativo que impede redirect ao Dashboard
         const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
@@ -1053,11 +1064,6 @@ export default function AppPage() {
             console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
             window.location.href = "/dashboard";
             return;
-        }
-
-        // Limpar returnStage se era "hero" (não é fluxo ativo, só limpeza)
-        if (returnStage === "hero") {
-            localStorage.removeItem("vant_auth_return_stage");
         }
 
         // Processar fluxo ativo normalmente (pagamento, history, etc.)
