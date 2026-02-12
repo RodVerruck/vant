@@ -1128,9 +1128,13 @@ export default function AppPage() {
         const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
         // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
         const hasNonHeroStage = stage !== "hero";
-        const hasActiveFlow = returnPlan || hasReturnStage || hasHistoryItem || hasCheckoutPending || hasNonHeroStage || hasAutoProcess;
+        // Stripe payment flow: query param ou sessão pendente no localStorage
+        const urlNow = new URL(window.location.href);
+        const hasPaymentSuccess = urlNow.searchParams.get("payment") === "success";
+        const hasPendingStripeSession = !!localStorage.getItem("vant_pending_stripe_session_id");
+        const hasActiveFlow = returnPlan || hasReturnStage || hasHistoryItem || hasCheckoutPending || hasNonHeroStage || hasAutoProcess || hasPaymentSuccess || hasPendingStripeSession;
 
-        console.log("[Auth] Verificando fluxo:", { returnPlan: !!returnPlan, hasReturnStage, hasCheckoutPending, hasNonHeroStage, stage });
+        console.log("[Auth] Verificando fluxo:", { returnPlan: !!returnPlan, hasReturnStage, hasCheckoutPending, hasNonHeroStage, stage, hasPaymentSuccess, hasPendingStripeSession });
 
         if (!hasActiveFlow) {
             console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
