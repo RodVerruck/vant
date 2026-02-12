@@ -185,7 +185,7 @@ const VALUE_PROP_HTML = `
                     <span style="color: #10B981; font-size: 1.4rem;">43</span> Critérios ATS
                 </div>
                 <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6; opacity: 0.85;">
-                    Verificamos todos os pontos que sistemas automáticos filtram antes do recrutador
+                    Verificamos os critérios que os robôs usam para aprovar seu currículo
                 </div>
             </div>
             
