@@ -2658,13 +2658,13 @@ export default function AppPage() {
                                                 flexDirection: "column",
                                                 alignItems: "center",
                                                 gap: 1,
-                                                background: !useGenericJob ? "rgba(56, 189, 248, 0.15)" : "transparent",
-                                                color: !useGenericJob ? "#38BDF8" : "#94A3B8",
+                                                background: !useGenericJob ? "rgba(56, 189, 248, 0.15)" : "rgba(255, 255, 255, 0.04)",
+                                                color: !useGenericJob ? "#38BDF8" : "#CBD5E1",
                                                 boxShadow: !useGenericJob ? "0 1px 3px rgba(0,0,0,0.2)" : "none"
                                             }}
                                         >
                                             <span>Tenho uma vaga</span>
-                                            <span style={{ fontSize: "0.6rem", opacity: 0.6, fontWeight: 400 }}>colar descrição</span>
+                                            <span style={{ fontSize: "0.6rem", opacity: 0.5, fontWeight: 400 }}>colar descrição</span>
                                         </button>
                                         <button
                                             type="button"
@@ -2686,13 +2686,13 @@ export default function AppPage() {
                                                 flexDirection: "column",
                                                 alignItems: "center",
                                                 gap: 1,
-                                                background: useGenericJob ? "rgba(16, 185, 129, 0.15)" : "transparent",
-                                                color: useGenericJob ? "#10B981" : "#94A3B8",
+                                                background: useGenericJob ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.04)",
+                                                color: useGenericJob ? "#10B981" : "#CBD5E1",
                                                 boxShadow: useGenericJob ? "0 1px 3px rgba(0,0,0,0.2)" : "none"
                                             }}
                                         >
                                             <span>Não tenho uma vaga</span>
-                                            <span style={{ fontSize: "0.6rem", opacity: 0.6, fontWeight: 400 }}>selecionar área</span>
+                                            <span style={{ fontSize: "0.6rem", opacity: 0.5, fontWeight: 400 }}>selecionar área</span>
                                         </button>
                                     </div>
 
