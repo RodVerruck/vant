@@ -7,6 +7,7 @@ interface AuthModalProps {
     onClose: () => void;
     selectedPlan?: string;
     supabase: SupabaseClient | null;
+    stage?: string;
     // Props para último CV mágico
     lastCV?: {
         has_last_cv: boolean;
@@ -19,7 +20,7 @@ interface AuthModalProps {
     onUseLastCV?: () => void;
 }
 
-export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, lastCV, onUseLastCV }: AuthModalProps) {
+export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, stage, lastCV, onUseLastCV }: AuthModalProps) {
     const [showEmailForm, setShowEmailForm] = useState(false);
     const [isLoginMode, setIsLoginMode] = useState(false);
     const [authEmail, setAuthEmail] = useState("");
@@ -27,6 +28,8 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, 
     const [authPasswordConfirm, setAuthPasswordConfirm] = useState("");
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [error, setError] = useState("");
+    const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
+    const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
 
     // Estado local para último CV mágico
     const [localLastCV, setLocalLastCV] = useState<{
@@ -73,10 +76,13 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, 
 
         try {
             // Salvar plano selecionado para restaurar após login
-            if (typeof window !== "undefined" && selectedPlan) {
-                localStorage.setItem("vant_auth_return_plan", selectedPlan);
-                localStorage.setItem("vant_auth_return_stage", "checkout");
-                console.log("[DEBUG] AuthModal Google - Salvando plano:", selectedPlan, "stage: checkout");
+            // Só salvar plano se NÃO estiver no hero (evita redirect indevido ao checkout)
+            if (typeof window !== "undefined") {
+                localStorage.setItem("vant_auth_return_stage", stage || "hero");
+                if (selectedPlan && stage && stage !== "hero") {
+                    localStorage.setItem("vant_auth_return_plan", selectedPlan);
+                }
+                console.log("[DEBUG] AuthModal Google - Salvando stage:", stage, "plano:", selectedPlan, "salvouPlano:", stage !== "hero");
             }
 
             const { error } = await supabase.auth.signInWithOAuth({
@@ -406,7 +412,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, 
                             {isAuthenticating ? "Autenticando..." : (isLoginMode ? "ENTRAR" : "CRIAR CONTA GRÁTIS")}
                         </button>
 
-                        <div style={{ textAlign: "center", marginBottom: 12 }}>
+                        <div style={{ textAlign: "center", marginBottom: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                             <button
                                 type="button"
                                 onClick={() => setIsLoginMode(!isLoginMode)}
@@ -421,6 +427,52 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, 
                             >
                                 {isLoginMode ? "Não tem conta? Criar agora" : "Já tem conta? Fazer login"}
                             </button>
+                            {isLoginMode && (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!supabase || !authEmail || !authEmail.includes("@")) {
+                                            setError("Digite seu e-mail acima para receber o link de recuperação.");
+                                            return;
+                                        }
+                                        setError("");
+                                        setIsAuthenticating(true);
+                                        try {
+                                            const origin = typeof window !== "undefined" ? window.location.origin : "";
+                                            const redirectUrl = new URL(`${origin}/app/reset-password`);
+                                            if (stage === "checkout" && selectedPlan) {
+                                                redirectUrl.searchParams.set("return_to", "checkout");
+                                                redirectUrl.searchParams.set("return_plan", selectedPlan);
+                                            }
+                                            const { error: resetError } = await supabase.auth.resetPasswordForEmail(authEmail.trim().toLowerCase(), {
+                                                redirectTo: redirectUrl.toString(),
+                                            });
+                                            if (resetError) throw resetError;
+                                            setForgotPasswordSent(true);
+                                        } catch (e: unknown) {
+                                            setError(e instanceof Error ? e.message : "Erro ao enviar email de recuperação.");
+                                        } finally {
+                                            setIsAuthenticating(false);
+                                        }
+                                    }}
+                                    disabled={isAuthenticating}
+                                    style={{
+                                        background: "none",
+                                        border: "none",
+                                        color: "#94A3B8",
+                                        fontSize: "0.8rem",
+                                        cursor: "pointer",
+                                        textDecoration: "underline",
+                                    }}
+                                >
+                                    Esqueceu a senha?
+                                </button>
+                            )}
+                            {forgotPasswordSent && (
+                                <div style={{ color: "#10B981", fontSize: "0.8rem", marginTop: 4 }}>
+                                    ✓ Link de recuperação enviado para {authEmail}
+                                </div>
+                            )}
                         </div>
 
                         <button

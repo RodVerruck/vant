@@ -1039,7 +1039,7 @@ export default function AppPage() {
 
         // Verificar se há fluxo ativo que impede redirect ao Dashboard
         const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
-        const hasReturnStage = !!returnStage;
+        const hasReturnStage = !!returnStage && returnStage !== "hero";
         const checkoutPending = localStorage.getItem("checkout_pending");
         const hasCheckoutPending = !!checkoutPending;
         const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
@@ -1053,6 +1053,11 @@ export default function AppPage() {
             console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
             window.location.href = "/dashboard";
             return;
+        }
+
+        // Limpar returnStage se era "hero" (não é fluxo ativo, só limpeza)
+        if (returnStage === "hero") {
+            localStorage.removeItem("vant_auth_return_stage");
         }
 
         // Processar fluxo ativo normalmente (pagamento, history, etc.)
@@ -1665,12 +1670,13 @@ export default function AppPage() {
 
         try {
             // Salvar o stage e plano atual para restaurar após o login
+            // Só salvar plano se NÃO estiver no hero (evita redirect indevido ao checkout)
             if (typeof window !== "undefined") {
                 localStorage.setItem("vant_auth_return_stage", stage);
-                if (selectedPlan) {
+                if (selectedPlan && stage !== "hero") {
                     localStorage.setItem("vant_auth_return_plan", selectedPlan);
                 }
-                console.log("[DEBUG] handleGoogleLogin page.tsx - Salvando stage:", stage, "plano:", selectedPlan);
+                console.log("[DEBUG] handleGoogleLogin page.tsx - Salvando stage:", stage, "plano:", selectedPlan, "salvouPlano:", stage !== "hero");
             }
 
             // Verificação de tipo explícita para evitar never
@@ -4385,6 +4391,7 @@ export default function AppPage() {
                 isOpen={showAuthModal}
                 selectedPlan={selectedPlan}
                 supabase={supabase}
+                stage={stage}
                 onSuccess={(userId, email) => {
                     setAuthUserId(userId);
                     setAuthEmail(email);
