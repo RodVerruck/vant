@@ -59,6 +59,31 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
     success_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=cancel"
 
+    # Block subscription purchase if user already has an active subscription
+    if is_subscription and payload.client_reference_id and supabase_admin:
+        try:
+            existing_sub = (
+                supabase_admin.table("subscriptions")
+                .select("subscription_plan,subscription_status")
+                .eq("user_id", payload.client_reference_id)
+                .in_("subscription_status", ["active", "trialing"])
+                .limit(1)
+                .execute()
+            )
+            if existing_sub.data:
+                current_plan = existing_sub.data[0].get("subscription_plan", "")
+                logger.info(f"[Checkout] Bloqueado: usuário já tem assinatura ativa ({current_plan})")
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "error": f"Você já possui uma assinatura ativa ({current_plan}). Para comprar mais créditos, escolha um pacote avulso.",
+                        "code": "ACTIVE_SUBSCRIPTION_EXISTS",
+                        "current_plan": current_plan,
+                    }
+                )
+        except Exception as check_err:
+            logger.warning(f"[Checkout] Subscription check failed (non-fatal): {check_err}")
+
     try:
         # Resolve customer: use existing Stripe customer ID if available, otherwise use email
         customer_kwargs: dict[str, Any] = {}

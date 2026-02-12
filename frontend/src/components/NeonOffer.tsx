@@ -27,6 +27,8 @@ export function NeonOffer({
         onCheckout(planId);
     };
 
+    const hasActivePlan = !!authUserId && creditsRemaining > 0;
+
     return (
         <div>
             {showHeader && (
@@ -274,23 +276,42 @@ export function NeonOffer({
 
                             {/* CTA PRINCIPAL */}
                             <div style={{ marginBottom: 28 }}>
-                                <button
-                                    type="button"
-                                    onClick={() => handlePlanAction("trial")}
-                                    style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = "translateY(-2px)";
-                                        e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = "translateY(0)";
-                                        e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
-                                    }}
-                                    onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                    onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                                >
-                                    Desbloquear Meu Novo Currículo - R$ 1,99 🚀
-                                </button>
+                                {hasActivePlan ? (
+                                    <div style={{
+                                        width: "100%",
+                                        background: "rgba(16, 185, 129, 0.1)",
+                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                        padding: "16px 20px",
+                                        borderRadius: 12,
+                                        textAlign: "center"
+                                    }}>
+                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 6 }}>
+                                            ✅ Você já é assinante PRO!
+                                        </div>
+                                        <div style={{ color: "#94A3B8", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                                            Você já tem {creditsRemaining} créditos disponíveis.<br />
+                                            Precisa de mais? Compre créditos avulsos ao lado.
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePlanAction("trial")}
+                                        style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = "translateY(-2px)";
+                                            e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = "translateY(0)";
+                                            e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
+                                        }}
+                                        onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
+                                        onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                                    >
+                                        Desbloquear Meu Novo Currículo - R$ 1,99 🚀
+                                    </button>
+                                )}
                             </div>
 
                             <div style={{

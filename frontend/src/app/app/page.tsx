@@ -1350,6 +1350,13 @@ export default function AppPage() {
 
         const planId = (selectedPlan || "basico").trim();
 
+        // Bloquear assinatura se usuário já tem plano ativo
+        const subscriptionPlans = ["pro_monthly", "pro_monthly_early_bird", "pro_annual", "trial"];
+        if (subscriptionPlans.includes(planId) && creditsRemaining > 0) {
+            setCheckoutError("Você já possui uma assinatura ativa. Para comprar mais créditos, escolha um pacote avulso (1, 3 ou 5 CVs).");
+            return;
+        }
+
         try {
             const body: Record<string, unknown> = {
                 plan_id: planId,
