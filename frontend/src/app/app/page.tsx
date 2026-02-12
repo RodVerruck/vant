@@ -167,38 +167,38 @@ const VALUE_PROP_HTML = `
         </div>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; margin: 0 auto;">
-            <div style="background: rgba(74, 158, 255, 0.06); border: 1px solid rgba(74, 158, 255, 0.15); border-radius: 16px; padding: 28px;">
-                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(74, 158, 255, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 18px;">
+            <div style="background: rgba(74, 158, 255, 0.06); border: 1px solid rgba(74, 158, 255, 0.15); border-radius: 16px; padding: 28px; text-align: left;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(74, 158, 255, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A9EFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
                 </div>
-                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; line-height: 1.3;">
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; line-height: 1.3;">
                     IA Treinada com <span style="color: #4A9EFF; font-size: 1.3rem;">50K+</span> Vagas
                 </div>
-                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6;">
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6; opacity: 0.85;">
                     Analisamos milhares de descrições de vagas reais para identificar padrões de sucesso
                 </div>
             </div>
             
-            <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 28px;">
-                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 18px;">
+            <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 28px; text-align: left;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
                 </div>
-                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; line-height: 1.3;">
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; line-height: 1.3;">
                     <span style="color: #10B981; font-size: 1.4rem;">43</span> Critérios ATS
                 </div>
-                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6;">
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6; opacity: 0.85;">
                     Verificamos todos os pontos que sistemas automáticos filtram antes do recrutador
                 </div>
             </div>
             
-            <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.15); border-radius: 16px; padding: 28px;">
-                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 18px;">
+            <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.15); border-radius: 16px; padding: 28px; text-align: left;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                 </div>
-                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; line-height: 1.3;">
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; line-height: 1.3;">
                     Padrões de <span style="color: #F59E0B;">Mercado</span>
                 </div>
-                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6;">
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6; opacity: 0.85;">
                     Otimização baseada em CVs aprovados em processos seletivos reais
                 </div>
             </div>
