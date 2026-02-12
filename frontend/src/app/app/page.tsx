@@ -878,6 +878,40 @@ export default function AppPage() {
                         setAuthEmail(session.user.email || "");
                         setCheckoutError("");
 
+                        // Ativar sessão pendente do Stripe se existir
+                        const pendingSession = localStorage.getItem("vant_pending_stripe_session_id");
+                        if (pendingSession) {
+                            console.log("[AuthStateChange] Sessão Stripe pendente detectada, ativando...");
+                            (async () => {
+                                try {
+                                    const activateResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            session_id: pendingSession,
+                                            user_id: session.user.id,
+                                            plan_id: "trial",
+                                        }),
+                                    });
+                                    const activateData = await activateResp.json();
+                                    if (activateResp.ok) {
+                                        console.log("[AuthStateChange] Ativação OK!", activateData);
+                                        localStorage.removeItem("vant_pending_stripe_session_id");
+                                        if (typeof activateData.credits_remaining === "number") {
+                                            localStorage.setItem('vant_cached_credits', String(activateData.credits_remaining));
+                                        }
+                                        localStorage.setItem('vant_just_paid', 'true');
+                                        window.location.href = "/dashboard";
+                                    } else {
+                                        console.error("[AuthStateChange] Ativação falhou:", activateData);
+                                    }
+                                } catch (err) {
+                                    console.error("[AuthStateChange] Erro na ativação:", err);
+                                }
+                            })();
+                            return; // Não continuar, vai redirecionar
+                        }
+
                         // Cache imediato de créditos para resposta instantânea
                         const cachedCredits = localStorage.getItem('vant_cached_credits');
                         if (cachedCredits) {
@@ -946,15 +980,43 @@ export default function AppPage() {
         // Verificar se há sessão pendente de ativação
         const pendingSid = window.localStorage.getItem("vant_pending_stripe_session_id") || "";
         if (pendingSid && authUserId) {
-            // Se tem sessão pendente E usuário logado, ativar via useEffect needsActivation
-            setStripeSessionId(pendingSid);
-            setNeedsActivation(true);
+            // Sessão pendente + usuário logado: ativar diretamente
+            console.log("[Init] Sessão Stripe pendente encontrada, ativando...");
+            setStage("checkout");
+            setCheckoutError("Ativando seu plano...");
+            (async () => {
+                try {
+                    const activateResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            session_id: pendingSid,
+                            user_id: authUserId,
+                            plan_id: "trial",
+                        }),
+                    });
+                    const activateData = await activateResp.json();
+                    if (activateResp.ok) {
+                        console.log("[Init] Ativação OK!", activateData);
+                        localStorage.removeItem("vant_pending_stripe_session_id");
+                        if (typeof activateData.credits_remaining === "number") {
+                            localStorage.setItem('vant_cached_credits', String(activateData.credits_remaining));
+                        }
+                        localStorage.setItem('vant_just_paid', 'true');
+                        window.location.href = "/dashboard";
+                    } else {
+                        console.error("[Init] Ativação falhou:", activateData);
+                        setCheckoutError("Erro ao ativar plano. Tente recarregar a página.");
+                    }
+                } catch (err) {
+                    console.error("[Init] Erro na ativação:", err);
+                    setCheckoutError("Erro ao ativar plano. Tente recarregar a página.");
+                }
+            })();
         } else if (pendingSid && !authUserId) {
-            // Se tem sessão pendente mas SEM usuário, abrir modal de auth
-            setStripeSessionId(pendingSid);
-            setNeedsActivation(true);
-            setShowAuthModal(true);
-            setCheckoutError("✅ Pagamento confirmado! Crie sua conta para acessar seus créditos.");
+            // Sessão pendente mas sem auth — SIGNED_IN handler vai ativar quando auth carregar
+            setStage("checkout");
+            setCheckoutError("Pagamento confirmado. Carregando sua conta...");
         }
 
         // Retorno do Stripe após pagamento
@@ -981,14 +1043,15 @@ export default function AppPage() {
                         setSelectedPlan(verifiedPlanId as PlanType);
                         setStripeSessionId(sessionId);
 
-                        if (!authUserId) {
-                            // Sem usuário: salvar sessão e abrir modal de auth para vincular créditos
-                            window.localStorage.setItem("vant_pending_stripe_session_id", sessionId);
-                            setNeedsActivation(true);
-                            setShowAuthModal(true);
-                            setCheckoutError("✅ Pagamento confirmado! Crie sua conta para acessar seus créditos.");
-                        } else {
-                            // Com usuário: ativar diretamente aqui (evita race condition com useEffect)
+                        // Sempre salvar no localStorage — a ativação será feita pelo
+                        // SIGNED_IN handler (se auth ainda não carregou) ou pelo
+                        // initSession check abaixo (se auth já está disponível)
+                        window.localStorage.setItem("vant_pending_stripe_session_id", sessionId);
+                        console.log("[Stripe Return] Pagamento verificado, sessionId salvo no localStorage");
+
+                        if (authUserId) {
+                            // Auth já disponível: ativar diretamente
+                            console.log("[Stripe Return] Auth disponível, ativando agora...");
                             setCheckoutError("Pagamento confirmado. Ativando seu plano...");
                             const activateResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
                                 method: "POST",
@@ -1000,19 +1063,22 @@ export default function AppPage() {
                                 }),
                             });
                             const activateData = (await activateResp.json()) as JsonObject;
-                            if (!activateResp.ok) {
-                                throw new Error(typeof activateData.error === "string" ? activateData.error : "Falha ao ativar plano");
+                            if (activateResp.ok) {
+                                if (typeof activateData.credits_remaining === "number") {
+                                    localStorage.setItem('vant_cached_credits', String(activateData.credits_remaining));
+                                }
+                                window.localStorage.removeItem("vant_pending_stripe_session_id");
+                                localStorage.setItem('vant_just_paid', 'true');
+                                console.log("[Stripe Return] Ativação OK, redirecionando para /dashboard");
+                                window.location.href = "/dashboard";
+                                return;
+                            } else {
+                                console.error("[Stripe Return] Ativação falhou, SIGNED_IN handler tentará novamente");
                             }
-                            // Atualizar créditos
-                            if (typeof activateData.credits_remaining === "number") {
-                                setCreditsRemaining(activateData.credits_remaining as number);
-                                localStorage.setItem('vant_cached_credits', String(activateData.credits_remaining));
-                            }
-                            window.localStorage.removeItem("vant_pending_stripe_session_id");
-                            localStorage.setItem('vant_just_paid', 'true');
-                            console.log("[Stripe Return] Ativação OK, redirecionando para /dashboard");
-                            window.location.href = "/dashboard";
-                            return;
+                        } else {
+                            // Auth ainda não carregou — o SIGNED_IN handler vai ativar
+                            console.log("[Stripe Return] Auth não disponível, aguardando SIGNED_IN handler...");
+                            setCheckoutError("Pagamento confirmado. Ativando seu plano...");
                         }
                     } else {
                         setCheckoutError("Pagamento não confirmado ainda. Tente novamente em alguns segundos.");
