@@ -3,6 +3,9 @@ Endpoints de usuário (status, histórico, entitlements).
 """
 from __future__ import annotations
 
+import logging
+
+import stripe
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -12,7 +15,12 @@ from dependencies import (
     validate_user_id,
     _entitlements_status,
     _consume_one_credit,
+    STRIPE_SECRET_KEY,
+    PRICING,
+    ActivateEntitlementsRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["user"])
 
@@ -42,16 +50,71 @@ def get_user_status(user_id: str) -> JSONResponse:
     
     try:
         status = _entitlements_status(user_id)
+        has_plan = status.get("payment_verified", False)
+        credits = status.get("credits_remaining", 0)
+        plan = status.get("plan")
+
+        # AUTO-ACTIVATE: se usuário não tem plano, verificar no Stripe se há sessão paga pendente
+        if not has_plan and STRIPE_SECRET_KEY:
+            try:
+                activated = _try_auto_activate_from_stripe(user_id)
+                if activated:
+                    # Re-check status after activation
+                    status = _entitlements_status(user_id)
+                    has_plan = status.get("payment_verified", False)
+                    credits = status.get("credits_remaining", 0)
+                    plan = status.get("plan")
+                    logger.info(f"[AUTO-ACTIVATE] Sucesso para user={user_id}: credits={credits}")
+            except Exception as auto_err:
+                logger.error(f"[AUTO-ACTIVATE] Erro (non-fatal): {auto_err}")
+
         return JSONResponse(content={
-            "has_active_plan": status.get("payment_verified", False),
-            "credits_remaining": status.get("credits_remaining", 0),
-            "plan": status.get("plan")
+            "has_active_plan": has_plan,
+            "credits_remaining": credits,
+            "plan": plan
         })
     except Exception as e:
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
         )
+
+
+def _try_auto_activate_from_stripe(user_id: str) -> bool:
+    """Verifica no Stripe se há sessões pagas recentes para este user e ativa automaticamente."""
+    try:
+        sessions = stripe.checkout.Session.list(limit=5)
+        for session in sessions.data:
+            if (
+                session.get("client_reference_id") == user_id
+                and session.get("payment_status") in ("paid", "no_payment_required")
+                and session.get("status") == "complete"
+            ):
+                meta = session.get("metadata") or {}
+                plan_id = (meta.get("plan") or "basico").strip()
+                if plan_id not in PRICING:
+                    plan_id = "basico"
+
+                logger.info(f"[AUTO-ACTIVATE] Sessão paga encontrada: {session.id}, plan={plan_id}")
+
+                from routers.stripe_routes import activate_entitlements
+                activate_payload = ActivateEntitlementsRequest(
+                    session_id=session.id,
+                    user_id=user_id,
+                    plan_id=plan_id,
+                )
+                resp = activate_entitlements(activate_payload)
+                import json
+                body = json.loads(resp.body.decode())
+                if body.get("ok"):
+                    logger.info(f"[AUTO-ACTIVATE] Ativação OK: {body}")
+                    return True
+                else:
+                    logger.warning(f"[AUTO-ACTIVATE] Ativação retornou não-ok: {body}")
+        return False
+    except Exception as e:
+        logger.error(f"[AUTO-ACTIVATE] Erro ao buscar sessões Stripe: {e}")
+        return False
 
 
 @router.post("/entitlements/status")
