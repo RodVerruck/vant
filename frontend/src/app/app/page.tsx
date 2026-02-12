@@ -86,23 +86,21 @@ function getApiUrl(): string {
 // V3 Layout: Split into separate sections for above-the-fold CRO optimization
 const HERO_HEADER_HTML = `
     <div class="hero-section">
-        <div class="badge-live" data-cy="main-heading">
-            <span style="font-weight: 800; letter-spacing: 1.5px; color: #60A5FA;">VANT</span>
-            <span style="opacity: 0.4; margin: 0 6px;">·</span>
+        <div class="badge-live" data-cy="main-heading" style="margin-bottom: 24px;">
             <span class="vant-tooltip" 
                   tabindex="0" 
-                  style="border-bottom: none; cursor: help;" 
+                  style="border-bottom: none; cursor: help; font-size: 0.82rem; color: #94A3B8; letter-spacing: 0.3px;" 
                   data-tooltip="Mais de 50.000 CVs otimizados. Taxa de sucesso comprovada em seleções de grandes empresas.">
-                50K+ Currículos Otimizados
+                <span style="color: #4ADE80;">✓</span>&nbsp; Mais de <strong style="color: #CBD5E1; font-weight: 600;">50.000</strong> currículos otimizados
             </span>
         </div>
 
-        <div class="headline">
+        <div class="headline" style="margin-bottom: 24px;">
             Vença o algoritmo ATS.<br>
             <span class="highlight">Chegue na mão do recrutador.</span>
         </div>
 
-        <div class="subheadline" style="max-width: 420px;">
+        <div class="subheadline" style="max-width: 420px; margin-bottom: 32px;">
             IA que otimiza seu CV para passar nos filtros automáticos e chegar no recrutador.
         </div>
     </div>
@@ -2457,79 +2455,105 @@ export default function AppPage() {
                 <>
                     {/* Indicador de Status do Usuário */}
                     {authUserId && (
-                        <div style={{
-                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
-                            border: "1px solid rgba(16, 185, 129, 0.3)",
-                            borderRadius: 12,
-                            padding: "16px 20px",
-                            margin: "0 auto 20px",
-                            maxWidth: "100%",
-                            textAlign: "center"
-                        }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-                                <div style={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: "50%",
-                                    background: "rgba(16, 185, 129, 0.2)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: "1.2rem"
-                                }}>
-                                    ✅
-                                </div>
-                                <div style={{ flex: 1, textAlign: "left" }}>
-                                    <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 2 }}>
-                                        Logado como {authEmail}
+                        <div>
+                            <div style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                padding: "14px 20px 12px"
+                            }}>
+                                <span style={{
+                                    fontWeight: 900,
+                                    fontSize: "1.35rem",
+                                    letterSpacing: "2.5px",
+                                    color: "#F8FAFC",
+                                    userSelect: "none",
+                                    fontFamily: "'Outfit', sans-serif"
+                                }}>VANT<span style={{ color: "#38BDF8", marginLeft: 1 }}>.</span></span>
+                            </div>
+                            <div style={{
+                                background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
+                                border: "1px solid rgba(16, 185, 129, 0.3)",
+                                borderRadius: 12,
+                                padding: "16px 20px",
+                                margin: "0 auto 20px",
+                                maxWidth: "100%",
+                                textAlign: "center"
+                            }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+                                    <div style={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: "50%",
+                                        background: "rgba(16, 185, 129, 0.2)",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: "1.2rem"
+                                    }}>
+                                        ✅
                                     </div>
-                                    <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
-                                        {creditsRemaining > 0
-                                            ? `Você tem ${creditsRemaining} crédito(s) disponível(is)`
-                                            : "Pronto para analisar seu CV"
-                                        }
+                                    <div style={{ flex: 1, textAlign: "left" }}>
+                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 2 }}>
+                                            Logado como {authEmail}
+                                        </div>
+                                        <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
+                                            {creditsRemaining > 0
+                                                ? `Você tem ${creditsRemaining} crédito(s) disponível(is)`
+                                                : "Pronto para analisar seu CV"
+                                            }
+                                        </div>
                                     </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        if (supabase) {
-                                            // Verificação de tipo explícita para evitar never
-                                            const client = supabase as SupabaseClient;
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            if (supabase) {
+                                                // Verificação de tipo explícita para evitar never
+                                                const client = supabase as SupabaseClient;
 
-                                            await client.auth.signOut();
-                                        }
-                                    }}
-                                    style={{
-                                        background: "none",
-                                        border: "1px solid rgba(239, 68, 68, 0.3)",
-                                        color: "#EF4444",
-                                        borderRadius: 6,
-                                        padding: "6px 12px",
-                                        fontSize: "0.75rem",
-                                        cursor: "pointer",
-                                        transition: "all 0.2s"
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = "none";
-                                    }}
-                                >
-                                    Sair
-                                </button>
+                                                await client.auth.signOut();
+                                            }
+                                        }}
+                                        style={{
+                                            background: "none",
+                                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                                            color: "#EF4444",
+                                            borderRadius: 6,
+                                            padding: "6px 12px",
+                                            fontSize: "0.75rem",
+                                            cursor: "pointer",
+                                            transition: "all 0.2s"
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = "none";
+                                        }}
+                                    >
+                                        Sair
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Compact header login — top-right */}
+                    {/* Header nav — VANT logo left, login right */}
                     {!authUserId && (
                         <div style={{
                             display: "flex",
-                            justifyContent: "flex-end",
-                            padding: "12px 20px 0"
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "14px 20px 0"
                         }}>
+                            <span style={{
+                                fontWeight: 900,
+                                fontSize: "1.35rem",
+                                letterSpacing: "2.5px",
+                                color: "#F8FAFC",
+                                userSelect: "none",
+                                fontFamily: "'Outfit', sans-serif"
+                            }}>VANT<span style={{ color: "#38BDF8", marginLeft: 1 }}>.</span></span>
                             <button
                                 type="button"
                                 onClick={() => setShowAuthModal(true)}
