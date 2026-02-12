@@ -44,6 +44,21 @@ ALLOW_DEBUG_ENDPOINTS = os.getenv("ALLOW_DEBUG_ENDPOINTS", "false").lower() == "
 # ============================================================
 # STRIPE CONFIG
 # ============================================================
+# STRIPE_MODE=test no Render → usa keys de teste (cartão 4242 4242 4242 4242)
+# STRIPE_MODE=live (ou não definido) → usa keys de produção normais
+# Para voltar a produção: remova STRIPE_MODE do Render ou mude para "live"
+
+STRIPE_MODE = os.getenv("STRIPE_MODE", "live").lower()
+
+def _stripe_var(name: str, fallback: str = "") -> str:
+    """
+    Se STRIPE_MODE=test, lê de STRIPE_TEST_* env vars (ex: STRIPE_TEST_SECRET_KEY).
+    Se STRIPE_MODE=live (padrão), lê da env var normal (ex: STRIPE_SECRET_KEY).
+    """
+    if STRIPE_MODE == "test":
+        test_name = name.replace("STRIPE_", "STRIPE_TEST_", 1)
+        return os.getenv(test_name) or os.getenv(name, fallback)
+    return os.getenv(name, fallback)
 
 if settings and IS_DEV:
     STRIPE_SECRET_KEY = settings.STRIPE_SECRET_KEY
@@ -61,20 +76,23 @@ if settings and IS_DEV:
     STRIPE_PRICE_ID_CREDIT_5 = settings.STRIPE_PRICE_ID_CREDIT_5
     STRIPE_PRICE_ID_TRIAL_SETUP_FEE = getattr(settings, 'STRIPE_PRICE_ID_TRIAL_SETUP_FEE', None) or os.getenv("STRIPE_PRICE_ID_TRIAL_SETUP_FEE")
 else:
-    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+    STRIPE_SECRET_KEY = _stripe_var("STRIPE_SECRET_KEY")
     SUPABASE_URL = os.getenv("SUPABASE_URL")
     SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
     DEBUG_API_SECRET = os.getenv("DEBUG_API_SECRET", "vant_debug_2026_secure_key")
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
-    STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD")
-    STRIPE_PRICE_ID_PRO_MONTHLY = os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY")
-    STRIPE_PRICE_ID_PRO_ANNUAL = os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL")
-    STRIPE_PRICE_ID_CREDIT_1 = os.getenv("STRIPE_PRICE_ID_CREDIT_1")
-    STRIPE_PRICE_ID_CREDIT_3 = os.getenv("STRIPE_PRICE_ID_CREDIT_3")
-    STRIPE_PRICE_ID_CREDIT_5 = os.getenv("STRIPE_PRICE_ID_CREDIT_5")
-    STRIPE_PRICE_ID_TRIAL_SETUP_FEE = os.getenv("STRIPE_PRICE_ID_TRIAL_SETUP_FEE")
+    STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD = _stripe_var("STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD")
+    STRIPE_PRICE_ID_PRO_MONTHLY = _stripe_var("STRIPE_PRICE_ID_PRO_MONTHLY")
+    STRIPE_PRICE_ID_PRO_ANNUAL = _stripe_var("STRIPE_PRICE_ID_PRO_ANNUAL")
+    STRIPE_PRICE_ID_CREDIT_1 = _stripe_var("STRIPE_PRICE_ID_CREDIT_1")
+    STRIPE_PRICE_ID_CREDIT_3 = _stripe_var("STRIPE_PRICE_ID_CREDIT_3")
+    STRIPE_PRICE_ID_CREDIT_5 = _stripe_var("STRIPE_PRICE_ID_CREDIT_5")
+    STRIPE_PRICE_ID_TRIAL_SETUP_FEE = _stripe_var("STRIPE_PRICE_ID_TRIAL_SETUP_FEE")
+
+if STRIPE_MODE == "test":
+    logger.warning("⚠️ STRIPE_MODE=test — usando chaves de TESTE do Stripe")
 
 if STRIPE_SECRET_KEY:
     stripe.api_key = STRIPE_SECRET_KEY
