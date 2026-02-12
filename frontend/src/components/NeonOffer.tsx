@@ -154,7 +154,7 @@ export function NeonOffer({
                             </div>
 
                             <div style={{ marginTop: 12, padding: 10, background: "rgba(56, 189, 248, 0.1)", borderRadius: 6, border: "1px solid rgba(56, 189, 248, 0.2)" }}>
-                                <div style={{ color: "#38BDF8", fontSize: "0.75rem", fontWeight: 500, marginBottom: 3 }}>💡 Quer otimizar mais de 5 CVs?</div>
+                                <div style={{ color: "#38BDF8", fontSize: "0.75rem", fontWeight: 500, marginBottom: 3 }}>💡 Quer otimizar mais de 3 CVs?</div>
                                 <div style={{ color: "#94A3B8", fontSize: "0.7rem" }}>Trial por R$ 1,99 é melhor negócio!</div>
                             </div>
                         </div>

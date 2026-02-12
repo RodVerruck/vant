@@ -76,7 +76,7 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
                 return JSONResponse(
                     status_code=400,
                     content={
-                        "error": f"Você já possui uma assinatura ativa ({current_plan}). Para comprar mais créditos, escolha um pacote avulso.",
+                        "error": f"Você já possui uma assinatura ativa ({current_plan}). Para comprar mais créditos, escolha um pacote avulso (1 ou 3 CVs).",
                         "code": "ACTIVE_SUBSCRIPTION_EXISTS",
                         "current_plan": current_plan,
                     }
