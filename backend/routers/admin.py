@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from dependencies import (
     supabase_admin,
     STRIPE_SECRET_KEY,
+    STRIPE_MODE,
     DEBUG_API_SECRET,
     PRICING,
     _entitlements_status,
@@ -23,6 +24,17 @@ from dependencies import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+@router.get("/stripe-mode")
+def get_stripe_mode() -> JSONResponse:
+    """Diagnóstico: mostra qual modo do Stripe está ativo."""
+    key_prefix = (STRIPE_SECRET_KEY or "")[:7]
+    return JSONResponse(content={
+        "stripe_mode": STRIPE_MODE,
+        "key_type": "test" if key_prefix.startswith("sk_test") else "live" if key_prefix.startswith("sk_live") else "unknown",
+        "key_prefix": key_prefix + "...",
+    })
 
 
 @router.post("/force-activate")
