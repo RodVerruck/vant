@@ -50,14 +50,29 @@ ALLOW_DEBUG_ENDPOINTS = os.getenv("ALLOW_DEBUG_ENDPOINTS", "false").lower() == "
 
 STRIPE_MODE = os.getenv("STRIPE_MODE", "live").lower()
 
+# Price IDs de teste (não são secrets, podem ficar no código)
+_STRIPE_TEST_PRICES = {
+    "STRIPE_PRICE_ID_PRO_MONTHLY": "price_1Svo9G2VONQto1dc7pwdC0dQ",
+    "STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD": "price_1Sw6712VONQto1dcAyvBbAJI",
+    "STRIPE_PRICE_ID_PRO_ANNUAL": "price_1SvoDV2VONQto1dcDwfBafiS",
+    "STRIPE_PRICE_ID_CREDIT_1": "price_1SvoFZ2VONQto1dcbFQithrP",
+    "STRIPE_PRICE_ID_CREDIT_3": "price_1Sw6Pi2VONQto1dc15S28ZmX",
+    "STRIPE_PRICE_ID_CREDIT_5": "price_1SvoGS2VONQto1dcO2rCuRTZ",
+    "STRIPE_PRICE_ID_TRIAL_SETUP_FEE": "price_1SvoER2VONQto1dcdi5VHNpM",
+}
+
 def _stripe_var(name: str, fallback: str = "") -> str:
     """
-    Se STRIPE_MODE=test, lê de STRIPE_TEST_* env vars (ex: STRIPE_TEST_SECRET_KEY).
-    Se STRIPE_MODE=live (padrão), lê da env var normal (ex: STRIPE_SECRET_KEY).
+    Se STRIPE_MODE=test:
+      - Secret key: lê de STRIPE_TEST_SECRET_KEY (env var no Render)
+      - Price IDs: usa valores de teste hardcoded acima
+    Se STRIPE_MODE=live (padrão): lê da env var normal.
     """
     if STRIPE_MODE == "test":
-        test_name = name.replace("STRIPE_", "STRIPE_TEST_", 1)
-        return os.getenv(test_name) or os.getenv(name, fallback)
+        if name == "STRIPE_SECRET_KEY":
+            return os.getenv("STRIPE_TEST_SECRET_KEY") or os.getenv(name, fallback)
+        if name in _STRIPE_TEST_PRICES:
+            return _STRIPE_TEST_PRICES[name]
     return os.getenv(name, fallback)
 
 if settings and IS_DEV:
