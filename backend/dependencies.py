@@ -61,6 +61,8 @@ _STRIPE_TEST_PRICES = {
     "STRIPE_PRICE_ID_TRIAL_SETUP_FEE": "price_1SvoER2VONQto1dcdi5VHNpM",
 }
 
+_STRIPE_TEST_SECRET_KEY_RAW = os.getenv("STRIPE_TEST_SECRET_KEY", "").strip()
+
 def _stripe_var(name: str, fallback: str = "") -> str:
     """
     Se STRIPE_MODE=test:
@@ -70,7 +72,12 @@ def _stripe_var(name: str, fallback: str = "") -> str:
     """
     if STRIPE_MODE == "test":
         if name == "STRIPE_SECRET_KEY":
-            return os.getenv("STRIPE_TEST_SECRET_KEY") or os.getenv(name, fallback)
+            if _STRIPE_TEST_SECRET_KEY_RAW:
+                logger.info(f"[STRIPE] Usando STRIPE_TEST_SECRET_KEY ({_STRIPE_TEST_SECRET_KEY_RAW[:7]}...)")
+                return _STRIPE_TEST_SECRET_KEY_RAW
+            else:
+                logger.warning("[STRIPE] STRIPE_MODE=test mas STRIPE_TEST_SECRET_KEY está vazia! Usando STRIPE_SECRET_KEY como fallback.")
+                return os.getenv(name, fallback)
         if name in _STRIPE_TEST_PRICES:
             return _STRIPE_TEST_PRICES[name]
     return os.getenv(name, fallback)

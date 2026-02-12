@@ -30,10 +30,13 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 def get_stripe_mode() -> JSONResponse:
     """Diagnóstico: mostra qual modo do Stripe está ativo."""
     key_prefix = (STRIPE_SECRET_KEY or "")[:7]
+    test_key_raw = os.getenv("STRIPE_TEST_SECRET_KEY", "")
     return JSONResponse(content={
         "stripe_mode": STRIPE_MODE,
         "key_type": "test" if key_prefix.startswith("sk_test") else "live" if key_prefix.startswith("sk_live") else "unknown",
         "key_prefix": key_prefix + "...",
+        "test_key_exists": bool(test_key_raw),
+        "test_key_prefix": (test_key_raw[:7] + "...") if test_key_raw else "EMPTY",
     })
 
 
