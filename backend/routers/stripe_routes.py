@@ -20,7 +20,6 @@ from dependencies import (
     PRICING,
     STRIPE_SECRET_KEY,
     STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD,
-    STRIPE_PRICE_ID_TRIAL,
     STRIPE_PRICE_ID_TRIAL_SETUP_FEE,
     FRONTEND_CHECKOUT_RETURN_URL,
     _entitlements_status,
@@ -113,13 +112,13 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
 
         # Configuração especial para Paid Trial (R$ 1,99 hoje + 7 dias trial + R$ 19,90/mês depois)
         if plan_id == "trial":
-            subscription_price_id = STRIPE_PRICE_ID_TRIAL or STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD
+            subscription_price_id = STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD
             setup_fee_price_id = STRIPE_PRICE_ID_TRIAL_SETUP_FEE
             
             if not subscription_price_id:
                 return JSONResponse(
                     status_code=500,
-                    content={"error": "STRIPE_PRICE_ID_TRIAL e STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD não configurados."},
+                    content={"error": "STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD não configurado."},
                 )
             if not setup_fee_price_id:
                 return JSONResponse(

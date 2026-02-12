@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     STRIPE_PRICE_ID_PRO_MONTHLY: str = Field(default="", description="Price ID PRO Mensal")
     STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD: str = Field(default="", description="Price ID PRO Mensal Early Bird")
     STRIPE_PRICE_ID_PRO_ANNUAL: str = Field(default="", description="Price ID PRO Anual")
-    STRIPE_PRICE_ID_TRIAL: str = Field(default="", description="Price ID Trial")
+
     STRIPE_PRICE_ID_CREDIT_1: str = Field(default="", description="Price ID Crédito 1")
     STRIPE_PRICE_ID_CREDIT_3: str = Field(default="", description="Price ID Crédito 3")
     STRIPE_PRICE_ID_CREDIT_5: str = Field(default="", description="Price ID Crédito 5")

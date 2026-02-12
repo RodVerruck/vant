@@ -117,7 +117,6 @@ def determine_plan_from_price(price_id: str) -> str:
         os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY"): "pro_monthly",
         os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD"): "pro_monthly_early_bird",
         os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL"): "pro_annual",
-        os.getenv("STRIPE_PRICE_ID_TRIAL"): "trial",
         os.getenv("STRIPE_PRICE_ID_CREDIT_1"): "credit_1",
         os.getenv("STRIPE_PRICE_ID_CREDIT_3"): "credit_3",
         os.getenv("STRIPE_PRICE_ID_CREDIT_5"): "credit_5",
