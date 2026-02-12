@@ -8,6 +8,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
+from typing import Any
 
 import sentry_sdk
 import stripe
@@ -59,6 +60,31 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
     cancel_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=cancel"
 
     try:
+        # Resolve customer: use existing Stripe customer ID if available, otherwise use email
+        customer_kwargs: dict[str, Any] = {}
+        existing_customer_id = None
+        
+        if payload.client_reference_id and supabase_admin:
+            try:
+                subs = (
+                    supabase_admin.table("subscriptions")
+                    .select("stripe_customer_id")
+                    .eq("user_id", payload.client_reference_id)
+                    .order("current_period_end", desc=True)
+                    .limit(1)
+                    .execute()
+                )
+                if subs.data and subs.data[0].get("stripe_customer_id"):
+                    existing_customer_id = subs.data[0]["stripe_customer_id"]
+                    logger.info(f"[Checkout] Existing Stripe customer found: {existing_customer_id}")
+            except Exception as lookup_err:
+                logger.warning(f"[Checkout] Customer lookup failed (non-fatal): {lookup_err}")
+        
+        if existing_customer_id:
+            customer_kwargs["customer"] = existing_customer_id
+        elif payload.customer_email:
+            customer_kwargs["customer_email"] = payload.customer_email
+
         # Configuração especial para Paid Trial (R$ 1,99 hoje + 7 dias trial + R$ 19,90/mês depois)
         if plan_id == "trial":
             subscription_price_id = STRIPE_PRICE_ID_TRIAL
@@ -83,7 +109,7 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
                 success_url=success_url,
                 cancel_url=cancel_url,
                 allow_promotion_codes=True,
-                customer_email=payload.customer_email,
+                **customer_kwargs,
                 client_reference_id=payload.client_reference_id,
                 metadata={
                     "plan": plan_id,
@@ -98,7 +124,7 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
                 success_url=success_url,
                 cancel_url=cancel_url,
                 allow_promotion_codes=True,
-                customer_email=payload.customer_email,
+                **customer_kwargs,
                 client_reference_id=payload.client_reference_id,
                 metadata={
                     "plan": plan_id,
@@ -108,6 +134,7 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
         return JSONResponse(content={"id": session.get("id"), "url": session.get("url")})
     except Exception as e:
         sentry_sdk.capture_exception(e)
+        logger.error(f"❌ [Checkout] Stripe error: {type(e).__name__}: {e}")
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
 
 
