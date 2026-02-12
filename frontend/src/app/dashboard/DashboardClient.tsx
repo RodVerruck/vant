@@ -84,7 +84,33 @@ export function DashboardClient() {
                     if (!isNaN(n)) setCreditsRemaining(n);
                 }
 
-                // 🚀 Sincronizar créditos ao entrar no dashboard
+                // � Ativar sessão Stripe pendente se existir (safety net)
+                const pendingSid = localStorage.getItem("vant_pending_stripe_session_id");
+                if (pendingSid) {
+                    console.log("[Dashboard] Sessão Stripe pendente detectada, ativando:", pendingSid);
+                    try {
+                        const actResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ session_id: pendingSid, user_id: user.id, plan_id: "trial" }),
+                        });
+                        const actData = await actResp.json();
+                        if (actResp.ok && actData.credits_remaining) {
+                            console.log("[Dashboard] Ativação pendente OK!", actData);
+                            setCreditsRemaining(actData.credits_remaining);
+                            localStorage.setItem("vant_cached_credits", String(actData.credits_remaining));
+                            localStorage.removeItem("vant_pending_stripe_session_id");
+                            localStorage.setItem("vant_just_paid", "true");
+                        } else {
+                            console.warn("[Dashboard] Ativação pendente falhou:", actData);
+                            localStorage.removeItem("vant_pending_stripe_session_id");
+                        }
+                    } catch (actErr) {
+                        console.error("[Dashboard] Erro na ativação pendente:", actErr);
+                    }
+                }
+
+                // �🚀 Sincronizar créditos ao entrar no dashboard
                 console.log("[Dashboard] Sincronizando créditos na entrada...");
                 try {
                     const resp = await fetch(`${getApiUrl()}/api/user/status/${user.id}`);

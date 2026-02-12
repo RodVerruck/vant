@@ -1021,6 +1021,11 @@ export default function AppPage() {
 
         // Retorno do Stripe após pagamento
         if (payment === "success" && sessionId) {
+            // CRITICAL: salvar session_id IMEDIATAMENTE (síncrono) antes de qualquer async
+            // Isso garante que o Dashboard safety net pode ativar mesmo se /app redirecionar antes
+            window.localStorage.setItem("vant_pending_stripe_session_id", sessionId);
+            console.log("[Stripe Return] sessionId salvo IMEDIATAMENTE no localStorage:", sessionId);
+
             setStage("checkout");
             setCheckoutError("");
 
