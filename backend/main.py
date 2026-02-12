@@ -168,6 +168,12 @@ def check_dependencies() -> dict[str, Any]:
     
     return health_status
 
+@app.get("/ping")
+def ping():
+    """Lightweight keep-alive endpoint for cron-job.org and uptime monitors."""
+    return {"status": "ok"}
+
+
 @app.get("/health")
 def health() -> JSONResponse:
     """Health check completo do sistema com cache de 60 segundos."""
