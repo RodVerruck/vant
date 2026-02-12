@@ -2646,6 +2646,7 @@ export default function AppPage() {
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 16, height: 16 }}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                                     <span>Veja por que funciona</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="#4ADE80" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, marginLeft: 4 }}><polygon points="5 3 19 12 5 21 5 3" /></svg>
                                 </div>
                             </div>
 
@@ -2853,7 +2854,7 @@ export default function AppPage() {
                                     }}>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                                         <span style={{ color: "#94A3B8", fontSize: "0.7rem", lineHeight: 1.4 }}>
-                                            <span style={{ color: "#4ADE80", fontWeight: 600 }}>Dados destruídos após análise</span> · Processamento em memória
+                                            <span style={{ color: "#4ADE80", fontWeight: 600 }}>Seus dados não são salvos</span> · Privacidade total garantida
                                         </span>
                                     </div>
 
