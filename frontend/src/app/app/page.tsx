@@ -2889,13 +2889,13 @@ export default function AppPage() {
                                                 marginBottom: competitorFiles.length > 0 ? 12 : 0
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-                                                    <div style={{ fontSize: "1.4rem" }}>🎯</div>
+                                                    <div style={{ fontSize: "1.4rem" }}>📑</div>
                                                     <div>
                                                         <div style={{ color: "#F8FAFC", fontSize: "0.85rem", fontWeight: 700 }}>
-                                                            Referência Ideal
+                                                            Comparar com outro CV
                                                         </div>
                                                         <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 2 }}>
-                                                            {competitorFiles.length > 0 ? `${competitorFiles.length} referência(s)` : "Padrão automático"}
+                                                            {competitorFiles.length > 0 ? `${competitorFiles.length} comparativo(s)` : "Tem uma referência? Suba para ver quem vence."}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2917,7 +2917,7 @@ export default function AppPage() {
                                                         onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
                                                         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
                                                     >
-                                                        + Adicionar
+                                                        + Adicionar Comparativo
                                                     </button>
                                                 )}
                                                 <input ref={competitorUploaderInputRef} type="file" accept="application/pdf" multiple style={{ display: "none" }} onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))} />
