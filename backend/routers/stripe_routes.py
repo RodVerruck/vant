@@ -195,6 +195,29 @@ def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) 
         if plan_id not in PRICING:
             plan_id = "basico"
 
+        # AUTO-ACTIVATE: se pagamento confirmado e temos user_id, ativar automaticamente
+        auto_activated = False
+        credits_remaining = 0
+        user_id = session.get("client_reference_id")
+        if is_paid and user_id and supabase_admin:
+            try:
+                logger.info(f"[VERIFY+ACTIVATE] Pagamento confirmado, auto-ativando para user={user_id}")
+                activate_payload = ActivateEntitlementsRequest(
+                    session_id=payload.session_id,
+                    user_id=user_id,
+                    plan_id=plan_id,
+                )
+                activate_resp = activate_entitlements(activate_payload)
+                activate_body = json.loads(activate_resp.body.decode())
+                if activate_body.get("ok"):
+                    auto_activated = True
+                    credits_remaining = activate_body.get("credits_remaining", 0)
+                    logger.info(f"[VERIFY+ACTIVATE] Auto-ativação OK: credits={credits_remaining}")
+                else:
+                    logger.warning(f"[VERIFY+ACTIVATE] Auto-ativação retornou não-ok: {activate_body}")
+            except Exception as act_err:
+                logger.error(f"[VERIFY+ACTIVATE] Erro na auto-ativação (non-fatal): {act_err}")
+
         return JSONResponse(
             content={
                 "paid": is_paid,
@@ -203,6 +226,8 @@ def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) 
                 "payment_status": session.get("payment_status"),
                 "status": session.get("status"),
                 "customer_email": session.get("customer_details", {}).get("email"),
+                "auto_activated": auto_activated,
+                "credits_remaining": credits_remaining,
             }
         )
     except Exception as e:
