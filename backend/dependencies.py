@@ -113,8 +113,17 @@ else:
     STRIPE_PRICE_ID_CREDIT_5 = _stripe_var("STRIPE_PRICE_ID_CREDIT_5")
     STRIPE_PRICE_ID_TRIAL_SETUP_FEE = _stripe_var("STRIPE_PRICE_ID_TRIAL_SETUP_FEE")
 
+# Override: se STRIPE_MODE=test, sobrescrever TODAS as variáveis Stripe
+# independente de qual bloco (DEV/PROD) foi usado acima
 if STRIPE_MODE == "test":
-    logger.warning("⚠️ STRIPE_MODE=test — usando chaves de TESTE do Stripe")
+    logger.warning("⚠️ STRIPE_MODE=test — sobrescrevendo com chaves de TESTE do Stripe")
+    if _STRIPE_TEST_SECRET_KEY_RAW:
+        STRIPE_SECRET_KEY = _STRIPE_TEST_SECRET_KEY_RAW
+        logger.info(f"[STRIPE] Secret key de teste carregada ({_STRIPE_TEST_SECRET_KEY_RAW[:7]}...)")
+    else:
+        logger.error("[STRIPE] STRIPE_MODE=test mas STRIPE_TEST_SECRET_KEY não encontrada!")
+    for _k, _v in _STRIPE_TEST_PRICES.items():
+        globals()[_k] = _v
 
 if STRIPE_SECRET_KEY:
     stripe.api_key = STRIPE_SECRET_KEY
