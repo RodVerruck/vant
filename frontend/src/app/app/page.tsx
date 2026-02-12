@@ -522,22 +522,8 @@ export default function AppPage() {
     // Hook do Next.js para capturar parâmetros da URL de forma robusta
     const searchParams = useSearchParams();
 
-    // NOVO: useEffect dedicado para capturar parâmetros do Stripe via useSearchParams
-    // Isso é mais robusto que window.location no Next.js App Router
-    useEffect(() => {
-        const payment = searchParams.get("payment");
-        const sessionId = searchParams.get("session_id");
-
-        console.log("[DEBUG URL - useSearchParams] Params encontrados:", { payment, sessionId: sessionId?.slice(0, 20) });
-
-        if (payment === "success" && sessionId) {
-            console.log("[DEBUG URL] Pagamento detectado! Setando estado...");
-            setStripeSessionId(sessionId);
-            setNeedsActivation(true);
-            setStage("checkout");
-            setCheckoutError("Pagamento confirmado. Ativando seu plano...");
-        }
-    }, [searchParams]);
+    // Parâmetros do Stripe são tratados no useEffect principal (window.location)
+    // que faz verify-checkout-session antes de ativar
 
     function getErrorMessage(e: unknown, fallback: string): string {
         // Ignorar AbortError (cancelamento intencional)
@@ -991,11 +977,8 @@ export default function AppPage() {
                     }
 
                     if (payload.paid === true) {
-                        if (typeof payload.plan_id === "string") {
-                            setSelectedPlan(payload.plan_id as PlanType);
-                        }
-
-                        // Salvar sessão e delegar ativação para useEffect needsActivation
+                        const verifiedPlanId = typeof payload.plan_id === "string" ? payload.plan_id : "basico";
+                        setSelectedPlan(verifiedPlanId as PlanType);
                         setStripeSessionId(sessionId);
 
                         if (!authUserId) {
@@ -1005,8 +988,31 @@ export default function AppPage() {
                             setShowAuthModal(true);
                             setCheckoutError("✅ Pagamento confirmado! Crie sua conta para acessar seus créditos.");
                         } else {
-                            // Com usuário: ativar imediatamente via useEffect
-                            setNeedsActivation(true);
+                            // Com usuário: ativar diretamente aqui (evita race condition com useEffect)
+                            setCheckoutError("Pagamento confirmado. Ativando seu plano...");
+                            const activateResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    session_id: sessionId,
+                                    user_id: authUserId,
+                                    plan_id: verifiedPlanId,
+                                }),
+                            });
+                            const activateData = (await activateResp.json()) as JsonObject;
+                            if (!activateResp.ok) {
+                                throw new Error(typeof activateData.error === "string" ? activateData.error : "Falha ao ativar plano");
+                            }
+                            // Atualizar créditos
+                            if (typeof activateData.credits_remaining === "number") {
+                                setCreditsRemaining(activateData.credits_remaining as number);
+                                localStorage.setItem('vant_cached_credits', String(activateData.credits_remaining));
+                            }
+                            window.localStorage.removeItem("vant_pending_stripe_session_id");
+                            localStorage.setItem('vant_just_paid', 'true');
+                            console.log("[Stripe Return] Ativação OK, redirecionando para /dashboard");
+                            window.location.href = "/dashboard";
+                            return;
                         }
                     } else {
                         setCheckoutError("Pagamento não confirmado ainda. Tente novamente em alguns segundos.");
