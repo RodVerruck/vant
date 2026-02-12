@@ -2938,6 +2938,25 @@ export default function AppPage() {
                                             {authUserId && creditsRemaining > 0 ? "OTIMIZAR MEU CV" : "ANALISAR CV GRÁTIS"}
                                         </button>
                                     </div>
+
+                                    {/* Trust signal — no credit card required */}
+                                    <div style={{
+                                        textAlign: "center",
+                                        marginTop: 8,
+                                        opacity: 0.7
+                                    }}>
+                                        <span style={{
+                                            color: "#10B981",
+                                            fontSize: "0.75rem",
+                                            fontWeight: 500,
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            gap: 4
+                                        }}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                            Sem cartão de crédito
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
