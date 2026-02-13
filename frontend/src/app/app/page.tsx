@@ -1039,18 +1039,42 @@ export default function AppPage() {
         const checkoutPending = localStorage.getItem("checkout_pending");
         const hasCheckoutPending = !!checkoutPending;
         const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
+        const hasAutoStart = !!localStorage.getItem("vant_auto_start");
+        const hasSkipPreview = !!localStorage.getItem("vant_skip_preview");
         // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
         const hasNonHeroStage = stage !== "hero";
         // Stripe payment flow: query param ou sessão pendente no localStorage
         const urlNow = new URL(window.location.href);
         const hasPaymentSuccess = urlNow.searchParams.get("payment") === "success";
         const hasPendingStripeSession = !!localStorage.getItem("vant_pending_stripe_session_id");
-        const hasActiveFlow = returnPlan || hasReturnStage || hasHistoryItem || hasCheckoutPending || hasNonHeroStage || hasAutoProcess || hasPaymentSuccess || hasPendingStripeSession;
+        const hasActiveFlow =
+            returnPlan ||
+            hasReturnStage ||
+            hasHistoryItem ||
+            hasCheckoutPending ||
+            hasNonHeroStage ||
+            hasAutoProcess ||
+            hasAutoStart ||
+            hasSkipPreview ||
+            hasPaymentSuccess ||
+            hasPendingStripeSession;
 
-        console.log("[Auth] Verificando fluxo:", { returnPlan: !!returnPlan, hasReturnStage, hasCheckoutPending, hasNonHeroStage, stage, hasPaymentSuccess, hasPendingStripeSession });
+        console.log("[Auth] Verificando fluxo:", {
+            returnPlan: !!returnPlan,
+            hasReturnStage,
+            hasCheckoutPending,
+            hasNonHeroStage,
+            hasAutoProcess,
+            hasAutoStart,
+            hasSkipPreview,
+            stage,
+            hasPaymentSuccess,
+            hasPendingStripeSession,
+        });
 
         if (!hasActiveFlow) {
-            console.log("[Auth] Sem fluxo ativo, mantendo usuário no /app (hero)");
+            console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
+            window.location.href = "/dashboard";
             return;
         }
 
