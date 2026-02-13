@@ -1916,6 +1916,43 @@ export default function AppPage() {
         setStage("hero");
     };
 
+    async function getLatestCredits(userId: string): Promise<number | null> {
+        try {
+            const statusResp = await fetchJsonWithRetry<JsonObject>(
+                `${getApiUrl()}/api/user/status/${userId}`,
+                undefined,
+                3,
+                1000,
+            );
+            if (statusResp.ok) {
+                const statusData = statusResp.data as JsonObject;
+                if (typeof statusData.credits_remaining === "number") {
+                    return statusData.credits_remaining;
+                }
+            }
+
+            const entitlementsResp = await fetchJsonWithRetry<JsonObject>(
+                `${getApiUrl()}/api/entitlements/status`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: userId }),
+                },
+                3,
+                1000,
+            );
+            if (entitlementsResp.ok) {
+                const entitlementData = entitlementsResp.data as JsonObject;
+                if (typeof entitlementData.credits_remaining === "number") {
+                    return entitlementData.credits_remaining;
+                }
+            }
+        } catch (err) {
+            debugLog("[Credits] Falha ao validar créditos:", err);
+        }
+        return null;
+    }
+
     function redirectToPlansForNoCredits(message?: string, currentCredits?: number) {
         const safeCredits = typeof currentCredits === "number" ? currentCredits : creditsRemaining;
         const dynamicFallback = `Você está com ${Math.max(0, safeCredits)} crédito${safeCredits === 1 ? "" : "s"}. Para continuar esta otimização, escolha um plano.`;
@@ -1924,12 +1961,12 @@ export default function AppPage() {
         trackEvent("no_credits_redirect_to_pricing", {
             source: "processing_premium",
             current_credits: Math.max(0, safeCredits),
-            recommended_plan: "credit_1",
+            recommended_plan: "pro_monthly",
         });
 
         setPremiumError("");
         setCheckoutError(notice);
-        setSelectedPlan("credit_1");
+        setSelectedPlan("pro_monthly");
 
         if (typeof window !== "undefined") {
             localStorage.setItem("vant_auth_return_stage", "processing_premium");
@@ -1998,24 +2035,14 @@ export default function AppPage() {
             setStatusText("");
             try {
                 // Pré-checagem de créditos para evitar espera longa e erro tardio
-                const statusResp = await fetchJsonWithRetry<JsonObject>(
-                    `${getApiUrl()}/api/user/status/${authUserId}`,
-                    undefined,
-                    3,
-                    1000,
-                );
+                const latestCredits = await getLatestCredits(authUserId);
+                if (typeof latestCredits === "number") {
+                    setCreditsRemaining(latestCredits);
+                    localStorage.setItem("vant_cached_credits", String(latestCredits));
 
-                if (statusResp.ok) {
-                    const statusData = statusResp.data as JsonObject;
-                    const credits = statusData.credits_remaining;
-                    if (typeof credits === "number") {
-                        setCreditsRemaining(credits);
-                        localStorage.setItem("vant_cached_credits", String(credits));
-
-                        if (credits <= 0) {
-                            redirectToPlansForNoCredits(undefined, credits);
-                            return;
-                        }
+                    if (latestCredits <= 0) {
+                        redirectToPlansForNoCredits(undefined, latestCredits);
+                        return;
                     }
                 }
 
@@ -2144,6 +2171,20 @@ export default function AppPage() {
         // Se skipPreview ativo (modal Dashboard), pular lite inteiro e ir direto para premium
         if (pendingSkipPreview.current) {
             pendingSkipPreview.current = false;
+
+            if (authUserId) {
+                const latestCredits = await getLatestCredits(authUserId);
+                if (typeof latestCredits === "number") {
+                    setCreditsRemaining(latestCredits);
+                    localStorage.setItem("vant_cached_credits", String(latestCredits));
+
+                    if (latestCredits <= 0) {
+                        redirectToPlansForNoCredits(undefined, latestCredits);
+                        return;
+                    }
+                }
+            }
+
             console.log("[onStart] skipPreview ativo, pulando analyze-lite e indo direto para processing_premium...");
             setApiError("");
             setReportData(null);
@@ -3216,9 +3257,9 @@ export default function AppPage() {
                                     onClick={() => {
                                         trackEvent("no_credits_cta_click", {
                                             source: "pricing_notice",
-                                            selected_plan: "credit_1",
+                                            selected_plan: "pro_monthly",
                                         });
-                                        setSelectedPlan("credit_1");
+                                        setSelectedPlan("pro_monthly");
                                         setStage("checkout");
                                     }}
                                     style={{
@@ -3232,7 +3273,7 @@ export default function AppPage() {
                                         cursor: "pointer",
                                     }}
                                 >
-                                    Continuar com plano recomendado
+                                    Continuar com assinatura recomendada
                                 </button>
                             </div>
                         </div>
