@@ -4574,8 +4574,9 @@ export default function AppPage() {
                                                                 borderRadius: 8,
                                                                 marginBottom: 8,
                                                                 display: "flex",
-                                                                justifyContent: "space-between",
-                                                                alignItems: "center"
+                                                                flexDirection: "column",
+                                                                gap: 8,
+                                                                alignItems: "stretch"
                                                             }}>
                                                                 <p style={{
                                                                     color: "#EF4444",
@@ -4584,37 +4585,57 @@ export default function AppPage() {
                                                                     lineHeight: 1.4,
                                                                     flex: 1
                                                                 }}>
-                                                                    😅 Ops! Essa não é a senha correta para este e-mail.
+                                                                    😅 Não foi possível entrar com este e-mail e senha. Se sua conta foi criada com Google, use "Continuar com Google" ou redefina sua senha.
                                                                 </p>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={handleForgotPassword}
-                                                                    disabled={isAuthenticating}
-                                                                    style={{
-                                                                        background: "none",
-                                                                        border: "none",
-                                                                        color: "#3B82F6",
-                                                                        fontSize: "0.8rem",
-                                                                        cursor: isAuthenticating ? "wait" : "pointer",
-                                                                        textDecoration: "underline",
-                                                                        padding: "2px 4px",
-                                                                        borderRadius: "4px",
-                                                                        transition: "all 0.2s",
-                                                                        whiteSpace: "nowrap"
-                                                                    }}
-                                                                    onMouseEnter={(e) => {
-                                                                        if (!isAuthenticating) {
-                                                                            e.currentTarget.style.color = "#2563EB";
-                                                                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-                                                                        }
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.color = "#3B82F6";
-                                                                        e.currentTarget.style.background = "none";
-                                                                    }}
-                                                                >
-                                                                    Esqueci minha senha
-                                                                </button>
+                                                                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={handleGoogleLogin}
+                                                                        disabled={isAuthenticating}
+                                                                        style={{
+                                                                            background: "rgba(255,255,255,0.92)",
+                                                                            border: "1px solid rgba(255,255,255,0.9)",
+                                                                            color: "#1F2937",
+                                                                            fontSize: "0.78rem",
+                                                                            fontWeight: 600,
+                                                                            cursor: isAuthenticating ? "wait" : "pointer",
+                                                                            padding: "6px 10px",
+                                                                            borderRadius: "6px",
+                                                                            transition: "all 0.2s",
+                                                                        }}
+                                                                    >
+                                                                        Entrar com Google
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={handleForgotPassword}
+                                                                        disabled={isAuthenticating}
+                                                                        style={{
+                                                                            background: "none",
+                                                                            border: "none",
+                                                                            color: "#3B82F6",
+                                                                            fontSize: "0.8rem",
+                                                                            cursor: isAuthenticating ? "wait" : "pointer",
+                                                                            textDecoration: "underline",
+                                                                            padding: "6px 4px",
+                                                                            borderRadius: "4px",
+                                                                            transition: "all 0.2s",
+                                                                            whiteSpace: "nowrap"
+                                                                        }}
+                                                                        onMouseEnter={(e) => {
+                                                                            if (!isAuthenticating) {
+                                                                                e.currentTarget.style.color = "#2563EB";
+                                                                                e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                                                                            }
+                                                                        }}
+                                                                        onMouseLeave={(e) => {
+                                                                            e.currentTarget.style.color = "#3B82F6";
+                                                                            e.currentTarget.style.background = "none";
+                                                                        }}
+                                                                    >
+                                                                        Esqueci minha senha
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}

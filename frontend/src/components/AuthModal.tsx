@@ -65,6 +65,14 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, 
 
     if (!isOpen) return null;
 
+    const normalizedRenderError = error.toLowerCase();
+    const displayError =
+        isLoginMode &&
+            (normalizedRenderError.includes("invalid login credentials") ||
+                normalizedRenderError.includes("wrong password"))
+            ? "Não foi possível entrar com este e-mail e senha. Se sua conta foi criada com Google, use 'Continuar com Google' ou clique em 'Esqueceu a senha?' para definir uma senha."
+            : error;
+
     const handleGoogleAuth = async () => {
         setError("");
         if (!supabase) {
@@ -164,7 +172,19 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, 
             }
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : (isLoginMode ? "Erro ao fazer login" : "Erro ao criar conta");
-            setError(message);
+            const normalizedMessage = message.toLowerCase();
+
+            if (
+                isLoginMode &&
+                (normalizedMessage.includes("invalid login credentials") ||
+                    normalizedMessage.includes("wrong password"))
+            ) {
+                setError(
+                    "Não foi possível entrar com este e-mail e senha. Se sua conta foi criada com Google, use 'Continuar com Google' ou clique em 'Esqueceu a senha?' para definir uma senha.",
+                );
+            } else {
+                setError(message);
+            }
         } finally {
             setIsAuthenticating(false);
         }
@@ -494,7 +514,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, 
                     </form>
                 )}
 
-                {error && (
+                {displayError && (
                     <div
                         style={{
                             marginTop: 12,
@@ -506,7 +526,7 @@ export function AuthModal({ isOpen, onSuccess, onClose, selectedPlan, supabase, 
                             fontSize: "0.85rem",
                         }}
                     >
-                        {error}
+                        {displayError}
                     </div>
                 )}
             </div>
