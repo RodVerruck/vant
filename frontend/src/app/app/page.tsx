@@ -2011,6 +2011,31 @@ export default function AppPage() {
                         });
                     return;
                 }
+
+                // Fallback: restaurar arquivo do IndexedDB (fluxo de checkout salva aqui)
+                if (savedJob) {
+                    (async () => {
+                        try {
+                            const restoredFile = await getFileFromIDB();
+                            if (restoredFile) {
+                                console.log("[processing_premium] Restaurando arquivo do IndexedDB...");
+                                setIsRestoringData(true);
+                                setJobDescription(savedJob);
+                                setFile(restoredFile);
+                                await clearFileFromIDB();
+                                setIsRestoringData(false);
+                                console.log("[processing_premium] Dados restaurados via IndexedDB!");
+                                return;
+                            }
+                        } catch (idbErr) {
+                            console.error("[processing_premium] Erro ao restaurar do IndexedDB:", idbErr);
+                        }
+                        setIsRestoringData(false);
+                        console.log("[processing_premium] Sem arquivo para restaurar (localStorage/IndexedDB)");
+                        setStage("hero");
+                    })();
+                    return;
+                }
             }
             console.log("[processing_premium] Usuário comprou créditos, redirecionando para hero para usar créditos...");
             // setPremiumError("Para usar seus créditos, envie seu CV primeiro."); // Removido para não assustar usuário
