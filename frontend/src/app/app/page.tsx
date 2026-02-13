@@ -1050,8 +1050,7 @@ export default function AppPage() {
         console.log("[Auth] Verificando fluxo:", { returnPlan: !!returnPlan, hasReturnStage, hasCheckoutPending, hasNonHeroStage, stage, hasPaymentSuccess, hasPendingStripeSession });
 
         if (!hasActiveFlow) {
-            console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
-            window.location.href = "/dashboard";
+            console.log("[Auth] Sem fluxo ativo, mantendo usuário no /app (hero)");
             return;
         }
 
