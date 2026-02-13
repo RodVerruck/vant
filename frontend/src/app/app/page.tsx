@@ -459,6 +459,7 @@ export default function AppPage() {
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null);
     const [premiumError, setPremiumError] = useState("");
+    const [isBootingAutoStart, setIsBootingAutoStart] = useState(false);
     const [isRestoringData, setIsRestoringData] = useState(false);
     const [pdfMetadata, setPdfMetadata] = useState<{ pages?: number; text?: string; candidateName?: string } | null>(null);
     const [processingStartTime] = useState(Date.now());
@@ -698,7 +699,7 @@ export default function AppPage() {
             const autoStart = localStorage.getItem("vant_auto_start");
             if (autoStart === "true") {
                 pendingAutoStart.current = true;
-                localStorage.removeItem("vant_auto_start");
+                setIsBootingAutoStart(true);
                 localStorage.removeItem("vant_use_generic_job");
                 localStorage.removeItem("vant_area_of_interest");
             }
@@ -721,6 +722,20 @@ export default function AppPage() {
                         const restoredFile = new File([blob], savedFileName, { type: savedFileType });
                         setFile(restoredFile);
                     });
+            } else if (autoStart === "true" && savedJob && !file) {
+                (async () => {
+                    const restoredFile = await getFileFromIDB();
+                    if (restoredFile) {
+                        setFile(restoredFile);
+                    }
+                })();
+            }
+
+            if (autoStart === "true") {
+                const timeoutId = window.setTimeout(() => {
+                    setIsBootingAutoStart(false);
+                }, 5000);
+                return () => window.clearTimeout(timeoutId);
             }
         }
     }, []); // Removido jobDescription e file das dependências
@@ -729,6 +744,8 @@ export default function AppPage() {
     useEffect(() => {
         if (pendingAutoStart.current && jobDescription.trim() && file && stage === "hero") {
             pendingAutoStart.current = false;
+            localStorage.removeItem("vant_auto_start");
+            setIsBootingAutoStart(false);
 
             // Verificar se deve pular preview (vindo do modal do Dashboard)
             const shouldSkip = localStorage.getItem("vant_skip_preview") === "true";
@@ -739,8 +756,7 @@ export default function AppPage() {
             } else {
                 console.log("[AutoStart] Fluxo normal (com preview)...");
             }
-            const timer = setTimeout(() => onStart(), 300);
-            return () => clearTimeout(timer);
+            void onStart();
         }
     }, [jobDescription, file, stage]);
 
@@ -2699,7 +2715,15 @@ export default function AppPage() {
     return (
         <main>
             {renderCreditsIndicator()}
-            {stage === "hero" && (
+            {stage === "hero" && isBootingAutoStart && (
+                <div className="hero-container" style={{ textAlign: "center" }}>
+                    <div style={{ color: "#94A3B8", fontSize: "1rem", marginTop: 80 }}>
+                        Preparando sua otimização...
+                    </div>
+                </div>
+            )}
+
+            {stage === "hero" && !isBootingAutoStart && (
                 <>
                     {/* Indicador de Status do Usuário */}
                     {authUserId && (
