@@ -2,11 +2,52 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { OptimizationHero } from "@/components/OptimizationHero";
 import { HistoryGrid } from "@/components/HistoryGrid";
 import { NewOptimizationModal } from "@/components/NewOptimizationModal";
+import { getSupabaseClient } from "@/lib/supabaseClient";
+
+const isProd = process.env.NODE_ENV === "production";
+function debugLog(...args: unknown[]) {
+    if (!isProd) {
+        console.log(...args);
+    }
+}
+
+async function fetchJsonWithRetry<T>(
+    input: RequestInfo | URL,
+    init?: RequestInit,
+    retries = 3,
+    baseDelayMs = 1000,
+): Promise<{ ok: boolean; status: number; data: T | Record<string, unknown> }> {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const resp = await fetch(input, init);
+            let data: T | Record<string, unknown> = {};
+            try {
+                data = (await resp.json()) as T | Record<string, unknown>;
+            } catch {
+                data = {};
+            }
+            if (resp.ok) return { ok: true, status: resp.status, data };
+            if (attempt < retries && resp.status >= 500) {
+                await new Promise((r) => setTimeout(r, baseDelayMs * attempt));
+                continue;
+            }
+            return { ok: false, status: resp.status, data };
+        } catch (err) {
+            lastError = err;
+            if (attempt < retries) {
+                await new Promise((r) => setTimeout(r, baseDelayMs * attempt));
+                continue;
+            }
+        }
+    }
+    throw lastError instanceof Error ? lastError : new Error("Falha de rede");
+}
 
 function getApiUrl(): string {
     if (typeof window !== "undefined") {
@@ -46,19 +87,7 @@ export function DashboardClient() {
     const [lastCV, setLastCV] = useState<{ has_last_cv: boolean; filename?: string; time_ago?: string; is_recent?: boolean; analysis_id?: string; job_description?: string } | null>(null);
 
     // Supabase client (single instance)
-    const supabase = useMemo((): SupabaseClient | null => {
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        if (!url || !key) return null;
-
-        return createClient(url, key, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                storageKey: "vant-supabase-auth",
-            },
-        });
-    }, []);
+    const supabase = useMemo((): SupabaseClient | null => getSupabaseClient(), []);
 
     // Initialize auth
     useEffect(() => {
@@ -90,7 +119,7 @@ export function DashboardClient() {
                 const sessionIdParam = urlParams.get("session_id");
 
                 if (paymentParam === "success" && sessionIdParam) {
-                    console.log("[Dashboard] Retorno do Stripe detectado! session_id:", sessionIdParam);
+                    debugLog("[Dashboard] Retorno do Stripe detectado! session_id:", sessionIdParam);
                     // Limpar URL params imediatamente
                     const cleanUrl = window.location.pathname;
                     window.history.replaceState({}, "", cleanUrl);
@@ -99,7 +128,7 @@ export function DashboardClient() {
                     let activated = false;
                     for (let attempt = 1; attempt <= 3; attempt++) {
                         try {
-                            console.log(`[Dashboard] Verificando pagamento, tentativa ${attempt}/3...`);
+                            debugLog(`[Dashboard] Verificando pagamento, tentativa ${attempt}/3...`);
                             const verifyResp = await fetch(`${getApiUrl()}/api/stripe/verify-checkout-session`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
@@ -108,7 +137,7 @@ export function DashboardClient() {
                             if (verifyResp.ok) {
                                 const verifyData = await verifyResp.json();
                                 if (verifyData.paid) {
-                                    console.log("[Dashboard] Pagamento verificado!", verifyData);
+                                    debugLog("[Dashboard] Pagamento verificado!", verifyData);
                                     if (typeof verifyData.credits_remaining === "number" && verifyData.credits_remaining > 0) {
                                         setCreditsRemaining(verifyData.credits_remaining);
                                         localStorage.setItem("vant_cached_credits", String(verifyData.credits_remaining));
@@ -139,7 +168,7 @@ export function DashboardClient() {
                 // Ativar sessão Stripe pendente do localStorage se existir (safety net)
                 const pendingSid = localStorage.getItem("vant_pending_stripe_session_id");
                 if (pendingSid) {
-                    console.log("[Dashboard] Sessão Stripe pendente detectada, ativando:", pendingSid);
+                    debugLog("[Dashboard] Sessão Stripe pendente detectada, ativando:", pendingSid);
                     try {
                         const actResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
                             method: "POST",
@@ -148,7 +177,7 @@ export function DashboardClient() {
                         });
                         const actData = await actResp.json();
                         if (actResp.ok && actData.credits_remaining) {
-                            console.log("[Dashboard] Ativação pendente OK!", actData);
+                            debugLog("[Dashboard] Ativação pendente OK!", actData);
                             setCreditsRemaining(actData.credits_remaining);
                             localStorage.setItem("vant_cached_credits", String(actData.credits_remaining));
                             localStorage.removeItem("vant_pending_stripe_session_id");
@@ -163,32 +192,43 @@ export function DashboardClient() {
                 }
 
                 // �🚀 Sincronizar créditos ao entrar no dashboard
-                console.log("[Dashboard] Sincronizando créditos na entrada...");
+                debugLog("[Dashboard] Sincronizando créditos na entrada...");
                 try {
-                    const resp = await fetch(`${getApiUrl()}/api/user/status/${user.id}`);
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        console.log("[Dashboard] user/status response:", data);
+                    const userStatus = await fetchJsonWithRetry<UserStatus>(
+                        `${getApiUrl()}/api/user/status/${user.id}`,
+                        undefined,
+                        3,
+                        1000,
+                    );
+                    if (userStatus.ok) {
+                        const data = userStatus.data as UserStatus;
+                        debugLog("[Dashboard] user/status response:", data);
                         if (data.credits_remaining > 0) {
                             setCreditsRemaining(data.credits_remaining);
                             localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
-                            console.log("[Dashboard] Créditos atualizados:", data.credits_remaining);
+                            debugLog("[Dashboard] Créditos atualizados:", data.credits_remaining);
                         }
                     } else {
                         // Tentar syncEntitlements se user/status falhar
-                        console.log("[Dashboard] user/status falhou, tentando entitlements...");
-                        const entitlementResp = await fetch(`${getApiUrl()}/api/entitlements/status`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ user_id: user.id })
-                        });
+                        debugLog("[Dashboard] user/status falhou, tentando entitlements...");
+                        const entitlementResp = await fetchJsonWithRetry<{ credits_remaining?: number }>(
+                            `${getApiUrl()}/api/entitlements/status`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ user_id: user.id }),
+                            },
+                            3,
+                            1000,
+                        );
                         if (entitlementResp.ok) {
-                            const entitlementData = await entitlementResp.json();
-                            console.log("[Dashboard] entitlements response:", entitlementData);
-                            if (entitlementData.credits_remaining > 0) {
-                                setCreditsRemaining(entitlementData.credits_remaining);
-                                localStorage.setItem('vant_cached_credits', String(entitlementData.credits_remaining));
-                                console.log("[Dashboard] Créditos atualizados via entitlements:", entitlementData.credits_remaining);
+                            const entitlementData = entitlementResp.data as { credits_remaining?: number };
+                            debugLog("[Dashboard] entitlements response:", entitlementData);
+                            const entitlementCredits = entitlementData.credits_remaining;
+                            if (typeof entitlementCredits === "number" && entitlementCredits > 0) {
+                                setCreditsRemaining(entitlementCredits);
+                                localStorage.setItem('vant_cached_credits', String(entitlementCredits));
+                                debugLog("[Dashboard] Créditos atualizados via entitlements:", entitlementCredits);
                             }
                         }
                     }
@@ -230,15 +270,15 @@ export function DashboardClient() {
     const fetchLastCV = async () => {
         if (!authUserId) return;
         try {
-            console.log("[LastCV] Buscando último CV para usuário:", authUserId);
+            debugLog("[LastCV] Buscando último CV para usuário:", authUserId);
             const response = await fetch(`${getApiUrl()}/api/user/last-cv/${authUserId}`);
             if (!response.ok) {
-                console.log("[LastCV] Nenhum CV encontrado ou erro na busca");
+                debugLog("[LastCV] Nenhum CV encontrado ou erro na busca");
                 setLastCV(null);
                 return;
             }
             const data = await response.json();
-            console.log("[LastCV] Dados recebidos:", data);
+            debugLog("[LastCV] Dados recebidos:", data);
             setLastCV(data);
             try {
                 localStorage.setItem('vant_last_cv', JSON.stringify(data));
@@ -257,12 +297,15 @@ export function DashboardClient() {
 
         const fetchStatus = async () => {
             try {
-                const resp = await fetch(
-                    `${getApiUrl()}/api/user/status/${authUserId}`
+                const statusResp = await fetchJsonWithRetry<UserStatus>(
+                    `${getApiUrl()}/api/user/status/${authUserId}`,
+                    undefined,
+                    3,
+                    1000,
                 );
-                if (!resp.ok) return;
+                if (!statusResp.ok) return;
 
-                const data: UserStatus = await resp.json();
+                const data = statusResp.data as UserStatus;
                 setCreditsRemaining(data.credits_remaining);
                 setIsPremium(data.has_active_plan);
 
@@ -295,7 +338,7 @@ export function DashboardClient() {
         const fileName = localStorage.getItem('vant_file_name');
 
         if (justPaid && jobDesc && fileName) {
-            console.log("[Dashboard] Pagamento recente detectado com CV/vaga salvos:", fileName);
+            debugLog("[Dashboard] Pagamento recente detectado com CV/vaga salvos:", fileName);
             setSavedJobDescription(jobDesc);
             setSavedFileName(fileName);
             setShowContinueModal(true);

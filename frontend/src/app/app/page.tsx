@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap, HistoryItem } from "@/types";
 import { PaidStage } from "@/components/PaidStage";
 import { AuthModal } from "@/components/AuthModal";
@@ -10,8 +10,16 @@ import { HistoryStage } from "@/components/HistoryStage";
 import { PricingSimplified } from "@/components/PricingSimplified";
 import { NeonOffer } from "@/components/NeonOffer";
 import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 type JsonObject = Record<string, unknown>;
+
+const isProd = process.env.NODE_ENV === "production";
+function debugLog(...args: unknown[]) {
+    if (!isProd) {
+        console.log(...args);
+    }
+}
 
 // IndexedDB helpers for file storage (localStorage has 5MB limit, IndexedDB doesn't)
 const IDB_NAME = "vant_files";
@@ -74,13 +82,46 @@ function getApiUrl(): string {
     if (typeof window !== "undefined") {
         const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
         if (isLocalhost) {
-            console.log("[getApiUrl] Ambiente LOCAL detectado, usando http://127.0.0.1:8000");
+            debugLog("[getApiUrl] Ambiente LOCAL detectado, usando http://127.0.0.1:8000");
             return "http://127.0.0.1:8000";
         }
     }
     const url = process.env.NEXT_PUBLIC_API_URL || "https://vant-vlgn.onrender.com";
-    console.log("[getApiUrl] Ambiente PRODUÇÃO, usando", url);
+    debugLog("[getApiUrl] Ambiente PRODUÇÃO, usando", url);
     return url;
+}
+
+async function fetchJsonWithRetry<T>(
+    input: RequestInfo | URL,
+    init?: RequestInit,
+    retries = 3,
+    baseDelayMs = 1000,
+): Promise<{ ok: boolean; status: number; data: T | JsonObject }> {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const resp = await fetch(input, init);
+            let data: T | JsonObject = {};
+            try {
+                data = (await resp.json()) as T | JsonObject;
+            } catch {
+                data = {};
+            }
+            if (resp.ok) return { ok: true, status: resp.status, data };
+            if (attempt < retries && resp.status >= 500) {
+                await new Promise((r) => setTimeout(r, baseDelayMs * attempt));
+                continue;
+            }
+            return { ok: false, status: resp.status, data };
+        } catch (err) {
+            lastError = err;
+            if (attempt < retries) {
+                await new Promise((r) => setTimeout(r, baseDelayMs * attempt));
+                continue;
+            }
+        }
+    }
+    throw lastError instanceof Error ? lastError : new Error("Falha de rede");
 }
 
 // V3 Layout: Split into separate sections for above-the-fold CRO optimization
@@ -284,7 +325,7 @@ async function pollAnalysisProgress(
 
             const { status, current_step, result_data } = data;
 
-            console.log(`[Polling] Status: ${status}, Step: ${current_step}`);
+            debugLog(`[Polling] Status: ${status}, Step: ${current_step}`);
 
             // Atualizar UI baseado no step
             switch (current_step) {
@@ -298,7 +339,7 @@ async function pollAnalysisProgress(
                     await updateStatus("🔍 DIAGNÓSTICO CONCLUÍDO!", 25);
                     // Mostrar diagnóstico parcial e mudar para paid
                     if (result_data && typeof result_data === 'object') {
-                        console.log("[Polling] Atualizando com diagnóstico parcial:", result_data);
+                        debugLog("[Polling] Atualizando com diagnóstico parcial:", result_data);
                         setReportData(result_data);
                         setStage("paid"); // Mudar para paid para mostrar resultados
                     }
@@ -307,7 +348,7 @@ async function pollAnalysisProgress(
                     await updateStatus("✍️ CV OTIMIZADO PRONTO!", 50);
                     // Adicionar CV otimizado aos dados existentes
                     if (result_data && typeof result_data === 'object') {
-                        console.log("[Polling] Atualizando com CV parcial:", result_data);
+                        debugLog("[Polling] Atualizando com CV parcial:", result_data);
                         setReportData((prev: any) => ({ ...prev, ...result_data }));
                     }
                     break;
@@ -315,7 +356,7 @@ async function pollAnalysisProgress(
                     await updateStatus("📚 BIBLIOTECA PRONTA!", 75);
                     // Adicionar biblioteca aos dados existentes
                     if (result_data && typeof result_data === 'object') {
-                        console.log("[Polling] Atualizando com biblioteca parcial:", result_data);
+                        debugLog("[Polling] Atualizando com biblioteca parcial:", result_data);
                         setReportData((prev: any) => ({ ...prev, ...result_data }));
                     }
                     break;
@@ -323,7 +364,7 @@ async function pollAnalysisProgress(
                     await updateStatus("🎯 ESTRATÉGIAS PRONTAS!", 85);
                     // Adicionar tactical aos dados existentes
                     if (result_data && typeof result_data === 'object') {
-                        console.log("[Polling] Atualizando com tactical parcial:", result_data);
+                        debugLog("[Polling] Atualizando com tactical parcial:", result_data);
                         setReportData((prev: any) => ({ ...prev, ...result_data }));
                     }
                     break;
@@ -333,7 +374,7 @@ async function pollAnalysisProgress(
                     if (result_data && typeof result_data === 'object') {
                         // Atualizar estado com resultado completo
                         const report = result_data as any;
-                        console.log("[Polling] Análise concluída com sucesso:", report);
+                        debugLog("[Polling] Análise concluída com sucesso:", report);
 
                         // Atualizar estado do frontend com os dados completos
                         setReportData(report);
@@ -489,35 +530,7 @@ export default function AppPage() {
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
 
-    const supabase = useMemo((): SupabaseClient | null => {
-        // Limpar instâncias antigas do Supabase para evitar conflitos
-        if (typeof window !== 'undefined') {
-            // Limpar localStorage com padrão mais abrangente
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('supabase.auth.')) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-        }
-
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        if (!url || !key) {
-            return null;
-        }
-
-        // Criar instância única com storage key customizada
-        return createClient(url, key, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                storageKey: 'vant-supabase-auth', // Chave única para evitar conflitos
-            }
-        });
-    }, []);
+    const supabase = useMemo((): SupabaseClient | null => getSupabaseClient(), []);
 
     // Hook do Next.js para capturar parâmetros da URL de forma robusta
     const searchParams = useSearchParams();
@@ -838,7 +851,7 @@ export default function AppPage() {
     }, []);
 
     useEffect(() => {
-        console.log("[useEffect URL params] Rodou.");
+        debugLog("[useEffect URL params] Rodou.");
         if (typeof window === "undefined") {
             return;
         }
@@ -871,7 +884,7 @@ export default function AppPage() {
 
             const { data: { subscription } } = client.auth.onAuthStateChange(
                 (event, session) => {
-                    console.log("[AuthStateChange] Event:", event, "User:", session?.user?.email);
+                    debugLog("[AuthStateChange] Event:", event, "User:", session?.user?.email);
 
                     if (event === 'SIGNED_IN' && session?.user) {
                         setAuthUserId(session.user.id);
@@ -881,7 +894,7 @@ export default function AppPage() {
                         // Sessão Stripe pendente é tratada pelo useEffect dedicado de Payment Redirect
                         const pendingSession = localStorage.getItem("vant_pending_stripe_session_id");
                         if (pendingSession) {
-                            console.log("[AuthStateChange] Sessão Stripe pendente detectada, useEffect de redirect vai tratar.");
+                            debugLog("[AuthStateChange] Sessão Stripe pendente detectada, useEffect de redirect vai tratar.");
                             return;
                         }
 
@@ -890,10 +903,10 @@ export default function AppPage() {
                         if (cachedCredits) {
                             const credits = parseInt(cachedCredits);
                             setCreditsRemaining(credits);
-                            console.log("[AuthStateChange] Usando cache de créditos:", credits);
+                            debugLog("[AuthStateChange] Usando cache de créditos:", credits);
                         } else {
                             setCreditsLoading(true);
-                            console.log("[AuthStateChange] Sem cache, carregando créditos...");
+                            debugLog("[AuthStateChange] Sem cache, carregando créditos...");
                         }
                     } else if (event === 'SIGNED_OUT') {
                         setAuthUserId(null);
@@ -1152,14 +1165,14 @@ export default function AppPage() {
     // DEBUG: Restauração do Contexto de Reset de Senha
     // -------------------------------------------------------------------------
     useEffect(() => {
-        console.log("🔍 [RESTORE DEBUG] useEffect de restauração foi chamado!");
+        debugLog("🔍 [RESTORE DEBUG] useEffect de restauração foi chamado!");
 
         // Leitura "crua" do LocalStorage para debug
         const storedStage = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_to") : null;
         const storedPlan = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_plan") : null;
 
-        console.log("🕵️ [RESTORE DEBUG] Rodou o efeito de restauração.");
-        console.log("🕵️ [RESTORE DEBUG] LocalStorage cru:", {
+        debugLog("🕵️ [RESTORE DEBUG] Rodou o efeito de restauração.");
+        debugLog("🕵️ [RESTORE DEBUG] LocalStorage cru:", {
             vant_reset_return_to: storedStage,
             vant_reset_return_plan: storedPlan,
             authUserId: authUserId,
@@ -1167,23 +1180,23 @@ export default function AppPage() {
         });
 
         if (storedStage === "checkout") {
-            console.log("✅ [RESTORE DEBUG] Contexto de checkout encontrado!");
+            debugLog("✅ [RESTORE DEBUG] Contexto de checkout encontrado!");
 
             if (storedPlan) {
-                console.log(`🔄 [RESTORE DEBUG] Restaurando plano: ${storedPlan}`);
+                debugLog(`🔄 [RESTORE DEBUG] Restaurando plano: ${storedPlan}`);
                 setSelectedPlan(storedPlan as PlanType);
             }
 
-            console.log("🚀 [RESTORE DEBUG] Forçando stage para 'checkout'");
+            debugLog("🚀 [RESTORE DEBUG] Forçando stage para 'checkout'");
             setStage("checkout");
 
             if (authUserId) {
-                console.log("🧹 [RESTORE DEBUG] Usuário autenticado, limpando flags de reset.");
+                debugLog("🧹 [RESTORE DEBUG] Usuário autenticado, limpando flags de reset.");
                 localStorage.removeItem("vant_reset_return_to");
                 localStorage.removeItem("vant_reset_return_plan");
             }
         } else {
-            console.log("ℹ️ [RESTORE DEBUG] Nenhum contexto de retorno encontrado.");
+            debugLog("ℹ️ [RESTORE DEBUG] Nenhum contexto de retorno encontrado.");
         }
     }, [authUserId]); // Re-rodar quando authUserId mudar
 
@@ -1814,27 +1827,32 @@ export default function AppPage() {
     }
 
     async function syncEntitlements(userId: string) {
-        const resp = await fetch(`${getApiUrl()}/api/entitlements/status`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: userId }),
-        });
-        const payload = (await resp.json()) as JsonObject;
-        if (!resp.ok) {
-            const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
+        const { ok, status, data } = await fetchJsonWithRetry<JsonObject>(
+            `${getApiUrl()}/api/entitlements/status`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: userId }),
+            },
+            3,
+            1000,
+        );
+        const payload = data as JsonObject;
+        if (!ok) {
+            const err = typeof payload.error === "string" ? payload.error : `HTTP ${status}`;
             throw new Error(err);
         }
         if (typeof payload.credits_remaining === "number") {
             setCreditsRemaining(payload.credits_remaining);
             // Salvar no cache para próximos logins
             localStorage.setItem('vant_cached_credits', payload.credits_remaining.toString());
-            console.log("[syncEntitlements] Créditos atualizados e cacheados:", payload.credits_remaining);
+            debugLog("[syncEntitlements] Créditos atualizados e cacheados:", payload.credits_remaining);
         }
         setCreditsLoading(false);
     }
 
     useEffect(() => {
-        console.log("[useEffect syncEntitlements] Rodou.");
+        debugLog("[useEffect syncEntitlements] Rodou.");
         if (!authUserId) {
             return;
         }
@@ -1845,20 +1863,20 @@ export default function AppPage() {
                 // Se usuário tem créditos e está na página de planos (preview), NÃO mover para hero automaticamente
                 // Usuário pode querer ver planos mesmo tendo créditos
                 if (creditsRemaining > 0 && stage === "preview") {
-                    console.log("[syncEntitlements] Usuário tem créditos mas está em preview - mantendo em preview para ver planos");
+                    debugLog("[syncEntitlements] Usuário tem créditos mas está em preview - mantendo em preview para ver planos");
                     // Não mover para hero - deixar usuário decidir
                 }
 
                 // Se usuário tem créditos e está no hero (tela inicial), mostrar mensagem
                 if (creditsRemaining > 0 && stage === "hero") {
-                    console.log("[syncEntitlements] Usuário com créditos detectado no hero");
+                    debugLog("[syncEntitlements] Usuário com créditos detectado no hero");
                     // O botão "Começar Agora" já vai chamar onStart() que vai usar os créditos
                 }
             } catch {
                 return;
             }
         })();
-    }, [authUserId, creditsRemaining, stage]);
+    }, [authUserId]);
 
     // Função para lidar com seleção de item do histórico
     const handleSelectHistory = async (item: HistoryItem) => {
@@ -1899,9 +1917,9 @@ export default function AppPage() {
     };
 
     useEffect(() => {
-        console.log("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
+        debugLog("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
         if (stage !== "processing_premium") {
-            console.log("[useEffect processing_premium] Stage não é processing_premium, saindo.");
+            debugLog("[useEffect processing_premium] Stage não é processing_premium, saindo.");
             return;
         }
         if (!authUserId) {
