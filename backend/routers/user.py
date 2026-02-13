@@ -80,37 +80,61 @@ def get_user_status(user_id: str) -> JSONResponse:
         )
 
 
+_activated_session_ids: set[str] = set()
+
+
 def _try_auto_activate_from_stripe(user_id: str) -> bool:
     """Verifica no Stripe se há sessões pagas recentes para este user e ativa automaticamente."""
+    import json
     try:
         sessions = stripe.checkout.Session.list(limit=5)
         for session in sessions.data:
+            sid = session.get("id", "")
+            if sid in _activated_session_ids:
+                continue
             if (
                 session.get("client_reference_id") == user_id
                 and session.get("payment_status") in ("paid", "no_payment_required")
                 and session.get("status") == "complete"
             ):
+                # Verificar se já existe subscription com este stripe_subscription_id no banco
+                sub_id = session.get("subscription")
+                if sub_id and supabase_admin:
+                    existing = (
+                        supabase_admin.table("subscriptions")
+                        .select("id")
+                        .eq("stripe_subscription_id", sub_id)
+                        .eq("user_id", user_id)
+                        .limit(1)
+                        .execute()
+                    )
+                    if existing.data:
+                        logger.info(f"[AUTO-ACTIVATE] Sessão {sid} já ativada (subscription existe no banco), pulando")
+                        _activated_session_ids.add(sid)
+                        continue
+
                 meta = session.get("metadata") or {}
                 plan_id = (meta.get("plan") or "basico").strip()
                 if plan_id not in PRICING:
                     plan_id = "basico"
 
-                logger.info(f"[AUTO-ACTIVATE] Sessão paga encontrada: {session.id}, plan={plan_id}")
+                logger.info(f"[AUTO-ACTIVATE] Sessão paga encontrada: {sid}, plan={plan_id}")
 
                 from routers.stripe_routes import activate_entitlements
                 activate_payload = ActivateEntitlementsRequest(
-                    session_id=session.id,
+                    session_id=sid,
                     user_id=user_id,
                     plan_id=plan_id,
                 )
                 resp = activate_entitlements(activate_payload)
-                import json
                 body = json.loads(resp.body.decode())
                 if body.get("ok"):
                     logger.info(f"[AUTO-ACTIVATE] Ativação OK: {body}")
+                    _activated_session_ids.add(sid)
                     return True
                 else:
                     logger.warning(f"[AUTO-ACTIVATE] Ativação retornou não-ok: {body}")
+                    _activated_session_ids.add(sid)
         return False
     except Exception as e:
         logger.error(f"[AUTO-ACTIVATE] Erro ao buscar sessões Stripe: {e}")
