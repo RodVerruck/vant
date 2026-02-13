@@ -878,38 +878,11 @@ export default function AppPage() {
                         setAuthEmail(session.user.email || "");
                         setCheckoutError("");
 
-                        // Ativar sessão pendente do Stripe se existir
+                        // Sessão Stripe pendente é tratada pelo useEffect dedicado de Payment Redirect
                         const pendingSession = localStorage.getItem("vant_pending_stripe_session_id");
                         if (pendingSession) {
-                            console.log("[AuthStateChange] Sessão Stripe pendente detectada, ativando...");
-                            (async () => {
-                                try {
-                                    const activateResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({
-                                            session_id: pendingSession,
-                                            user_id: session.user.id,
-                                            plan_id: "trial",
-                                        }),
-                                    });
-                                    const activateData = await activateResp.json();
-                                    if (activateResp.ok) {
-                                        console.log("[AuthStateChange] Ativação OK!", activateData);
-                                        localStorage.removeItem("vant_pending_stripe_session_id");
-                                        if (typeof activateData.credits_remaining === "number") {
-                                            localStorage.setItem('vant_cached_credits', String(activateData.credits_remaining));
-                                        }
-                                        localStorage.setItem('vant_just_paid', 'true');
-                                        window.location.href = "/dashboard";
-                                    } else {
-                                        console.error("[AuthStateChange] Ativação falhou:", activateData);
-                                    }
-                                } catch (err) {
-                                    console.error("[AuthStateChange] Erro na ativação:", err);
-                                }
-                            })();
-                            return; // Não continuar, vai redirecionar
+                            console.log("[AuthStateChange] Sessão Stripe pendente detectada, useEffect de redirect vai tratar.");
+                            return;
                         }
 
                         // Cache imediato de créditos para resposta instantânea
@@ -1019,50 +992,14 @@ export default function AppPage() {
             setCheckoutError("Pagamento confirmado. Carregando sua conta...");
         }
 
-        // Retorno do Stripe após pagamento
+        // Retorno do Stripe após pagamento — apenas salvar no localStorage e limpar URL
+        // A verificação e redirect são feitos pelo useEffect dedicado abaixo
         if (payment === "success" && sessionId) {
-            // CRITICAL: salvar session_id IMEDIATAMENTE (síncrono) antes de qualquer async
-            // Isso garante que o Dashboard safety net pode ativar mesmo se /app redirecionar antes
             window.localStorage.setItem("vant_pending_stripe_session_id", sessionId);
-            console.log("[Stripe Return] sessionId salvo IMEDIATAMENTE no localStorage:", sessionId);
-
+            localStorage.setItem('vant_payment_success', 'true');
+            console.log("[Stripe Return] sessionId salvo no localStorage:", sessionId);
             setStage("checkout");
-            setCheckoutError("");
-
-            (async () => {
-                try {
-                    const resp = await fetch(`${getApiUrl()}/api/stripe/verify-checkout-session`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ session_id: sessionId }),
-                    });
-
-                    const payload = (await resp.json()) as JsonObject;
-                    if (!resp.ok) {
-                        const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status} `;
-                        throw new Error(err);
-                    }
-
-                    if (payload.paid === true) {
-                        // Pagamento confirmado pelo backend — redirecionar para /dashboard
-                        // O backend auto-ativa os créditos via /api/user/status
-                        console.log("[Stripe Return] Pagamento verificado! Redirecionando para /dashboard...");
-
-                        // Cachear créditos se disponíveis (auto_activated pelo verify-checkout-session)
-                        if (typeof payload.credits_remaining === "number" && payload.credits_remaining > 0) {
-                            localStorage.setItem('vant_cached_credits', String(payload.credits_remaining));
-                        }
-                        window.localStorage.removeItem("vant_pending_stripe_session_id");
-                        localStorage.setItem('vant_just_paid', 'true');
-                        window.location.href = "/dashboard";
-                        return;
-                    } else {
-                        setCheckoutError("Pagamento não confirmado ainda. Tente novamente em alguns segundos.");
-                    }
-                } catch (e: unknown) {
-                    setCheckoutError(getErrorMessage(e, "Falha ao validar pagamento"));
-                }
-            })();
+            setCheckoutError("Pagamento confirmado. Ativando seu plano...");
 
             url.searchParams.delete("payment");
             url.searchParams.delete("session_id");
@@ -1269,6 +1206,8 @@ export default function AppPage() {
 
     // useRef para controlar se ativação já foi tentada
     const activationAttempted = useRef(false);
+    // Ref para controlar se o redirect pós-pagamento já está em andamento
+    const paymentRedirectInProgress = useRef(false);
 
     // Função para resetar estado de ativação
     const resetActivationState = () => {
@@ -1277,6 +1216,84 @@ export default function AppPage() {
         setNeedsActivation(false);
         setCheckoutError("");
     };
+
+    // useEffect dedicado: detecta pagamento pendente no localStorage e redireciona para /dashboard
+    // Funciona independente de URL params (que podem ser limpos antes do fetch completar)
+    // Inclui retry para lidar com cold starts do Render (500 errors)
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const paymentSuccess = localStorage.getItem('vant_payment_success');
+        const pendingSid = localStorage.getItem('vant_pending_stripe_session_id');
+        if (!paymentSuccess || !pendingSid || paymentRedirectInProgress.current) return;
+
+        paymentRedirectInProgress.current = true;
+        console.log("[Payment Redirect] Pagamento pendente detectado, verificando e redirecionando...");
+        setStage("checkout");
+        setCheckoutError("Pagamento confirmado. Ativando seu plano...");
+
+        const verifyAndRedirect = async (retries: number) => {
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    console.log(`[Payment Redirect] Tentativa ${attempt}/${retries}...`);
+                    const resp = await fetch(`${getApiUrl()}/api/stripe/verify-checkout-session`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ session_id: pendingSid }),
+                    });
+
+                    if (!resp.ok) {
+                        if (attempt < retries) {
+                            console.warn(`[Payment Redirect] Backend retornou ${resp.status}, retry em 3s...`);
+                            await new Promise(r => setTimeout(r, 3000));
+                            continue;
+                        }
+                        throw new Error(`Backend retornou ${resp.status}`);
+                    }
+
+                    const payload = (await resp.json()) as JsonObject;
+                    if (payload.paid === true) {
+                        console.log("[Payment Redirect] Pagamento verificado! Redirecionando para /dashboard...");
+                        if (typeof payload.credits_remaining === "number" && payload.credits_remaining > 0) {
+                            localStorage.setItem('vant_cached_credits', String(payload.credits_remaining));
+                        }
+                        localStorage.removeItem("vant_pending_stripe_session_id");
+                        localStorage.removeItem('vant_payment_success');
+                        localStorage.setItem('vant_just_paid', 'true');
+                        window.location.href = "/dashboard";
+                        return;
+                    } else {
+                        // Pagamento ainda não confirmado — retry
+                        if (attempt < retries) {
+                            console.warn("[Payment Redirect] Pagamento não confirmado ainda, retry em 3s...");
+                            await new Promise(r => setTimeout(r, 3000));
+                            continue;
+                        }
+                        // Último attempt — redirecionar mesmo assim, backend auto-ativa via /api/user/status
+                        console.warn("[Payment Redirect] Pagamento não confirmado após retries, redirecionando mesmo assim...");
+                        localStorage.removeItem("vant_pending_stripe_session_id");
+                        localStorage.removeItem('vant_payment_success');
+                        localStorage.setItem('vant_just_paid', 'true');
+                        window.location.href = "/dashboard";
+                        return;
+                    }
+                } catch (err) {
+                    if (attempt < retries) {
+                        console.warn(`[Payment Redirect] Erro na tentativa ${attempt}, retry em 3s...`, err);
+                        await new Promise(r => setTimeout(r, 3000));
+                    } else {
+                        console.error("[Payment Redirect] Falha após todas as tentativas, redirecionando para /dashboard...", err);
+                        // Redirecionar mesmo assim — backend auto-ativa via /api/user/status
+                        localStorage.removeItem("vant_pending_stripe_session_id");
+                        localStorage.removeItem('vant_payment_success');
+                        localStorage.setItem('vant_just_paid', 'true');
+                        window.location.href = "/dashboard";
+                    }
+                }
+            }
+        };
+
+        verifyAndRedirect(3);
+    }, []);
 
     useEffect(() => {
         console.log("[useEffect needsActivation] Rodou.");
