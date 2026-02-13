@@ -87,6 +87,20 @@ def _try_auto_activate_from_stripe(user_id: str) -> bool:
     """Verifica no Stripe se há sessões pagas recentes para este user e ativa automaticamente."""
     import json
     try:
+        # Se o user já tem QUALQUER subscription no banco, não auto-ativar
+        # (significa que alguma sessão já foi processada anteriormente)
+        if supabase_admin:
+            any_sub = (
+                supabase_admin.table("subscriptions")
+                .select("id")
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if any_sub.data:
+                logger.info(f"[AUTO-ACTIVATE] User {user_id} já tem subscription no banco, pulando auto-activate")
+                return False
+
         sessions = stripe.checkout.Session.list(limit=5)
         for session in sessions.data:
             sid = session.get("id", "")
@@ -97,22 +111,6 @@ def _try_auto_activate_from_stripe(user_id: str) -> bool:
                 and session.get("payment_status") in ("paid", "no_payment_required")
                 and session.get("status") == "complete"
             ):
-                # Verificar se já existe subscription no banco para este stripe_subscription_id
-                # (qualquer status = já foi processada anteriormente)
-                sub_id = session.get("subscription")
-                if sub_id and supabase_admin:
-                    existing = (
-                        supabase_admin.table("subscriptions")
-                        .select("id")
-                        .eq("stripe_subscription_id", sub_id)
-                        .limit(1)
-                        .execute()
-                    )
-                    if existing.data:
-                        logger.info(f"[AUTO-ACTIVATE] Sessão {sid} já processada (subscription {sub_id} existe no banco), pulando")
-                        _activated_session_ids.add(sid)
-                        continue
-
                 meta = session.get("metadata") or {}
                 plan_id = (meta.get("plan") or "basico").strip()
                 if plan_id not in PRICING:
