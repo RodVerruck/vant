@@ -84,8 +84,9 @@ _activated_session_ids: set[str] = set()
 
 
 def _try_auto_activate_from_stripe(user_id: str) -> bool:
-    """Verifica no Stripe se há sessões pagas recentes para este user e ativa automaticamente."""
+    """Verifica no Stripe se há sessões pagas recentes (últimos 10 min) para este user e ativa automaticamente."""
     import json
+    import time as _time
     try:
         # Se o user já tem QUALQUER subscription no banco, não auto-ativar
         # (significa que alguma sessão já foi processada anteriormente)
@@ -101,7 +102,9 @@ def _try_auto_activate_from_stripe(user_id: str) -> bool:
                 logger.info(f"[AUTO-ACTIVATE] User {user_id} já tem subscription no banco, pulando auto-activate")
                 return False
 
-        sessions = stripe.checkout.Session.list(limit=5)
+        # Só buscar sessões dos últimos 10 minutos para evitar reativar sessões antigas
+        ten_min_ago = int(_time.time()) - 600
+        sessions = stripe.checkout.Session.list(limit=5, created={"gte": ten_min_ago})
         for session in sessions.data:
             sid = session.get("id", "")
             if sid in _activated_session_ids:
