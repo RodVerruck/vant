@@ -56,7 +56,10 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
 
     billing = (PRICING[plan_id].get("billing") or "one_time").strip().lower()
     is_subscription = billing == "subscription" or billing == "trial"
-    success_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
+    # Redirecionar para /dashboard após pagamento (não /app)
+    # O dashboard detecta payment=success e mostra os créditos
+    base_url = FRONTEND_CHECKOUT_RETURN_URL.replace("/app", "")
+    success_url = f"{base_url}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=cancel"
 
     # Block subscription purchase if user already has an active subscription

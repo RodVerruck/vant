@@ -84,7 +84,59 @@ export function DashboardClient() {
                     if (!isNaN(n)) setCreditsRemaining(n);
                 }
 
-                // � Ativar sessão Stripe pendente se existir (safety net)
+                // Detectar retorno do Stripe via URL params (?payment=success&session_id=...)
+                const urlParams = new URLSearchParams(window.location.search);
+                const paymentParam = urlParams.get("payment");
+                const sessionIdParam = urlParams.get("session_id");
+
+                if (paymentParam === "success" && sessionIdParam) {
+                    console.log("[Dashboard] Retorno do Stripe detectado! session_id:", sessionIdParam);
+                    // Limpar URL params imediatamente
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, "", cleanUrl);
+
+                    // Verificar e ativar com retry (Render cold start pode dar 500)
+                    let activated = false;
+                    for (let attempt = 1; attempt <= 3; attempt++) {
+                        try {
+                            console.log(`[Dashboard] Verificando pagamento, tentativa ${attempt}/3...`);
+                            const verifyResp = await fetch(`${getApiUrl()}/api/stripe/verify-checkout-session`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ session_id: sessionIdParam }),
+                            });
+                            if (verifyResp.ok) {
+                                const verifyData = await verifyResp.json();
+                                if (verifyData.paid) {
+                                    console.log("[Dashboard] Pagamento verificado!", verifyData);
+                                    if (typeof verifyData.credits_remaining === "number" && verifyData.credits_remaining > 0) {
+                                        setCreditsRemaining(verifyData.credits_remaining);
+                                        localStorage.setItem("vant_cached_credits", String(verifyData.credits_remaining));
+                                    }
+                                    localStorage.removeItem("vant_pending_stripe_session_id");
+                                    localStorage.removeItem("vant_payment_success");
+                                    localStorage.setItem("vant_just_paid", "true");
+                                    activated = true;
+                                    break;
+                                }
+                            }
+                            if (attempt < 3) {
+                                console.warn(`[Dashboard] Tentativa ${attempt} falhou, retry em 3s...`);
+                                await new Promise(r => setTimeout(r, 3000));
+                            }
+                        } catch (err) {
+                            console.warn(`[Dashboard] Erro na tentativa ${attempt}:`, err);
+                            if (attempt < 3) await new Promise(r => setTimeout(r, 3000));
+                        }
+                    }
+                    if (!activated) {
+                        // Mesmo sem verificação, marcar como pago — backend auto-ativa via /api/user/status
+                        console.warn("[Dashboard] Verificação falhou, mas marcando como pago (backend auto-ativa)");
+                        localStorage.setItem("vant_just_paid", "true");
+                    }
+                }
+
+                // Ativar sessão Stripe pendente do localStorage se existir (safety net)
                 const pendingSid = localStorage.getItem("vant_pending_stripe_session_id");
                 if (pendingSid) {
                     console.log("[Dashboard] Sessão Stripe pendente detectada, ativando:", pendingSid);
