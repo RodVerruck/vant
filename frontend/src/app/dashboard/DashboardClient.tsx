@@ -82,6 +82,7 @@ export function DashboardClient() {
     const [showContinueModal, setShowContinueModal] = useState(false);
     const [savedJobDescription, setSavedJobDescription] = useState<string | null>(null);
     const [savedFileName, setSavedFileName] = useState<string | null>(null);
+    const [continueModalSource, setContinueModalSource] = useState<"just_paid" | "auth_resume">("auth_resume");
 
     // Last CV state
     const [lastCV, setLastCV] = useState<{ has_last_cv: boolean; filename?: string; time_ago?: string; is_recent?: boolean; analysis_id?: string; job_description?: string } | null>(null);
@@ -167,7 +168,8 @@ export function DashboardClient() {
 
                 // Ativar sessão Stripe pendente do localStorage se existir (safety net)
                 const pendingSid = localStorage.getItem("vant_pending_stripe_session_id");
-                if (pendingSid) {
+                const paymentSuccessFlag = localStorage.getItem("vant_payment_success") === "true";
+                if (pendingSid && paymentSuccessFlag) {
                     debugLog("[Dashboard] Sessão Stripe pendente detectada, ativando:", pendingSid);
                     try {
                         const actResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
@@ -189,6 +191,10 @@ export function DashboardClient() {
                     } catch (actErr) {
                         console.error("[Dashboard] Erro na ativação pendente:", actErr);
                     }
+                } else if (pendingSid && !paymentSuccessFlag) {
+                    debugLog("[Dashboard] Sessão Stripe pendente stale detectada, limpando flags.");
+                    localStorage.removeItem("vant_pending_stripe_session_id");
+                    localStorage.removeItem("vant_just_paid");
                 }
 
                 // �🚀 Sincronizar créditos ao entrar no dashboard
@@ -335,21 +341,38 @@ export function DashboardClient() {
 
         const justPaid = localStorage.getItem('vant_just_paid');
         const resumeContext = localStorage.getItem('vant_dashboard_resume_context');
+        const paymentSuccessFlag = localStorage.getItem('vant_payment_success') === 'true';
+        const hasPendingStripeSession = !!localStorage.getItem('vant_pending_stripe_session_id');
+        const urlPaymentSuccess = new URLSearchParams(window.location.search).get('payment') === 'success';
+        const hasPaymentEvidence = paymentSuccessFlag || hasPendingStripeSession || urlPaymentSuccess;
         const jobDesc = localStorage.getItem('vant_jobDescription');
         const fileName = localStorage.getItem('vant_file_name');
         const hasSavedContext = !!jobDesc && !!fileName;
-        const shouldShowContinue = hasSavedContext && (justPaid === 'true' || resumeContext === 'true');
+        const source: "just_paid" | "auth_resume" | null =
+            resumeContext === 'true'
+                ? 'auth_resume'
+                : justPaid === 'true' && hasPaymentEvidence
+                    ? 'just_paid'
+                    : justPaid === 'true' && hasSavedContext
+                        ? 'auth_resume'
+                        : null;
+        const shouldShowContinue = hasSavedContext && !!source;
 
         if (shouldShowContinue) {
             debugLog("[Dashboard] Contexto salvo detectado para continuidade:", {
-                source: justPaid ? 'just_paid' : 'auth_resume',
+                source,
                 fileName,
             });
             setSavedJobDescription(jobDesc as string);
             setSavedFileName(fileName as string);
+            setContinueModalSource(source as "just_paid" | "auth_resume");
             setShowContinueModal(true);
             localStorage.removeItem('vant_just_paid');
             localStorage.removeItem('vant_dashboard_resume_context');
+            if (source === 'auth_resume') {
+                localStorage.removeItem('vant_payment_success');
+                localStorage.removeItem('vant_pending_stripe_session_id');
+            }
         } else {
             if (justPaid) {
                 localStorage.removeItem('vant_just_paid');
@@ -510,12 +533,14 @@ export function DashboardClient() {
                         boxShadow: "0 25px 50px rgba(0,0,0,0.5)",
                     }}>
                         <div style={{ textAlign: "center", marginBottom: 24 }}>
-                            <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
+                            <div style={{ fontSize: 40, marginBottom: 8 }}>{continueModalSource === "just_paid" ? "🎉" : "📄"}</div>
                             <h2 style={{ color: "#F8FAFC", fontSize: "1.3rem", fontWeight: 700, margin: "0 0 8px" }}>
-                                Pagamento confirmado!
+                                {continueModalSource === "just_paid" ? "Pagamento confirmado!" : "Dados salvos encontrados"}
                             </h2>
                             <p style={{ color: "#94A3B8", fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>
-                                Seus créditos já estão disponíveis. Deseja prosseguir com a análise do seu CV?
+                                {continueModalSource === "just_paid"
+                                    ? "Seus créditos já estão disponíveis. Deseja prosseguir com a análise do seu CV?"
+                                    : "Detectamos seu CV e vaga salvos. Deseja prosseguir com a análise agora?"}
                             </p>
                         </div>
 

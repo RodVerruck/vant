@@ -981,7 +981,15 @@ export default function AppPage() {
 
         // Verificar se há sessão pendente de ativação
         const pendingSid = window.localStorage.getItem("vant_pending_stripe_session_id") || "";
-        if (pendingSid && authUserId) {
+        const paymentSuccessFlag = localStorage.getItem("vant_payment_success") === "true";
+        const hasPaymentContext = payment === "success" || paymentSuccessFlag;
+
+        // Sessão pendente sem contexto de pagamento atual é stale
+        if (pendingSid && !hasPaymentContext) {
+            window.localStorage.removeItem("vant_pending_stripe_session_id");
+            window.localStorage.removeItem("vant_payment_success");
+            window.localStorage.removeItem("vant_just_paid");
+        } else if (pendingSid && authUserId) {
             // Sessão pendente + usuário logado: ativar diretamente
             console.log("[Init] Sessão Stripe pendente encontrada, ativando...");
             setStage("checkout");
@@ -1001,6 +1009,7 @@ export default function AppPage() {
                     if (activateResp.ok) {
                         console.log("[Init] Ativação OK!", activateData);
                         localStorage.removeItem("vant_pending_stripe_session_id");
+                        localStorage.removeItem("vant_payment_success");
                         if (typeof activateData.credits_remaining === "number") {
                             localStorage.setItem('vant_cached_credits', String(activateData.credits_remaining));
                         }
@@ -1072,10 +1081,35 @@ export default function AppPage() {
         const hasSkipPreview = !!localStorage.getItem("vant_skip_preview");
         // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
         const hasNonHeroStage = stage !== "hero";
+        const hasSavedJob = !!localStorage.getItem("vant_jobDescription");
+        const hasSavedFile = !!localStorage.getItem("vant_file_name");
+        const hasSavedResumeContext = hasSavedJob && hasSavedFile;
         // Stripe payment flow: query param ou sessão pendente no localStorage
         const urlNow = new URL(window.location.href);
         const hasPaymentSuccess = urlNow.searchParams.get("payment") === "success";
-        const hasPendingStripeSession = !!localStorage.getItem("vant_pending_stripe_session_id");
+        let hasPaymentSuccessFlag = localStorage.getItem("vant_payment_success") === "true";
+        let hasPendingStripeSessionRaw = !!localStorage.getItem("vant_pending_stripe_session_id");
+
+        // Login/cadastro vindo do hero com contexto salvo: não deve herdar flags antigas de pagamento
+        if (hasSavedResumeContext && !hasPaymentSuccess) {
+            if (hasPaymentSuccessFlag || hasPendingStripeSessionRaw) {
+                localStorage.removeItem("vant_payment_success");
+                localStorage.removeItem("vant_pending_stripe_session_id");
+            }
+            localStorage.removeItem("vant_just_paid");
+            hasPaymentSuccessFlag = false;
+            hasPendingStripeSessionRaw = false;
+        }
+
+        const hasPaymentFlowContext = hasPaymentSuccess || hasPaymentSuccessFlag;
+
+        // Se existe sessão pendente sem contexto de pagamento atual, tratar como stale
+        if (hasPendingStripeSessionRaw && !hasPaymentFlowContext) {
+            localStorage.removeItem("vant_pending_stripe_session_id");
+            localStorage.removeItem("vant_just_paid");
+        }
+
+        const hasPendingStripeSession = hasPendingStripeSessionRaw && hasPaymentFlowContext;
         const hasActiveFlow =
             returnPlan ||
             hasReturnStage ||
@@ -1103,10 +1137,10 @@ export default function AppPage() {
 
         if (!hasActiveFlow) {
             console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
-            const hasSavedJob = !!localStorage.getItem("vant_jobDescription");
-            const hasSavedFile = !!localStorage.getItem("vant_file_name");
-            if (hasSavedJob && hasSavedFile) {
+            if (hasSavedResumeContext) {
                 localStorage.setItem("vant_dashboard_resume_context", "true");
+                // Garantir que dashboard trate como retomada normal e não pagamento
+                localStorage.removeItem("vant_just_paid");
             }
             window.location.href = "/dashboard";
             return;
