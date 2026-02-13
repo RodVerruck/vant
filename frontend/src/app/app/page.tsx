@@ -1103,6 +1103,11 @@ export default function AppPage() {
 
         if (!hasActiveFlow) {
             console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
+            const hasSavedJob = !!localStorage.getItem("vant_jobDescription");
+            const hasSavedFile = !!localStorage.getItem("vant_file_name");
+            if (hasSavedJob && hasSavedFile) {
+                localStorage.setItem("vant_dashboard_resume_context", "true");
+            }
             window.location.href = "/dashboard";
             return;
         }

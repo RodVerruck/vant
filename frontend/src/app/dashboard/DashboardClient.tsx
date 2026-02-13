@@ -329,22 +329,34 @@ export function DashboardClient() {
         }
     }, [authUserId]);
 
-    // Detectar se acabou de pagar e tem CV/vaga salvos → mostrar modal "Continuar Análise?"
+    // Detectar contexto salvo de CV/vaga (após pagamento OU login/cadastro vindo do hero)
     useEffect(() => {
         if (!authUserId || loading) return;
 
         const justPaid = localStorage.getItem('vant_just_paid');
+        const resumeContext = localStorage.getItem('vant_dashboard_resume_context');
         const jobDesc = localStorage.getItem('vant_jobDescription');
         const fileName = localStorage.getItem('vant_file_name');
+        const hasSavedContext = !!jobDesc && !!fileName;
+        const shouldShowContinue = hasSavedContext && (justPaid === 'true' || resumeContext === 'true');
 
-        if (justPaid && jobDesc && fileName) {
-            debugLog("[Dashboard] Pagamento recente detectado com CV/vaga salvos:", fileName);
-            setSavedJobDescription(jobDesc);
-            setSavedFileName(fileName);
+        if (shouldShowContinue) {
+            debugLog("[Dashboard] Contexto salvo detectado para continuidade:", {
+                source: justPaid ? 'just_paid' : 'auth_resume',
+                fileName,
+            });
+            setSavedJobDescription(jobDesc as string);
+            setSavedFileName(fileName as string);
             setShowContinueModal(true);
             localStorage.removeItem('vant_just_paid');
-        } else if (justPaid) {
-            localStorage.removeItem('vant_just_paid');
+            localStorage.removeItem('vant_dashboard_resume_context');
+        } else {
+            if (justPaid) {
+                localStorage.removeItem('vant_just_paid');
+            }
+            if (resumeContext) {
+                localStorage.removeItem('vant_dashboard_resume_context');
+            }
         }
     }, [authUserId, loading]);
 
