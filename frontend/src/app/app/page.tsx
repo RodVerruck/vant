@@ -1044,47 +1044,18 @@ export default function AppPage() {
                     }
 
                     if (payload.paid === true) {
-                        const verifiedPlanId = typeof payload.plan_id === "string" ? payload.plan_id : "basico";
-                        setSelectedPlan(verifiedPlanId as PlanType);
-                        setStripeSessionId(sessionId);
+                        // Pagamento confirmado pelo backend — redirecionar para /dashboard
+                        // O backend auto-ativa os créditos via /api/user/status
+                        console.log("[Stripe Return] Pagamento verificado! Redirecionando para /dashboard...");
 
-                        // Sempre salvar no localStorage — a ativação será feita pelo
-                        // SIGNED_IN handler (se auth ainda não carregou) ou pelo
-                        // initSession check abaixo (se auth já está disponível)
-                        window.localStorage.setItem("vant_pending_stripe_session_id", sessionId);
-                        console.log("[Stripe Return] Pagamento verificado, sessionId salvo no localStorage");
-
-                        if (authUserId) {
-                            // Auth já disponível: ativar diretamente
-                            console.log("[Stripe Return] Auth disponível, ativando agora...");
-                            setCheckoutError("Pagamento confirmado. Ativando seu plano...");
-                            const activateResp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    session_id: sessionId,
-                                    user_id: authUserId,
-                                    plan_id: verifiedPlanId,
-                                }),
-                            });
-                            const activateData = (await activateResp.json()) as JsonObject;
-                            if (activateResp.ok) {
-                                if (typeof activateData.credits_remaining === "number") {
-                                    localStorage.setItem('vant_cached_credits', String(activateData.credits_remaining));
-                                }
-                                window.localStorage.removeItem("vant_pending_stripe_session_id");
-                                localStorage.setItem('vant_just_paid', 'true');
-                                console.log("[Stripe Return] Ativação OK, redirecionando para /dashboard");
-                                window.location.href = "/dashboard";
-                                return;
-                            } else {
-                                console.error("[Stripe Return] Ativação falhou, SIGNED_IN handler tentará novamente");
-                            }
-                        } else {
-                            // Auth ainda não carregou — o SIGNED_IN handler vai ativar
-                            console.log("[Stripe Return] Auth não disponível, aguardando SIGNED_IN handler...");
-                            setCheckoutError("Pagamento confirmado. Ativando seu plano...");
+                        // Cachear créditos se disponíveis (auto_activated pelo verify-checkout-session)
+                        if (typeof payload.credits_remaining === "number" && payload.credits_remaining > 0) {
+                            localStorage.setItem('vant_cached_credits', String(payload.credits_remaining));
                         }
+                        window.localStorage.removeItem("vant_pending_stripe_session_id");
+                        localStorage.setItem('vant_just_paid', 'true');
+                        window.location.href = "/dashboard";
+                        return;
                     } else {
                         setCheckoutError("Pagamento não confirmado ainda. Tente novamente em alguns segundos.");
                     }
