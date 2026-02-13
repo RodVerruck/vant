@@ -9,7 +9,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { HistoryStage } from "@/components/HistoryStage";
 import { PricingSimplified } from "@/components/PricingSimplified";
 import { NeonOffer } from "@/components/NeonOffer";
-import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
+import { calcPotencial, calculateProjectedScore, trackEvent } from "@/lib/helpers";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
 type JsonObject = Record<string, unknown>;
@@ -1916,6 +1916,28 @@ export default function AppPage() {
         setStage("hero");
     };
 
+    function redirectToPlansForNoCredits(message?: string, currentCredits?: number) {
+        const safeCredits = typeof currentCredits === "number" ? currentCredits : creditsRemaining;
+        const dynamicFallback = `Você está com ${Math.max(0, safeCredits)} crédito${safeCredits === 1 ? "" : "s"}. Para continuar esta otimização, escolha um plano.`;
+        const notice = message?.trim() || dynamicFallback;
+
+        trackEvent("no_credits_redirect_to_pricing", {
+            source: "processing_premium",
+            current_credits: Math.max(0, safeCredits),
+            recommended_plan: "credit_1",
+        });
+
+        setPremiumError("");
+        setCheckoutError(notice);
+        setSelectedPlan("credit_1");
+
+        if (typeof window !== "undefined") {
+            localStorage.setItem("vant_auth_return_stage", "processing_premium");
+        }
+
+        setStage("pricing");
+    }
+
     useEffect(() => {
         debugLog("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
         if (stage !== "processing_premium") {
@@ -1975,6 +1997,28 @@ export default function AppPage() {
             setProgress(0);
             setStatusText("");
             try {
+                // Pré-checagem de créditos para evitar espera longa e erro tardio
+                const statusResp = await fetchJsonWithRetry<JsonObject>(
+                    `${getApiUrl()}/api/user/status/${authUserId}`,
+                    undefined,
+                    3,
+                    1000,
+                );
+
+                if (statusResp.ok) {
+                    const statusData = statusResp.data as JsonObject;
+                    const credits = statusData.credits_remaining;
+                    if (typeof credits === "number") {
+                        setCreditsRemaining(credits);
+                        localStorage.setItem("vant_cached_credits", String(credits));
+
+                        if (credits <= 0) {
+                            redirectToPlansForNoCredits(undefined, credits);
+                            return;
+                        }
+                    }
+                }
+
                 const updateStatus = async (text: string, percent: number) => {
                     setStatusText(text);
                     setProgress(percent);
@@ -2027,6 +2071,10 @@ export default function AppPage() {
                 const payload = (await resp.json()) as JsonObject;
                 if (!resp.ok) {
                     const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
+                    if (resp.status === 400 && err.toLowerCase().includes("crédit")) {
+                        redirectToPlansForNoCredits(err);
+                        return;
+                    }
                     throw new Error(err);
                 }
 
@@ -2071,7 +2119,12 @@ export default function AppPage() {
                     console.log('Processamento premium cancelado ao navegar');
                     return;
                 }
-                setPremiumError(getErrorMessage(e, "Erro na geração premium"));
+                const message = getErrorMessage(e, "Erro na geração premium");
+                if (message.toLowerCase().includes("crédit")) {
+                    redirectToPlansForNoCredits(message);
+                    return;
+                }
+                setPremiumError(message);
                 setStage("hero");
             }
         })();
@@ -3144,6 +3197,46 @@ export default function AppPage() {
 
             {stage === "pricing" && (
                 <div className="hero-container">
+                    {checkoutError && (
+                        <div style={{
+                            width: "100%",
+                            margin: "0 auto 16px",
+                            padding: "12px 14px",
+                            borderRadius: 10,
+                            border: "1px solid rgba(245, 158, 11, 0.45)",
+                            background: "rgba(245, 158, 11, 0.12)",
+                            color: "#FDE68A",
+                            fontSize: "0.9rem",
+                            textAlign: "center",
+                        }}>
+                            {checkoutError}
+                            <div style={{ marginTop: 10 }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        trackEvent("no_credits_cta_click", {
+                                            source: "pricing_notice",
+                                            selected_plan: "credit_1",
+                                        });
+                                        setSelectedPlan("credit_1");
+                                        setStage("checkout");
+                                    }}
+                                    style={{
+                                        border: "none",
+                                        borderRadius: 8,
+                                        background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                                        color: "#fff",
+                                        fontSize: "0.82rem",
+                                        fontWeight: 700,
+                                        padding: "10px 14px",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Continuar com plano recomendado
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     <div className="action-island-container">
                         <NeonOffer
                             onSelectPlan={(planId) => setSelectedPlan(planId)}
