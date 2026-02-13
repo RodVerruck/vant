@@ -97,19 +97,19 @@ def _try_auto_activate_from_stripe(user_id: str) -> bool:
                 and session.get("payment_status") in ("paid", "no_payment_required")
                 and session.get("status") == "complete"
             ):
-                # Verificar se já existe subscription com este stripe_subscription_id no banco
+                # Verificar se já existe subscription no banco para este stripe_subscription_id
+                # (qualquer status = já foi processada anteriormente)
                 sub_id = session.get("subscription")
                 if sub_id and supabase_admin:
                     existing = (
                         supabase_admin.table("subscriptions")
                         .select("id")
                         .eq("stripe_subscription_id", sub_id)
-                        .eq("user_id", user_id)
                         .limit(1)
                         .execute()
                     )
                     if existing.data:
-                        logger.info(f"[AUTO-ACTIVATE] Sessão {sid} já ativada (subscription existe no banco), pulando")
+                        logger.info(f"[AUTO-ACTIVATE] Sessão {sid} já processada (subscription {sub_id} existe no banco), pulando")
                         _activated_session_ids.add(sid)
                         continue
 
