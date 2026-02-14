@@ -2181,9 +2181,13 @@ export default function AppPage() {
         // 🎯 Cálculo inteligente do score projetado
         const projected = calculateProjectedScore(nota, gapsFatals, 0, ats, keywords, impacto);
 
-        const row = (label: string, value: number) => `
+        const row = (label: string, value: number, tooltip: string) => `
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
-                <span style="color:#CBD5E1; font-size:0.75rem; font-weight:600; letter-spacing:0.5px;">${label.toUpperCase()}</span>
+                <div class="metric-hint-lite" tabindex="0" role="note" aria-label="${label}: ${tooltip}">
+                    <span style="color:#CBD5E1; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; cursor:help;">${label.toUpperCase()}</span>
+                    <span aria-hidden="true" style="width:14px; height:14px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); color:#94A3B8; font-size:0.62rem; display:inline-flex; align-items:center; justify-content:center; line-height:1; cursor:help;">i</span>
+                    <div class="metric-tooltip-lite">${tooltip}</div>
+                </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <div style="width:60px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
                         <div style="width:${value}%; height:100%; background:${value > 70 ? '#10B981' : value > 40 ? '#F59E0B' : '#EF4444'};"></div>
@@ -2195,6 +2199,11 @@ export default function AppPage() {
 
         return `
             <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 12px; padding: 16px;">
+                <style>
+                    .metric-hint-lite { position: relative; display: inline-flex; align-items: center; gap: 6px; outline: none; }
+                    .metric-tooltip-lite { position: absolute; left: 0; top: calc(100% + 8px); width: 230px; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.96); border: 1px solid rgba(56, 189, 248, 0.28); color: #E2E8F0; font-size: 0.72rem; font-weight: 500; line-height: 1.45; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.65), 0 0 20px -10px rgba(56,189,248,0.35); opacity: 0; transform: translateY(4px); transition: opacity 0.16s ease, transform 0.16s ease; pointer-events: none; z-index: 20; }
+                    .metric-hint-lite:hover .metric-tooltip-lite, .metric-hint-lite:focus-visible .metric-tooltip-lite { opacity: 1; transform: translateY(0); }
+                </style>
                 <div style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: #94A3B8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
                     <span style="background: rgba(56, 189, 248, 0.1); color: #38BDF8; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">VERSÃO LITE</span>
@@ -2213,9 +2222,9 @@ export default function AppPage() {
                 </div>
 
                 <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                    ${row("Impacto", impacto)}
-                    ${row("Palavras-chave", keywords)}
-                    ${row("Format. ATS", ats)}
+                    ${row("Impacto", impacto, "Seu CV ainda usa descrições genéricas e verbos passivos. A versão otimizada prioriza verbos de ação e resultados mensuráveis.")}
+                    ${row("Palavras-chave", keywords, "Faltam termos exatos da vaga em cargos, competências e resultados. A versão 92/100 distribui esses termos nos blocos mais lidos pelo ATS.")}
+                    ${row("Format. ATS", ats, "Seu layout atual ainda tem padrões que dificultam parsing automático. A versão otimizada usa estrutura limpa para leitura ATS sem perda visual.")}
                 </div>
             </div>
         `;
