@@ -73,8 +73,8 @@ export function NewOptimizationModal({
     const [loadingLastCV, setLoadingLastCV] = useState(false);
 
     // Função para usar último CV: busca cv_text do backend e salva no localStorage
-    const handleUseLastCV = async () => {
-        if (!lastCV?.analysis_id || !authUserId) return;
+    const handleUseLastCV = async (): Promise<boolean> => {
+        if (!lastCV?.analysis_id || !authUserId) return false;
         setLoadingLastCV(true);
         try {
             console.log("[LastCV] Buscando texto do CV:", lastCV.analysis_id);
@@ -83,8 +83,7 @@ export function NewOptimizationModal({
             );
             if (!resp.ok) {
                 console.error("[LastCV] Erro ao buscar CV:", resp.status);
-                setLoadingLastCV(false);
-                return;
+                return false;
             }
             const data = await resp.json();
             if (data.cv_text) {
@@ -94,11 +93,17 @@ export function NewOptimizationModal({
                 const placeholder = new File(["placeholder"], lastCV.filename || "cv.pdf", { type: "text/plain" });
                 setFile(placeholder);
                 console.log("[LastCV] CV texto carregado com sucesso:", lastCV.filename, `(${data.cv_text.length} chars)`);
+                return true;
             }
+
+            console.warn("[LastCV] Resposta sem cv_text, fallback para upload manual.");
+            return false;
         } catch (error) {
             console.error("[LastCV] Erro ao buscar texto do CV:", error);
+            return false;
+        } finally {
+            setLoadingLastCV(false);
         }
-        setLoadingLastCV(false);
     };
 
     // Animation state
@@ -206,10 +211,23 @@ export function NewOptimizationModal({
     };
 
     // Submit → store data in localStorage & navigate to /app
-    const canSubmit = (jobDescription.trim().length > 0 || useGenericJob) && !!file;
+    const isJobReady = useGenericJob
+        ? selectedArea.trim().length > 0
+        : jobDescription.trim().length > 0;
+    const canUseRecentLastCV = !!(lastCV?.has_last_cv && lastCV?.is_recent && authUserId);
+    const canSubmit = isJobReady && (!!file || canUseRecentLastCV);
 
-    const handleSubmit = () => {
-        if (!canSubmit || !file) return;
+    const handleSubmit = async () => {
+        if (!canSubmit || loadingLastCV) return;
+
+        if (!file && canUseRecentLastCV) {
+            const loaded = await handleUseLastCV();
+            if (!loaded) {
+                fileInputRef.current?.click();
+                return;
+            }
+        }
+
         setShowConfirmation(true);
     };
 
@@ -454,7 +472,7 @@ export function NewOptimizationModal({
                     {/* ─── CTA ─── */}
                     <button
                         className={`${styles.ctaButton} ${canSubmit ? styles.ctaButtonReady : ""}`}
-                        disabled={!canSubmit}
+                        disabled={!canSubmit || loadingLastCV}
                         onClick={handleSubmit}
                     >
                         {creditsRemaining > 0

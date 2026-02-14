@@ -14,11 +14,14 @@ export function GapCard({ gap }: GapCardProps) {
         <div
             className="opportunity-box"
             style={{
-                background: "rgba(245, 158, 11, 0.1)",
-                border: "1px solid rgba(245, 158, 11, 0.4)",
-                borderRadius: "12px",
+                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(15, 23, 42, 0.64))",
+                border: "1px solid rgba(245, 158, 11, 0.36)",
+                borderRadius: "14px",
                 padding: "20px",
-                marginBottom: "20px"
+                marginBottom: "20px",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                boxShadow: "0 10px 24px rgba(2, 6, 23, 0.28), inset 0 1px 0 rgba(255,255,255,0.06)"
             }}
         >
             <div
@@ -39,7 +42,7 @@ export function GapCard({ gap }: GapCardProps) {
             <div
                 className="evidence-box"
                 style={{
-                    background: "rgba(0, 0, 0, 0.4)",
+                    background: "rgba(2, 6, 23, 0.45)",
                     padding: "12px",
                     borderRadius: "6px",
                     color: "#94A3B8",
@@ -54,7 +57,7 @@ export function GapCard({ gap }: GapCardProps) {
             <div
                 className="solution-box-card"
                 style={{
-                    background: "rgba(16, 185, 129, 0.1)",
+                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(15, 23, 42, 0.35))",
                     border: "1px solid rgba(16, 185, 129, 0.3)",
                     padding: "12px",
                     borderRadius: "6px",

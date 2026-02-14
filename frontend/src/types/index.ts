@@ -83,6 +83,8 @@ export interface KitHacker {
 export interface ReportData {
     veredito: string;
     nota_ats: number;
+    nota_ats_estrutura?: number;
+    nota_ats_conteudo?: number;
     analise_por_pilares: PilaresData;
     linkedin_headline: string;
     resumo_otimizado: string;

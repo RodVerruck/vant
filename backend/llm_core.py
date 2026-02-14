@@ -997,7 +997,7 @@ def analyze_cv_orchestrator_streaming(
     
     try:
         # Sanitizar inputs
-        from logic import sanitize_input
+        from logic import sanitize_input, analyze_preview_lite
         cv_text = sanitize_input(cv_text)
         job_description = sanitize_input(job_description)
         
@@ -1011,12 +1011,32 @@ def analyze_cv_orchestrator_streaming(
         else:
             modified_job_description = job_description
         
-        # ETAPA 1: Diagnosis (rápido, primeiro)
+        # ETAPA 1: Calcular nota estrutural usando a mesma lógica do /analyze-lite
+        nota_ats_estrutura = None
+        try:
+            if forced_area:
+                lite_result = analyze_preview_lite(cv_text, job_description, forced_area=forced_area)
+            else:
+                lite_result = analyze_preview_lite(cv_text, job_description)
+            if isinstance(lite_result, dict):
+                nota_ats_estrutura = int(lite_result.get("nota_ats", 0) or 0)
+        except Exception as lite_error:
+            logger.warning(f"⚠️ Não foi possível calcular nota estrutural via analyze_preview_lite: {lite_error}")
+
+        # ETAPA 2: Diagnosis premium (conteúdo/gaps)
         logger.info("📊 Etapa 1: Processando diagnosis...")
         
         try:
             diag_result = agent_diagnosis(cv_text, modified_job_description, forced_area=forced_area)
             
+            nota_ats_conteudo = int(diag_result.get("nota_ats", 0) or 0)
+            if nota_ats_estrutura is None:
+                nota_ats_estrutura = nota_ats_conteudo
+
+            # Campos explícitos para o frontend diferenciar score estrutural vs conteúdo
+            diag_result["nota_ats_conteudo"] = nota_ats_conteudo
+            diag_result["nota_ats_estrutura"] = int(nota_ats_estrutura)
+
             # Salvar diagnóstico parcial
             update_session_progress(session_id, diag_result, "diagnostico_pronto")
             logger.info("✅ Diagnóstico salvo no banco")

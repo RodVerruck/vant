@@ -393,9 +393,13 @@ async function pollAnalysisProgress(
 export default function AppPage() {
     // AbortController para cancelar requisições ao navegar
     const abortControllerRef = useRef<AbortController | null>(null);
+    const smartRedirectHandledRef = useRef(false);
+    const storageHydratedRef = useRef(false);
 
     // Estados principais
     const [stage, setStage] = useState<AppStage>("hero");
+    // Flag para evitar flicker ao verificar autenticação/redirecionamento
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     // Flag para evitar flash do hero ao abrir item do histórico vindo do Dashboard
     const [loadingHistoryItem, setLoadingHistoryItem] = useState(() => {
         if (typeof window !== "undefined" && localStorage.getItem("vant_dashboard_open_history_id")) {
@@ -423,6 +427,7 @@ export default function AppPage() {
     const [isLoginMode, setIsLoginMode] = useState(true);  // ← NOVO (true = login, false = cadastro)
     const [isAuthenticating, setIsAuthenticating] = useState(false);  // ← NOVO
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const [showSmartRedirectCreditsModal, setShowSmartRedirectCreditsModal] = useState(false);
     const [timeRemaining, setTimeRemaining] = useState({ hours: 23, minutes: 45, seconds: 12 });
     const [emailSent, setEmailSent] = useState(false);
     const [resendCountdown, setResendCountdown] = useState(0);
@@ -540,6 +545,99 @@ export default function AppPage() {
 
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
+
+    type PreviewSnapshot = {
+        jobDescription?: string;
+        previewData?: PreviewData;
+        useGenericJob?: boolean;
+        selectedArea?: string;
+        selectedPlan?: PlanType;
+        fileName?: string;
+        fileType?: string;
+        fileB64?: string;
+        cvTextPreextracted?: string;
+        createdAt?: number;
+    };
+
+    const parsePreviewSnapshot = (): PreviewSnapshot | null => {
+        if (typeof window === "undefined") return null;
+        const raw = localStorage.getItem("vant_preview_snapshot");
+        if (!raw) return null;
+        try {
+            const parsed = JSON.parse(raw) as PreviewSnapshot;
+            return parsed && typeof parsed === "object" ? parsed : null;
+        } catch (error) {
+            console.warn("[Smart Redirect] Snapshot inválido, ignorando:", error);
+            return null;
+        }
+    };
+
+    const restorePendingAnalysisFromSnapshot = async (snapshot: PreviewSnapshot): Promise<boolean> => {
+        const storageJob = localStorage.getItem("vant_jobDescription") || "";
+        const storageFileName = localStorage.getItem("vant_file_name") || "";
+        const storageFileType = localStorage.getItem("vant_file_type") || "";
+        const storageFileB64 = localStorage.getItem("vant_file_b64") || "";
+
+        const finalJob = (snapshot.jobDescription || storageJob || "").trim();
+        if (!finalJob) {
+            console.warn("[Smart Redirect] Snapshot sem job_description válido.");
+            return false;
+        }
+
+        if (finalJob !== jobDescription) {
+            setJobDescription(finalJob);
+            localStorage.setItem("vant_jobDescription", finalJob);
+        }
+
+        if (!previewData && snapshot.previewData && typeof snapshot.previewData === "object") {
+            setPreviewData(snapshot.previewData);
+        }
+
+        if (typeof snapshot.useGenericJob === "boolean") {
+            setUseGenericJob(snapshot.useGenericJob);
+            localStorage.setItem("vant_use_generic_job", String(snapshot.useGenericJob));
+        }
+
+        if (typeof snapshot.selectedArea === "string") {
+            setSelectedArea(snapshot.selectedArea);
+            localStorage.setItem("vant_area_of_interest", snapshot.selectedArea);
+        }
+
+        if (snapshot.cvTextPreextracted && snapshot.cvTextPreextracted.trim()) {
+            const fallbackName = snapshot.fileName || storageFileName || "cv.pdf";
+            localStorage.setItem("vant_cv_text_preextracted", snapshot.cvTextPreextracted);
+            localStorage.setItem("vant_file_name", fallbackName);
+            localStorage.setItem("vant_file_type", "text/plain");
+            if (!file) {
+                setFile(new File(["placeholder"], fallbackName, { type: "text/plain" }));
+            }
+            return true;
+        }
+
+        if (file) return true;
+
+        const finalFileName = snapshot.fileName || storageFileName;
+        const finalFileType = snapshot.fileType || storageFileType || "application/pdf";
+        const finalFileB64 = snapshot.fileB64 || storageFileB64;
+
+        if (!finalFileName || !finalFileB64) {
+            console.warn("[Smart Redirect] Snapshot sem arquivo restaurável.");
+            return false;
+        }
+
+        try {
+            const blob = await fetch(finalFileB64).then((res) => res.blob());
+            const restoredFile = new File([blob], finalFileName, { type: finalFileType });
+            setFile(restoredFile);
+            localStorage.setItem("vant_file_name", finalFileName);
+            localStorage.setItem("vant_file_type", finalFileType);
+            localStorage.setItem("vant_file_b64", finalFileB64);
+            return true;
+        } catch (error) {
+            console.error("[Smart Redirect] Falha ao restaurar arquivo do snapshot:", error);
+            return false;
+        }
+    };
 
     const supabase = useMemo((): SupabaseClient | null => {
         // Limpar instâncias antigas do Supabase para evitar conflitos
@@ -775,6 +873,8 @@ export default function AppPage() {
                         setFile(restoredFile);
                     });
             }
+
+            storageHydratedRef.current = true;
         }
     }, []); // Removido jobDescription e file das dependências
 
@@ -799,6 +899,7 @@ export default function AppPage() {
 
     // Salvar jobDescription e file em localStorage quando mudarem
     useEffect(() => {
+        if (!storageHydratedRef.current) return;
         if (typeof window !== "undefined") {
             if (jobDescription) {
                 localStorage.setItem("vant_jobDescription", jobDescription);
@@ -831,6 +932,27 @@ export default function AppPage() {
             }
         }
     }, [file]);
+
+    // Persistir snapshot do preview para retomada inteligente pós-login
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        if (stage !== "preview" || !previewData) return;
+
+        const snapshot: PreviewSnapshot = {
+            jobDescription,
+            previewData,
+            useGenericJob,
+            selectedArea,
+            selectedPlan,
+            fileName: file?.name || localStorage.getItem("vant_file_name") || undefined,
+            fileType: file?.type || localStorage.getItem("vant_file_type") || undefined,
+            fileB64: localStorage.getItem("vant_file_b64") || undefined,
+            cvTextPreextracted: localStorage.getItem("vant_cv_text_preextracted") || undefined,
+            createdAt: Date.now(),
+        };
+
+        localStorage.setItem("vant_preview_snapshot", JSON.stringify(snapshot));
+    }, [stage, previewData, jobDescription, useGenericJob, selectedArea, selectedPlan, file]);
 
     const trustFooterHtml = useMemo(() => {
         const cvCount = calculateDynamicCvCount();
@@ -959,6 +1081,8 @@ export default function AppPage() {
                         setAuthEmail("");
                         setCreditsRemaining(0);
                         setCreditsLoading(false);
+                        setShowSmartRedirectCreditsModal(false);
+                        smartRedirectHandledRef.current = false;
                         // Limpar cache ao fazer logout
                         localStorage.removeItem('vant_cached_credits');
                         // Resetar estado de ativação ao fazer logout
@@ -1086,129 +1210,182 @@ export default function AppPage() {
     useEffect(() => {
         if (!authUserId || typeof window === "undefined") return;
 
-        const returnStage = localStorage.getItem("vant_auth_return_stage");
-        let returnPlan = localStorage.getItem("vant_auth_return_plan");
+        (async () => {
+            const returnStage = localStorage.getItem("vant_auth_return_stage");
+            let returnPlan = localStorage.getItem("vant_auth_return_plan");
+            const previewSnapshot = parsePreviewSnapshot();
+            const isEligibleSmartRedirectStage = stage === "hero" || stage === "checkout" || showAuthModal;
 
-        // CRITICAL: Se returnStage é "hero" ou ausente, qualquer returnPlan é stale
-        // (o usuário estava no hero, não num fluxo de checkout real)
-        if (!returnStage || returnStage === "hero") {
-            if (returnPlan) {
-                console.log("[Auth] Limpando returnPlan stale (stage era hero):", returnPlan);
-                localStorage.removeItem("vant_auth_return_plan");
-                returnPlan = null;
-            }
-            localStorage.removeItem("vant_auth_return_stage");
-        }
+            // Smart Redirect: intenção de análise pendente após login
+            if (!smartRedirectHandledRef.current && isEligibleSmartRedirectStage && !needsActivation && previewSnapshot) {
+                smartRedirectHandledRef.current = true;
 
-        // Verificar se há fluxo ativo que impede redirect ao Dashboard
-        const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
-        const hasReturnStage = !!returnStage && returnStage !== "hero";
-        const checkoutPending = localStorage.getItem("checkout_pending");
-        const hasCheckoutPending = !!checkoutPending;
-        const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
-        const hasAutoStartFlag = !!localStorage.getItem("vant_auto_start");
-        const hasPendingAutoStart = pendingAutoStart.current;
-        const hasSkipPreviewFlag = !!localStorage.getItem("vant_skip_preview");
-        // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
-        const hasNonHeroStage = stage !== "hero";
-        const hasActiveFlow =
-            returnPlan ||
-            hasReturnStage ||
-            hasHistoryItem ||
-            hasCheckoutPending ||
-            hasNonHeroStage ||
-            hasAutoProcess ||
-            hasAutoStartFlag ||
-            hasPendingAutoStart ||
-            hasSkipPreviewFlag;
-
-        console.log("[Auth] Verificando fluxo:", {
-            returnPlan: !!returnPlan,
-            hasReturnStage,
-            hasCheckoutPending,
-            hasNonHeroStage,
-            hasAutoProcess,
-            hasAutoStartFlag,
-            hasPendingAutoStart,
-            hasSkipPreviewFlag,
-            stage
-        });
-
-        if (!hasActiveFlow) {
-            console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
-            window.location.href = "/dashboard";
-            return;
-        }
-
-        // Processar fluxo ativo normalmente (pagamento, history, etc.)
-        if (returnPlan) {
-            console.log("[Restoration] Restaurando plano e indo para checkout...");
-            setSelectedPlan(returnPlan as PlanType);
-            localStorage.removeItem("vant_auth_return_plan");
-            setStage("checkout");
-            localStorage.removeItem("vant_auth_return_stage");
-        } else if (returnStage) {
-            localStorage.removeItem("vant_auth_return_stage");
-            if (returnStage !== "hero") {
-                console.log("[Restoration] Restaurando stage:", returnStage);
-                setStage(returnStage as AppStage);
-            }
-        } else if (hasCheckoutPending) {
-            try {
-                const data = JSON.parse(checkoutPending!);
-                localStorage.removeItem("checkout_pending");
-                console.log("[Auth] Processando checkout_pending:", data);
-                setSelectedPlan(data.plan);
-                setStage("checkout");
-            } catch (error) {
-                console.error("[Auth] Erro ao processar checkout_pending:", error);
-                localStorage.removeItem("checkout_pending");
-            }
-        } else if (hasAutoProcess) {
-            // Veio do dashboard após pagamento — restaurar CV/vaga e iniciar processamento
-            localStorage.removeItem("vant_auto_process");
-            const savedJob = localStorage.getItem("vant_jobDescription");
-
-            if (savedJob) {
-                setJobDescription(savedJob);
-            }
-
-            // Restaurar arquivo do IndexedDB (async)
-            (async () => {
-                const restoredFile = await getFileFromIDB();
-                console.log("[Auth] Auto-process: dados encontrados:", { hasJob: !!savedJob, hasFile: !!restoredFile });
-
-                if (savedJob && restoredFile) {
-                    setFile(restoredFile);
-                    await clearFileFromIDB();
-                    console.log("[Auth] Auto-process: arquivo restaurado do IndexedDB, iniciando processing_premium");
-                    setStage("processing_premium");
+                const restored = await restorePendingAnalysisFromSnapshot(previewSnapshot);
+                if (!restored) {
+                    console.warn("[Smart Redirect] Snapshot encontrado, mas dados incompletos. Mantendo fluxo padrão.");
                 } else {
-                    console.log("[Auth] Auto-process: dados incompletos, indo para hero com vaga preenchida");
-                    setStage("hero");
+                    // Buscar créditos com cache primeiro, fallback para API
+                    let credits = 0;
+                    const cachedCredits = localStorage.getItem('vant_cached_credits');
+                    if (cachedCredits) {
+                        credits = parseInt(cachedCredits, 10) || 0;
+                    }
+
+                    if (!cachedCredits) {
+                        try {
+                            const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                credits = Number(data.credits_remaining || 0);
+                                localStorage.setItem('vant_cached_credits', String(credits));
+                            }
+                        } catch (error) {
+                            console.warn("[Smart Redirect] Falha ao buscar créditos via API:", error);
+                        }
+                    }
+
+                    setCreditsRemaining(credits);
+                    setShowAuthModal(false);
+                    setApiError("");
+                    setPremiumError("");
+                    setCheckoutError("");
+
+                    if (credits > 0) {
+                        setSelectedPlan("premium_plus");
+                        console.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Aguardando confirmação para consumir crédito...");
+                        setShowSmartRedirectCreditsModal(true);
+                    } else {
+                        if (previewSnapshot.selectedPlan) {
+                            setSelectedPlan(previewSnapshot.selectedPlan);
+                        }
+                        console.log("[Smart Redirect] Usuário Free detectado com análise pendente. Enviando para checkout...");
+                        setStage("checkout");
+                    }
+                    return;
+                }
+            }
+
+            // CRITICAL: Se returnStage é "hero" ou ausente, qualquer returnPlan é stale
+            // (o usuário estava no hero, não num fluxo de checkout real)
+            if (!returnStage || returnStage === "hero") {
+                if (returnPlan) {
+                    console.log("[Auth] Limpando returnPlan stale (stage era hero):", returnPlan);
+                    localStorage.removeItem("vant_auth_return_plan");
+                    returnPlan = null;
+                }
+                localStorage.removeItem("vant_auth_return_stage");
+            }
+
+            // Verificar se há fluxo ativo que impede redirect ao Dashboard
+            const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
+            const hasReturnStage = !!returnStage && returnStage !== "hero";
+            const checkoutPending = localStorage.getItem("checkout_pending");
+            const hasCheckoutPending = !!checkoutPending;
+            const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
+            const hasAutoStartFlag = !!localStorage.getItem("vant_auto_start");
+            const hasPendingAutoStart = pendingAutoStart.current;
+            const hasSkipPreviewFlag = !!localStorage.getItem("vant_skip_preview");
+            // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
+            const hasNonHeroStage = stage !== "hero";
+            const hasActiveFlow =
+                returnPlan ||
+                hasReturnStage ||
+                hasHistoryItem ||
+                hasCheckoutPending ||
+                hasNonHeroStage ||
+                hasAutoProcess ||
+                hasAutoStartFlag ||
+                hasPendingAutoStart ||
+                hasSkipPreviewFlag;
+
+            console.log("[Auth] Verificando fluxo:", {
+                returnPlan: !!returnPlan,
+                hasReturnStage,
+                hasCheckoutPending,
+                hasNonHeroStage,
+                hasAutoProcess,
+                hasAutoStartFlag,
+                hasPendingAutoStart,
+                hasSkipPreviewFlag,
+                stage
+            });
+
+            if (!hasActiveFlow) {
+                console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
+                window.location.href = "/dashboard";
+                return;
+            }
+
+            // Processar fluxo ativo normalmente (pagamento, history, etc.)
+            if (returnPlan) {
+                console.log("[Restoration] Restaurando plano e indo para checkout...");
+                setSelectedPlan(returnPlan as PlanType);
+                localStorage.removeItem("vant_auth_return_plan");
+                setStage("checkout");
+                localStorage.removeItem("vant_auth_return_stage");
+            } else if (returnStage) {
+                localStorage.removeItem("vant_auth_return_stage");
+                if (returnStage !== "hero") {
+                    console.log("[Restoration] Restaurando stage:", returnStage);
+                    setStage(returnStage as AppStage);
+                }
+            } else if (hasCheckoutPending) {
+                try {
+                    const data = JSON.parse(checkoutPending!);
+                    localStorage.removeItem("checkout_pending");
+                    console.log("[Auth] Processando checkout_pending:", data);
+                    setSelectedPlan(data.plan);
+                    setStage("checkout");
+                } catch (error) {
+                    console.error("[Auth] Erro ao processar checkout_pending:", error);
+                    localStorage.removeItem("checkout_pending");
+                }
+            } else if (hasAutoProcess) {
+                // Veio do dashboard após pagamento — restaurar CV/vaga e iniciar processamento
+                localStorage.removeItem("vant_auto_process");
+                const savedJob = localStorage.getItem("vant_jobDescription");
+
+                if (savedJob) {
+                    setJobDescription(savedJob);
+                }
+
+                // Restaurar arquivo do IndexedDB (async)
+                (async () => {
+                    const restoredFile = await getFileFromIDB();
+                    console.log("[Auth] Auto-process: dados encontrados:", { hasJob: !!savedJob, hasFile: !!restoredFile });
+
+                    if (savedJob && restoredFile) {
+                        setFile(restoredFile);
+                        await clearFileFromIDB();
+                        console.log("[Auth] Auto-process: arquivo restaurado do IndexedDB, iniciando processing_premium");
+                        setStage("processing_premium");
+                    } else {
+                        console.log("[Auth] Auto-process: dados incompletos, indo para hero com vaga preenchida");
+                        setStage("hero");
+                    }
+                })();
+            }
+            // hasHistoryItem é tratado pelo useEffect dedicado abaixo
+
+            // Sincronizar créditos em background
+            (async () => {
+                try {
+                    const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.credits_remaining > 0) {
+                            setCreditsRemaining(data.credits_remaining);
+                            localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
+                            setSelectedPlan("premium_plus");
+                            console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
+                        }
+                    }
+                } catch (e) {
+                    console.error("[Auth] Erro ao sincronizar créditos:", e);
                 }
             })();
-        }
-        // hasHistoryItem é tratado pelo useEffect dedicado abaixo
-
-        // Sincronizar créditos em background
-        (async () => {
-            try {
-                const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.credits_remaining > 0) {
-                        setCreditsRemaining(data.credits_remaining);
-                        localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
-                        setSelectedPlan("premium_plus");
-                        console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
-                    }
-                }
-            } catch (e) {
-                console.error("[Auth] Erro ao sincronizar créditos:", e);
-            }
         })();
-    }, [authUserId]);
+    }, [authUserId, stage, showAuthModal]);
 
     // -------------------------------------------------------------------------
     // DEBUG: Restauração do Contexto de Reset de Senha
@@ -1814,6 +1991,118 @@ export default function AppPage() {
         }
         setCreditsLoading(false);
     }
+
+    // useEffect dedicado para verificação inicial de autenticação e redirecionamento
+    useEffect(() => {
+        console.log("[useEffect initialAuthCheck] Iniciando verificação inicial...");
+
+        // Função assíncrona para verificação
+        const performInitialCheck = async () => {
+            try {
+                // Verificação rápida: se não há usuário, liberar renderização imediatamente
+                if (!authUserId) {
+                    console.log("[initialAuthCheck] Sem authUserId, liberando renderização do hero");
+                    setIsCheckingAuth(false);
+                    return;
+                }
+
+                // Verificar se há fluxo ativo que impede redirect ao Dashboard
+                const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
+                const hasReturnStage = !!localStorage.getItem("vant_auth_return_stage");
+                const checkoutPending = localStorage.getItem("checkout_pending");
+                const hasCheckoutPending = !!checkoutPending;
+                const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
+                const hasAutoStartFlag = !!localStorage.getItem("vant_auto_start");
+                const hasSkipPreviewFlag = !!localStorage.getItem("vant_skip_preview");
+                // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
+                const hasNonHeroStage = stage !== "hero";
+                const hasActiveFlow =
+                    hasReturnStage ||
+                    hasHistoryItem ||
+                    hasCheckoutPending ||
+                    hasNonHeroStage ||
+                    hasAutoProcess ||
+                    hasAutoStartFlag ||
+                    hasSkipPreviewFlag;
+
+                console.log("[initialAuthCheck] Verificando fluxo:", {
+                    hasHistoryItem: !!hasHistoryItem,
+                    hasReturnStage,
+                    hasCheckoutPending,
+                    hasNonHeroStage,
+                    hasAutoProcess,
+                    hasAutoStartFlag,
+                    hasSkipPreviewFlag,
+                    stage
+                });
+
+                // Se não há fluxo ativo, verificar créditos e decidir redirecionamento
+                if (!hasActiveFlow) {
+                    console.log("[initialAuthCheck] Sem fluxo ativo, verificando créditos...");
+
+                    // Verificar créditos rapidamente (usar cache primeiro)
+                    const cachedCredits = localStorage.getItem('vant_cached_credits');
+                    let credits = 0;
+
+                    if (cachedCredits) {
+                        credits = parseInt(cachedCredits, 10);
+                        console.log("[initialAuthCheck] Usando créditos cacheados:", credits);
+                    } else {
+                        // Se não tem cache, buscar da API (mas com timeout curto)
+                        try {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
+                            const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
+                                signal: controller.signal
+                            });
+                            clearTimeout(timeoutId);
+
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                credits = data.credits_remaining || 0;
+                                setCreditsRemaining(credits);
+                                localStorage.setItem('vant_cached_credits', credits.toString());
+                                console.log("[initialAuthCheck] Créditos buscados da API:", credits);
+                            }
+                        } catch (error) {
+                            console.log("[initialAuthCheck] Erro ao buscar créditos, assumindo 0:", error);
+                            credits = 0;
+                        }
+                    }
+
+                    // Se tem créditos, redirecionar para dashboard mantendo loading
+                    if (credits > 0) {
+                        console.log("[initialAuthCheck] Usuário tem créditos, redirecionando para dashboard...");
+                        window.location.href = "/dashboard";
+                        return; // Manter isCheckingAuth como true durante redirect
+                    }
+                }
+
+                // Se chegou aqui, pode liberar renderização
+                console.log("[initialAuthCheck] Verificação concluída, liberando renderização");
+                setIsCheckingAuth(false);
+
+            } catch (error) {
+                console.error("[initialAuthCheck] Erro na verificação inicial:", error);
+                // Em caso de erro, liberar renderização para não bloquear indefinidamente
+                setIsCheckingAuth(false);
+            }
+        };
+
+        // Executar verificação
+        performInitialCheck();
+
+        // Timeout de segurança: se demorar mais de 5s, liberar renderização
+        const safetyTimeout = setTimeout(() => {
+            if (isCheckingAuth) {
+                console.log("[initialAuthCheck] Timeout de segurança, liberando renderização");
+                setIsCheckingAuth(false);
+            }
+        }, 5000);
+
+        return () => clearTimeout(safetyTimeout);
+    }, [authUserId, stage]); // Dependências mínimas para evitar re-execuções desnecessárias
 
     useEffect(() => {
         console.log("[useEffect syncEntitlements] Rodou.");
@@ -4749,6 +5038,88 @@ export default function AppPage() {
                 }}
                 onClose={() => setShowAuthModal(false)}
             />
+
+            {showSmartRedirectCreditsModal && (
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        background: "rgba(2, 6, 23, 0.78)",
+                        backdropFilter: "blur(4px)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 10000,
+                        padding: 16,
+                    }}
+                >
+                    <div
+                        style={{
+                            width: "100%",
+                            maxWidth: 520,
+                            background: "#0f172a",
+                            border: "1px solid rgba(56, 189, 248, 0.35)",
+                            borderRadius: 14,
+                            padding: 24,
+                            boxShadow: "0 18px 40px rgba(2, 6, 23, 0.6)",
+                        }}
+                    >
+                        <div style={{ color: "#f8fafc", fontSize: "1.2rem", fontWeight: 700, marginBottom: 10 }}>
+                            Conta encontrada com créditos
+                        </div>
+                        <div style={{ color: "#cbd5e1", lineHeight: 1.5, marginBottom: 20 }}>
+                            Você já possui uma conta com <strong style={{ color: "#22c55e" }}>{creditsRemaining}</strong> crédito(s) disponível(is).<br />
+                            Deseja usar 1 crédito agora e continuar esta análise?
+                        </div>
+
+                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowSmartRedirectCreditsModal(false);
+                                    pendingSkipPreview.current = true;
+                                    console.log("[Smart Redirect] Confirmação aceita. Iniciando processamento premium...");
+                                    setStage("processing_premium");
+                                }}
+                                style={{
+                                    flex: 1,
+                                    minWidth: 220,
+                                    height: 46,
+                                    border: "none",
+                                    borderRadius: 10,
+                                    background: "#10b981",
+                                    color: "#ffffff",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                Usar 1 crédito e continuar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowSmartRedirectCreditsModal(false);
+                                    console.log("[Smart Redirect] Usuário preferiu não consumir crédito agora. Redirecionando para dashboard...");
+                                    window.location.href = "/dashboard";
+                                }}
+                                style={{
+                                    flex: 1,
+                                    minWidth: 180,
+                                    height: 46,
+                                    borderRadius: 10,
+                                    border: "1px solid rgba(148, 163, 184, 0.45)",
+                                    background: "transparent",
+                                    color: "#cbd5e1",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                Ir para o dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main >
     );
 }

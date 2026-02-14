@@ -376,11 +376,15 @@ def analyze_premium_paid(
         # Modo DEV: retorna mock instantaneamente
         if DEV_MODE:
             print("🔧 [DEV MODE] Retornando mock de análise premium (sem processar IA)")
+            dev_result = dict(MOCK_PREMIUM_DATA)
+            nota_conteudo = int(dev_result.get("nota_ats", 0) or 0)
+            dev_result.setdefault("nota_ats_conteudo", nota_conteudo)
+            dev_result.setdefault("nota_ats_estrutura", nota_conteudo)
             
             supabase_admin.table("analysis_sessions").update({
                 "status": "completed",
                 "current_step": "completed",
-                "result_data": MOCK_PREMIUM_DATA,
+                "result_data": dev_result,
                 "updated_at": datetime.now().isoformat()
             }).eq("id", session_id).execute()
             
@@ -397,7 +401,7 @@ def analyze_premium_paid(
                     user_id=user_id,
                     cv_text="[DEV MODE]",
                     job_description=job_description,
-                    result_json=MOCK_PREMIUM_DATA
+                    result_json=dev_result
                 )
                 print("💾 [DEV MODE] Mock salvo no histórico (cached_analyses)")
             except Exception as cache_err:
