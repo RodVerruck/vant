@@ -3305,7 +3305,7 @@ export default function AppPage() {
                                                 <div
                                                     style={{
                                                         background: "rgba(239, 68, 68, 0.15)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.4)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.3)",
                                                         borderRadius: 10,
                                                         padding: 12,
                                                         marginBottom: 12,
@@ -3487,7 +3487,7 @@ export default function AppPage() {
 
                                     {progress < 35 && (
                                         <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                            <strong style={{ color: "#F8FAFC" }}>Analisando 43 critérios ATS avançados.</strong>
+                                            <strong style={{ color: "#F8FAFC" }}>Analisando todos os critérios ATS avançados.</strong>
                                             <br /><br />
                                             Verificamos alinhamento semântico, estrutura de impacto, palavras-chave da vaga,
                                             e comparando com padrões de profissionais que foram contratados.
@@ -3683,7 +3683,7 @@ export default function AppPage() {
                                                 {data.gap_1.exemplo_atual && (
                                                     <div style={{
                                                         background: "rgba(239, 68, 68, 0.15)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.4)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.3)",
                                                         borderLeft: "2px solid #EF4444",
                                                         borderRadius: 6,
                                                         padding: "12px 12px 12px 16px",
@@ -3795,7 +3795,7 @@ export default function AppPage() {
                                                 {gap2ExampleAtual && (
                                                     <div style={{
                                                         background: "rgba(239, 68, 68, 0.15)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.4)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.3)",
                                                         borderLeft: "2px solid #EF4444",
                                                         borderRadius: 6,
                                                         padding: "12px 12px 12px 16px",
@@ -3907,7 +3907,7 @@ export default function AppPage() {
                                                                 boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
                                                             }}>✓</div>
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
-                                                                Análise completa de <strong>43 critérios ATS</strong> (não apenas 2)
+                                                                Análise completa de <strong>todos os critérios ATS</strong> (não apenas 2)
                                                             </span>
                                                         </div>
                                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

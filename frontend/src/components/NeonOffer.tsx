@@ -176,7 +176,7 @@ export function NeonOffer({
                                     🔥 OFERTA POR TEMPO LIMITADO
                                 </div>
                                 <div style={{ fontSize: "1.8rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6 }}>
-                                    7 DIAS POR <span style={{ fontSize: "2.6rem" }}>R$ 1,99</span>
+                                    7 DIAS POR <span style={{ fontSize: "2.5rem", fontWeight: 900 }}>R$ 1,99</span>
                                 </div>
                                 <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 12 }}>
                                     Renova por apenas R$ 19,90/mês
@@ -256,7 +256,7 @@ export function NeonOffer({
                             </div>
 
                             {/* CTA PRINCIPAL */}
-                            <div style={{ marginBottom: 28 }}>
+                            <div style={{ marginBottom: 28, marginTop: 32 }}>
                                 {hasActivePlan ? (
                                     <div style={{
                                         width: "100%",
