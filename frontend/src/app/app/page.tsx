@@ -3558,7 +3558,7 @@ export default function AppPage() {
             )}
 
             {stage === "preview" && (
-                <div className="hero-container">
+                <div className="hero-container mobile-preview-with-sticky">
                     {(() => {
                         const data: Partial<PreviewData> = previewData ?? {};
                         const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
@@ -3629,8 +3629,18 @@ export default function AppPage() {
         </div>
         `;
 
+                        const showMobileStickyBuyBar = !(authUserId && creditsRemaining > 0);
+
                         return (
                             <>
+                                <div className="mobile-sticky-top-score md:hidden" aria-hidden={false}>
+                                    <div className="mobile-sticky-top-score-inner">
+                                        <span>Score Atual: <strong>{nota}</strong></span>
+                                        <span style={{ opacity: 0.75 }}>→</span>
+                                        <span className="mobile-sticky-top-score-meta">Meta: <strong>{projected.score}</strong></span>
+                                    </div>
+                                </div>
+
                                 <div dangerouslySetInnerHTML={{ __html: metaHtml }} />
 
                                 <div className="action-island-container" style={{ textAlign: "left", marginTop: 18 }}>
@@ -4058,6 +4068,22 @@ export default function AppPage() {
                                         </button>
                                     </div>
                                 </div>
+
+                                {showMobileStickyBuyBar && (
+                                    <div className="mobile-sticky-bottom-cta md:hidden">
+                                        <div className="mobile-sticky-bottom-cta-price">7 Dias por R$ 1,99</div>
+                                        <button
+                                            type="button"
+                                            className="mobile-sticky-bottom-cta-button"
+                                            onClick={() => {
+                                                setSelectedPlan("trial");
+                                                setStage("checkout");
+                                            }}
+                                        >
+                                            Desbloquear
+                                        </button>
+                                    </div>
+                                )}
                             </>
                         );
                     })()}
