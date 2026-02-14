@@ -3304,8 +3304,8 @@ export default function AppPage() {
                                             <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: 640, margin: "0 auto", width: "100%" }}>
                                                 <div
                                                     style={{
-                                                        background: "rgba(239, 68, 68, 0.1)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.32)",
+                                                        background: "rgba(239, 68, 68, 0.15)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.4)",
                                                         borderRadius: 10,
                                                         padding: 12,
                                                         marginBottom: 12,
@@ -3682,8 +3682,8 @@ export default function AppPage() {
 
                                                 {data.gap_1.exemplo_atual && (
                                                     <div style={{
-                                                        background: "rgba(239, 68, 68, 0.1)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                                                        background: "rgba(239, 68, 68, 0.15)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.4)",
                                                         borderLeft: "2px solid #EF4444",
                                                         borderRadius: 6,
                                                         padding: "12px 12px 12px 16px",
@@ -3794,8 +3794,8 @@ export default function AppPage() {
 
                                                 {gap2ExampleAtual && (
                                                     <div style={{
-                                                        background: "rgba(239, 68, 68, 0.1)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                                                        background: "rgba(239, 68, 68, 0.15)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.4)",
                                                         borderLeft: "2px solid #EF4444",
                                                         borderRadius: 6,
                                                         padding: "12px 12px 12px 16px",

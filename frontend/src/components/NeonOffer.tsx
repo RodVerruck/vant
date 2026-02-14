@@ -133,9 +133,9 @@ export function NeonOffer({
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: 12, padding: 10, background: "rgba(56, 189, 248, 0.1)", borderRadius: 6, border: "1px solid rgba(56, 189, 248, 0.2)" }}>
-                                <div style={{ color: "#38BDF8", fontSize: "0.75rem", fontWeight: 500, marginBottom: 3 }}>💡 Quer otimizar mais de 3 CVs?</div>
-                                <div style={{ color: "#94A3B8", fontSize: "0.7rem" }}>Trial por R$ 1,99 é melhor negócio!</div>
+                            <div style={{ marginTop: 12, padding: 10, background: "rgba(59, 130, 246, 0.8)", borderRadius: 6, border: "1px solid rgba(59, 130, 246, 0.9)" }}>
+                                <div style={{ color: "#FFFFFF", fontSize: "0.75rem", fontWeight: 700, marginBottom: 3 }}>💡 Quer otimizar mais de 3 CVs?</div>
+                                <div style={{ color: "#FFFFFF", fontSize: "0.7rem", fontWeight: 600 }}>Trial por R$ 1,99 é melhor negócio!</div>
                             </div>
                         </div>
                     </div>
@@ -175,8 +175,8 @@ export function NeonOffer({
                                 <div style={{ color: "#EF4444", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
                                     🔥 OFERTA POR TEMPO LIMITADO
                                 </div>
-                                <div style={{ fontSize: "2.2rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6 }}>
-                                    7 DIAS POR R$ 1,99
+                                <div style={{ fontSize: "1.8rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6 }}>
+                                    7 DIAS POR <span style={{ fontSize: "2.6rem" }}>R$ 1,99</span>
                                 </div>
                                 <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 12 }}>
                                     Renova por apenas R$ 19,90/mês
@@ -305,7 +305,7 @@ export function NeonOffer({
                                 <div style={{ display: "flex", alignItems: "start", gap: 10, marginBottom: 10 }}>
                                     <span style={{ fontSize: "1.3rem" }}>🔒</span>
                                     <div>
-                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
+                                        <div style={{ color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
                                             GARANTIA TOTAL DE 7 DIAS
                                         </div>
                                         <div style={{ color: "#CBD5E1", fontSize: "0.8rem", lineHeight: 1.5 }}>
@@ -317,7 +317,7 @@ export function NeonOffer({
                                 <div style={{ borderTop: "1px dashed rgba(16, 185, 129, 0.3)", paddingTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
                                     <span style={{ fontSize: "1.05rem" }}>🔐</span>
                                     <div style={{ color: "#FDE68A", fontSize: "0.86rem", lineHeight: 1.45 }}>
-                                        <strong style={{ color: "#FCD34D" }}>Cancele online em 1 clique</strong> • Sem renovação automática forçada • Sem taxas escondidas
+                                        <strong style={{ color: "#FFFFFF" }}>Cancele online em 1 clique</strong> • Sem renovação automática forçada • Sem taxas escondidas
                                     </div>
                                 </div>
                             </div>
