@@ -7,6 +7,7 @@ interface DashboardLayoutProps {
     authEmail: string;
     creditsRemaining: number;
     isPremium: boolean;
+    isSyncingCredits?: boolean;
     onLogout: () => void;
     onUpgrade: () => void;
     children: ReactNode;
@@ -16,6 +17,7 @@ export function DashboardLayout({
     authEmail,
     creditsRemaining,
     isPremium,
+    isSyncingCredits = false,
     onLogout,
     onUpgrade,
     children,
@@ -54,15 +56,23 @@ export function DashboardLayout({
 
                     <div className={styles.headerRight}>
                         {/* Credits pill */}
-                        {creditsRemaining > 0 ? (
-                            <div className={styles.creditsPill}>
-                                ⚡ {creditsRemaining} crédito{creditsRemaining !== 1 ? "s" : ""}
-                            </div>
-                        ) : (
-                            <div className={styles.creditsPillZero}>
-                                0 créditos
-                            </div>
-                        )}
+                        <div className={styles.creditsBlock}>
+                            {creditsRemaining > 0 ? (
+                                <div className={styles.creditsPill}>
+                                    ⚡ {creditsRemaining} crédito{creditsRemaining !== 1 ? "s" : ""}
+                                </div>
+                            ) : (
+                                <div className={styles.creditsPillZero}>
+                                    0 créditos
+                                </div>
+                            )}
+                            {isSyncingCredits && (
+                                <div className={styles.syncingHint}>
+                                    <span className={styles.syncDot} aria-hidden="true" />
+                                    Sincronizando créditos...
+                                </div>
+                            )}
+                        </div>
 
                         {/* Upgrade CTA for free users */}
                         {!isPremium && (

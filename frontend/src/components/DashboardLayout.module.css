@@ -68,6 +68,13 @@
     gap: 12px;
 }
 
+.creditsBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
 .creditsPill {
     display: flex;
     align-items: center;
@@ -92,6 +99,39 @@
     color: #64748B;
     font-size: 0.8rem;
     font-weight: 600;
+}
+
+.syncingHint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #94A3B8;
+    letter-spacing: 0.2px;
+}
+
+.syncDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #38BDF8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+    animation: syncPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes syncPulse {
+
+    0%,
+    100% {
+        opacity: 0.45;
+        transform: scale(0.95);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
 }
 
 .upgradeButton {

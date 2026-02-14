@@ -35,6 +35,7 @@ export function DashboardClient() {
     // User status
     const [creditsRemaining, setCreditsRemaining] = useState(0);
     const [isPremium, setIsPremium] = useState(false);
+    const [isSyncingCredits, setIsSyncingCredits] = useState(false);
 
     // Modal state
     const [showOptModal, setShowOptModal] = useState(false);
@@ -59,6 +60,37 @@ export function DashboardClient() {
             },
         });
     }, []);
+
+    async function refreshUserStatus(userId: string): Promise<number> {
+        try {
+            const resp = await fetch(`${getApiUrl()}/api/user/status/${userId}`);
+            if (resp.ok) {
+                const data: UserStatus = await resp.json();
+                setCreditsRemaining(data.credits_remaining || 0);
+                setIsPremium(!!data.has_active_plan);
+                localStorage.setItem("vant_cached_credits", String(data.credits_remaining || 0));
+                return data.credits_remaining || 0;
+            }
+
+            const entitlementResp = await fetch(`${getApiUrl()}/api/entitlements/status`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: userId }),
+            });
+
+            if (entitlementResp.ok) {
+                const entitlementData = await entitlementResp.json();
+                const credits = Number(entitlementData.credits_remaining || 0);
+                setCreditsRemaining(credits);
+                localStorage.setItem("vant_cached_credits", String(credits));
+                return credits;
+            }
+        } catch (error) {
+            console.error("[Dashboard] Erro ao sincronizar status/créditos:", error);
+        }
+
+        return 0;
+    }
 
     // Initialize auth
     useEffect(() => {
@@ -86,37 +118,7 @@ export function DashboardClient() {
 
                 // 🚀 Sincronizar créditos ao entrar no dashboard
                 console.log("[Dashboard] Sincronizando créditos na entrada...");
-                try {
-                    const resp = await fetch(`${getApiUrl()}/api/user/status/${user.id}`);
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        console.log("[Dashboard] user/status response:", data);
-                        if (data.credits_remaining > 0) {
-                            setCreditsRemaining(data.credits_remaining);
-                            localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
-                            console.log("[Dashboard] Créditos atualizados:", data.credits_remaining);
-                        }
-                    } else {
-                        // Tentar syncEntitlements se user/status falhar
-                        console.log("[Dashboard] user/status falhou, tentando entitlements...");
-                        const entitlementResp = await fetch(`${getApiUrl()}/api/entitlements/status`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ user_id: user.id })
-                        });
-                        if (entitlementResp.ok) {
-                            const entitlementData = await entitlementResp.json();
-                            console.log("[Dashboard] entitlements response:", entitlementData);
-                            if (entitlementData.credits_remaining > 0) {
-                                setCreditsRemaining(entitlementData.credits_remaining);
-                                localStorage.setItem('vant_cached_credits', String(entitlementData.credits_remaining));
-                                console.log("[Dashboard] Créditos atualizados via entitlements:", entitlementData.credits_remaining);
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error("[Dashboard] Erro ao sincronizar créditos:", error);
-                }
+                await refreshUserStatus(user.id);
             } else {
                 // Not authenticated — redirect to app (landing)
                 router.replace("/app");
@@ -179,20 +181,7 @@ export function DashboardClient() {
 
         const fetchStatus = async () => {
             try {
-                const resp = await fetch(
-                    `${getApiUrl()}/api/user/status/${authUserId}`
-                );
-                if (!resp.ok) return;
-
-                const data: UserStatus = await resp.json();
-                setCreditsRemaining(data.credits_remaining);
-                setIsPremium(data.has_active_plan);
-
-                // Update cache
-                localStorage.setItem(
-                    "vant_cached_credits",
-                    String(data.credits_remaining)
-                );
+                await refreshUserStatus(authUserId);
             } catch (err) {
                 console.error("[Dashboard] Erro ao buscar status:", err);
             }
@@ -207,6 +196,42 @@ export function DashboardClient() {
             fetchLastCV();
         }
     }, [authUserId]);
+
+    // Pós-pagamento: faz polling curto para evitar precisar recarregar manualmente
+    useEffect(() => {
+        if (!authUserId || loading) return;
+
+        const justPaid = localStorage.getItem("vant_just_paid");
+        if (!justPaid) return;
+
+        setIsSyncingCredits(true);
+
+        let attempts = 0;
+        const maxAttempts = 10;
+        const intervalMs = 1500;
+
+        const runSync = async () => {
+            attempts += 1;
+            const credits = await refreshUserStatus(authUserId);
+            if (credits > 0 || attempts >= maxAttempts) {
+                if (attempts >= maxAttempts) {
+                    localStorage.removeItem("vant_just_paid");
+                }
+                setIsSyncingCredits(false);
+                clearInterval(timer);
+            }
+        };
+
+        void runSync();
+        const timer = window.setInterval(() => {
+            void runSync();
+        }, intervalMs);
+
+        return () => {
+            setIsSyncingCredits(false);
+            clearInterval(timer);
+        };
+    }, [authUserId, loading]);
 
     // Detectar se acabou de pagar e tem CV/vaga salvos → mostrar modal "Continuar Análise?"
     useEffect(() => {
@@ -339,6 +364,7 @@ export function DashboardClient() {
                 authEmail={authEmail}
                 creditsRemaining={creditsRemaining}
                 isPremium={isPremium}
+                isSyncingCredits={isSyncingCredits}
                 onLogout={handleLogout}
                 onUpgrade={handleUpgrade}
             >
