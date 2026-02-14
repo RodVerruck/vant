@@ -68,7 +68,8 @@ export function NeonOffer({
                         padding: "20px",
                         display: "flex",
                         flexDirection: "column",
-                        justifyContent: "space-between"
+                        justifyContent: "space-between",
+                        minHeight: 760
                     }}>
                         <div>
                             <div style={{ color: "#CBD5E1", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>
@@ -117,40 +118,19 @@ export function NeonOffer({
                                 </button>
                             </div>
 
-                            <div style={{ marginBottom: 14, paddingBottom: 14, borderBottom: "1px dashed rgba(148, 163, 184, 0.2)" }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                    <span style={{ color: "#CBD5E1", fontWeight: 500 }}>Pacote 3 CVs</span>
-                                    <span style={{ color: "#FFFFFF", fontWeight: 600 }}>R$ 29,90</span>
+                            <div style={{ marginTop: 16, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                                <div style={{ display: "flex", gap: 10, alignItems: "center", color: "#E2E8F0", fontSize: "0.85rem" }}>
+                                    <span style={{ color: "#22D3EE", fontWeight: 700 }}>✓</span>
+                                    <span>Análise básica de compatibilidade ATS</span>
                                 </div>
-                                <div style={{ color: "#94A3B8", fontSize: "0.7rem", marginBottom: 6 }}>R$ 9,97/cada • economize 23%</div>
-                                <button
-                                    type="button"
-                                    onClick={() => handlePlanAction("credit_3")}
-                                    style={{
-                                        width: "100%",
-                                        background: "transparent",
-                                        border: "1px solid #CBD5E1",
-                                        color: "#CBD5E1",
-                                        padding: "8px",
-                                        borderRadius: 6,
-                                        fontSize: "0.8rem",
-                                        fontWeight: 500,
-                                        cursor: "pointer",
-                                        transition: "all 0.2s"
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.background = "rgba(203, 213, 225, 0.1)";
-                                        e.currentTarget.style.borderColor = "#FFFFFF";
-                                        e.currentTarget.style.color = "#FFFFFF";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.background = "transparent";
-                                        e.currentTarget.style.borderColor = "#CBD5E1";
-                                        e.currentTarget.style.color = "#CBD5E1";
-                                    }}
-                                >
-                                    Comprar Pacote 3
-                                </button>
+                                <div style={{ display: "flex", gap: 10, alignItems: "center", color: "#E2E8F0", fontSize: "0.85rem" }}>
+                                    <span style={{ color: "#22D3EE", fontWeight: 700 }}>✓</span>
+                                    <span>Download em PDF do currículo otimizado</span>
+                                </div>
+                                <div style={{ display: "flex", gap: 10, alignItems: "center", color: "#E2E8F0", fontSize: "0.85rem" }}>
+                                    <span style={{ color: "#22D3EE", fontWeight: 700 }}>✓</span>
+                                    <span>Ideal para 1 candidatura imediata</span>
+                                </div>
                             </div>
 
                             <div style={{ marginTop: 12, padding: 10, background: "rgba(56, 189, 248, 0.1)", borderRadius: 6, border: "1px solid rgba(56, 189, 248, 0.2)" }}>
@@ -172,10 +152,11 @@ export function NeonOffer({
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "space-between",
+                        minHeight: 760,
                         transform: "scale(1.02)",
                         transition: "all 0.3s ease"
                     }}>
-                        <div style={{ position: "absolute", top: "-14px", left: "50%", transform: "translateX(-50%)", background: "#10B981", color: "#fff", padding: "4px 16px", borderRadius: 20, fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.5px", boxShadow: "0 4px 6px rgba(0,0,0,0.2)", whiteSpace: "nowrap" }}>
+                        <div style={{ position: "absolute", top: "-18px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #34D399, #10B981)", color: "#fff", padding: "6px 18px", borderRadius: 999, border: "1px solid rgba(236, 253, 245, 0.7)", fontSize: "0.78rem", fontWeight: 900, letterSpacing: "0.7px", boxShadow: "0 8px 20px rgba(16, 185, 129, 0.45)", whiteSpace: "nowrap", textTransform: "uppercase" }}>
                             RECOMENDADO PELA IA
                         </div>
 
@@ -334,9 +315,9 @@ export function NeonOffer({
                                     </div>
                                 </div>
                                 <div style={{ borderTop: "1px dashed rgba(16, 185, 129, 0.3)", paddingTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                                    <span style={{ fontSize: "1rem" }}>🔐</span>
-                                    <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
-                                        <strong style={{ color: "#D1FAE5" }}>Cancele online em 1 clique</strong> • Sem renovação automática forçada • Sem taxas escondidas
+                                    <span style={{ fontSize: "1.05rem" }}>🔐</span>
+                                    <div style={{ color: "#FDE68A", fontSize: "0.86rem", lineHeight: 1.45 }}>
+                                        <strong style={{ color: "#FCD34D" }}>Cancele online em 1 clique</strong> • Sem renovação automática forçada • Sem taxas escondidas
                                     </div>
                                 </div>
                             </div>

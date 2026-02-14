@@ -2179,7 +2179,7 @@ export default function AppPage() {
                     </div>
                     <div style="text-align:right;">
                          <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">SCORE PROJETADO</div>
-                         <div style="color:#10B981; font-weight:900; font-size: 2rem; line-height: 1;">${projected.score}<span style="font-size:1rem; color:#10B981;">/100</span></div>
+                         <div style="color:#22C55E; font-weight:900; font-size: 3rem; line-height: 1; text-shadow: 0 0 12px rgba(34, 197, 94, 0.65), 0 0 26px rgba(34, 197, 94, 0.35);">${projected.score}<span style="font-size:1.15rem; color:#22C55E;">/100</span></div>
                          <div style="color:#F59E0B; font-size:0.9rem; font-weight:700; margin-top:2px;">+${projected.improvement}%</div>
                     </div>
                 </div>
@@ -3602,6 +3602,7 @@ export default function AppPage() {
                         const dashHtml = renderDashboardMetricsHtml(nota, veredito, potencial, pilares, gapsCount);
 
                         const setorDetectado = typeof pilares.setor_detectado === "string" ? pilares.setor_detectado : "Gestão Estratégica";
+                        const gap2ExampleAtual = (data.gap_2 as { exemplo_atual?: string } | undefined)?.exemplo_atual;
                         const exemploMelhoria = `Especialista em ${setorDetectado} com histórico de ` +
                             "liderança em projetos de alta complexidade. Otimizou o budget operacional em 22%..." +
                             "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
@@ -3681,13 +3682,13 @@ export default function AppPage() {
 
                                                 {data.gap_1.exemplo_atual && (
                                                     <div style={{
-                                                        background: "transparent",
+                                                        background: "rgba(239, 68, 68, 0.1)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.2)",
                                                         borderLeft: "2px solid #EF4444",
                                                         borderRadius: 6,
-                                                        padding: "12px 0 12px 16px",
+                                                        padding: "12px 12px 12px 16px",
                                                         marginBottom: 12,
-                                                        position: "relative",
-                                                        opacity: 0.7
+                                                        position: "relative"
                                                     }}>
                                                         <div style={{
                                                             position: "absolute",
@@ -3701,11 +3702,10 @@ export default function AppPage() {
                                                             VERSÃO ATUAL (Score: {nota}/100)
                                                         </div>
                                                         <div style={{
-                                                            color: "#475569",
+                                                            color: "#E2E8F0",
                                                             fontSize: "0.85rem",
                                                             fontStyle: "italic",
-                                                            lineHeight: 1.5,
-                                                            textDecoration: "line-through"
+                                                            lineHeight: 1.5
                                                         }}>
                                                             "{data.gap_1.exemplo_atual}"
                                                         </div>
@@ -3791,6 +3791,38 @@ export default function AppPage() {
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                {gap2ExampleAtual && (
+                                                    <div style={{
+                                                        background: "rgba(239, 68, 68, 0.1)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                                                        borderLeft: "2px solid #EF4444",
+                                                        borderRadius: 6,
+                                                        padding: "12px 12px 12px 16px",
+                                                        marginBottom: 12,
+                                                        position: "relative"
+                                                    }}>
+                                                        <div style={{
+                                                            position: "absolute",
+                                                            left: "-8px",
+                                                            top: "12px",
+                                                            color: "#EF4444",
+                                                            fontSize: "0.7rem",
+                                                            fontWeight: 700
+                                                        }}>❌</div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                            VERSÃO ATUAL (Score: {nota}/100)
+                                                        </div>
+                                                        <div style={{
+                                                            color: "#E2E8F0",
+                                                            fontSize: "0.85rem",
+                                                            fontStyle: "italic",
+                                                            lineHeight: 1.5
+                                                        }}>
+                                                            "{gap2ExampleAtual}"
+                                                        </div>
+                                                    </div>
+                                                )}
 
                                                 {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
                                                     <div style={{
