@@ -233,10 +233,10 @@ export function NeonOffer({
                                         Mais de <strong style={{ color: "#FFFFFF" }}>50.000 profissionais</strong> já utilizaram a plataforma.
                                     </div>
                                     <div style={{ color: "#fff", fontSize: "0.88rem", fontWeight: 600 }}>
-                                        Preço Vitalício de R$ 19,90/mês garantido
+                                        Preço Travado para Sempre: R$ 19,90/mês
                                     </div>
                                     <div style={{ color: "#CBD5E1", fontSize: "0.7rem", marginTop: 2 }}>
-                                        (Desconto de 30% aplicado automaticamente)
+                                        Assinou hoje, esse valor mensal nunca aumenta para sua conta.
                                     </div>
                                 </div>
 

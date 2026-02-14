@@ -2211,8 +2211,15 @@ export default function AppPage() {
 
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 16px;">
                     <div>
-                        <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">SCORE ATS ATUAL</div>
+                        <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                            SCORE ATS ATUAL
+                            <span class="metric-hint-lite" tabindex="0" aria-label="Como esse score é calculado">
+                                <span aria-hidden="true" style="width:14px; height:14px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); color:#94A3B8; font-size:0.62rem; display:inline-flex; align-items:center; justify-content:center; line-height:1; cursor:help;">i</span>
+                                <div class="metric-tooltip-lite">Baseado em densidade de palavras-chave da vaga e legibilidade ATS do CV.</div>
+                            </span>
+                        </div>
                         <div style="color:#E2E8F0; font-weight:900; font-size: 2rem; line-height: 1;">${nota}<span style="font-size:1rem; color:#94A3B8;">/100</span></div>
+                        <div style="color:#94A3B8; font-size:0.66rem; margin-top:4px; max-width:250px; line-height:1.35;">Baseado em densidade de palavras-chave e legibilidade ATS.</div>
                     </div>
                     <div style="text-align:right;">
                          <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">SCORE PROJETADO</div>
@@ -3370,9 +3377,10 @@ export default function AppPage() {
                                                         Depois (Score: 87/100)
                                                     </div>
                                                     <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
-                                                        "Especialista em <strong>Customer Success</strong> com <strong>+3 anos</strong> gerenciando
-                                                        carteira de <strong>150+ clientes B2B</strong>. Aumentei retenção em <strong>34%</strong>
-                                                        com estratégias de <strong>upsell</strong> e <strong>onboarding estruturado</strong>."
+                                                        "Profissional com <strong style={{ background: "rgba(34, 197, 94, 0.2)", borderRadius: 4, padding: "0 4px" }}>análise de dados</strong> aplicada ao funil comercial,
+                                                        com foco em <strong style={{ background: "rgba(34, 197, 94, 0.2)", borderRadius: 4, padding: "0 4px" }}>eficiência operacional</strong> e expansão de contas.
+                                                        Liderei carteira de <strong>150+ clientes B2B</strong> e aumentei retenção em <strong>34%</strong>
+                                                        com estratégias de <strong>onboarding estruturado</strong> e <strong>upsell</strong>."
                                                     </div>
                                                 </div>
                                             </div>
