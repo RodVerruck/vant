@@ -92,7 +92,8 @@ html,
 body,
 .stApp {
     font-family: 'Outfit', sans-serif;
-    background: radial-gradient(circle at top, #1e293b, var(--bg-darker)) !important;
+    background-color: #0B1222 !important;
+    background-image: radial-gradient(1200px 420px at 50% -180px, rgba(79, 70, 229, 0.26), rgba(79, 70, 229, 0) 70%) !important;
     color: var(--text-main);
     background-attachment: fixed;
 }

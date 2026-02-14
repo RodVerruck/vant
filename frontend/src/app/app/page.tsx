@@ -3175,20 +3175,9 @@ export default function AppPage() {
 
                                 <div className="analyzing-shell">
                                     <div className="analyzing-header">
-                                        <div
-                                            style={{
-                                                color: "rgba(167, 180, 222, 0.9)",
-                                                fontSize: "0.82rem",
-                                                fontWeight: 600,
-                                                letterSpacing: "0.08em",
-                                                textTransform: "uppercase",
-                                            }}
-                                        >
-                                            {phaseLabel}
-                                        </div>
                                         <h2
                                             style={{
-                                                marginTop: 16,
+                                                marginTop: 0,
                                                 marginBottom: 10,
                                                 color: "#F8FAFC",
                                                 fontSize: "clamp(1.5rem, 3.8vw, 2.35rem)",
@@ -3226,6 +3215,20 @@ export default function AppPage() {
                                         />
                                     </div>
 
+                                    <div
+                                        style={{
+                                            textAlign: "center",
+                                            marginTop: 12,
+                                            color: "rgba(167, 180, 222, 0.7)",
+                                            fontSize: "0.72rem",
+                                            fontWeight: 600,
+                                            letterSpacing: "0.1em",
+                                            textTransform: "uppercase",
+                                        }}
+                                    >
+                                        {phaseLabel}
+                                    </div>
+
                                     <div className="analyzing-phase-grid">
                                         {[1, 2, 3].map((step) => {
                                             const isDone = step < activePhase;
@@ -3248,25 +3251,28 @@ export default function AppPage() {
                                     <div
                                         className="analyzing-card-enter analyzing-tip-card"
                                         style={{
-                                            background: "linear-gradient(145deg, rgba(20, 31, 63, 0.76), rgba(17, 25, 48, 0.68))",
-                                            border: "1px solid rgba(99, 116, 175, 0.4)",
+                                            background: "rgba(255, 255, 255, 0.05)",
+                                            border: "1px solid rgba(255, 255, 255, 0.1)",
                                             backdropFilter: "blur(10px)",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "center",
                                         }}
                                     >
-                                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                                            <div style={{ fontSize: "1.35rem" }}>💡</div>
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16, width: "100%" }}>
+                                            <div style={{ fontSize: "1.5rem", display: "flex", alignItems: "center" }}>💡</div>
                                             <div>
                                                 <div style={{ color: "#C7D4FF", fontSize: "0.88rem", fontWeight: 700 }}>
                                                     Você sabia?
                                                 </div>
-                                                <div style={{ color: "#9FB0DC", fontSize: "0.76rem", marginTop: 2 }}>
+                                                <div style={{ color: "rgba(159, 176, 220, 0.85)", fontSize: "0.76rem", marginTop: 2 }}>
                                                     Insights do mercado enquanto avaliamos seu CV
                                                 </div>
                                             </div>
                                         </div>
 
                                         {activePhase === 1 && (
-                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.65 }}>
+                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.65, textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
                                                 <strong style={{ color: "#F8FAFC" }}>75% dos CVs são rejeitados antes de chegar ao recrutador.</strong>
                                                 <br /><br />
                                                 Sistemas ATS filtram automaticamente currículos com base em palavras-chave, estrutura e legibilidade.
@@ -3275,19 +3281,19 @@ export default function AppPage() {
                                         )}
 
                                         {activePhase === 2 && (
-                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.65 }}>
+                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.65, textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
                                                 <strong style={{ color: "#F8FAFC" }}>Checklist de compatibilidade que mais pesa no ATS:</strong>
-                                                <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+                                                <div style={{ margin: "12px auto 0", display: "grid", gap: 8, maxWidth: 520, textAlign: "left" }}>
                                                     <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <span style={{ color: "#7CA1FF", fontSize: "1rem" }}>•</span>
+                                                        <span style={{ color: "#22D3EE", fontSize: "1rem" }}>✓</span>
                                                         <span><strong>Palavras-chave estratégicas</strong> da vaga distribuídas no CV</span>
                                                     </div>
                                                     <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <span style={{ color: "#7CA1FF", fontSize: "1rem" }}>•</span>
+                                                        <span style={{ color: "#22D3EE", fontSize: "1rem" }}>✓</span>
                                                         <span><strong>Resultados com números</strong> para comprovar impacto</span>
                                                     </div>
                                                     <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <span style={{ color: "#7CA1FF", fontSize: "1rem" }}>•</span>
+                                                        <span style={{ color: "#22D3EE", fontSize: "1rem" }}>✓</span>
                                                         <span><strong>Clareza e escaneabilidade</strong> para leitura automática</span>
                                                     </div>
                                                 </div>
@@ -3295,7 +3301,7 @@ export default function AppPage() {
                                         )}
 
                                         {activePhase === 3 && (
-                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: 640, margin: "0 auto", width: "100%" }}>
                                                 <div
                                                     style={{
                                                         background: "rgba(239, 68, 68, 0.1)",
