@@ -13,6 +13,34 @@ import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
 
+function CheckCircle2Icon({ color = "#9CA3AF", size = 16 }: { color?: string; size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <path d="M9 12l2 2 4-4" />
+            <circle cx="12" cy="12" r="9" />
+        </svg>
+    );
+}
+
+function AlertCircleIcon({ color = "#9CA3AF", size = 16 }: { color?: string; size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <circle cx="12" cy="12" r="9" />
+            <line x1="12" y1="8" x2="12" y2="13" />
+            <circle cx="12" cy="16" r="1" />
+        </svg>
+    );
+}
+
+function LockIcon({ color = "#9CA3AF", size = 16 }: { color?: string; size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <rect x="3" y="11" width="18" height="10" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+    );
+}
+
 // IndexedDB helpers for file storage (localStorage has 5MB limit, IndexedDB doesn't)
 const IDB_NAME = "vant_files";
 const IDB_STORE = "files";
@@ -3285,15 +3313,15 @@ export default function AppPage() {
                                                 <strong style={{ color: "#F8FAFC" }}>Checklist de compatibilidade que mais pesa no ATS:</strong>
                                                 <div style={{ margin: "12px auto 0", display: "grid", gap: 8, maxWidth: 520, textAlign: "left" }}>
                                                     <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <span style={{ color: "#22D3EE", fontSize: "1rem" }}>✓</span>
+                                                        <CheckCircle2Icon color="#9CA3AF" />
                                                         <span><strong>Palavras-chave estratégicas</strong> da vaga distribuídas no CV</span>
                                                     </div>
                                                     <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <span style={{ color: "#22D3EE", fontSize: "1rem" }}>✓</span>
+                                                        <CheckCircle2Icon color="#9CA3AF" />
                                                         <span><strong>Resultados com números</strong> para comprovar impacto</span>
                                                     </div>
                                                     <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <span style={{ color: "#22D3EE", fontSize: "1rem" }}>✓</span>
+                                                        <CheckCircle2Icon color="#9CA3AF" />
                                                         <span><strong>Clareza e escaneabilidade</strong> para leitura automática</span>
                                                     </div>
                                                 </div>
@@ -3304,14 +3332,15 @@ export default function AppPage() {
                                             <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.6, maxWidth: 640, margin: "0 auto", width: "100%" }}>
                                                 <div
                                                     style={{
-                                                        background: "rgba(239, 68, 68, 0.15)",
+                                                        background: "rgba(15, 23, 42, 0.78)",
                                                         border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                        borderLeft: "2px solid #EF4444",
                                                         borderRadius: 10,
                                                         padding: 12,
                                                         marginBottom: 12,
                                                     }}
                                                 >
-                                                    <div style={{ color: "#FCA5A5", fontSize: "0.78rem", fontWeight: 700, marginBottom: 6 }}>
+                                                    <div style={{ color: "#FCA5A5", fontSize: "0.78rem", fontWeight: 600, marginBottom: 6 }}>
                                                         Antes (Score: 42/100)
                                                     </div>
                                                     <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic" }}>
@@ -3320,13 +3349,14 @@ export default function AppPage() {
                                                 </div>
                                                 <div
                                                     style={{
-                                                        background: "rgba(76, 110, 245, 0.15)",
-                                                        border: "1px solid rgba(129, 140, 248, 0.42)",
+                                                        background: "rgba(15, 23, 42, 0.78)",
+                                                        border: "1px solid rgba(16, 185, 129, 0.35)",
+                                                        borderLeft: "2px solid #10B981",
                                                         borderRadius: 10,
                                                         padding: 12,
                                                     }}
                                                 >
-                                                    <div style={{ color: "#A5B4FC", fontSize: "0.78rem", fontWeight: 700, marginBottom: 6 }}>
+                                                    <div style={{ color: "#34D399", fontSize: "0.78rem", fontWeight: 600, marginBottom: 6 }}>
                                                         Depois (Score: 87/100)
                                                     </div>
                                                     <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
@@ -3351,14 +3381,17 @@ export default function AppPage() {
                     {premiumError && (
                         <div className="hero-container" style={{ textAlign: "center" }}>
                             <div style={{
-                                background: "rgba(239, 68, 68, 0.1)",
-                                border: "2px solid #EF4444",
+                                background: "rgba(15, 23, 42, 0.7)",
+                                border: "1px solid rgba(239, 68, 68, 0.35)",
+                                borderLeft: "2px solid #EF4444",
                                 borderRadius: 12,
                                 padding: "40px",
                                 margin: "20px auto",
                                 maxWidth: "100%"
                             }}>
-                                <div style={{ fontSize: "3rem", marginBottom: "16px" }}>❌</div>
+                                <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+                                    <AlertCircleIcon color="#EF4444" size={24} />
+                                </div>
                                 <div style={{ color: "#EF4444", fontSize: "1.5rem", fontWeight: 700, marginBottom: "12px" }}>
                                     Dados da sessão perdidos
                                 </div>
@@ -3467,16 +3500,16 @@ export default function AppPage() {
                                 </div>
 
                                 <div style={{
-                                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
-                                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                                    background: "rgba(15, 23, 42, 0.68)",
+                                    border: "1px solid rgba(255, 255, 255, 0.1)",
                                     borderRadius: 16,
                                     padding: 24,
                                     backdropFilter: "blur(10px)"
                                 }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                                        <div style={{ fontSize: "1.8rem" }}>🚀</div>
+                                        <CheckCircle2Icon color="#9CA3AF" size={18} />
                                         <div>
-                                            <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, letterSpacing: "0.5px" }}>
+                                            <div style={{ color: "#E2E8F0", fontSize: "0.9rem", fontWeight: 600, letterSpacing: "0.4px" }}>
                                                 DOSSIÊ PROFISSIONAL EM CONSTRUÇÃO
                                             </div>
                                             <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 2 }}>
@@ -3497,28 +3530,31 @@ export default function AppPage() {
                                     {progress >= 35 && progress < 70 && (
                                         <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
                                             <div style={{
-                                                background: "rgba(16, 185, 129, 0.1)",
-                                                border: "1px solid rgba(16, 185, 129, 0.3)",
+                                                background: "rgba(15, 23, 42, 0.72)",
+                                                border: "1px solid rgba(16, 185, 129, 0.35)",
+                                                borderLeft: "2px solid #10B981",
                                                 borderRadius: 8,
                                                 padding: 12,
                                                 marginBottom: 12
                                             }}>
-                                                <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 700, marginBottom: 6 }}>
-                                                    ✅ ANÁLISE ESTRUTURAL CONCLUÍDA
+                                                <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+                                                    <CheckCircle2Icon color="#10B981" />
+                                                    ANÁLISE ESTRUTURAL CONCLUÍDA
                                                 </div>
                                                 <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
                                                     Identificamos os pontos exatos que impedem seu CV de passar nos filtros automáticos.
                                                 </div>
                                             </div>
                                             <div style={{
-                                                background: "rgba(56, 189, 248, 0.1)",
+                                                background: "rgba(15, 23, 42, 0.72)",
                                                 border: "1px solid rgba(56, 189, 248, 0.3)",
+                                                borderLeft: "2px solid #38BDF8",
                                                 borderRadius: 8,
                                                 padding: 12,
                                                 marginBottom: 12
                                             }}>
-                                                <div style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 700, marginBottom: 6 }}>
-                                                    🔄 REESCREVENDO CONTEÚDO
+                                                <div style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600, marginBottom: 6 }}>
+                                                    REESCREVENDO CONTEÚDO
                                                 </div>
                                                 <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
                                                     Aplicando otimizações semânticas e reestruturando experiências com métricas de impacto.
@@ -3532,19 +3568,19 @@ export default function AppPage() {
                                             <strong style={{ color: "#F8FAFC" }}>Seu dossiê profissional está quase pronto!</strong>
                                             <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                    <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
+                                                    <CheckCircle2Icon color="#9CA3AF" />
                                                     <span>CV reestruturado com <strong>palavras-chave da vaga</strong></span>
                                                 </div>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                    <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
+                                                    <CheckCircle2Icon color="#9CA3AF" />
                                                     <span><strong>Headline LinkedIn</strong> otimizada para recrutadores</span>
                                                 </div>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                    <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
+                                                    <CheckCircle2Icon color="#9CA3AF" />
                                                     <span><strong>Biblioteca técnica</strong> personalizada para seu cargo</span>
                                                 </div>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                    <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
+                                                    <CheckCircle2Icon color="#9CA3AF" />
                                                     <span><strong>Projeto prático</strong> para diferencial em entrevistas</span>
                                                 </div>
                                             </div>
@@ -3573,7 +3609,7 @@ export default function AppPage() {
                         else if (jobText.includes("amazon")) texto_destaque += " da Amazon";
                         else if (jobText.includes("itaú") || jobText.includes("itau")) texto_destaque += " do Itaú";
 
-                        // 🎯 Calcular score projetado inteligente
+                        // Calcular score projetado inteligente
                         const impacto = typeof pilares.impacto === "number" ? pilares.impacto : 0;
                         const keywords = typeof pilares.keywords === "number" ? pilares.keywords : 0;
                         const ats = typeof pilares.ats === "number" ? pilares.ats : 0;
@@ -3584,12 +3620,14 @@ export default function AppPage() {
                         const projected = calculateProjectedScore(nota, gapsCount, 0, ats, keywords, impacto);
 
                         const metaHtml = `
-    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(16, 185, 129, 0.1)); 
-                border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; margin-top: 20px;">
+    <div style="background: rgba(255, 255, 255, 0.03); 
+                border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 20px; margin-top: 20px;
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">🎯</div>
+            <div style="width: 22px; height: 22px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.5);
+                        display:flex; align-items:center; justify-content:center; color: #34D399; font-size: 0.8rem;">+</div>
             <div>
-                <div style="color: #F59E0B; font-weight: 800; font-size: 1.1rem;">META DE PONTUAÇÃO</div>
+                <div style="color: #E2E8F0; font-weight: 600; font-size: 1rem;">Meta de pontuação</div>
                 <div style="color: #E2E8F0; font-size: 0.9rem; margin-top: 5px;">
                     Com as otimizações completas, seu score pode chegar a <strong style="color: #10B981;">${projected.score}/100</strong>
                     <br>Isso coloca você no <strong>${projected.percentile}</strong> dos candidatos.
@@ -3608,11 +3646,11 @@ export default function AppPage() {
                             "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
 
                         const xrayHtml = `
-        <div style='background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(56, 189, 248, 0.2); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;'>
-            <div style="position: absolute; top: -20px; right: -20px; background: #38BDF8; width: 60px; height: 60px; filter: blur(40px); opacity: 0.1;"></div>
+        <div style='background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;
+                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);'>
             
             <div style="display: flex; gap: 12px; align-items: start;">
-                <div style="font-size: 1.2rem; background: rgba(56, 189, 248, 0.1); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">🕵️</div>
+                <div style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.12); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color:#38BDF8; font-weight: 600;">XR</div>
                 <div style="flex: 1;">
                     <h3 style='color: #E2E8F0; margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600;'>
                         Radar de Recrutadores Ativo
@@ -3649,28 +3687,31 @@ export default function AppPage() {
                                     {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
                                     {data.gap_1 && data.gap_2 && (
                                         <div style={{ marginTop: 24, marginBottom: 32 }}>
-                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "16px", background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.05))", borderRadius: 12, border: "1px solid rgba(16, 185, 129, 0.3)" }}>
-                                                <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>✨</div>
-                                                <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 700, marginBottom: 4 }}>
+                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "rgba(255, 255, 255, 0.03)", borderRadius: 12, border: "1px solid rgba(255, 255, 255, 0.08)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
+                                                <div style={{ color: "#E2E8F0", fontSize: "1.1rem", fontWeight: 600, marginBottom: 4 }}>
                                                     PRÉVIA GRATUITA
                                                 </div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.9rem" }}>
+                                                <div style={{ color: "#94A3B8", fontSize: "0.9rem" }}>
                                                     Nossa IA analisou seu CV e identificou 2 problemas críticos
                                                 </div>
                                             </div>
 
                                             {/* Gap 1 - Dados reais da IA */}
                                             <div style={{
-                                                background: "rgba(15, 23, 42, 0.6)",
-                                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                background: "rgba(255, 255, 255, 0.03)",
+                                                border: "1px solid rgba(255, 255, 255, 0.08)",
                                                 borderLeft: "4px solid #EF4444",
                                                 borderRadius: 12,
                                                 padding: 20,
-                                                marginBottom: 16
+                                                marginBottom: 16,
+                                                backdropFilter: "blur(20px)",
+                                                WebkitBackdropFilter: "blur(20px)",
+                                                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                     <div style={{
-                                                        background: "rgba(239, 68, 68, 0.2)",
+                                                        background: "rgba(15, 23, 42, 0.8)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.35)",
                                                         borderRadius: "50%",
                                                         width: 32,
                                                         height: 32,
@@ -3679,9 +3720,11 @@ export default function AppPage() {
                                                         justifyContent: "center",
                                                         fontSize: "1rem",
                                                         flexShrink: 0
-                                                    }}>⚠️</div>
+                                                    }}>
+                                                        <AlertCircleIcon color="#EF4444" size={14} />
+                                                    </div>
                                                     <div style={{ flex: 1 }}>
-                                                        <div style={{ color: "#EF4444", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
+                                                        <div style={{ color: "#FCA5A5", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
                                                             PROBLEMA #1: {data.gap_1.titulo || "Falta de Resultados Quantificáveis"}
                                                         </div>
                                                         <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
@@ -3692,43 +3735,44 @@ export default function AppPage() {
 
                                                 {data.gap_1.exemplo_atual && (
                                                     <div style={{
-                                                        background: "rgba(239, 68, 68, 0.15)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                        background: "rgba(255, 255, 255, 0.03)",
+                                                        border: "1px solid rgba(255, 255, 255, 0.08)",
                                                         borderLeft: "2px solid #EF4444",
                                                         borderRadius: 6,
                                                         padding: "12px 12px 12px 16px",
                                                         marginBottom: 12,
-                                                        position: "relative"
+                                                        display: "flex",
+                                                        alignItems: "start",
+                                                        gap: 10,
+                                                        backdropFilter: "blur(20px)",
+                                                        WebkitBackdropFilter: "blur(20px)"
                                                     }}>
-                                                        <div style={{
-                                                            position: "absolute",
-                                                            left: "-8px",
-                                                            top: "12px",
-                                                            color: "#EF4444",
-                                                            fontSize: "0.7rem",
-                                                            fontWeight: 700
-                                                        }}>❌</div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
-                                                            VERSÃO ATUAL (Score: {nota}/100)
-                                                        </div>
-                                                        <div style={{
-                                                            color: "#E2E8F0",
-                                                            fontSize: "0.85rem",
-                                                            fontStyle: "italic",
-                                                            lineHeight: 1.5
-                                                        }}>
-                                                            "{data.gap_1.exemplo_atual}"
+                                                        <AlertCircleIcon color="#EF4444" size={14} />
+                                                        <div>
+                                                            <div style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                                VERSÃO ATUAL (Score: {nota}/100)
+                                                            </div>
+                                                            <div style={{
+                                                                color: "#E2E8F0",
+                                                                fontSize: "0.85rem",
+                                                                fontStyle: "italic",
+                                                                lineHeight: 1.5
+                                                            }}>
+                                                                "{data.gap_1.exemplo_atual}"
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
 
                                                 {data.gap_1.exemplo_otimizado && (
                                                     <div style={{
-                                                        background: "rgba(34, 197, 94, 0.18)",
-                                                        border: "1px solid rgba(34, 197, 94, 0.35)",
+                                                        background: "rgba(255, 255, 255, 0.03)",
+                                                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                        borderLeft: "2px solid #10B981",
                                                         borderRadius: 10,
                                                         padding: 14,
-                                                        boxShadow: "0 0 15px rgba(34, 197, 94, 0.15)"
+                                                        backdropFilter: "blur(20px)",
+                                                        WebkitBackdropFilter: "blur(20px)"
                                                     }}>
                                                         <div style={{
                                                             display: "flex",
@@ -3737,8 +3781,9 @@ export default function AppPage() {
                                                             marginBottom: 4,
                                                             gap: 8
                                                         }}>
-                                                            <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 700 }}>
-                                                                ✅ VERSÃO OTIMIZADA (Score: 94/100)
+                                                            <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                                                                <CheckCircle2Icon color="#10B981" />
+                                                                VERSÃO OTIMIZADA (Score: 94/100)
                                                             </div>
                                                             <div style={{
                                                                 background: "#10B981",
@@ -3759,13 +3804,17 @@ export default function AppPage() {
                                                 <div style={{
                                                     marginTop: 12,
                                                     padding: 10,
-                                                    background: "rgba(56, 189, 248, 0.1)",
+                                                    background: "rgba(255, 255, 255, 0.03)",
+                                                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                    borderLeft: "2px solid #38BDF8",
                                                     borderRadius: 6,
                                                     display: "flex",
                                                     alignItems: "center",
-                                                    gap: 8
+                                                    gap: 8,
+                                                    backdropFilter: "blur(20px)",
+                                                    WebkitBackdropFilter: "blur(20px)"
                                                 }}>
-                                                    <span style={{ fontSize: "1rem" }}>💡</span>
+                                                    <AlertCircleIcon color="#38BDF8" size={14} />
                                                     <span style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600 }}>
                                                         Impacto: +{94 - nota} pontos no score ATS
                                                     </span>
@@ -3774,15 +3823,19 @@ export default function AppPage() {
 
                                             {/* Gap 2 - Dados reais da IA */}
                                             <div style={{
-                                                background: "rgba(15, 23, 42, 0.6)",
-                                                border: "1px solid rgba(245, 158, 11, 0.3)",
+                                                background: "rgba(255, 255, 255, 0.03)",
+                                                border: "1px solid rgba(255, 255, 255, 0.08)",
                                                 borderLeft: "4px solid #F59E0B",
                                                 borderRadius: 12,
-                                                padding: 20
+                                                padding: 20,
+                                                backdropFilter: "blur(20px)",
+                                                WebkitBackdropFilter: "blur(20px)",
+                                                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                     <div style={{
-                                                        background: "rgba(245, 158, 11, 0.2)",
+                                                        background: "rgba(15, 23, 42, 0.8)",
+                                                        border: "1px solid rgba(245, 158, 11, 0.35)",
                                                         borderRadius: "50%",
                                                         width: 32,
                                                         height: 32,
@@ -3791,9 +3844,11 @@ export default function AppPage() {
                                                         justifyContent: "center",
                                                         fontSize: "1rem",
                                                         flexShrink: 0
-                                                    }}>🎯</div>
+                                                    }}>
+                                                        <AlertCircleIcon color="#F59E0B" size={14} />
+                                                    </div>
                                                     <div style={{ flex: 1 }}>
-                                                        <div style={{ color: "#F59E0B", fontSize: "0.85rem", fontWeight: 700, marginBottom: 4 }}>
+                                                        <div style={{ color: "#FCD34D", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
                                                             PROBLEMA #2: {data.gap_2.titulo || "Palavras-Chave da Vaga Ausentes"}
                                                         </div>
                                                         <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
@@ -3804,32 +3859,29 @@ export default function AppPage() {
 
                                                 {gap2ExampleAtual && (
                                                     <div style={{
-                                                        background: "rgba(239, 68, 68, 0.15)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                        background: "rgba(15, 23, 42, 0.8)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.28)",
                                                         borderLeft: "2px solid #EF4444",
                                                         borderRadius: 6,
                                                         padding: "12px 12px 12px 16px",
                                                         marginBottom: 12,
-                                                        position: "relative"
+                                                        display: "flex",
+                                                        alignItems: "start",
+                                                        gap: 10
                                                     }}>
-                                                        <div style={{
-                                                            position: "absolute",
-                                                            left: "-8px",
-                                                            top: "12px",
-                                                            color: "#EF4444",
-                                                            fontSize: "0.7rem",
-                                                            fontWeight: 700
-                                                        }}>❌</div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
-                                                            VERSÃO ATUAL (Score: {nota}/100)
-                                                        </div>
-                                                        <div style={{
-                                                            color: "#E2E8F0",
-                                                            fontSize: "0.85rem",
-                                                            fontStyle: "italic",
-                                                            lineHeight: 1.5
-                                                        }}>
-                                                            "{gap2ExampleAtual}"
+                                                        <AlertCircleIcon color="#EF4444" size={14} />
+                                                        <div>
+                                                            <div style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                                VERSÃO ATUAL (Score: {nota}/100)
+                                                            </div>
+                                                            <div style={{
+                                                                color: "#E2E8F0",
+                                                                fontSize: "0.85rem",
+                                                                fontStyle: "italic",
+                                                                lineHeight: 1.5
+                                                            }}>
+                                                                "{gap2ExampleAtual}"
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
@@ -3841,7 +3893,7 @@ export default function AppPage() {
                                                         marginBottom: 8
                                                     }}>
                                                         <div style={{ color: "#FCD34D", fontSize: "0.75rem", fontWeight: 600, marginBottom: 8 }}>
-                                                            🔍 TERMOS FALTANDO NO SEU CV:
+                                                            TERMOS FALTANDO NO SEU CV:
                                                         </div>
                                                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                                                             {data.gap_2.termos_faltando.slice(0, 5).map((term: string, i: number) => (
@@ -3877,96 +3929,44 @@ export default function AppPage() {
                                                 <div style={{
                                                     marginTop: 12,
                                                     padding: 16,
-                                                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(56, 189, 248, 0.1))",
+                                                    background: "rgba(255, 255, 255, 0.03)",
                                                     borderRadius: 10,
-                                                    border: "2px solid rgba(16, 185, 129, 0.4)",
-                                                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)"
+                                                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                    borderLeft: "2px solid #10B981",
+                                                    backdropFilter: "blur(20px)",
+                                                    WebkitBackdropFilter: "blur(20px)",
+                                                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                                 }}>
-                                                    <div style={{ color: "#10B981", fontSize: "1rem", fontWeight: 800, marginBottom: 8, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
-                                                        🎁 NA VERSÃO PREMIUM VOCÊ RECEBE:
+                                                    <div style={{ color: "#10B981", fontSize: "1rem", fontWeight: 600, marginBottom: 8, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
+                                                        NA VERSÃO PREMIUM VOCÊ RECEBE:
                                                     </div>
                                                     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <div style={{
-                                                                minWidth: "28px",
-                                                                height: "28px",
-                                                                background: "linear-gradient(135deg, #10B981, #059669)",
-                                                                borderRadius: "50%",
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                fontSize: "1rem",
-                                                                flexShrink: 0,
-                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✓</div>
+                                                            <CheckCircle2Icon color="#9CA3AF" />
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 <strong>CV reescrito</strong> com todas as palavras-chave integradas naturalmente
                                                             </span>
                                                         </div>
                                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <div style={{
-                                                                minWidth: "28px",
-                                                                height: "28px",
-                                                                background: "linear-gradient(135deg, #10B981, #059669)",
-                                                                borderRadius: "50%",
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                fontSize: "1rem",
-                                                                flexShrink: 0,
-                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✓</div>
+                                                            <CheckCircle2Icon color="#9CA3AF" />
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 Análise completa de <strong>todos os critérios ATS</strong> (não apenas 2)
                                                             </span>
                                                         </div>
                                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <div style={{
-                                                                minWidth: "28px",
-                                                                height: "28px",
-                                                                background: "linear-gradient(135deg, #10B981, #059669)",
-                                                                borderRadius: "50%",
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                fontSize: "1rem",
-                                                                flexShrink: 0,
-                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✓</div>
+                                                            <CheckCircle2Icon color="#9CA3AF" />
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 <strong>Headline do LinkedIn</strong> otimizada para recrutadores
                                                             </span>
                                                         </div>
                                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <div style={{
-                                                                minWidth: "28px",
-                                                                height: "28px",
-                                                                background: "linear-gradient(135deg, #10B981, #059669)",
-                                                                borderRadius: "50%",
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                fontSize: "1rem",
-                                                                flexShrink: 0,
-                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✓</div>
+                                                            <CheckCircle2Icon color="#9CA3AF" />
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 <strong>Biblioteca técnica</strong> personalizada para seu cargo
                                                             </span>
                                                         </div>
                                                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <div style={{
-                                                                minWidth: "28px",
-                                                                height: "28px",
-                                                                background: "linear-gradient(135deg, #10B981, #059669)",
-                                                                borderRadius: "50%",
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                fontSize: "1rem",
-                                                                flexShrink: 0,
-                                                                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.4)"
-                                                            }}>✓</div>
+                                                            <CheckCircle2Icon color="#9CA3AF" />
                                                             <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
                                                                 <strong>Projeto prático</strong> para diferencial em entrevistas
                                                             </span>
@@ -3981,15 +3981,18 @@ export default function AppPage() {
                                     {authUserId && creditsRemaining > 0 ? (
                                         <div style={{ marginTop: 32 }}>
                                             <div style={{
-                                                background: "linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(56, 189, 248, 0.1))",
-                                                border: "2px solid #10B981",
+                                                background: "rgba(15, 23, 42, 0.72)",
+                                                border: "1px solid rgba(16, 185, 129, 0.35)",
+                                                borderLeft: "2px solid #10B981",
                                                 borderRadius: 16,
                                                 padding: "28px",
                                                 textAlign: "center",
-                                                boxShadow: "0 0 30px rgba(16, 185, 129, 0.2)"
+                                                boxShadow: "none"
                                             }}>
-                                                <div style={{ fontSize: "2rem", marginBottom: 12 }}>⚡</div>
-                                                <div style={{ color: "#10B981", fontSize: "1.2rem", fontWeight: 800, marginBottom: 8 }}>
+                                                <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                                                    <CheckCircle2Icon color="#10B981" size={18} />
+                                                </div>
+                                                <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 600, marginBottom: 8 }}>
                                                     Você tem {creditsRemaining} crédito(s) disponível(is)!
                                                 </div>
                                                 <div style={{ color: "#E2E8F0", fontSize: "0.95rem", marginBottom: 20, lineHeight: 1.5 }}>
@@ -4002,31 +4005,31 @@ export default function AppPage() {
                                                     style={{
                                                         width: "100%",
                                                         maxWidth: 420,
-                                                        background: "linear-gradient(135deg, #10B981, #059669)",
+                                                        background: "#10B981",
                                                         color: "#fff",
                                                         border: "none",
-                                                        padding: "20px",
+                                                        padding: "18px",
                                                         borderRadius: 12,
-                                                        fontSize: "1.15rem",
-                                                        fontWeight: 800,
+                                                        fontSize: "1.05rem",
+                                                        fontWeight: 600,
                                                         cursor: "pointer",
-                                                        boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)",
+                                                        boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
                                                         transition: "all 0.2s",
                                                         textTransform: "uppercase",
-                                                        letterSpacing: "0.5px"
+                                                        letterSpacing: "0.35px"
                                                     }}
                                                     onMouseEnter={(e) => {
                                                         e.currentTarget.style.transform = "translateY(-2px)";
-                                                        e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
+                                                        e.currentTarget.style.boxShadow = "0 6px 18px rgba(16, 185, 129, 0.45)";
                                                     }}
                                                     onMouseLeave={(e) => {
                                                         e.currentTarget.style.transform = "translateY(0)";
-                                                        e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
+                                                        e.currentTarget.style.boxShadow = "0 4px 14px rgba(16, 185, 129, 0.35)";
                                                     }}
                                                     onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
                                                     onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
                                                 >
-                                                    ⚡ USAR 1 CRÉDITO E DESBLOQUEAR
+                                                    USAR 1 CRÉDITO E DESBLOQUEAR
                                                 </button>
                                             </div>
                                         </div>

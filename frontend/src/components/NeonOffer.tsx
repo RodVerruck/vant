@@ -12,6 +12,34 @@ interface NeonOfferProps {
     showHeader?: boolean;
 }
 
+function CheckCircle2Icon({ color = "#9CA3AF" }: { color?: string }) {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 12l2 2 4-4" />
+            <circle cx="12" cy="12" r="9" />
+        </svg>
+    );
+}
+
+function LockIcon({ color = "#9CA3AF" }: { color?: string }) {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="10" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+    );
+}
+
+function AlertCircleIcon({ color = "#9CA3AF" }: { color?: string }) {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <line x1="12" y1="8" x2="12" y2="13" />
+            <circle cx="12" cy="16" r="1" />
+        </svg>
+    );
+}
+
 export function NeonOffer({
     onSelectPlan,
     onCheckout,
@@ -33,8 +61,8 @@ export function NeonOffer({
         <div>
             {showHeader && (
                 <>
-                    <div style={{ color: "#E2E8F0", fontSize: "1.25rem", fontWeight: 800, marginBottom: 14, textAlign: "center" }}>
-                        🚀 Escolha Seu Plano
+                    <div style={{ color: "#E2E8F0", fontSize: "1.2rem", fontWeight: 600, marginBottom: 14, textAlign: "center" }}>
+                        Escolha seu plano
                     </div>
                     <div style={{ color: "#94A3B8", fontSize: "0.9rem", marginBottom: 24, textAlign: "center" }}>
                         Desbloqueie análises completas e otimize múltiplos CVs
@@ -62,20 +90,23 @@ export function NeonOffer({
                     {/* CARD 1: SOLUÇÃO RÁPIDA (Âncora & Tripwire) - SECUNDÁRIO MAS ATIVO */}
                     <div style={{
                         flex: "1 1 300px",
-                        background: "rgba(15, 23, 42, 0.4)",
-                        border: "1px solid #334155",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
                         borderRadius: 12,
-                        padding: "20px",
+                        padding: "28px",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "space-between",
                         minHeight: 760
                     }}>
                         <div>
-                            <div style={{ color: "#CBD5E1", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6 }}>
+                            <div style={{ color: "#CBD5E1", fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6 }}>
                                 CRÉDITOS AVULSOS
                             </div>
-                            <div style={{ color: "#FFFFFF", fontSize: "1.2rem", fontWeight: 600, marginBottom: 6 }}>
+                            <div style={{ color: "#FFFFFF", fontSize: "1.2rem", fontWeight: 600, marginBottom: 8 }}>
                                 A partir de R$ 12,90
                             </div>
 
@@ -120,22 +151,22 @@ export function NeonOffer({
 
                             <div style={{ marginTop: 16, marginBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
                                 <div style={{ display: "flex", gap: 10, alignItems: "center", color: "#E2E8F0", fontSize: "0.85rem" }}>
-                                    <span style={{ color: "#22D3EE", fontWeight: 700 }}>✓</span>
+                                    <CheckCircle2Icon color="#9CA3AF" />
                                     <span>Análise básica de compatibilidade ATS</span>
                                 </div>
                                 <div style={{ display: "flex", gap: 10, alignItems: "center", color: "#E2E8F0", fontSize: "0.85rem" }}>
-                                    <span style={{ color: "#22D3EE", fontWeight: 700 }}>✓</span>
+                                    <CheckCircle2Icon color="#9CA3AF" />
                                     <span>Download em PDF do currículo otimizado</span>
                                 </div>
                                 <div style={{ display: "flex", gap: 10, alignItems: "center", color: "#E2E8F0", fontSize: "0.85rem" }}>
-                                    <span style={{ color: "#22D3EE", fontWeight: 700 }}>✓</span>
+                                    <CheckCircle2Icon color="#9CA3AF" />
                                     <span>Ideal para 1 candidatura imediata</span>
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: 12, padding: 10, background: "rgba(59, 130, 246, 0.8)", borderRadius: 6, border: "1px solid rgba(59, 130, 246, 0.9)" }}>
-                                <div style={{ color: "#FFFFFF", fontSize: "0.75rem", fontWeight: 700, marginBottom: 3 }}>💡 Quer otimizar mais de 3 CVs?</div>
-                                <div style={{ color: "#FFFFFF", fontSize: "0.7rem", fontWeight: 600 }}>Trial por R$ 1,99 é melhor negócio!</div>
+                            <div style={{ marginTop: 12, padding: 10, background: "rgba(15, 23, 42, 0.75)", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                                <div style={{ color: "#E2E8F0", fontSize: "0.75rem", fontWeight: 600, marginBottom: 3 }}>Quer otimizar mais de 3 CVs?</div>
+                                <div style={{ color: "#94A3B8", fontSize: "0.74rem", fontWeight: 500 }}>O trial por R$ 1,99 é o melhor custo-benefício.</div>
                             </div>
                         </div>
                     </div>
@@ -143,56 +174,62 @@ export function NeonOffer({
                     {/* CARD 2: HERO SAAS (O Foco da Venda) - DESTACADO COM GLOW */}
                     <div style={{
                         flex: "1 1 300px",
-                        background: "linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(6, 78, 59, 0.4))",
-                        border: "2px solid #10B981",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
                         borderRadius: 16,
-                        padding: "24px",
+                        padding: "28px",
                         position: "relative",
-                        boxShadow: "0 0 40px rgba(16, 185, 129, 0.4), 0 0 80px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.1)",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 45px rgba(16, 185, 129, 0.13)",
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "space-between",
-                        minHeight: 760,
-                        transform: "scale(1.02)",
-                        transition: "all 0.3s ease"
+                        minHeight: 760
                     }}>
-                        <div style={{ position: "absolute", top: "-18px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #34D399, #10B981)", color: "#fff", padding: "6px 18px", borderRadius: 999, border: "1px solid rgba(236, 253, 245, 0.7)", fontSize: "0.78rem", fontWeight: 900, letterSpacing: "0.7px", boxShadow: "0 8px 20px rgba(16, 185, 129, 0.45)", whiteSpace: "nowrap", textTransform: "uppercase" }}>
+                        <div style={{ position: "absolute", top: "12px", right: "12px", background: "rgba(16, 185, 129, 0.12)", color: "#6EE7B7", padding: "4px 10px", borderRadius: 999, border: "1px solid rgba(16, 185, 129, 0.25)", fontSize: "0.68rem", fontWeight: 500, letterSpacing: "0.25px", whiteSpace: "nowrap", textTransform: "uppercase" }}>
                             RECOMENDADO PELA IA
                         </div>
 
                         <div>
-                            <div style={{ color: "#10B981", fontWeight: 800, fontSize: "1.4rem", marginBottom: 20, textAlign: "center" }}>VANT PRO MENSAL</div>
+                            <div style={{ color: "#FFFFFF", fontWeight: 600, fontSize: "1.2rem", marginBottom: 20, textAlign: "center" }}>VANT PRO MENSAL</div>
 
                             <div style={{
-                                background: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15))",
-                                border: "2px solid #EF4444",
+                                background: "rgba(255, 255, 255, 0.03)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
                                 borderRadius: 12,
-                                padding: "18px",
+                                padding: "20px",
                                 marginBottom: 20,
                                 textAlign: "center",
-                                boxShadow: "0 0 20px rgba(239, 68, 68, 0.3)"
+                                backdropFilter: "blur(20px)",
+                                WebkitBackdropFilter: "blur(20px)"
                             }}>
-                                <div style={{ color: "#EF4444", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", marginBottom: 8 }}>
-                                    🔥 OFERTA POR TEMPO LIMITADO
+                                <div style={{ color: "#94A3B8", fontSize: "0.74rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 8 }}>
+                                    Oferta por tempo limitado
                                 </div>
-                                <div style={{ fontSize: "1.8rem", fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6 }}>
-                                    7 DIAS POR <span style={{ fontSize: "2.5rem", fontWeight: 900 }}>R$ 1,99</span>
+                                <div style={{ color: "#94A3B8", fontSize: "0.85rem", marginBottom: 6 }}>
+                                    7 dias por
                                 </div>
-                                <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 12 }}>
+                                <div style={{ fontSize: "2.6rem", fontWeight: 700, color: "#fff", lineHeight: 1, marginBottom: 8, letterSpacing: "-0.03em" }}>
+                                    R$ 1,99
+                                </div>
+                                <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 14 }}>
                                     Renova por apenas R$ 19,90/mês
                                 </div>
 
                                 <div style={{
-                                    background: "rgba(245, 158, 11, 0.2)",
-                                    border: "1px solid rgba(245, 158, 11, 0.4)",
+                                    background: "rgba(255, 255, 255, 0.03)",
+                                    border: "1px solid rgba(255, 255, 255, 0.08)",
                                     borderRadius: 8,
                                     padding: "10px",
-                                    marginBottom: 12
+                                    marginBottom: 12,
+                                    backdropFilter: "blur(20px)",
+                                    WebkitBackdropFilter: "blur(20px)"
                                 }}>
-                                    <div style={{ color: "#F59E0B", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
-                                        👥 JUNTE-SE A <strong style={{ color: "#10B981" }}>50.000+</strong> PROFISSIONAIS:
+                                    <div style={{ color: "#CBD5E1", fontSize: "0.74rem", fontWeight: 600, marginBottom: 4 }}>
+                                        Mais de <strong style={{ color: "#FFFFFF" }}>50.000 profissionais</strong> já utilizaram a plataforma.
                                     </div>
-                                    <div style={{ color: "#fff", fontSize: "0.9rem", fontWeight: 700 }}>
+                                    <div style={{ color: "#fff", fontSize: "0.88rem", fontWeight: 600 }}>
                                         Preço Vitalício de R$ 19,90/mês garantido
                                     </div>
                                     <div style={{ color: "#94A3B8", fontSize: "0.7rem", marginTop: 2 }}>
@@ -202,7 +239,7 @@ export function NeonOffer({
 
                                 <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
                                     <div>
-                                        <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                                        <div style={{ color: "#94A3B8", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                                             ESSA CONDIÇÃO EXPIRA EM
                                         </div>
                                         <div style={{
@@ -231,19 +268,19 @@ export function NeonOffer({
 
                             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: 24 }}>
                                 <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                    <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                    <CheckCircle2Icon />
                                     <span><strong>30 Otimizações/mês</strong></span>
                                 </div>
                                 <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                    <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                    <CheckCircle2Icon />
                                     <span><strong>Simulador de Entrevista IA</strong></span>
                                 </div>
                                 <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                    <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                    <CheckCircle2Icon />
                                     <span><strong>Radar de Vagas Inteligente</strong></span>
                                 </div>
                                 <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                    <div style={{ color: "#10B981", fontSize: "1rem" }}>✓</div>
+                                    <CheckCircle2Icon />
                                     Custo por CV: <strong>Apenas R$ 0,93</strong>
                                 </div>
                                 <div style={{
@@ -260,14 +297,15 @@ export function NeonOffer({
                                 {hasActivePlan ? (
                                     <div style={{
                                         width: "100%",
-                                        background: "rgba(16, 185, 129, 0.1)",
-                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                        background: "rgba(15, 23, 42, 0.7)",
+                                        border: "1px solid rgba(255, 255, 255, 0.1)",
                                         padding: "16px 20px",
                                         borderRadius: 12,
                                         textAlign: "center"
                                     }}>
-                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 6 }}>
-                                            ✅ Você já é assinante PRO!
+                                        <div style={{ color: "#E2E8F0", fontSize: "0.9rem", fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                                            <CheckCircle2Icon color="#10B981" />
+                                            Você já é assinante PRO
                                         </div>
                                         <div style={{ color: "#94A3B8", fontSize: "0.8rem", lineHeight: 1.5 }}>
                                             Você já tem {creditsRemaining} créditos disponíveis.<br />
@@ -278,34 +316,38 @@ export function NeonOffer({
                                     <button
                                         type="button"
                                         onClick={() => handlePlanAction("trial")}
-                                        style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", border: "none", padding: "20px", borderRadius: 12, fontSize: "1.15rem", fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 20px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.5px" }}
+                                        style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #14B8A6)", color: "#fff", border: "none", padding: "18px", borderRadius: 12, fontSize: "1.05rem", fontWeight: 600, cursor: "pointer", boxShadow: "0 10px 28px -12px rgba(16, 185, 129, 0.45), 0 0 28px rgba(16, 185, 129, 0.2)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.35px" }}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.transform = "translateY(-2px)";
-                                            e.currentTarget.style.boxShadow = "0 8px 25px rgba(16, 185, 129, 0.6)";
+                                            e.currentTarget.style.boxShadow = "0 14px 30px -12px rgba(16, 185, 129, 0.55), 0 0 34px rgba(16, 185, 129, 0.24)";
                                         }}
                                         onMouseLeave={(e) => {
                                             e.currentTarget.style.transform = "translateY(0)";
-                                            e.currentTarget.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.5)";
+                                            e.currentTarget.style.boxShadow = "0 10px 28px -12px rgba(16, 185, 129, 0.45), 0 0 28px rgba(16, 185, 129, 0.2)";
                                         }}
                                         onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
                                         onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
                                     >
-                                        Desbloquear Meu Novo Currículo - R$ 1,99 🚀
+                                        Desbloquear Meu Novo Currículo - R$ 1,99
                                     </button>
                                 )}
                             </div>
 
                             <div style={{
-                                background: "rgba(16, 185, 129, 0.1)",
-                                border: "1px solid rgba(16, 185, 129, 0.3)",
+                                background: "rgba(255, 255, 255, 0.03)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                                borderLeft: "2px solid #10B981",
                                 borderRadius: 8,
                                 padding: "14px",
-                                marginTop: 16
+                                marginTop: 16,
+                                backdropFilter: "blur(20px)",
+                                WebkitBackdropFilter: "blur(20px)",
+                                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                             }}>
                                 <div style={{ display: "flex", alignItems: "start", gap: 10, marginBottom: 10 }}>
-                                    <span style={{ fontSize: "1.3rem" }}>🔒</span>
+                                    <LockIcon />
                                     <div>
-                                        <div style={{ color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 700, marginBottom: 4 }}>
+                                        <div style={{ color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 600, marginBottom: 4 }}>
                                             GARANTIA TOTAL DE 7 DIAS
                                         </div>
                                         <div style={{ color: "#CBD5E1", fontSize: "0.8rem", lineHeight: 1.5 }}>
@@ -314,9 +356,9 @@ export function NeonOffer({
                                         </div>
                                     </div>
                                 </div>
-                                <div style={{ borderTop: "1px dashed rgba(16, 185, 129, 0.3)", paddingTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                                    <span style={{ fontSize: "1.05rem" }}>🔐</span>
-                                    <div style={{ color: "#FDE68A", fontSize: "0.86rem", lineHeight: 1.45 }}>
+                                <div style={{ borderTop: "1px dashed rgba(148, 163, 184, 0.25)", paddingTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                                    <AlertCircleIcon />
+                                    <div style={{ color: "#CBD5E1", fontSize: "0.86rem", lineHeight: 1.45 }}>
                                         <strong style={{ color: "#FFFFFF" }}>Cancele online em 1 clique</strong> • Sem renovação automática forçada • Sem taxas escondidas
                                     </div>
                                 </div>

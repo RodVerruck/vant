@@ -91,9 +91,12 @@
 html,
 body,
 .stApp {
-    font-family: 'Outfit', sans-serif;
-    background-color: #0B1222 !important;
-    background-image: radial-gradient(1200px 420px at 50% -180px, rgba(79, 70, 229, 0.26), rgba(79, 70, 229, 0) 70%) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background-color: #020617 !important;
+    background-image:
+        radial-gradient(1100px 560px at 50% -140px, rgba(79, 70, 229, 0.30), rgba(15, 23, 42, 0.18) 42%, rgba(2, 6, 23, 0) 72%),
+        radial-gradient(900px 460px at 50% 6%, rgba(56, 189, 248, 0.08), rgba(2, 6, 23, 0) 65%),
+        linear-gradient(180deg, #0f172a 0%, #030712 58%, #000000 100%) !important;
     color: var(--text-main);
     background-attachment: fixed;
 }
@@ -405,12 +408,16 @@ body,
 
 /* Problem Box (Dor) */
 .problem-box {
-    background: rgba(239, 68, 68, 0.05);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 2px solid rgba(239, 68, 68, 0.8);
     border-radius: 16px;
     padding: 25px;
     margin: 30px 0;
     text-align: left;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
 .problem-title {
@@ -1508,12 +1515,14 @@ img {
 
 /* 1. Ilha de Ação (Separa inputs da proposta de valor) */
 .action-island-container {
-    background: rgba(15, 23, 42, 0.4);
-    border: 1px solid rgba(56, 189, 248, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
     padding: 24px;
     margin-top: 0;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     width: 100%;
 }
 
