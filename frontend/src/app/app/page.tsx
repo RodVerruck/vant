@@ -3594,7 +3594,9 @@ export default function AppPage() {
             )}
 
             {stage === "preview" && (
-                <div className="hero-container mobile-preview-with-sticky">
+                <div className="hero-container mobile-preview-with-sticky" style={{ position: "relative" }}>
+                    {/* Cinematic spotlight from top-center */}
+                    <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: "420px", background: "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(56, 189, 248, 0.12) 0%, rgba(99, 102, 241, 0.06) 40%, transparent 100%)", pointerEvents: "none", zIndex: 0 }} />
                     {(() => {
                         const data: Partial<PreviewData> = previewData ?? {};
                         const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
@@ -3620,9 +3622,9 @@ export default function AppPage() {
                         const projected = calculateProjectedScore(nota, gapsCount, 0, ats, keywords, impacto);
 
                         const metaHtml = `
-    <div style="background: rgba(255, 255, 255, 0.03); 
-                border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 20px; margin-top: 20px;
-                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+    <div style="background: rgba(255, 255, 255, 0.06); 
+                border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 20px; margin-top: 20px;
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
         <div style="display: flex; align-items: center; gap: 15px;">
             <div style="width: 22px; height: 22px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.5);
                         display:flex; align-items:center; justify-content:center; color: #34D399; font-size: 0.8rem;">+</div>
@@ -3646,8 +3648,8 @@ export default function AppPage() {
                             "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
 
                         const xrayHtml = `
-        <div style='background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;
-                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);'>
+        <div style='background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;
+                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5);'>
             
             <div style="display: flex; gap: 12px; align-items: start;">
                 <div style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.12); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color:#38BDF8; font-weight: 600;">XR</div>
@@ -3655,7 +3657,7 @@ export default function AppPage() {
                     <h3 style='color: #E2E8F0; margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600;'>
                         Radar de Recrutadores Ativo
                     </h3>
-                    <p style='color: #94A3B8; font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.4;'>
+                    <p style='color: #CBD5E1; font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.4;'>
                         Detectamos padrões para localizar <strong>${texto_destaque}</strong>.
                     </p>
                     
@@ -3681,32 +3683,32 @@ export default function AppPage() {
 
                                 <div dangerouslySetInnerHTML={{ __html: metaHtml }} />
 
-                                <div className="action-island-container" style={{ textAlign: "left", marginTop: 18 }}>
+                                <div className="action-island-container" style={{ textAlign: "left", marginTop: 18, position: "relative", zIndex: 1 }}>
                                     <div dangerouslySetInnerHTML={{ __html: dashHtml }} />
 
                                     {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
                                     {data.gap_1 && data.gap_2 && (
                                         <div style={{ marginTop: 24, marginBottom: 32 }}>
-                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "rgba(255, 255, 255, 0.03)", borderRadius: 12, border: "1px solid rgba(255, 255, 255, 0.08)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
+                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "rgba(255, 255, 255, 0.06)", borderRadius: 12, border: "1px solid rgba(255, 255, 255, 0.12)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
                                                 <div style={{ color: "#E2E8F0", fontSize: "1.1rem", fontWeight: 600, marginBottom: 4 }}>
                                                     PRÉVIA GRATUITA
                                                 </div>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.9rem" }}>
+                                                <div style={{ color: "#CBD5E1", fontSize: "0.9rem" }}>
                                                     Nossa IA analisou seu CV e identificou 2 problemas críticos
                                                 </div>
                                             </div>
 
                                             {/* Gap 1 - Dados reais da IA */}
                                             <div style={{
-                                                background: "rgba(255, 255, 255, 0.03)",
-                                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                background: "rgba(255, 255, 255, 0.06)",
+                                                border: "1px solid rgba(255, 255, 255, 0.12)",
                                                 borderLeft: "4px solid #EF4444",
                                                 borderRadius: 12,
                                                 padding: 20,
                                                 marginBottom: 16,
                                                 backdropFilter: "blur(20px)",
                                                 WebkitBackdropFilter: "blur(20px)",
-                                                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                                                boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                     <div style={{
@@ -3727,7 +3729,7 @@ export default function AppPage() {
                                                         <div style={{ color: "#FCA5A5", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
                                                             PROBLEMA #1: {data.gap_1.titulo || "Falta de Resultados Quantificáveis"}
                                                         </div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.5 }}>
                                                             {data.gap_1.explicacao || "Seu CV usa descrições genéricas sem números ou impacto mensurável."}
                                                         </div>
                                                     </div>
@@ -3735,8 +3737,8 @@ export default function AppPage() {
 
                                                 {data.gap_1.exemplo_atual && (
                                                     <div style={{
-                                                        background: "rgba(255, 255, 255, 0.03)",
-                                                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                        background: "rgba(255, 255, 255, 0.06)",
+                                                        border: "1px solid rgba(255, 255, 255, 0.12)",
                                                         borderLeft: "2px solid #EF4444",
                                                         borderRadius: 6,
                                                         padding: "12px 12px 12px 16px",
@@ -3749,11 +3751,11 @@ export default function AppPage() {
                                                     }}>
                                                         <AlertCircleIcon color="#EF4444" size={14} />
                                                         <div>
-                                                            <div style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                            <div style={{ color: "#CBD5E1", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
                                                                 VERSÃO ATUAL (Score: {nota}/100)
                                                             </div>
                                                             <div style={{
-                                                                color: "#E2E8F0",
+                                                                color: "#F1F5F9",
                                                                 fontSize: "0.85rem",
                                                                 fontStyle: "italic",
                                                                 lineHeight: 1.5
@@ -3766,8 +3768,8 @@ export default function AppPage() {
 
                                                 {data.gap_1.exemplo_otimizado && (
                                                     <div style={{
-                                                        background: "rgba(255, 255, 255, 0.03)",
-                                                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                        background: "rgba(255, 255, 255, 0.06)",
+                                                        border: "1px solid rgba(255, 255, 255, 0.12)",
                                                         borderLeft: "2px solid #10B981",
                                                         borderRadius: 10,
                                                         padding: 14,
@@ -3804,8 +3806,8 @@ export default function AppPage() {
                                                 <div style={{
                                                     marginTop: 12,
                                                     padding: 10,
-                                                    background: "rgba(255, 255, 255, 0.03)",
-                                                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                    background: "rgba(255, 255, 255, 0.06)",
+                                                    border: "1px solid rgba(255, 255, 255, 0.12)",
                                                     borderLeft: "2px solid #38BDF8",
                                                     borderRadius: 6,
                                                     display: "flex",
@@ -3823,14 +3825,14 @@ export default function AppPage() {
 
                                             {/* Gap 2 - Dados reais da IA */}
                                             <div style={{
-                                                background: "rgba(255, 255, 255, 0.03)",
-                                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                background: "rgba(255, 255, 255, 0.06)",
+                                                border: "1px solid rgba(255, 255, 255, 0.12)",
                                                 borderLeft: "4px solid #F59E0B",
                                                 borderRadius: 12,
                                                 padding: 20,
                                                 backdropFilter: "blur(20px)",
                                                 WebkitBackdropFilter: "blur(20px)",
-                                                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                                                boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                     <div style={{
@@ -3851,7 +3853,7 @@ export default function AppPage() {
                                                         <div style={{ color: "#FCD34D", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
                                                             PROBLEMA #2: {data.gap_2.titulo || "Palavras-Chave da Vaga Ausentes"}
                                                         </div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.5 }}>
                                                             {data.gap_2.explicacao || "Termos críticos da vaga não aparecem no seu CV."}
                                                         </div>
                                                     </div>
@@ -3871,11 +3873,11 @@ export default function AppPage() {
                                                     }}>
                                                         <AlertCircleIcon color="#EF4444" size={14} />
                                                         <div>
-                                                            <div style={{ color: "#94A3B8", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                            <div style={{ color: "#CBD5E1", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
                                                                 VERSÃO ATUAL (Score: {nota}/100)
                                                             </div>
                                                             <div style={{
-                                                                color: "#E2E8F0",
+                                                                color: "#F1F5F9",
                                                                 fontSize: "0.85rem",
                                                                 fontStyle: "italic",
                                                                 lineHeight: 1.5
@@ -3929,13 +3931,13 @@ export default function AppPage() {
                                                 <div style={{
                                                     marginTop: 12,
                                                     padding: 16,
-                                                    background: "rgba(255, 255, 255, 0.03)",
+                                                    background: "rgba(255, 255, 255, 0.06)",
                                                     borderRadius: 10,
-                                                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                                                    border: "1px solid rgba(255, 255, 255, 0.12)",
                                                     borderLeft: "2px solid #10B981",
                                                     backdropFilter: "blur(20px)",
                                                     WebkitBackdropFilter: "blur(20px)",
-                                                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                                                    boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                                 }}>
                                                     <div style={{ color: "#10B981", fontSize: "1rem", fontWeight: 600, marginBottom: 8, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
                                                         NA VERSÃO PREMIUM VOCÊ RECEBE:
