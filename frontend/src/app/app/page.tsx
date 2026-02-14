@@ -2203,6 +2203,9 @@ export default function AppPage() {
                     .metric-hint-lite { position: relative; display: inline-flex; align-items: center; gap: 6px; outline: none; }
                     .metric-tooltip-lite { position: absolute; left: 0; top: calc(100% + 8px); width: 230px; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.96); border: 1px solid rgba(56, 189, 248, 0.28); color: #E2E8F0; font-size: 0.72rem; font-weight: 500; line-height: 1.45; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.65), 0 0 20px -10px rgba(56,189,248,0.35); opacity: 0; transform: translateY(4px); transition: opacity 0.16s ease, transform 0.16s ease; pointer-events: none; z-index: 20; }
                     .metric-hint-lite:hover .metric-tooltip-lite, .metric-hint-lite:focus-visible .metric-tooltip-lite { opacity: 1; transform: translateY(0); }
+                    .analyzing-phase-container .metric-hint-lite { display: flex; flex-direction: column; width: 100%; }
+                    .analyzing-phase-container .metric-hint-lite .metric-tooltip-lite { left: 50%; transform: translateX(-50%) translateY(4px); }
+                    .analyzing-phase-container .metric-hint-lite:hover .metric-tooltip-lite, .analyzing-phase-container .metric-hint-lite:focus-visible .metric-tooltip-lite { opacity: 1; transform: translateX(-50%) translateY(0); }
                 </style>
                 <div style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                     <span style="color: #94A3B8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
@@ -3294,7 +3297,7 @@ export default function AppPage() {
                                     </div>
 
                                     <div
-                                        className="analyzing-card-enter analyzing-tip-card"
+                                        className="analyzing-phase-container analyzing-tip-card"
                                         style={{
                                             background: "rgba(255, 255, 255, 0.05)",
                                             border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -3304,6 +3307,13 @@ export default function AppPage() {
                                             alignItems: "center",
                                         }}
                                     >
+                                        <style dangerouslySetInnerHTML={{
+                                            __html: `
+                                                .analyzing-phase-container .metric-hint-lite { position: relative; display: flex; flex-direction: column; width: 100%; outline: none; cursor: help; }
+                                                .analyzing-phase-container .metric-tooltip-lite { position: absolute; left: 50%; top: calc(100% + 8px); transform: translateX(-50%) translateY(4px); width: 280px; padding: 10px 12px; border-radius: 8px; background: rgba(15, 23, 42, 0.96); border: 1px solid rgba(56, 189, 248, 0.28); color: #E2E8F0; font-size: 0.72rem; font-weight: 500; line-height: 1.45; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.65), 0 0 20px -10px rgba(56,189,248,0.35); opacity: 0; transition: opacity 0.16s ease, transform 0.16s ease; pointer-events: none; z-index: 20; }
+                                                .analyzing-phase-container .metric-hint-lite:hover .metric-tooltip-lite, .analyzing-phase-container .metric-hint-lite:focus-visible .metric-tooltip-lite { opacity: 1; transform: translateX(-50%) translateY(0); }
+                                            `
+                                        }} />
                                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16, width: "100%" }}>
                                             <div style={{ fontSize: "1.5rem", display: "flex", alignItems: "center" }}>💡</div>
                                             <div>
@@ -3329,17 +3339,26 @@ export default function AppPage() {
                                             <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.65, textAlign: "center", maxWidth: 640, margin: "0 auto" }}>
                                                 <strong style={{ color: "#F8FAFC" }}>Checklist de compatibilidade que mais pesa no ATS:</strong>
                                                 <div style={{ margin: "12px auto 0", display: "grid", gap: 8, maxWidth: 520, textAlign: "left" }}>
-                                                    <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <CheckCircle2Icon color="#9CA3AF" />
-                                                        <span><strong>Palavras-chave estratégicas</strong> da vaga distribuídas no CV</span>
+                                                    <div className="metric-hint-lite" tabIndex={0} aria-label="Por que palavras-chave são importantes">
+                                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                                            <CheckCircle2Icon color="#9CA3AF" />
+                                                            <span><strong>Palavras-chave estratégicas</strong> da vaga distribuídas no CV</span>
+                                                        </div>
+                                                        <div className="metric-tooltip-lite">Sistemas ATS buscam termos exatos da vaga. Incluir palavras-chave em cargos, competências e resultados aumenta drasticamente a compatibilidade.</div>
                                                     </div>
-                                                    <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <CheckCircle2Icon color="#9CA3AF" />
-                                                        <span><strong>Resultados com números</strong> para comprovar impacto</span>
+                                                    <div className="metric-hint-lite" tabIndex={0} aria-label="Por que resultados com números são importantes">
+                                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                                            <CheckCircle2Icon color="#9CA3AF" />
+                                                            <span><strong>Resultados com números</strong> para comprovar impacto</span>
+                                                        </div>
+                                                        <div className="metric-tooltip-lite">Métricas como "aumentei 34%" ou "gerenciei 150+" demonstram impacto real e são priorizadas por algoritmos e recrutadores.</div>
                                                     </div>
-                                                    <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                        <CheckCircle2Icon color="#9CA3AF" />
-                                                        <span><strong>Clareza e escaneabilidade</strong> para leitura automática</span>
+                                                    <div className="metric-hint-lite" tabIndex={0} aria-label="Por que clareza e escaneabilidade são importantes">
+                                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                                            <CheckCircle2Icon color="#9CA3AF" />
+                                                            <span><strong>Clareza e escaneabilidade</strong> para leitura automática</span>
+                                                        </div>
+                                                        <div className="metric-tooltip-lite">Formatação limpa e sem tabelas/imagens permite que o ATS leia corretamente seu conteúdo. Layouts complexos causam erros de parsing.</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3993,16 +4012,62 @@ export default function AppPage() {
                                                         NA VERSÃO PREMIUM VOCÊ RECEBE:
                                                     </div>
                                                     <div className="premium-benefits-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
-                                                        <style dangerouslySetInnerHTML={{ __html: `@media (min-width: 768px) { .premium-benefits-grid { grid-template-columns: repeat(3, 1fr) !important; } }` }} />
+                                                        <style dangerouslySetInnerHTML={{
+                                                            __html: `
+                                                            @media (min-width: 768px) { .premium-benefits-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+                                                            .premium-benefit-item { position: relative; }
+                                                            .premium-benefit-tooltip {
+                                                                position: absolute;
+                                                                left: 50%;
+                                                                bottom: calc(100% + 10px);
+                                                                transform: translateX(-50%) translateY(6px);
+                                                                width: min(270px, 85vw);
+                                                                padding: 10px 12px;
+                                                                border-radius: 10px;
+                                                                border: 1px solid rgba(16, 185, 129, 0.35);
+                                                                background: rgba(15, 23, 42, 0.96);
+                                                                color: #E2E8F0;
+                                                                font-size: 0.74rem;
+                                                                line-height: 1.45;
+                                                                box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.7), 0 0 24px -12px rgba(16, 185, 129, 0.45);
+                                                                opacity: 0;
+                                                                pointer-events: none;
+                                                                z-index: 30;
+                                                                transition: opacity 0.16s ease, transform 0.16s ease;
+                                                            }
+                                                            .premium-benefit-item:hover .premium-benefit-tooltip,
+                                                            .premium-benefit-item:focus-within .premium-benefit-tooltip {
+                                                                opacity: 1;
+                                                                transform: translateX(-50%) translateY(0);
+                                                            }
+                                                        ` }} />
                                                         {[
-                                                            { label: <><strong>CV reescrito</strong> com palavras-chave integradas</> },
-                                                            { label: <>Análise de <strong>todos os critérios ATS</strong></> },
-                                                            { label: <><strong>Headline LinkedIn</strong> para recrutadores</> },
-                                                            { label: <><strong>Biblioteca técnica</strong> para seu cargo</> },
-                                                            { label: <><strong>Projeto prático</strong> para entrevistas</> },
-                                                            { label: <><strong>Simulador de Entrevista</strong> com IA</> },
+                                                            {
+                                                                label: <><strong>CV reescrito</strong> com palavras-chave integradas</>,
+                                                                tooltip: "Reescrevemos seu CV com termos da vaga distribuídos em experiências, competências e resumo para aumentar aderência ATS.",
+                                                            },
+                                                            {
+                                                                label: <>Análise de <strong>todos os critérios ATS</strong></>,
+                                                                tooltip: "Avaliação completa de palavras-chave, estrutura, legibilidade, impacto e lacunas que bloqueiam seu avanço.",
+                                                            },
+                                                            {
+                                                                label: <><strong>Headline LinkedIn</strong> para recrutadores</>,
+                                                                tooltip: "Você recebe uma headline estratégica para aumentar buscas no LinkedIn e atrair recrutadores certos.",
+                                                            },
+                                                            {
+                                                                label: <><strong>Biblioteca técnica</strong> para seu cargo</>,
+                                                                tooltip: "Lista guiada de livros recomendados para a vaga que você está buscando.",
+                                                            },
+                                                            {
+                                                                label: <><strong>Projeto prático</strong> para entrevistas</>,
+                                                                tooltip: "Sugestão de projeto aplicado ao seu perfil para gerar portfólio e respostas mais fortes em entrevistas.",
+                                                            },
+                                                            {
+                                                                label: <><strong>Simulador de Entrevista</strong> com IA</>,
+                                                                tooltip: "Treine perguntas técnicas e comportamentais com feedback instantâneo para melhorar clareza e confiança.",
+                                                            },
                                                         ].map((item, i) => (
-                                                            <div key={i} style={{
+                                                            <div key={i} className="premium-benefit-item" style={{
                                                                 display: "flex",
                                                                 alignItems: "center",
                                                                 gap: 12,
@@ -4012,7 +4077,8 @@ export default function AppPage() {
                                                                 borderRadius: 16,
                                                                 backdropFilter: "blur(12px)",
                                                                 WebkitBackdropFilter: "blur(12px)",
-                                                            }}>
+                                                                cursor: "help",
+                                                            }} tabIndex={0} aria-label={item.tooltip}>
                                                                 <div style={{
                                                                     width: 36,
                                                                     height: 36,
@@ -4029,6 +4095,9 @@ export default function AppPage() {
                                                                 <span style={{ color: "#F1F5F9", fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.4 }}>
                                                                     {item.label}
                                                                 </span>
+                                                                <div className="premium-benefit-tooltip" role="tooltip">
+                                                                    {item.tooltip}
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
