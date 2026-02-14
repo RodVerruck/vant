@@ -3596,7 +3596,7 @@ export default function AppPage() {
             {stage === "preview" && (
                 <div className="hero-container mobile-preview-with-sticky" style={{ position: "relative" }}>
                     {/* Cinematic spotlight from top-center */}
-                    <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: "420px", background: "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(56, 189, 248, 0.12) 0%, rgba(99, 102, 241, 0.06) 40%, transparent 100%)", pointerEvents: "none", zIndex: 0 }} />
+                    <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: "480px", background: "radial-gradient(ellipse 70% 55% at 50% 0%, rgba(56, 189, 248, 0.18) 0%, rgba(99, 102, 241, 0.09) 40%, transparent 100%)", pointerEvents: "none", zIndex: 0 }} />
                     {(() => {
                         const data: Partial<PreviewData> = previewData ?? {};
                         const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
@@ -3623,8 +3623,8 @@ export default function AppPage() {
 
                         const metaHtml = `
     <div style="background: rgba(255, 255, 255, 0.06); 
-                border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 20px; margin-top: 20px;
-                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                border: 1px solid rgba(16, 185, 129, 0.28); border-left: 3px solid rgba(16, 185, 129, 0.7); border-radius: 12px; padding: 20px; margin-top: 20px;
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 30px -6px rgba(16, 185, 129, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
         <div style="display: flex; align-items: center; gap: 15px;">
             <div style="width: 22px; height: 22px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.5);
                         display:flex; align-items:center; justify-content:center; color: #34D399; font-size: 0.8rem;">+</div>
@@ -3648,8 +3648,8 @@ export default function AppPage() {
                             "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
 
                         const xrayHtml = `
-        <div style='background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;
-                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5);'>
+        <div style='background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-left: 3px solid rgba(56, 189, 248, 0.6); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;
+                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 25px -6px rgba(56, 189, 248, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.5);'>
             
             <div style="display: flex; gap: 12px; align-items: start;">
                 <div style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.12); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color:#38BDF8; font-weight: 600;">XR</div>
@@ -3689,12 +3689,12 @@ export default function AppPage() {
                                     {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
                                     {data.gap_1 && data.gap_2 && (
                                         <div style={{ marginTop: 24, marginBottom: 32 }}>
-                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "rgba(255, 255, 255, 0.06)", borderRadius: 12, border: "1px solid rgba(255, 255, 255, 0.12)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
-                                                <div style={{ color: "#E2E8F0", fontSize: "1.1rem", fontWeight: 600, marginBottom: 4 }}>
+                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "rgba(255, 255, 255, 0.06)", borderRadius: 12, border: "1px solid rgba(56, 189, 248, 0.25)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 25px -6px rgba(56, 189, 248, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
+                                                <div style={{ color: "#38BDF8", fontSize: "1.1rem", fontWeight: 600, marginBottom: 4, letterSpacing: "1px" }}>
                                                     PRÉVIA GRATUITA
                                                 </div>
                                                 <div style={{ color: "#CBD5E1", fontSize: "0.9rem" }}>
-                                                    Nossa IA analisou seu CV e identificou 2 problemas críticos
+                                                    Nossa IA analisou seu CV e identificou <strong style={{ color: "#FCA5A5" }}>2 problemas críticos</strong>
                                                 </div>
                                             </div>
 
@@ -3712,8 +3712,8 @@ export default function AppPage() {
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                     <div style={{
-                                                        background: "rgba(15, 23, 42, 0.8)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.35)",
+                                                        background: "rgba(239, 68, 68, 0.15)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.45)",
                                                         borderRadius: "50%",
                                                         width: 32,
                                                         height: 32,
@@ -3721,9 +3721,10 @@ export default function AppPage() {
                                                         alignItems: "center",
                                                         justifyContent: "center",
                                                         fontSize: "1rem",
-                                                        flexShrink: 0
+                                                        flexShrink: 0,
+                                                        boxShadow: "0 0 16px -2px rgba(239, 68, 68, 0.45)"
                                                     }}>
-                                                        <AlertCircleIcon color="#EF4444" size={14} />
+                                                        <AlertCircleIcon color="#F87171" size={14} />
                                                     </div>
                                                     <div style={{ flex: 1 }}>
                                                         <div style={{ color: "#FCA5A5", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
@@ -3836,8 +3837,8 @@ export default function AppPage() {
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                     <div style={{
-                                                        background: "rgba(15, 23, 42, 0.8)",
-                                                        border: "1px solid rgba(245, 158, 11, 0.35)",
+                                                        background: "rgba(245, 158, 11, 0.15)",
+                                                        border: "1px solid rgba(245, 158, 11, 0.45)",
                                                         borderRadius: "50%",
                                                         width: 32,
                                                         height: 32,
@@ -3845,9 +3846,10 @@ export default function AppPage() {
                                                         alignItems: "center",
                                                         justifyContent: "center",
                                                         fontSize: "1rem",
-                                                        flexShrink: 0
+                                                        flexShrink: 0,
+                                                        boxShadow: "0 0 16px -2px rgba(245, 158, 11, 0.45)"
                                                     }}>
-                                                        <AlertCircleIcon color="#F59E0B" size={14} />
+                                                        <AlertCircleIcon color="#FBBF24" size={14} />
                                                     </div>
                                                     <div style={{ flex: 1 }}>
                                                         <div style={{ color: "#FCD34D", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
@@ -3937,42 +3939,50 @@ export default function AppPage() {
                                                     borderLeft: "2px solid #10B981",
                                                     backdropFilter: "blur(20px)",
                                                     WebkitBackdropFilter: "blur(20px)",
-                                                    boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                                                    boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 30px -6px rgba(16, 185, 129, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                                 }}>
-                                                    <div style={{ color: "#10B981", fontSize: "1rem", fontWeight: 600, marginBottom: 8, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
+                                                    <div style={{ color: "#4ADE80", fontSize: "1rem", fontWeight: 600, marginBottom: 16, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
                                                         NA VERSÃO PREMIUM VOCÊ RECEBE:
                                                     </div>
-                                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <CheckCircle2Icon color="#9CA3AF" />
-                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
-                                                                <strong>CV reescrito</strong> com todas as palavras-chave integradas naturalmente
-                                                            </span>
-                                                        </div>
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <CheckCircle2Icon color="#9CA3AF" />
-                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
-                                                                Análise completa de <strong>todos os critérios ATS</strong> (não apenas 2)
-                                                            </span>
-                                                        </div>
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <CheckCircle2Icon color="#9CA3AF" />
-                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
-                                                                <strong>Headline do LinkedIn</strong> otimizada para recrutadores
-                                                            </span>
-                                                        </div>
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <CheckCircle2Icon color="#9CA3AF" />
-                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
-                                                                <strong>Biblioteca técnica</strong> personalizada para seu cargo
-                                                            </span>
-                                                        </div>
-                                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                                            <CheckCircle2Icon color="#9CA3AF" />
-                                                            <span style={{ color: "#F8FAFC", fontSize: "0.95rem", fontWeight: 600, lineHeight: 1.4 }}>
-                                                                <strong>Projeto prático</strong> para diferencial em entrevistas
-                                                            </span>
-                                                        </div>
+                                                    <div className="premium-benefits-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
+                                                        <style dangerouslySetInnerHTML={{ __html: `@media (min-width: 768px) { .premium-benefits-grid { grid-template-columns: repeat(3, 1fr) !important; } }` }} />
+                                                        {[
+                                                            { label: <><strong>CV reescrito</strong> com palavras-chave integradas</> },
+                                                            { label: <>Análise de <strong>todos os critérios ATS</strong></> },
+                                                            { label: <><strong>Headline LinkedIn</strong> para recrutadores</> },
+                                                            { label: <><strong>Biblioteca técnica</strong> para seu cargo</> },
+                                                            { label: <><strong>Projeto prático</strong> para entrevistas</> },
+                                                            { label: <><strong>Simulador de Entrevista</strong> com IA</> },
+                                                        ].map((item, i) => (
+                                                            <div key={i} style={{
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                gap: 12,
+                                                                padding: "16px 18px",
+                                                                background: "rgba(255, 255, 255, 0.03)",
+                                                                border: "1px solid rgba(16, 185, 129, 0.2)",
+                                                                borderRadius: 16,
+                                                                backdropFilter: "blur(12px)",
+                                                                WebkitBackdropFilter: "blur(12px)",
+                                                            }}>
+                                                                <div style={{
+                                                                    width: 36,
+                                                                    height: 36,
+                                                                    borderRadius: "50%",
+                                                                    background: "rgba(16, 185, 129, 0.15)",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "center",
+                                                                    flexShrink: 0,
+                                                                    boxShadow: "0 0 15px -3px rgba(16, 185, 129, 0.4)",
+                                                                }}>
+                                                                    <CheckCircle2Icon color="#34D399" />
+                                                                </div>
+                                                                <span style={{ color: "#F1F5F9", fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.4 }}>
+                                                                    {item.label}
+                                                                </span>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             </div>

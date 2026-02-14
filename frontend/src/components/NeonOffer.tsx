@@ -90,13 +90,13 @@ export function NeonOffer({
                     {/* CARD 1: SOLUÇÃO RÁPIDA (Âncora & Tripwire) - SECUNDÁRIO MAS ATIVO */}
                     <div style={{
                         flex: "1 1 300px",
-                        background: "rgba(255, 255, 255, 0.06)",
-                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid rgba(255, 255, 255, 0.18)",
                         borderRadius: 12,
                         padding: "28px",
                         backdropFilter: "blur(20px)",
                         WebkitBackdropFilter: "blur(20px)",
-                        boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+                        boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), 0 25px 50px -12px rgba(0, 0, 0, 0.5)",
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "space-between",
@@ -107,7 +107,8 @@ export function NeonOffer({
                                 CRÉDITOS AVULSOS
                             </div>
                             <div style={{ color: "#FFFFFF", fontSize: "1.2rem", fontWeight: 600, marginBottom: 8 }}>
-                                A partir de R$ 12,90
+                                <div style={{ fontSize: "0.75rem", color: "#CBD5E1", marginBottom: 2 }}>Pagamento Único</div>
+                                R$ 12,90
                             </div>
 
                             <p style={{ color: "#CBD5E1", fontSize: "0.8rem", lineHeight: 1.4, marginBottom: 20 }}>
@@ -164,7 +165,7 @@ export function NeonOffer({
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: 12, padding: 10, background: "rgba(15, 23, 42, 0.75)", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                            <div style={{ marginTop: 12, padding: 10, background: "rgba(16, 185, 129, 0.08)", borderRadius: 8, border: "1px solid rgba(16, 185, 129, 0.15)" }}>
                                 <div style={{ color: "#E2E8F0", fontSize: "0.75rem", fontWeight: 600, marginBottom: 3 }}>Quer otimizar mais de 3 CVs?</div>
                                 <div style={{ color: "#CBD5E1", fontSize: "0.74rem", fontWeight: 500 }}>O trial por R$ 1,99 é o melhor custo-benefício.</div>
                             </div>
@@ -181,7 +182,7 @@ export function NeonOffer({
                         position: "relative",
                         backdropFilter: "blur(20px)",
                         WebkitBackdropFilter: "blur(20px)",
-                        boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px rgba(16, 185, 129, 0.15)",
+                        boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 60px rgba(16, 185, 129, 0.22)",
                         display: "flex",
                         flexDirection: "column",
                         justifyContent: "space-between",
@@ -196,25 +197,25 @@ export function NeonOffer({
 
                             <div style={{
                                 background: "rgba(255, 255, 255, 0.06)",
-                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                border: "1px solid rgba(16, 185, 129, 0.18)",
                                 borderRadius: 12,
                                 padding: "20px",
                                 marginBottom: 20,
                                 textAlign: "center",
                                 backdropFilter: "blur(20px)",
                                 WebkitBackdropFilter: "blur(20px)",
-                                boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06)"
+                                boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 35px -6px rgba(16, 185, 129, 0.22)"
                             }}>
-                                <div style={{ color: "#94A3B8", fontSize: "0.74rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 8 }}>
+                                <div style={{ color: "#6EE7B7", fontSize: "0.74rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 8 }}>
                                     Oferta por tempo limitado
                                 </div>
                                 <div style={{ color: "#CBD5E1", fontSize: "0.85rem", marginBottom: 6 }}>
                                     7 dias por
                                 </div>
-                                <div style={{ fontSize: "2.6rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1, marginBottom: 8, letterSpacing: "-0.02em" }}>
+                                <div style={{ fontSize: "2.6rem", fontWeight: 700, color: "#FFFFFF", lineHeight: 1, marginBottom: 8, letterSpacing: "-0.02em", textShadow: "0 0 40px rgba(16, 185, 129, 0.45), 0 0 80px rgba(16, 185, 129, 0.15)" }}>
                                     R$ 1,99
                                 </div>
-                                <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 14 }}>
+                                <div style={{ color: "#F1F5F9", fontSize: "0.85rem", lineHeight: 1.4, marginBottom: 14 }}>
                                     Renova por apenas R$ 19,90/mês
                                 </div>
 
@@ -241,7 +242,7 @@ export function NeonOffer({
 
                                 <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
                                     <div>
-                                        <div style={{ color: "#94A3B8", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                                        <div style={{ color: "#CBD5E1", fontSize: "0.7rem", fontWeight: 600, marginBottom: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                                             ESSA CONDIÇÃO EXPIRA EM
                                         </div>
                                         <div style={{
@@ -264,31 +265,54 @@ export function NeonOffer({
                                 ` }} />
                             </div>
 
-                            <div style={{ color: "#E2E8F0", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: 20, textAlign: "center" }}>
-                                O que você ganha:
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
+                                <div style={{ height: 1, flex: 1, background: "linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.7))" }} />
+                                <span style={{ color: "#6EE7B7", fontSize: "0.78rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1.5px", whiteSpace: "nowrap" }}>O que você ganha</span>
+                                <div style={{ height: 1, flex: 1, background: "linear-gradient(90deg, rgba(16, 185, 129, 0.7), transparent)" }} />
                             </div>
 
-                            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: 24 }}>
-                                <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                    <CheckCircle2Icon />
-                                    <span><strong>30 Otimizações/mês</strong></span>
-                                </div>
-                                <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                    <CheckCircle2Icon />
-                                    <span><strong>Simulador de Entrevista IA</strong></span>
-                                </div>
-                                <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                    <CheckCircle2Icon />
-                                    <span><strong>Radar de Vagas Inteligente</strong></span>
-                                </div>
-                                <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: "0.9rem", color: "#E2E8F0" }}>
-                                    <CheckCircle2Icon />
-                                    Custo por CV: <strong>Apenas R$ 0,93</strong>
-                                </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: 24 }}>
+                                {[
+                                    "30 Otimizações/mês",
+                                    "Simulador de Entrevista IA",
+                                    "Radar de Vagas Inteligente",
+                                    "Custo por CV: R$ 0,93",
+                                ].map((text, i) => (
+                                    <div key={i} style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 10,
+                                        padding: "10px 12px",
+                                        background: "rgba(255, 255, 255, 0.03)",
+                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                        borderRadius: 12,
+                                        backdropFilter: "blur(10px)",
+                                        WebkitBackdropFilter: "blur(10px)",
+                                    }}>
+                                        <div style={{
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: "50%",
+                                            background: "rgba(16, 185, 129, 0.15)",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            flexShrink: 0,
+                                            boxShadow: "0 0 18px -2px rgba(16, 185, 129, 0.5)",
+                                        }}>
+                                            <CheckCircle2Icon color="#34D399" />
+                                        </div>
+                                        <span style={{ color: "#E2E8F0", fontSize: "0.82rem", fontWeight: 600, lineHeight: 1.3 }}>
+                                            {text}
+                                        </span>
+                                    </div>
+                                ))}
                                 <div style={{
-                                    color: "#CBD5E1",
-                                    fontSize: "0.75rem",
-                                    marginTop: 4
+                                    gridColumn: "1 / -1",
+                                    textAlign: "center",
+                                    color: "#94A3B8",
+                                    fontSize: "0.72rem",
+                                    marginTop: 2
                                 }}>
                                     (93% mais barato que créditos avulsos)
                                 </div>
@@ -318,7 +342,7 @@ export function NeonOffer({
                                     <button
                                         type="button"
                                         onClick={() => handlePlanAction("trial")}
-                                        style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #14B8A6)", color: "#fff", border: "none", padding: "18px", borderRadius: 12, fontSize: "1.05rem", fontWeight: 600, cursor: "pointer", boxShadow: "0 10px 28px -12px rgba(16, 185, 129, 0.5), 0 0 32px rgba(16, 185, 129, 0.22)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.35px" }}
+                                        style={{ width: "100%", background: "linear-gradient(135deg, #10B981, #14B8A6)", color: "#fff", border: "none", padding: "18px", borderRadius: 12, fontSize: "1.05rem", fontWeight: 600, cursor: "pointer", boxShadow: "0 10px 28px -10px rgba(16, 185, 129, 0.55), 0 0 40px rgba(16, 185, 129, 0.28), 0 0 15px rgba(16, 185, 129, 0.5)", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.35px" }}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.transform = "translateY(-2px)";
                                             e.currentTarget.style.boxShadow = "0 14px 30px -12px rgba(16, 185, 129, 0.55), 0 0 34px rgba(16, 185, 129, 0.24)";
