@@ -397,6 +397,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                         <div>
                             <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#10B981", lineHeight: 1 }}>{projected.score}/100</div>
                             <div style={{ fontSize: "0.85rem", color: "#10B981", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Score Projetado Pós-Otimização</div>
+                            <div style={{ fontSize: "0.72rem", color: "#94A3B8", marginTop: 6, maxWidth: 420, lineHeight: 1.35 }}>{projected.reasoning}</div>
                         </div>
                         <div style={{ textAlign: "right" }}>
                             <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#10B981" }}>+{projected.improvement}%</div>

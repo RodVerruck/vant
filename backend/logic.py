@@ -1177,7 +1177,7 @@ IMPORTANTE:
                 response_obj = groq_client.chat.completions.create(
                     model="llama-3.3-70b-versatile",  # Modelo gratuito e rápido
                     messages=[{"role": "user", "content": prompt_preview}],
-                    temperature=0.3,
+                    temperature=0,
                     max_tokens=1000,
                 )
                 
@@ -1205,7 +1205,7 @@ IMPORTANTE:
                 model="gemini-1.5-flash",
                 contents=prompt_preview,
                 config=types.GenerateContentConfig(
-                    temperature=0.3,
+                    temperature=0,
                     max_output_tokens=1000,
                 )
             )
@@ -1316,7 +1316,7 @@ Regras:
                 response_obj = groq_client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[{"role": "user", "content": fallback_prompt}],
-                    temperature=0.2,
+                    temperature=0,
                     max_tokens=500,
                 )
                 
@@ -1376,7 +1376,7 @@ Regras:
                     model="gemini-1.5-flash",
                     contents=fallback_prompt,
                     config=types.GenerateContentConfig(
-                        temperature=0.2,
+                        temperature=0,
                         max_output_tokens=500,
                     )
                 )

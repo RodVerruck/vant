@@ -26,44 +26,64 @@ export function calculateProjectedScore(
     keywords: number = 0,
     impacto: number = 0
 ): { score: number; improvement: number; percentile: string; reasoning: string } {
+    const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
-    // Base de melhoria garantida
-    const baseImprovement = 15;
+    const current = clamp(Math.round(currentScore || 0), 0, 100);
+    const ats = clamp(Math.round(formatoAts || 0), 0, 100);
+    const kw = clamp(Math.round(keywords || 0), 0, 100);
+    const imp = clamp(Math.round(impacto || 0), 0, 100);
+    const fatalGaps = Math.max(0, Math.round(gapsFatals || 0));
+    const mediumGaps = Math.max(0, Math.round(gapsMediums || 0));
 
-    // Bônus baseado nos gaps identificados
-    const gapBonus = (gapsFatals * 12) + (gapsMediums * 6);
+    // Potencial baseado em deficit real dos pilares (peso maior para formatação ATS e keywords)
+    const atsDeficit = 100 - ats;
+    const kwDeficit = 100 - kw;
+    const impDeficit = 100 - imp;
+    const weightedDeficit = (atsDeficit * 0.45) + (kwDeficit * 0.35) + (impDeficit * 0.2);
 
-    // Bônus baseado nas métricas atuais (quanto pior, maior o potencial)
-    const formatBonus = formatoAts < 60 ? 15 : formatoAts < 80 ? 8 : 3;
-    const keywordBonus = keywords < 60 ? 12 : keywords < 80 ? 6 : 2;
-    const impactBonus = impacto < 60 ? 10 : impacto < 80 ? 5 : 2;
+    // Converte déficit em potencial recuperável (conservador)
+    const recoverableFromPillars = weightedDeficit * 0.24;
+    const gapInfluence = (fatalGaps * 1.8) + (mediumGaps * 0.9);
+    const rawImprovement = recoverableFromPillars + gapInfluence;
 
-    // Cálculo do score projetado
-    const totalImprovement = baseImprovement + gapBonus + formatBonus + keywordBonus + impactBonus;
-    const projectedScore = Math.min(92, Math.max(currentScore + 10, currentScore + totalImprovement));
-    const improvement = projectedScore - currentScore;
+    // Limite de ganho por faixa (evita saltos irreais em scores já altos)
+    let bandGainCap = 24;
+    if (current >= 85) bandGainCap = 7;
+    else if (current >= 75) bandGainCap = 10;
+    else if (current >= 60) bandGainCap = 14;
+    else if (current >= 45) bandGainCap = 19;
 
-    // Cálculo de percentil realista
+    const minGain = weightedDeficit >= 12 ? 1 : 0;
+    const boundedImprovement = clamp(Math.round(rawImprovement), minGain, bandGainCap);
+
+    // Teto dinâmico para preservar realismo e evitar concentração em um único valor
+    let dynamicCeiling = 94;
+    if (current >= 80) dynamicCeiling = 95;
+    if (current >= 90) dynamicCeiling = 96;
+
+    const projectedScore = clamp(current + boundedImprovement, current, dynamicCeiling);
+    const improvement = projectedScore - current;
+
     let percentile = "Top 25%";
-    if (projectedScore >= 85) percentile = "Top 15%";
-    if (projectedScore >= 90) percentile = "Top 10%";
+    if (projectedScore >= 80) percentile = "Top 20%";
+    if (projectedScore >= 86) percentile = "Top 15%";
+    if (projectedScore >= 91) percentile = "Top 10%";
 
-    // Geração de justificativa
-    const reasons = [];
-    if (gapBonus > 0) reasons.push(`${gapsFatals + gapsMediums} gaps críticos identificados`);
-    if (formatBonus > 10) reasons.push("formatação ATS abaixo do ideal");
-    if (keywordBonus > 8) reasons.push("palavras-chave insuficientes");
-    if (impactBonus > 8) reasons.push("métricas de impacto ausentes");
+    const reasons: string[] = [];
+    if (fatalGaps + mediumGaps > 0) reasons.push(`${fatalGaps + mediumGaps} gaps relevantes identificados`);
+    if (atsDeficit >= 25) reasons.push("estrutura ATS com alto espaço de melhoria");
+    if (kwDeficit >= 25) reasons.push("baixa cobertura de palavras-chave da vaga");
+    if (impDeficit >= 25) reasons.push("baixo nível de verbos de impacto e especificidade");
 
     const reasoning = reasons.length > 0
-        ? `Baseado em: ${reasons.join(", ")}`
-        : "Com otimizações estratégicas no currículo";
+        ? `Projeção baseada em: ${reasons.join(", ")}`
+        : "Projeção estável com ajustes finos de otimização";
 
     return {
         score: projectedScore,
-        improvement: improvement,
-        percentile: percentile,
-        reasoning: reasoning
+        improvement,
+        percentile,
+        reasoning
     };
 }
 

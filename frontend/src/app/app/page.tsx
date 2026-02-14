@@ -2218,12 +2218,13 @@ export default function AppPage() {
                          <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">SCORE PROJETADO</div>
                          <div style="color:#22C55E; font-weight:900; font-size: 3rem; line-height: 1; text-shadow: 0 0 12px rgba(34, 197, 94, 0.65), 0 0 26px rgba(34, 197, 94, 0.35);">${projected.score}<span style="font-size:1.15rem; color:#22C55E;">/100</span></div>
                          <div style="color:#F59E0B; font-size:0.9rem; font-weight:700; margin-top:2px;">+${projected.improvement}%</div>
+                         <div style="color:#94A3B8; font-size:0.66rem; margin-top:4px; max-width:270px; line-height:1.35;">${projected.reasoning}</div>
                     </div>
                 </div>
 
                 <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
                     ${row("Impacto", impacto, "Seu CV ainda usa descrições genéricas e verbos passivos. A versão otimizada prioriza verbos de ação e resultados mensuráveis.")}
-                    ${row("Palavras-chave", keywords, "Faltam termos exatos da vaga em cargos, competências e resultados. A versão 92/100 distribui esses termos nos blocos mais lidos pelo ATS.")}
+                    ${row("Palavras-chave", keywords, "Faltam termos exatos da vaga em cargos, competências e resultados. A versão otimizada distribui esses termos nos blocos mais lidos pelo ATS.")}
                     ${row("Format. ATS", ats, "Seu layout atual ainda tem padrões que dificultam parsing automático. A versão otimizada usa estrutura limpa para leitura ATS sem perda visual.")}
                 </div>
             </div>
