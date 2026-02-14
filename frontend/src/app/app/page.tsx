@@ -3837,7 +3837,7 @@ export default function AppPage() {
                                             <div style={{
                                                 background: "rgba(255, 255, 255, 0.06)",
                                                 border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                borderLeft: "4px solid #F59E0B",
+                                                borderLeft: "4px solid #EF4444",
                                                 borderRadius: 12,
                                                 padding: 20,
                                                 backdropFilter: "blur(20px)",
@@ -3846,8 +3846,8 @@ export default function AppPage() {
                                             }}>
                                                 <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
                                                     <div style={{
-                                                        background: "rgba(245, 158, 11, 0.15)",
-                                                        border: "1px solid rgba(245, 158, 11, 0.45)",
+                                                        background: "rgba(239, 68, 68, 0.15)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.45)",
                                                         borderRadius: "50%",
                                                         width: 32,
                                                         height: 32,
@@ -3856,12 +3856,12 @@ export default function AppPage() {
                                                         justifyContent: "center",
                                                         fontSize: "1rem",
                                                         flexShrink: 0,
-                                                        boxShadow: "0 0 16px -2px rgba(245, 158, 11, 0.45)"
+                                                        boxShadow: "0 0 16px -2px rgba(239, 68, 68, 0.45)"
                                                     }}>
-                                                        <AlertCircleIcon color="#FBBF24" size={14} />
+                                                        <AlertCircleIcon color="#F87171" size={14} />
                                                     </div>
                                                     <div style={{ flex: 1 }}>
-                                                        <div style={{ color: "#FCD34D", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
+                                                        <div style={{ color: "#FCA5A5", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
                                                             PROBLEMA #2: {data.gap_2.titulo || "Palavras-Chave da Vaga Ausentes"}
                                                         </div>
                                                         <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.5 }}>
@@ -3901,64 +3901,70 @@ export default function AppPage() {
 
                                                 {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
                                                     <div style={{
-                                                        background: "transparent",
-                                                        padding: "12px 0",
-                                                        marginBottom: 8
+                                                        background: "rgba(15, 23, 42, 0.8)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.28)",
+                                                        borderLeft: "2px solid #EF4444",
+                                                        borderRadius: 6,
+                                                        padding: "12px 12px 12px 16px",
+                                                        marginBottom: 12,
+                                                        display: "flex",
+                                                        alignItems: "start",
+                                                        gap: 10
                                                     }}>
-                                                        <div style={{ color: "#FCD34D", fontSize: "0.75rem", fontWeight: 600, marginBottom: 8 }}>
-                                                            TERMOS FALTANDO NO SEU CV:
-                                                        </div>
-                                                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                                                            {data.gap_2.termos_faltando.slice(0, 5).map((term: string, i: number) => (
-                                                                <span
-                                                                    key={i}
-                                                                    style={{
-                                                                        background: "transparent",
-                                                                        color: "#FCD34D",
-                                                                        padding: "4px 10px",
-                                                                        borderRadius: 16,
-                                                                        fontSize: "0.75rem",
-                                                                        fontWeight: 600,
-                                                                        border: "1px dashed rgba(252, 211, 77, 0.6)",
-                                                                        transition: "all 0.2s",
-                                                                        cursor: "pointer"
-                                                                    }}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.currentTarget.style.background = "rgba(252, 211, 77, 0.12)";
-                                                                        e.currentTarget.style.borderStyle = "solid";
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.background = "transparent";
-                                                                        e.currentTarget.style.borderStyle = "dashed";
-                                                                    }}
-                                                                >
-                                                                    {term}
-                                                                </span>
-                                                            ))}
+                                                        <AlertCircleIcon color="#EF4444" size={14} />
+                                                        <div style={{ flex: 1 }}>
+                                                            <div style={{ color: "#CBD5E1", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                                TERMOS FALTANDO NO SEU CV:
+                                                            </div>
+                                                            <div style={{ display: "grid", gap: 4 }}>
+                                                                {data.gap_2.termos_faltando.slice(0, 5).map((term: string, i: number) => (
+                                                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                                                        <span style={{ width: 5, height: 5, borderRadius: 999, background: "#F87171", flexShrink: 0 }} />
+                                                                        <span style={{ color: "#F1F5F9", fontSize: "0.82rem", lineHeight: 1.45 }}>
+                                                                            {term}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
 
                                                 {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
                                                     <div style={{
-                                                        background: "rgba(16, 185, 129, 0.08)",
-                                                        border: "1px solid rgba(16, 185, 129, 0.22)",
+                                                        background: "rgba(255, 255, 255, 0.06)",
+                                                        border: "1px solid rgba(255, 255, 255, 0.12)",
                                                         borderLeft: "2px solid #10B981",
-                                                        borderRadius: 8,
-                                                        padding: "12px 12px 12px 16px",
-                                                        marginBottom: 10,
-                                                        display: "flex",
-                                                        alignItems: "start",
-                                                        gap: 10
+                                                        borderRadius: 10,
+                                                        padding: 14,
+                                                        backdropFilter: "blur(20px)",
+                                                        WebkitBackdropFilter: "blur(20px)",
+                                                        marginBottom: 12
                                                     }}>
-                                                        <CheckCircle2Icon color="#34D399" />
-                                                        <div>
-                                                            <div style={{ color: "#6EE7B7", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
-                                                                COMO INTEGRAR NA EXPERIÊNCIA (EXEMPLO IA)
+                                                        <div style={{
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            alignItems: "center",
+                                                            marginBottom: 4,
+                                                            gap: 8
+                                                        }}>
+                                                            <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                                                                <CheckCircle2Icon color="#10B981" />
+                                                                VERSÃO OTIMIZADA (Score: 94/100)
                                                             </div>
-                                                            <div style={{ color: "#F1F5F9", fontSize: "0.84rem", lineHeight: 1.55, fontStyle: "italic" }}>
-                                                                "Na minha experiência recente, conduzi iniciativas de <strong>{data.gap_2.termos_faltando[0] || "análise de dados"}</strong> para melhorar a tomada de decisão e implementei práticas de <strong>{data.gap_2.termos_faltando[1] || "gestão de indicadores"}</strong>, resultando em ganho de eficiência operacional e melhor alinhamento com metas estratégicas."
+                                                            <div style={{
+                                                                background: "#10B981",
+                                                                color: "#fff",
+                                                                fontSize: "0.65rem",
+                                                                fontWeight: 700,
+                                                                padding: "3px 10px",
+                                                                borderRadius: 999
+                                                            }}>
+                                                                +{94 - nota} pts
                                                             </div>
+                                                        </div>
+                                                        <div style={{ color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 500, lineHeight: 1.6, fontStyle: "italic" }}>
+                                                            "Na minha experiência recente, conduzi iniciativas de <strong>{data.gap_2.termos_faltando[0] || "análise de dados"}</strong> para melhorar a tomada de decisão e implementei práticas de <strong>{data.gap_2.termos_faltando[1] || "gestão de indicadores"}</strong>, resultando em ganho de eficiência operacional e melhor alinhamento com metas estratégicas."
                                                         </div>
                                                     </div>
                                                 )}
