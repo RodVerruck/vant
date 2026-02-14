@@ -3403,6 +3403,7 @@ export default function AppPage() {
                 <PaidStage
                     reportData={reportData}
                     authUserId={authUserId}
+                    creditsRemaining={creditsRemaining}
                     onNewOptimization={() => setStage("hero")}
                     onUpdateReport={(updated) => setReportData(updated)}
                     onViewHistory={() => setStage("history")}

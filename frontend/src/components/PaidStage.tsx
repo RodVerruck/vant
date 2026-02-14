@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import type { ReportData } from "@/types";
-import { CopyableSection } from "./CopyableSection";
-import { GapCard } from "./GapCard";
 import { BookCard } from "./BookCard";
 import { InterviewSimulator } from "./InterviewSimulator";
 import { calculateProjectedScore } from "@/lib/helpers";
@@ -85,18 +83,69 @@ const LoadingPlaceholder = ({ title, description }: { title: string; description
     </div>
 );
 
+const CircularGauge = ({
+    value,
+    size,
+    color,
+    label,
+    valueLabel,
+    glow = false,
+}: {
+    value: number;
+    size: number;
+    color: string;
+    label: string;
+    valueLabel: string;
+    glow?: boolean;
+}) => {
+    const clamped = Math.max(0, Math.min(100, value));
+    return (
+        <div style={{ textAlign: "center" }}>
+            <div
+                style={{
+                    width: size,
+                    height: size,
+                    borderRadius: "50%",
+                    background: `conic-gradient(${color} ${clamped * 3.6}deg, rgba(148, 163, 184, 0.2) 0deg)`,
+                    padding: 8,
+                    boxShadow: glow ? `0 0 36px ${color}55` : "0 14px 28px rgba(2, 6, 23, 0.35)",
+                    margin: "0 auto 10px",
+                }}
+            >
+                <div
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.16), rgba(15,23,42,0.94))",
+                        border: "1px solid rgba(255,255,255,0.18)",
+                        display: "grid",
+                        placeItems: "center",
+                    }}
+                >
+                    <div style={{ fontSize: size > 140 ? "1.9rem" : "1.45rem", fontWeight: 800, color: "#F8FAFC" }}>{valueLabel}</div>
+                </div>
+            </div>
+            <div style={{ color: "#CBD5E1", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+        </div>
+    );
+};
+
 interface PaidStageProps {
     reportData: ReportData | null;
     authUserId: string | null;
+    creditsRemaining?: number;
     onNewOptimization: () => void;
     onUpdateReport: (updated: ReportData) => void;
     onViewHistory?: () => void;
 }
 
-export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateReport, onViewHistory }: PaidStageProps) {
+export function PaidStage({ reportData, authUserId, creditsRemaining = 0, onNewOptimization, onUpdateReport, onViewHistory }: PaidStageProps) {
     const [activeTab, setActiveTab] = useState<"diagnostico" | "cv" | "biblioteca" | "simulador">("diagnostico");
     const [editedCvText, setEditedCvText] = useState("");
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [copiedField, setCopiedField] = useState<"headline" | "summary" | null>(null);
+    const [openGapIndex, setOpenGapIndex] = useState<number | null>(0);
 
     // Estado para controlar quais abas estão carregando
     const [loadingTabs, setLoadingTabs] = useState<Record<string, boolean>>({
@@ -186,22 +235,41 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
         impacto,
     ]);
 
-    let nivelLabel = "FORMATADO COMO JÚNIOR 🧱";
-    let barColor = "#EF4444";
-    let bgGlow = "rgba(239, 68, 68, 0.2)";
-    let msgEgo = "Seu currículo está escondendo sua senioridade real.";
+    let seniorityLabel = "JÚNIOR";
+    let seniorityColor = "#F59E0B";
+    let seniorityMessage = "Seu currículo já tem potencial, mas ainda transmite menos senioridade do que você realmente possui.";
 
     if (xpAtual >= 85) {
-        nivelLabel = "FORMATADO COMO SÊNIOR 👑";
-        barColor = "#10B981";
-        bgGlow = "rgba(16, 185, 129, 0.2)";
-        msgEgo = "Documento alinhado com sua experiência real.";
+        seniorityLabel = "SÊNIOR";
+        seniorityColor = "#22C55E";
+        seniorityMessage = "Excelente base. Agora o foco é elevar precisão e posicionamento para vagas estratégicas.";
     } else if (xpAtual >= 60) {
-        nivelLabel = "FORMATADO COMO PLENO ⚔️";
-        barColor = "#F59E0B";
-        bgGlow = "rgba(245, 158, 11, 0.2)";
-        msgEgo = "Bom potencial, mas a formatação limita seu salário.";
+        seniorityLabel = "PLENO";
+        seniorityColor = "#FB923C";
+        seniorityMessage = "Seu perfil está forte, com espaço claro para ganhar autoridade e aumentar competitividade.";
     }
+
+    const tabs = [
+        { id: "diagnostico", label: "Diagnóstico" },
+        { id: "cv", label: "CV Otimizado" },
+        { id: "biblioteca", label: "Biblioteca" },
+        { id: "simulador", label: "Simulador" },
+    ] as const;
+
+    const formatDiagnostic = (text: string) => {
+        if (!text) return "";
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#E2E8F0">$1</strong>');
+    };
+
+    const handleCopyText = async (field: "headline" | "summary", content: string) => {
+        try {
+            await navigator.clipboard.writeText(content);
+            setCopiedField(field);
+            setTimeout(() => setCopiedField(null), 1800);
+        } catch (error) {
+            console.error("Erro ao copiar texto:", error);
+        }
+    };
 
     const handleSaveEdit = () => {
         if (editedCvText && reportData) {
@@ -387,7 +455,7 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
     const pageStyle = {
         minHeight: "100vh",
         color: "#F8FAFC",
-        background: "radial-gradient(1200px 520px at 50% -120px, rgba(56, 189, 248, 0.22), rgba(15, 23, 42, 0) 68%), radial-gradient(900px 420px at 92% 8%, rgba(99, 102, 241, 0.14), rgba(15, 23, 42, 0) 70%), linear-gradient(180deg, #060f25 0%, #0b152d 45%, #050d1f 100%)"
+        background: "radial-gradient(900px 520px at 12% 5%, rgba(249, 115, 22, 0.16), rgba(10, 15, 30, 0) 72%), radial-gradient(1000px 620px at 88% 12%, rgba(34, 211, 238, 0.13), rgba(10, 15, 30, 0) 76%), linear-gradient(135deg, #05070f 0%, #090f1d 45%, #071226 100%)"
     } as const;
 
     const sectionGlassStyle = {
@@ -403,153 +471,212 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
     } as const;
 
     const tabContentGlassStyle = {
-        borderRadius: 16,
-        border: "1px solid rgba(148, 163, 184, 0.16)",
-        background: "linear-gradient(180deg, rgba(10, 18, 35, 0.72), rgba(8, 16, 32, 0.42))",
-        padding: "24px 16px 14px",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)"
+        borderRadius: 22,
+        border: "1px solid rgba(255, 255, 255, 0.12)",
+        background: "linear-gradient(140deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02))",
+        padding: "28px 20px 20px",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: "0 35px 80px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.15)"
     } as const;
 
     return (
         <div style={pageStyle}>
-            {/* Header */}
-            <div style={{ padding: "44px 20px 30px", textAlign: "center" }}>
-                <h1 style={{ fontSize: "2.5rem", fontWeight: 800, marginBottom: 10, background: "linear-gradient(120deg, #67E8F9 0%, #38BDF8 45%, #818CF8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", letterSpacing: "-0.02em" }}>
-                    VANT - Análise Completa
-                </h1>
-                <p style={{ fontSize: "1.06rem", color: "#94A3B8", marginBottom: 24 }}>
-                    Currículo otimizado com IA para {reportData.setor_detectado || "sua área"}
-                </p>
-
-                {/* Score Card */}
-                <div style={{
-                    maxWidth: 760,
-                    margin: "0 auto 14px",
-                    background: "linear-gradient(145deg, rgba(15, 23, 42, 0.84) 0%, rgba(30, 41, 59, 0.62) 100%)",
-                    border: "1px solid rgba(125, 211, 252, 0.24)",
-                    borderRadius: 20,
-                    padding: 24,
-                    backdropFilter: "blur(16px)",
-                    WebkitBackdropFilter: "blur(16px)",
-                    boxShadow: `0 18px 46px rgba(2, 6, 23, 0.48), 0 0 38px ${bgGlow}`
-                }}>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(56, 189, 248, 0.08)", border: "1px solid rgba(56, 189, 248, 0.2)", color: "#7DD3FC", borderRadius: 999, padding: "6px 12px", fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14, fontWeight: 700 }}>
-                        Resultado Premium
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 16, flexWrap: "wrap" }}>
-                        <div style={{ textAlign: "left", flex: "1 1 320px" }}>
-                            <h2 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: 4, letterSpacing: "-0.02em" }}>{nivelLabel}</h2>
-                            <p style={{ color: "#94A3B8", margin: 0, lineHeight: 1.5 }}>{msgEgo}</p>
+            <div style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 18px 34px" }}>
+                <header style={{ marginBottom: 22 }}>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 14,
+                        flexWrap: "wrap",
+                        marginBottom: 18
+                    }}>
+                        <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                            color: "#F8FAFC",
+                            fontWeight: 700,
+                            letterSpacing: "0.08em"
+                        }}>
+                            <div style={{
+                                width: 34,
+                                height: 34,
+                                borderRadius: 12,
+                                background: "linear-gradient(145deg, rgba(249,115,22,0.25), rgba(255,255,255,0.08))",
+                                border: "1px solid rgba(255,255,255,0.18)",
+                                display: "grid",
+                                placeItems: "center",
+                                boxShadow: "0 14px 30px rgba(0,0,0,0.28)"
+                            }}>
+                                V
+                            </div>
+                            VANT
                         </div>
-                        <div style={{ textAlign: "center", minWidth: 120 }}>
-                            <div style={{ fontSize: "3rem", fontWeight: 800, color: barColor, lineHeight: 1 }}>{xpAtual}%</div>
-                            <div style={{ fontSize: "0.9rem", color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Score ATS Atual</div>
-                        </div>
-                    </div>
 
-                    <div style={{ marginBottom: 8 }}>
-                        <div style={{ height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${xpAtual}%`, background: barColor, borderRadius: 4, transition: "width 1s ease-out" }} />
-                        </div>
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, padding: "16px", background: "linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(34, 197, 94, 0.04) 100%)", borderRadius: 14, border: "1px solid rgba(16, 185, 129, 0.28)", gap: 14, flexWrap: "wrap" }}>
-                        <div>
-                            <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#10B981", lineHeight: 1 }}>{projected.score}/100</div>
-                            <div style={{ fontSize: "0.85rem", color: "#10B981", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Score Projetado Pós-Otimização</div>
-                            <div style={{ fontSize: "0.72rem", color: "#94A3B8", marginTop: 6, maxWidth: 420, lineHeight: 1.35 }}>{projected.reasoning}</div>
-                        </div>
-                        <div style={{ textAlign: "right", minWidth: 120 }}>
-                            <div style={{ fontSize: "1.2rem", fontWeight: 700, color: "#10B981" }}>+{projected.improvement}%</div>
-                            <div style={{ fontSize: "0.75rem", color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Potencial de Melhoria</div>
+                        <div style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            borderRadius: 999,
+                            padding: "8px 14px",
+                            border: "1px solid rgba(255,255,255,0.14)",
+                            background: "linear-gradient(140deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
+                            backdropFilter: "blur(20px)",
+                            WebkitBackdropFilter: "blur(20px)",
+                            color: "#E2E8F0",
+                            fontWeight: 600,
+                            fontSize: "0.9rem"
+                        }}>
+                            <span style={{ color: "#FB923C" }}>●</span>
+                            Créditos: <strong style={{ color: "#F8FAFC" }}>{creditsRemaining}</strong>
                         </div>
                     </div>
 
-                    <div style={{ marginBottom: 16 }}>
-                        <div style={{ height: 10, background: "rgba(255,255,255,0.1)", borderRadius: 5, overflow: "hidden", position: "relative" }}>
-                            <div style={{ height: "100%", width: `${projected.score}%`, background: "linear-gradient(90deg, #10B981 0%, #22C55E 100%)", borderRadius: 5, transition: "width 1s ease-out", boxShadow: "0 0 20px rgba(16, 185, 129, 0.3)" }} />
+                    <div style={sectionGlassStyle}>
+                        <h1 style={{
+                            fontSize: "clamp(1.8rem, 3vw, 2.6rem)",
+                            fontWeight: 800,
+                            letterSpacing: "-0.03em",
+                            marginBottom: 6
+                        }}>
+                            Resultado da Análise
+                        </h1>
+                        <p style={{ color: "#CBD5E1", marginBottom: 20 }}>
+                            Visão estratégica do seu currículo para {reportData.setor_detectado || "sua área"}, com foco em clareza e ações de alto impacto.
+                        </p>
+
+                        <div style={{
+                            borderRadius: 20,
+                            border: "1px solid rgba(255,255,255,0.14)",
+                            background: "linear-gradient(140deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03))",
+                            backdropFilter: "blur(20px)",
+                            WebkitBackdropFilter: "blur(20px)",
+                            padding: "20px 18px",
+                            boxShadow: "0 30px 80px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.18)",
+                            position: "relative",
+                            overflow: "hidden"
+                        }}>
                             <div style={{
                                 position: "absolute",
-                                left: `${xpAtual}%`,
-                                top: 0,
-                                width: "2px",
-                                height: "100%",
-                                background: "#F59E0B",
-                                boxShadow: "0 0 10px rgba(245, 158, 11, 0.5)"
+                                inset: 0,
+                                background: "linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0))",
+                                pointerEvents: "none"
                             }} />
+
+                            <div style={{
+                                position: "relative",
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                                gap: 18,
+                                alignItems: "center"
+                            }}>
+                                <div style={{
+                                    borderRadius: 16,
+                                    border: "1px solid rgba(255,255,255,0.12)",
+                                    background: "rgba(10, 15, 30, 0.34)",
+                                    padding: "16px 14px"
+                                }}>
+                                    <div style={{ color: "#94A3B8", marginBottom: 8, fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                                        Senioridade Detectada
+                                    </div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                        <span style={{ fontSize: "1.3rem" }}>⚠️</span>
+                                        <strong style={{ fontSize: "1.55rem", color: seniorityColor, letterSpacing: "0.03em" }}>{seniorityLabel}</strong>
+                                    </div>
+                                    <p style={{ marginTop: 10, color: "#CBD5E1", lineHeight: 1.5 }}>
+                                        {seniorityMessage}
+                                    </p>
+                                </div>
+
+                                <div style={{
+                                    display: "flex",
+                                    gap: 18,
+                                    justifyContent: "center",
+                                    flexWrap: "wrap"
+                                }}>
+                                    <CircularGauge
+                                        value={xpAtual}
+                                        size={128}
+                                        color="#FB923C"
+                                        label="Score Atual"
+                                        valueLabel={`${xpAtual}%`}
+                                    />
+                                    <CircularGauge
+                                        value={projected.score}
+                                        size={158}
+                                        color="#22D3EE"
+                                        label="Potencial Projetado"
+                                        valueLabel={`${projected.score}/100`}
+                                        glow
+                                    />
+                                </div>
+                            </div>
+
+                            <p style={{
+                                position: "relative",
+                                marginTop: 16,
+                                color: "#E2E8F0",
+                                lineHeight: 1.6
+                            }}>
+                                Com pequenos ajustes de linguagem e estrutura, você pode evoluir <strong style={{ color: "#22D3EE" }}>+{projected.improvement}%</strong> e reduzir o risco de rejeição automática.
+                            </p>
                         </div>
                     </div>
 
-                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Diagnóstico"></div>
-                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="CV Otimizado"></div>
-                        <div style={{ flex: 1, height: 6, background: "#10B981", borderRadius: 3 }} title="Biblioteca"></div>
-                        <div style={{ flex: 1, height: 6, background: "#374151", borderRadius: 3, transition: "background 0.3s ease" }} title="Simulador"></div>
-                    </div>
-                    <p style={{ color: "#64748B", fontSize: "0.75rem", marginTop: 10, marginBottom: 0 }}>
-                        Progresso: Diagnóstico ✅ | CV Otimizado ✅ | Biblioteca ✅ | Simulador ⏳
-                    </p>
-                </div>
-            </div>
-
-            {/* Content */}
-            <div style={sectionGlassStyle}>
-                <div style={{ display: "flex", gap: 10, marginBottom: 20, overflowX: "auto", paddingBottom: 6, scrollbarWidth: "thin" }}>
-                    {[
-                        { id: "diagnostico", label: "📊 DIAGNÓSTICO E AÇÃO" },
-                        { id: "cv", label: "📄 CV OTIMIZADO" },
-                        { id: "biblioteca", label: "📚 BIBLIOTECA" },
-                        { id: "simulador", label: "🎙️ SIMULADOR DE ENTREVISTA" }
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                            style={{
-                                background: activeTab === tab.id
-                                    ? "linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(59, 130, 246, 0.08))"
-                                    : "rgba(15, 23, 42, 0.35)",
-                                color: activeTab === tab.id ? "#7DD3FC" : "#94A3B8",
-                                border: activeTab === tab.id ? "1px solid rgba(56, 189, 248, 0.45)" : "1px solid rgba(148, 163, 184, 0.2)",
-                                borderBottom: activeTab === tab.id ? "1px solid rgba(56, 189, 248, 0.55)" : "1px solid rgba(148, 163, 184, 0.2)",
-                                borderRadius: 999,
-                                padding: "10px 16px",
-                                cursor: "pointer",
-                                fontWeight: 600,
-                                fontSize: "0.82rem",
-                                transition: "all 0.2s",
-                                position: "relative",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                                whiteSpace: "nowrap",
-                                boxShadow: activeTab === tab.id ? "0 8px 24px rgba(56, 189, 248, 0.16)" : "none"
-                            }}
-                        >
-                            {loadingTabs[tab.id] && (
-                                <>
-                                    <div
-                                        style={{
-                                            width: "16px",
-                                            height: "16px",
-                                            border: "2px solid #38BDF8",
-                                            borderTop: "2px solid transparent",
+                    <div style={{
+                        marginTop: 16,
+                        display: "flex",
+                        gap: 10,
+                        overflowX: "auto",
+                        paddingBottom: 4,
+                        scrollbarWidth: "thin"
+                    }}>
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                style={{
+                                    borderRadius: 999,
+                                    padding: "11px 16px",
+                                    border: activeTab === tab.id ? "1px solid rgba(249, 115, 22, 0.65)" : "1px solid rgba(255,255,255,0.14)",
+                                    background: activeTab === tab.id
+                                        ? "linear-gradient(140deg, rgba(249, 115, 22, 0.26), rgba(255,255,255,0.08))"
+                                        : "linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
+                                    color: activeTab === tab.id ? "#FFF7ED" : "#CBD5E1",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    whiteSpace: "nowrap",
+                                    backdropFilter: "blur(18px)",
+                                    WebkitBackdropFilter: "blur(18px)",
+                                    boxShadow: activeTab === tab.id ? "0 10px 26px rgba(249,115,22,0.24)" : "none",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 8
+                                }}
+                            >
+                                {loadingTabs[tab.id] ? (
+                                    <>
+                                        <span style={{
+                                            width: 14,
+                                            height: 14,
                                             borderRadius: "50%",
+                                            border: "2px solid currentColor",
+                                            borderTopColor: "transparent",
                                             animation: "spin 1s linear infinite"
-                                        }}
-                                    />
-                                    <span style={{ opacity: 0.7 }}>IA processando...</span>
-                                </>
-                            )}
-                            {!loadingTabs[tab.id] && tab.label}
-                        </button>
-                    ))}
-                </div>
+                                        }} />
+                                        IA processando
+                                    </>
+                                ) : tab.label}
+                            </button>
+                        ))}
+                    </div>
+                </header>
 
                 <div style={tabContentGlassStyle}>
                     {activeTab === "diagnostico" && (
-                        <div style={{ maxWidth: 850, margin: "0 auto" }}>
+                        <div style={{ maxWidth: 980, margin: "0 auto" }}>
                             {loadingTabs.diagnostico ? (
                                 <LoadingPlaceholder
                                     title="🔍 Analisando seu currículo..."
@@ -557,70 +684,199 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
                                 />
                             ) : (
                                 <>
-                                    <h3 style={{ color: "#F8FAFC", marginBottom: 20, fontSize: "1.5rem", fontWeight: 600 }}>1. Plano de Correção Imediata</h3>
-                                    {reportData.gaps_fatais?.map((gap, idx) => (
-                                        <GapCard key={idx} gap={gap} />
-                                    ))}
+                                    <h3 style={{ color: "#F8FAFC", marginBottom: 18, fontSize: "1.45rem", fontWeight: 700 }}>
+                                        Plano de Correção
+                                    </h3>
 
-                                    <div style={{ height: 20 }} />
-                                    <CopyableSection title="💼 Headline LinkedIn" content={reportData.linkedin_headline || ""} isHeadline />
-                                    <CopyableSection title="📝 Resumo Profissional Otimizado" content={reportData.resumo_otimizado || ""} />
+                                    <div style={{ display: "grid", gap: 12 }}>
+                                        {reportData.gaps_fatais?.map((gap, idx) => {
+                                            const isOpen = openGapIndex === idx;
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    style={{
+                                                        borderRadius: 16,
+                                                        border: "1px solid rgba(255,255,255,0.12)",
+                                                        background: "linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
+                                                        backdropFilter: "blur(20px)",
+                                                        WebkitBackdropFilter: "blur(20px)",
+                                                        overflow: "hidden",
+                                                        boxShadow: "0 14px 34px rgba(0,0,0,0.24)"
+                                                    }}
+                                                >
+                                                    <button
+                                                        onClick={() => setOpenGapIndex(isOpen ? null : idx)}
+                                                        style={{
+                                                            width: "100%",
+                                                            border: "none",
+                                                            background: "transparent",
+                                                            padding: "14px 16px",
+                                                            textAlign: "left",
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            alignItems: "center",
+                                                            color: "#F8FAFC",
+                                                            cursor: "pointer"
+                                                        }}
+                                                    >
+                                                        <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontWeight: 600 }}>
+                                                            <span style={{ color: "#FB923C" }}>{idx + 1 <= 2 ? "⚡" : "⚠️"}</span>
+                                                            {idx + 1}. {gap.erro}
+                                                        </span>
+                                                        <span style={{ color: "#CBD5E1", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.25s ease" }}>⌄</span>
+                                                    </button>
 
-                                    <div style={{ marginTop: 30, marginBottom: 20, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
-                                        <h3 style={{ color: "#F8FAFC", marginBottom: 15, fontSize: "1.5rem", fontWeight: 600 }}>🎯 X-Ray Search (Acesso ao Mercado Oculto)</h3>
+                                                    {isOpen && (
+                                                        <div style={{ padding: "0 16px 16px" }}>
+                                                            <div
+                                                                style={{
+                                                                    color: "#CBD5E1",
+                                                                    lineHeight: 1.6,
+                                                                    marginBottom: 12,
+                                                                    fontStyle: "italic"
+                                                                }}
+                                                                dangerouslySetInnerHTML={{ __html: `Evidência: \"${formatDiagnostic(gap.evidencia)}\"` }}
+                                                            />
+
+                                                            <div
+                                                                style={{
+                                                                    borderRadius: 12,
+                                                                    border: "1px solid rgba(34, 211, 238, 0.34)",
+                                                                    background: "linear-gradient(135deg, rgba(34,211,238,0.12), rgba(255,255,255,0.05))",
+                                                                    padding: "12px 13px",
+                                                                    color: "#F8FAFC",
+                                                                    lineHeight: 1.55,
+                                                                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14)"
+                                                                }}
+                                                                dangerouslySetInnerHTML={{ __html: `💡 ${formatDiagnostic(gap.correcao_sugerida)}` }}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div style={{
+                                        marginTop: 24,
+                                        display: "grid",
+                                        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                                        gap: 14
+                                    }}>
                                         <div style={{
-                                            background: "linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(56, 189, 248, 0.1) 100%)",
-                                            border: "1px solid #38BDF8",
-                                            borderRadius: 12,
-                                            padding: 20,
-                                            position: "relative",
-                                            overflow: "hidden"
+                                            borderRadius: 16,
+                                            border: "1px solid rgba(255,255,255,0.12)",
+                                            background: "linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
+                                            backdropFilter: "blur(20px)",
+                                            WebkitBackdropFilter: "blur(20px)",
+                                            padding: 16
                                         }}>
-                                            <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, background: "#38BDF8", filter: "blur(50px)", opacity: 0.2 }} />
-
-                                            <div style={{ marginBottom: 15 }}>
-                                                <strong style={{ color: "#F8FAFC", fontSize: "1.05rem" }}>Como encontrar os Recrutadores dessa vaga?</strong>
-                                                <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: 5, lineHeight: 1.5 }}>
-                                                    Não espere eles te acharem. Nossa IA gerou um código de busca avançada (Google Dorking) para filtrar Gestores, Recrutadores e Pares Sêniores.
-                                                </p>
+                                            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 10, alignItems: "center" }}>
+                                                <strong style={{ color: "#F8FAFC", fontSize: "1rem" }}>💼 Headline LinkedIn</strong>
+                                                <button
+                                                    onClick={() => handleCopyText("headline", reportData.linkedin_headline || "")}
+                                                    style={{
+                                                        borderRadius: 999,
+                                                        border: "1px solid rgba(255,255,255,0.14)",
+                                                        background: "rgba(255,255,255,0.08)",
+                                                        color: "#E2E8F0",
+                                                        padding: "6px 11px",
+                                                        cursor: "pointer",
+                                                        fontSize: "0.8rem"
+                                                    }}
+                                                >
+                                                    {copiedField === "headline" ? "✓ Copiado" : "📋 Copiar texto"}
+                                                </button>
                                             </div>
-
-                                            <a href={googleLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-                                                <div style={{
-                                                    background: "#38BDF8",
-                                                    color: "#0F172A",
-                                                    textAlign: "center",
-                                                    padding: 12,
-                                                    borderRadius: 8,
-                                                    fontWeight: 800,
-                                                    fontSize: "1rem",
-                                                    transition: "transform 0.2s",
-                                                    boxShadow: "0 4px 15px rgba(56, 189, 248, 0.3)",
-                                                    cursor: "pointer"
-                                                }}>
-                                                    🔍 CLIQUE PARA RODAR A BUSCA NO GOOGLE
-                                                </div>
-                                            </a>
-
-                                            <div style={{ marginTop: 20 }}>
-                                                <p style={{ fontSize: "0.75rem", color: "#64748B", marginBottom: 5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>
-                                                    CÓDIGO GERADO PELA IA:
-                                                </p>
-                                                <div style={{
-                                                    background: "rgba(0,0,0,0.3)",
-                                                    border: "1px solid rgba(255,255,255,0.1)",
-                                                    borderRadius: 6,
-                                                    padding: 12,
-                                                    fontFamily: "monospace",
-                                                    fontSize: "0.85rem",
-                                                    color: "#CBD5E1",
-                                                    wordBreak: "break-all",
-                                                    lineHeight: 1.4
-                                                }}>
-                                                    {googleLink}
-                                                </div>
-                                            </div>
+                                            <pre style={{
+                                                margin: 0,
+                                                whiteSpace: "pre-wrap",
+                                                color: "#E2E8F0",
+                                                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                                                lineHeight: 1.55,
+                                                background: "rgba(5,10,20,0.42)",
+                                                borderRadius: 12,
+                                                border: "1px solid rgba(255,255,255,0.10)",
+                                                padding: 12
+                                            }}>
+                                                {reportData.linkedin_headline || "Sem conteúdo no momento."}
+                                            </pre>
                                         </div>
+
+                                        <div style={{
+                                            borderRadius: 16,
+                                            border: "1px solid rgba(255,255,255,0.12)",
+                                            background: "linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
+                                            backdropFilter: "blur(20px)",
+                                            WebkitBackdropFilter: "blur(20px)",
+                                            padding: 16
+                                        }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 10, alignItems: "center" }}>
+                                                <strong style={{ color: "#F8FAFC", fontSize: "1rem" }}>📝 Resumo Profissional</strong>
+                                                <button
+                                                    onClick={() => handleCopyText("summary", reportData.resumo_otimizado || "")}
+                                                    style={{
+                                                        borderRadius: 999,
+                                                        border: "1px solid rgba(255,255,255,0.14)",
+                                                        background: "rgba(255,255,255,0.08)",
+                                                        color: "#E2E8F0",
+                                                        padding: "6px 11px",
+                                                        cursor: "pointer",
+                                                        fontSize: "0.8rem"
+                                                    }}
+                                                >
+                                                    {copiedField === "summary" ? "✓ Copiado" : "📋 Copiar texto"}
+                                                </button>
+                                            </div>
+                                            <pre style={{
+                                                margin: 0,
+                                                whiteSpace: "pre-wrap",
+                                                color: "#E2E8F0",
+                                                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                                                lineHeight: 1.55,
+                                                background: "rgba(5,10,20,0.42)",
+                                                borderRadius: 12,
+                                                border: "1px solid rgba(255,255,255,0.10)",
+                                                padding: 12
+                                            }}>
+                                                {reportData.resumo_otimizado || "Sem conteúdo no momento."}
+                                            </pre>
+                                        </div>
+                                    </div>
+
+                                    <div style={{
+                                        marginTop: 20,
+                                        borderRadius: 18,
+                                        border: "1px solid rgba(251, 146, 60, 0.5)",
+                                        background: "linear-gradient(135deg, rgba(249,115,22,0.16), rgba(34,211,238,0.07), rgba(255,255,255,0.04))",
+                                        backdropFilter: "blur(20px)",
+                                        WebkitBackdropFilter: "blur(20px)",
+                                        boxShadow: "0 24px 54px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.16)",
+                                        padding: 20
+                                    }}>
+                                        <h3 style={{ color: "#F8FAFC", marginBottom: 10, fontSize: "1.2rem" }}>
+                                            Bônus: Acesso ao Mercado Oculto (X-Ray Search)
+                                        </h3>
+                                        <p style={{ color: "#CBD5E1", marginBottom: 14, lineHeight: 1.55 }}>
+                                            Use uma busca avançada para encontrar recrutadores e gestores fora das vagas abertas tradicionais.
+                                        </p>
+
+                                        <a href={googleLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+                                            <button style={{
+                                                width: "100%",
+                                                border: "none",
+                                                borderRadius: 12,
+                                                padding: "14px 18px",
+                                                cursor: "pointer",
+                                                background: "linear-gradient(180deg, #FB923C 0%, #F97316 52%, #EA580C 100%)",
+                                                color: "#2A1202",
+                                                fontWeight: 800,
+                                                fontSize: "1rem",
+                                                boxShadow: "0 16px 34px rgba(249,115,22,0.35)"
+                                            }}>
+                                                🔍 Rodar Busca Avançada no Google
+                                            </button>
+                                        </a>
                                     </div>
                                 </>
                             )}
@@ -803,43 +1059,55 @@ export function PaidStage({ reportData, authUserId, onNewOptimization, onUpdateR
             </div>
 
             {/* Botões de Ação */}
-            <div style={{ marginTop: 30, padding: "0 20px 26px" }}>
-                <div style={{ maxWidth: 1200, margin: "0 auto", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
-                    <div style={{ maxWidth: 850, margin: "0 auto", display: "flex", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
+            <div style={{ marginTop: 30, padding: "0 0 26px" }}>
+                <div style={{
+                    maxWidth: 1200,
+                    margin: "0 auto",
+                    borderTop: "1px solid rgba(255,255,255,0.08)",
+                    paddingTop: 20,
+                    background: "rgba(2,6,23,0.55)",
+                    borderRadius: 18,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    backdropFilter: "blur(18px)",
+                    WebkitBackdropFilter: "blur(18px)",
+                    boxShadow: "0 18px 34px rgba(0,0,0,0.3)",
+                    paddingLeft: 16,
+                    paddingRight: 16,
+                    paddingBottom: 16
+                }}>
+                    <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", gap: 16, marginBottom: 0, flexWrap: "wrap" }}>
                         <button
                             onClick={() => { window.location.href = "/dashboard"; }}
                             style={{
-                                background: "linear-gradient(135deg, rgba(56, 189, 248, 0.14), rgba(99, 102, 241, 0.1))",
-                                border: "1px solid rgba(56, 189, 248, 0.35)",
-                                color: "#7DD3FC",
+                                background: "rgba(255,255,255,0.03)",
+                                border: "1px solid rgba(255,255,255,0.22)",
+                                color: "#E2E8F0",
                                 padding: "12px 24px",
                                 borderRadius: 50,
-                                fontWeight: 800,
-                                textTransform: "uppercase",
+                                fontWeight: 700,
                                 cursor: "pointer",
                                 flex: "1 1 260px",
-                                minHeight: 48
+                                minHeight: 52
                             }}
                         >
-                            ⬅️ Voltar ao Dashboard
+                            ← Voltar ao Dashboard
                         </button>
                         <button
                             onClick={onNewOptimization}
                             style={{
-                                background: "linear-gradient(to bottom, #FFD54F 0%, #FF8F00 50%, #EF6C00 100%)",
+                                background: "linear-gradient(180deg, #FB923C 0%, #F97316 52%, #EA580C 100%)",
                                 border: "none",
-                                color: "#210B00",
+                                color: "#2A1202",
                                 padding: "12px 24px",
                                 borderRadius: 50,
                                 fontWeight: 800,
-                                textTransform: "uppercase",
                                 cursor: "pointer",
                                 flex: "1 1 260px",
-                                minHeight: 48,
-                                boxShadow: "0 4px 16px rgba(255, 143, 0, 0.4)"
+                                minHeight: 52,
+                                boxShadow: "0 12px 30px rgba(249, 115, 22, 0.35)"
                             }}
                         >
-                            ➡️ Nova Otimização
+                            Aplicar Correções
                         </button>
                     </div>
                 </div>
