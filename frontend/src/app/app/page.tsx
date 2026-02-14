@@ -4225,8 +4225,8 @@ export default function AppPage() {
 
             {
                 stage === "checkout" && (
-                    <div className="hero-container">
-                        <div className="action-island-container">
+                    <div className="hero-container checkout-hero-container">
+                        <div className="action-island-container checkout-island-container">
                             {(() => {
                                 const planId = (selectedPlan || "premium_plus").trim();
 

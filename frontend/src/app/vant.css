@@ -187,6 +187,53 @@ body,
     }
 }
 
+/* Checkout: largura mais contida para evitar visual esticado */
+.checkout-hero-container {
+    max-width: 1040px;
+    margin: 0 auto 32px auto;
+    padding-inline: 20px;
+}
+
+.checkout-island-container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 32px;
+    border-radius: 18px;
+}
+
+.checkout-island-container .checkout-header,
+.checkout-island-container .checkout-order-summary,
+.checkout-island-container form,
+.checkout-island-container .payment-methods-section {
+    max-width: 920px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.checkout-island-container .checkout-order-summary {
+    padding: 18px 20px;
+    border-radius: 12px;
+}
+
+@media (max-width: 900px) {
+    .checkout-hero-container {
+        max-width: 100%;
+        padding-inline: 12px;
+    }
+
+    .checkout-island-container {
+        max-width: 100%;
+        padding: 20px 16px;
+    }
+
+    .checkout-island-container .checkout-header,
+    .checkout-island-container .checkout-order-summary,
+    .checkout-island-container form,
+    .checkout-island-container .payment-methods-section {
+        max-width: 100%;
+    }
+}
+
 /* Stat icon circle */
 .stat-icon {
     width: 36px;
@@ -1308,6 +1355,11 @@ body,
 }
 
 [data-testid="stExpander"] summary:hover {
+    color: var(--primary-blue);
+}
+
+[data-testid="stExpander"] summary:focus {
+    outline: none;
     color: var(--primary-blue);
 }
 
