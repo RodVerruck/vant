@@ -1106,11 +1106,33 @@ export default function AppPage() {
         const checkoutPending = localStorage.getItem("checkout_pending");
         const hasCheckoutPending = !!checkoutPending;
         const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
+        const hasAutoStartFlag = !!localStorage.getItem("vant_auto_start");
+        const hasPendingAutoStart = pendingAutoStart.current;
+        const hasSkipPreviewFlag = !!localStorage.getItem("vant_skip_preview");
         // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
         const hasNonHeroStage = stage !== "hero";
-        const hasActiveFlow = returnPlan || hasReturnStage || hasHistoryItem || hasCheckoutPending || hasNonHeroStage || hasAutoProcess;
+        const hasActiveFlow =
+            returnPlan ||
+            hasReturnStage ||
+            hasHistoryItem ||
+            hasCheckoutPending ||
+            hasNonHeroStage ||
+            hasAutoProcess ||
+            hasAutoStartFlag ||
+            hasPendingAutoStart ||
+            hasSkipPreviewFlag;
 
-        console.log("[Auth] Verificando fluxo:", { returnPlan: !!returnPlan, hasReturnStage, hasCheckoutPending, hasNonHeroStage, stage });
+        console.log("[Auth] Verificando fluxo:", {
+            returnPlan: !!returnPlan,
+            hasReturnStage,
+            hasCheckoutPending,
+            hasNonHeroStage,
+            hasAutoProcess,
+            hasAutoStartFlag,
+            hasPendingAutoStart,
+            hasSkipPreviewFlag,
+            stage
+        });
 
         if (!hasActiveFlow) {
             console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
