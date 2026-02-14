@@ -424,6 +424,30 @@ export default function AppPage() {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(60); // segundos
     const [sessionId, setSessionId] = useState<string | null>(null); // ← Progressive loading
+    const ANALYZING_TOTAL_MS = 10000;
+    const ANALYZING_PHASE_1_MS = 3333;
+    const ANALYZING_PHASE_2_MS = 3333;
+
+    function getAnalyzingPhaseByElapsed(elapsedMs: number): 1 | 2 | 3 {
+        if (elapsedMs < ANALYZING_PHASE_1_MS) return 1;
+        if (elapsedMs < ANALYZING_PHASE_1_MS + ANALYZING_PHASE_2_MS) return 2;
+        return 3;
+    }
+
+    function getAnalyzingProgressByElapsed(elapsedMs: number): number {
+        if (elapsedMs <= ANALYZING_PHASE_1_MS) {
+            return (elapsedMs / ANALYZING_PHASE_1_MS) * 35;
+        }
+
+        const phase2Start = ANALYZING_PHASE_1_MS;
+        const phase2End = ANALYZING_PHASE_1_MS + ANALYZING_PHASE_2_MS;
+        if (elapsedMs <= phase2End) {
+            return 35 + ((elapsedMs - phase2Start) / ANALYZING_PHASE_2_MS) * 40;
+        }
+
+        const phase3Duration = ANALYZING_TOTAL_MS - phase2End;
+        return Math.min(100, 75 + ((elapsedMs - phase2End) / phase3Duration) * 25);
+    }
 
     // Mensagens dinâmicas para o processamento premium
     const premiumMessages = [
@@ -2021,6 +2045,8 @@ export default function AppPage() {
                 abortControllerRef.current.abort();
             }
             abortControllerRef.current = new AbortController();
+            const analyzingStartedAt = Date.now();
+            let timelineInterval: ReturnType<typeof setInterval> | null = null;
 
             const apiRequestPromise = fetch(`${getApiUrl()}/api/analyze-lite`, {
                 method: "POST",
@@ -2028,35 +2054,34 @@ export default function AppPage() {
                 signal: abortControllerRef.current.signal
             });
 
-            // 4. Roteiro da Ansiedade (Total ~8000ms)
-            // Tempos variáveis para parecer orgânico
+            const visualTimelinePromise = new Promise<void>((resolve) => {
+                const syncVisualState = () => {
+                    const elapsed = Date.now() - analyzingStartedAt;
+                    const cappedElapsed = Math.min(elapsed, ANALYZING_TOTAL_MS);
+                    const phase = getAnalyzingPhaseByElapsed(cappedElapsed);
 
-            // 0s - 1.5s: Protocolo Inicial (Rápido)
-            setStatusText("INICIANDO PROTOCOLO DE SEGURANÇA VANT...");
-            setProgress(10);
-            await sleep(1500);
+                    if (phase === 1) {
+                        setStatusText("Iniciando análise profunda do perfil...");
+                    } else if (phase === 2) {
+                        setStatusText("Verificando compatibilidade com a vaga...");
+                    } else {
+                        setStatusText("Gerando pontuação final...");
+                    }
 
-            // 1.5s - 3.5s: Parsing (2s - Parece que está lendo o arquivo físico)
-            setStatusText("LENDO ESTRUTURA DO PDF (PARSING)...");
-            setProgress(30);
-            await sleep(2000);
+                    setProgress(getAnalyzingProgressByElapsed(cappedElapsed));
 
-            // 3.5s - 5.0s: Extração (1.5s)
-            setStatusText("EXTRAINDO PALAVRAS-CHAVE DA VAGA...");
-            setProgress(55);
-            await sleep(1500);
+                    if (cappedElapsed >= ANALYZING_TOTAL_MS) {
+                        if (timelineInterval) {
+                            clearInterval(timelineInterval);
+                        }
+                        resolve();
+                    }
+                };
 
-            // 5.0s - 7.0s: Cruzamento (2s - O momento "difícil/mágico")
-            setStatusText("CRUZANDO DADOS: EXPERIÊNCIA vs REQUISITOS...");
-            setProgress(80);
-            await sleep(2000);
+                syncVisualState();
+                timelineInterval = setInterval(syncVisualState, 90);
+            });
 
-            // 7.0s - 8.0s: Score Final (Rápido para fechar)
-            setStatusText("GERANDO SCORE DE ADERÊNCIA...");
-            setProgress(95);
-            await sleep(1000);
-
-            // 5. Verificar resposta da API (Se já acabou, libera. Se não, espera o resto)
             const resp = await apiRequestPromise;
 
             if (!resp.ok) {
@@ -2066,10 +2091,11 @@ export default function AppPage() {
 
             const data = (await resp.json()) as unknown;
 
-            // 6. Transição final
-            setStatusText("RELATÓRIO PRONTO. CARREGANDO...");
+            // Garantir timeline visual fixa de 10s e sincronizada com as fases
+            await visualTimelinePromise;
+
             setProgress(100);
-            await sleep(500); // Pequena pausa para ler a conclusão
+            setStatusText("Gerando pontuação final...");
 
             setPreviewData(data as PreviewData);
             setStage("preview");
@@ -3072,152 +3098,244 @@ export default function AppPage() {
 
             {stage === "analyzing" && (
                 <div className="hero-container">
-                    {/* Estilos locais para animação e cursor */}
-                    <style>{`
-                        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-                        .cursor-block {
-                            display: inline-block;
-                            width: 10px;
-                            height: 18px;
-                            background-color: #38BDF8;
-                            animation: blink 0.8s step-end infinite;
-                            vertical-align: text-bottom;
-                            margin-left: 6px;
-                        }
-                        @keyframes pulse-glow {
-                            0% { text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); opacity: 0.85; transform: scale(1); }
-                            50% { text-shadow: 0 0 25px rgba(56, 189, 248, 0.8), 0 0 5px rgba(255,255,255,0.4); opacity: 1; transform: scale(1.02); }
-                            100% { text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); opacity: 0.85; transform: scale(1); }
-                        }
-                        .logo-pulse {
-                            animation: pulse-glow 2.5s ease-in-out infinite;
-                        }
-                        @keyframes gradient-move {
-                            0% { background-position: 0% 50%; }
-                            50% { background-position: 100% 50%; }
-                            100% { background-position: 0% 50%; }
-                        }
-                        @keyframes fadeIn {
-                            from { opacity: 0; transform: translateY(10px); }
-                            to { opacity: 1; transform: translateY(0); }
-                        }
-                        .edu-card {
-                            animation: fadeIn 0.5s ease-out;
-                        }
-                    `}</style>
+                    {(() => {
+                        const activePhase = progress < 35 ? 1 : progress < 75 ? 2 : 3;
+                        const phaseLabel =
+                            activePhase === 1
+                                ? "Etapa 1 de 3"
+                                : activePhase === 2
+                                    ? "Etapa 2 de 3"
+                                    : "Etapa 3 de 3";
 
-                    <div className="loading-logo logo-pulse">vant.core scanner</div>
+                        return (
+                            <>
+                                <style>{`
+                                    @keyframes fadeInUp {
+                                        from { opacity: 0; transform: translateY(12px); }
+                                        to { opacity: 1; transform: translateY(0); }
+                                    }
+                                    .analyzing-card-enter {
+                                        animation: fadeInUp 0.45s ease-out;
+                                    }
+                                    @keyframes shimmerMove {
+                                        0% { background-position: 0% 50%; }
+                                        100% { background-position: 100% 50%; }
+                                    }
+                                    .analyzing-shell {
+                                        width: 100%;
+                                        max-width: 760px;
+                                        margin: 0 auto;
+                                        padding: 0 20px;
+                                    }
+                                    .analyzing-header {
+                                        text-align: center;
+                                        margin-bottom: 28px;
+                                    }
+                                    .analyzing-phase-grid {
+                                        display: grid;
+                                        grid-template-columns: repeat(3, 1fr);
+                                        gap: 10px;
+                                        margin-top: 14px;
+                                    }
+                                    .analyzing-tip-card {
+                                        margin-top: 40px;
+                                        border-radius: 18px;
+                                        padding: 26px 24px;
+                                    }
+                                    @media (max-width: 768px) {
+                                        .analyzing-shell {
+                                            padding: 0 16px;
+                                        }
+                                        .analyzing-header {
+                                            margin-bottom: 24px;
+                                        }
+                                        .analyzing-phase-grid {
+                                            gap: 8px;
+                                            margin-top: 12px;
+                                        }
+                                        .analyzing-tip-card {
+                                            margin-top: 28px;
+                                            padding: 22px 18px;
+                                            border-radius: 16px;
+                                        }
+                                    }
+                                    @media (max-width: 480px) {
+                                        .analyzing-shell {
+                                            padding: 0 12px;
+                                        }
+                                        .analyzing-header {
+                                            margin-bottom: 20px;
+                                        }
+                                        .analyzing-tip-card {
+                                            margin-top: 22px;
+                                            padding: 18px 14px;
+                                        }
+                                    }
+                                `}</style>
 
-                    <div style={{ width: "100%", margin: "0 auto" }}>
-                        <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden", boxShadow: "0 0 10px rgba(0,0,0,0.3) inset" }}>
-                            <div
-                                style={{
-                                    width: `${Math.max(0, Math.min(100, progress))}%`,
-                                    height: "100%",
-                                    background: "linear-gradient(90deg, #38BDF8, #818CF8, #38BDF8)",
-                                    backgroundSize: "200% 100%",
-                                    animation: "gradient-move 2s linear infinite",
-                                    transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                                    boxShadow: "0 0 15px rgba(56, 189, 248, 0.6)"
-                                }}
-                            />
-                        </div>
-
-                        <div style={{ marginTop: 24, minHeight: "40px" }}>
-                            <div className="terminal-log" style={{ color: "#38BDF8", fontFamily: "monospace", fontSize: "1.1rem", textShadow: "0 0 5px rgba(56, 189, 248, 0.3)" }}>
-                                &gt;&gt; {statusText}<span className="cursor-block"></span>
-                            </div>
-                        </div>
-
-                        {/* Conteúdo Educativo sobre ATS */}
-                        <div className="edu-card" style={{
-                            marginTop: 40,
-                            background: "linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(129, 140, 248, 0.08))",
-                            border: "1px solid rgba(56, 189, 248, 0.2)",
-                            borderRadius: 16,
-                            padding: 24,
-                            backdropFilter: "blur(10px)"
-                        }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                                <div style={{ fontSize: "1.8rem" }}>💡</div>
-                                <div>
-                                    <div style={{ color: "#38BDF8", fontSize: "0.9rem", fontWeight: 700, letterSpacing: "0.5px" }}>
-                                        VOCÊ SABIA?
+                                <div className="analyzing-shell">
+                                    <div className="analyzing-header">
+                                        <div
+                                            style={{
+                                                color: "rgba(167, 180, 222, 0.9)",
+                                                fontSize: "0.82rem",
+                                                fontWeight: 600,
+                                                letterSpacing: "0.08em",
+                                                textTransform: "uppercase",
+                                            }}
+                                        >
+                                            {phaseLabel}
+                                        </div>
+                                        <h2
+                                            style={{
+                                                marginTop: 16,
+                                                marginBottom: 10,
+                                                color: "#F8FAFC",
+                                                fontSize: "clamp(1.5rem, 3.8vw, 2.35rem)",
+                                                fontWeight: 800,
+                                                letterSpacing: "-0.02em",
+                                                lineHeight: 1.2,
+                                            }}
+                                        >
+                                            Analisando seu perfil com IA
+                                        </h2>
+                                        <p
+                                            style={{
+                                                margin: 0,
+                                                color: "#D8E1F3",
+                                                fontSize: "clamp(1rem, 2.3vw, 1.2rem)",
+                                                fontWeight: 700,
+                                                lineHeight: 1.4,
+                                            }}
+                                        >
+                                            {statusText}
+                                        </p>
                                     </div>
-                                    <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 2 }}>
-                                        Enquanto analisamos seu CV...
+
+                                    <div style={{ height: 10, background: "rgba(148, 163, 184, 0.2)", borderRadius: 999, overflow: "hidden" }}>
+                                        <div
+                                            style={{
+                                                width: `${Math.max(0, Math.min(100, progress))}%`,
+                                                height: "100%",
+                                                background: "linear-gradient(90deg, #3B5BDB, #4F46E5, #3B5BDB)",
+                                                backgroundSize: "200% 100%",
+                                                animation: "shimmerMove 1.8s linear infinite",
+                                                transition: "width 0.2s linear",
+                                                boxShadow: "0 0 12px rgba(79, 70, 229, 0.35)",
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="analyzing-phase-grid">
+                                        {[1, 2, 3].map((step) => {
+                                            const isDone = step < activePhase;
+                                            const isActive = step === activePhase;
+                                            return (
+                                                <div
+                                                    key={`analyzing-step-${step}`}
+                                                    style={{
+                                                        height: 6,
+                                                        borderRadius: 999,
+                                                        background: isDone || isActive ? "linear-gradient(90deg, #415CCF, #4F46E5)" : "rgba(148, 163, 184, 0.25)",
+                                                        boxShadow: isActive ? "0 0 10px rgba(79, 70, 229, 0.3)" : "none",
+                                                        transition: "all 0.25s ease",
+                                                    }}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+
+                                    <div
+                                        className="analyzing-card-enter analyzing-tip-card"
+                                        style={{
+                                            background: "linear-gradient(145deg, rgba(20, 31, 63, 0.76), rgba(17, 25, 48, 0.68))",
+                                            border: "1px solid rgba(99, 116, 175, 0.4)",
+                                            backdropFilter: "blur(10px)",
+                                        }}
+                                    >
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                                            <div style={{ fontSize: "1.35rem" }}>💡</div>
+                                            <div>
+                                                <div style={{ color: "#C7D4FF", fontSize: "0.88rem", fontWeight: 700 }}>
+                                                    Você sabia?
+                                                </div>
+                                                <div style={{ color: "#9FB0DC", fontSize: "0.76rem", marginTop: 2 }}>
+                                                    Insights do mercado enquanto avaliamos seu CV
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {activePhase === 1 && (
+                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.65 }}>
+                                                <strong style={{ color: "#F8FAFC" }}>75% dos CVs são rejeitados antes de chegar ao recrutador.</strong>
+                                                <br /><br />
+                                                Sistemas ATS filtram automaticamente currículos com base em palavras-chave, estrutura e legibilidade.
+                                                Um ajuste técnico bem feito aumenta muito a chance de avançar para a entrevista.
+                                            </div>
+                                        )}
+
+                                        {activePhase === 2 && (
+                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.65 }}>
+                                                <strong style={{ color: "#F8FAFC" }}>Checklist de compatibilidade que mais pesa no ATS:</strong>
+                                                <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+                                                    <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                                        <span style={{ color: "#7CA1FF", fontSize: "1rem" }}>•</span>
+                                                        <span><strong>Palavras-chave estratégicas</strong> da vaga distribuídas no CV</span>
+                                                    </div>
+                                                    <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                                        <span style={{ color: "#7CA1FF", fontSize: "1rem" }}>•</span>
+                                                        <span><strong>Resultados com números</strong> para comprovar impacto</span>
+                                                    </div>
+                                                    <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                                                        <span style={{ color: "#7CA1FF", fontSize: "1rem" }}>•</span>
+                                                        <span><strong>Clareza e escaneabilidade</strong> para leitura automática</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {activePhase === 3 && (
+                                            <div style={{ color: "#E6ECFF", fontSize: "0.95rem", lineHeight: 1.6 }}>
+                                                <div
+                                                    style={{
+                                                        background: "rgba(239, 68, 68, 0.1)",
+                                                        border: "1px solid rgba(239, 68, 68, 0.32)",
+                                                        borderRadius: 10,
+                                                        padding: 12,
+                                                        marginBottom: 12,
+                                                    }}
+                                                >
+                                                    <div style={{ color: "#FCA5A5", fontSize: "0.78rem", fontWeight: 700, marginBottom: 6 }}>
+                                                        Antes (Score: 42/100)
+                                                    </div>
+                                                    <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic" }}>
+                                                        "Trabalhei com vendas e atendimento ao cliente"
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        background: "rgba(76, 110, 245, 0.15)",
+                                                        border: "1px solid rgba(129, 140, 248, 0.42)",
+                                                        borderRadius: 10,
+                                                        padding: 12,
+                                                    }}
+                                                >
+                                                    <div style={{ color: "#A5B4FC", fontSize: "0.78rem", fontWeight: 700, marginBottom: 6 }}>
+                                                        Depois (Score: 87/100)
+                                                    </div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
+                                                        "Especialista em <strong>Customer Success</strong> com <strong>+3 anos</strong> gerenciando
+                                                        carteira de <strong>150+ clientes B2B</strong>. Aumentei retenção em <strong>34%</strong>
+                                                        com estratégias de <strong>upsell</strong> e <strong>onboarding estruturado</strong>."
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
-
-                            {progress < 35 && (
-                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                    <strong style={{ color: "#F8FAFC" }}>75% dos CVs são rejeitados antes de chegar no recrutador.</strong>
-                                    <br /><br />
-                                    Sistemas ATS (Applicant Tracking System) filtram automaticamente currículos usando palavras-chave,
-                                    formatação e estrutura. Se seu CV não está otimizado, ele nunca chega aos olhos humanos.
-                                </div>
-                            )}
-
-                            {progress >= 35 && progress < 70 && (
-                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                    <div style={{
-                                        background: "rgba(239, 68, 68, 0.1)",
-                                        border: "1px solid rgba(239, 68, 68, 0.3)",
-                                        borderRadius: 8,
-                                        padding: 12,
-                                        marginBottom: 12
-                                    }}>
-                                        <div style={{ color: "#EF4444", fontSize: "0.8rem", fontWeight: 700, marginBottom: 6 }}>
-                                            ❌ ANTES (Score: 42/100)
-                                        </div>
-                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", fontStyle: "italic" }}>
-                                            "Trabalhei com vendas e atendimento ao cliente"
-                                        </div>
-                                    </div>
-                                    <div style={{
-                                        background: "rgba(16, 185, 129, 0.1)",
-                                        border: "1px solid rgba(16, 185, 129, 0.3)",
-                                        borderRadius: 8,
-                                        padding: 12
-                                    }}>
-                                        <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 700, marginBottom: 6 }}>
-                                            ✅ DEPOIS (Score: 87/100)
-                                        </div>
-                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
-                                            "Especialista em <strong>Customer Success</strong> com <strong>+3 anos</strong> gerenciando
-                                            carteira de <strong>150+ clientes B2B</strong>. Aumentei retenção em <strong>34%</strong>
-                                            através de estratégias de <strong>upsell</strong> e <strong>onboarding estruturado</strong>."
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {progress >= 70 && (
-                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                    <strong style={{ color: "#F8FAFC" }}>O que o ATS procura:</strong>
-                                    <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
-                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                            <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
-                                            <span><strong>Palavras-chave</strong> da descrição da vaga</span>
-                                        </div>
-                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                            <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
-                                            <span><strong>Números e resultados</strong> quantificáveis</span>
-                                        </div>
-                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                            <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
-                                            <span><strong>Formatação limpa</strong> sem tabelas ou colunas</span>
-                                        </div>
-                                        <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                            <span style={{ color: "#10B981", fontSize: "1.2rem" }}>✓</span>
-                                            <span><strong>Verbos de ação</strong> e linguagem técnica</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                            </>
+                        );
+                    })()}
                 </div>
             )}
 
