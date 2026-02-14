@@ -3939,6 +3939,30 @@ export default function AppPage() {
                                                     </div>
                                                 )}
 
+                                                {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
+                                                    <div style={{
+                                                        background: "rgba(16, 185, 129, 0.08)",
+                                                        border: "1px solid rgba(16, 185, 129, 0.22)",
+                                                        borderLeft: "2px solid #10B981",
+                                                        borderRadius: 8,
+                                                        padding: "12px 12px 12px 16px",
+                                                        marginBottom: 10,
+                                                        display: "flex",
+                                                        alignItems: "start",
+                                                        gap: 10
+                                                    }}>
+                                                        <CheckCircle2Icon color="#34D399" />
+                                                        <div>
+                                                            <div style={{ color: "#6EE7B7", fontSize: "0.75rem", fontWeight: 700, marginBottom: 4 }}>
+                                                                COMO INTEGRAR NA EXPERIÊNCIA (EXEMPLO IA)
+                                                            </div>
+                                                            <div style={{ color: "#F1F5F9", fontSize: "0.84rem", lineHeight: 1.55, fontStyle: "italic" }}>
+                                                                "Na minha experiência recente, conduzi iniciativas de <strong>{data.gap_2.termos_faltando[0] || "análise de dados"}</strong> para melhorar a tomada de decisão e implementei práticas de <strong>{data.gap_2.termos_faltando[1] || "gestão de indicadores"}</strong>, resultando em ganho de eficiência operacional e melhor alinhamento com metas estratégicas."
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 <div style={{
                                                     marginTop: 12,
                                                     padding: 16,
