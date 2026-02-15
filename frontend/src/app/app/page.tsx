@@ -506,51 +506,11 @@ export default function AppPage() {
         "Preparando entrega dos resultados..."
     ];
 
-    // Simular progressão gradual enquanto aguarda resposta do backend
+    // Mensagem de loading simples - sem barra de progresso inconsistente
     useEffect(() => {
         if (stage !== "processing_premium") return;
-
-        const progressInterval = setInterval(() => {
-            setProgress(prev => {
-                // Se já atingiu 35%, manter estável até backend responder
-                if (prev >= 35 && prev < 90) {
-                    // Pequenas variações para mostrar atividade
-                    return prev + (Math.random() > 0.7 ? 0.5 : 0);
-                }
-                // Se ainda não chegou em 35%, progredir gradualmente
-                if (prev < 35) {
-                    return Math.min(35, prev + 2);
-                }
-                return prev;
-            });
-
-            // Atualizar tempo estimado baseado no progresso
-            setEstimatedTimeRemaining(prev => {
-                const elapsed = (Date.now() - processingStartTime) / 1000; // segundos
-                const avgRate = progress / Math.max(elapsed, 1); // % por segundo
-                const remaining = (100 - progress) / Math.max(avgRate, 0.5); // segundos restantes
-
-                // Não deixar ficar abaixo de 15 segundos até backend responder
-                if (progress < 90) {
-                    return Math.max(15, Math.min(120, Math.ceil(remaining)));
-                }
-                return Math.max(5, Math.ceil(remaining));
-            });
-        }, 800); // Atualizar a cada 800ms
-
-        return () => clearInterval(progressInterval);
-    }, [stage, progress, processingStartTime]);
-
-    // Atualizar mensagens conforme o progresso
-    useEffect(() => {
-        if (stage === "processing_premium") {
-            const messageIndex = Math.min(
-                Math.floor((progress / 100) * premiumMessages.length),
-                premiumMessages.length - 1
-            );
-            setStatusText(premiumMessages[messageIndex]);
-        }
-    }, [progress, stage]);
+        setStatusText("Iniciando análise...");
+    }, [stage]);
 
     const uploaderInputRef = useRef<HTMLInputElement | null>(null);
     const competitorUploaderInputRef = useRef<HTMLInputElement | null>(null);
@@ -3764,156 +3724,87 @@ export default function AppPage() {
                     )}
 
                     {!premiumError && (
-                        <div className="hero-container">
-                            {/* Estilos locais para animação e cursor */}
+                        <div className="hero-container" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <style>{`
-                        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-                        .cursor-block {
-                            display: inline-block;
-                            width: 10px;
-                            height: 18px;
-                            background-color: #10B981;
-                            animation: blink 0.8s step-end infinite;
-                            vertical-align: text-bottom;
-                            margin-left: 6px;
-                        }
-                        @keyframes pulse-glow {
-                            0% { text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); opacity: 0.85; transform: scale(1); }
-                            50% { text-shadow: 0 0 25px rgba(16, 185, 129, 0.8), 0 0 5px rgba(255,255,255,0.4); opacity: 1; transform: scale(1.02); }
-                            100% { text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); opacity: 0.85; transform: scale(1); }
-                        }
-                        .logo-pulse {
-                            animation: pulse-glow 2.5s ease-in-out infinite;
-                        }
-                        @keyframes gradient-move {
-                            0% { background-position: 0% 50%; }
-                            50% { background-position: 100% 50%; }
-                            100% { background-position: 0% 50%; }
-                        }
-                    `}</style>
+                                @keyframes pulse-glow {
+                                    0% { text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); opacity: 0.85; transform: scale(1); }
+                                    50% { text-shadow: 0 0 25px rgba(16, 185, 129, 0.8), 0 0 5px rgba(255,255,255,0.4); opacity: 1; transform: scale(1.02); }
+                                    100% { text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); opacity: 0.85; transform: scale(1); }
+                                }
+                                @keyframes spin-smooth {
+                                    from { transform: rotate(0deg); }
+                                    to { transform: rotate(360deg); }
+                                }
+                                @keyframes dots {
+                                    0%, 20% { content: '.'; }
+                                    40% { content: '..'; }
+                                    60%, 100% { content: '...'; }
+                                }
+                            `}</style>
 
-                            <div className="loading-logo logo-pulse">vant.core premium</div>
-
-                            <div style={{ width: "100%", margin: "0 auto" }}>
-                                <div style={{ height: 10, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden", boxShadow: "0 0 10px rgba(0,0,0,0.3) inset" }}>
-                                    <div
-                                        className="progress-bar-glow"
-                                        style={{
-                                            width: `${Math.max(0, Math.min(100, progress))}%`,
-                                            height: "100%",
-                                            background: "linear-gradient(90deg, #10B981, #34D399, #10B981)",
-                                            backgroundSize: "200% 100%",
-                                            animation: "gradient-move 2s linear infinite, progress-pulse 2s ease-in-out infinite",
-                                            transition: "width 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-                                            boxShadow: "0 0 15px rgba(16, 185, 129, 0.6)"
-                                        }}
-                                    /></div>
-
-                                <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
-                                        {progress < 20 ? "Iniciando análise..." :
-                                            progress < 40 ? "Analisando estrutura..." :
-                                                progress < 60 ? "Otimizando conteúdo..." :
-                                                    progress < 80 ? "Gerando relatórios..." :
-                                                        progress < 95 ? "Finalizando dossiê..." : "Concluindo processo"}
-                                    </div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                        <div style={{ color: "#64748B", fontSize: "0.75rem" }}>
-                                            ~{Math.ceil(estimatedTimeRemaining / 60)}:{String(estimatedTimeRemaining % 60).padStart(2, '0')}
-                                        </div>
-                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 600 }}>
-                                            {Math.round(progress)}%
-                                        </div>
-                                    </div>
+                            <div style={{ textAlign: "center", maxWidth: 600 }}>
+                                {/* Logo com pulse */}
+                                <div style={{
+                                    fontSize: "2rem",
+                                    fontWeight: 900,
+                                    letterSpacing: "3px",
+                                    color: "#10B981",
+                                    marginBottom: 40,
+                                    animation: "pulse-glow 2.5s ease-in-out infinite"
+                                }}>
+                                    vant.core premium
                                 </div>
 
+                                {/* Spinner animado */}
                                 <div style={{
-                                    background: "rgba(15, 23, 42, 0.68)",
+                                    width: 60,
+                                    height: 60,
+                                    margin: "0 auto 32px",
+                                    border: "4px solid rgba(16, 185, 129, 0.1)",
+                                    borderTop: "4px solid #10B981",
+                                    borderRadius: "50%",
+                                    animation: "spin-smooth 1s linear infinite"
+                                }} />
+
+                                {/* Mensagem principal */}
+                                <div style={{
+                                    color: "#E2E8F0",
+                                    fontSize: "1.1rem",
+                                    fontWeight: 600,
+                                    marginBottom: 16
+                                }}>
+                                    Iniciando análise
+                                    <span style={{ display: "inline-block", width: 24, textAlign: "left" }}>
+                                        <span style={{ animation: "dots 1.5s steps(3, end) infinite" }}>...</span>
+                                    </span>
+                                </div>
+
+                                {/* Descrição */}
+                                <div style={{
+                                    color: "#94A3B8",
+                                    fontSize: "0.9rem",
+                                    lineHeight: 1.6,
+                                    maxWidth: 480,
+                                    margin: "0 auto"
+                                }}>
+                                    Nossa IA está analisando seu CV. Os resultados começarão a aparecer em instantes.
+                                </div>
+
+                                {/* Info adicional */}
+                                <div style={{
+                                    marginTop: 40,
+                                    padding: 20,
+                                    background: "rgba(15, 23, 42, 0.5)",
                                     border: "1px solid rgba(255, 255, 255, 0.1)",
-                                    borderRadius: 16,
-                                    padding: 24,
+                                    borderRadius: 12,
                                     backdropFilter: "blur(10px)"
                                 }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-                                        <CheckCircle2Icon color="#9CA3AF" size={18} />
-                                        <div>
-                                            <div style={{ color: "#E2E8F0", fontSize: "0.9rem", fontWeight: 600, letterSpacing: "0.4px" }}>
-                                                DOSSIÊ PROFISSIONAL EM CONSTRUÇÃO
-                                            </div>
-                                            <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 2 }}>
-                                                Nossa IA está trabalhando para você...
-                                            </div>
-                                        </div>
+                                    <div style={{ color: "#64748B", fontSize: "0.85rem", marginBottom: 12 }}>
+                                        💡 <strong style={{ color: "#94A3B8" }}>Dica:</strong> A análise é progressiva
                                     </div>
-
-                                    {progress < 35 && (
-                                        <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                            <strong style={{ color: "#F8FAFC" }}>Analisando todos os critérios ATS avançados.</strong>
-                                            <br /><br />
-                                            Verificamos alinhamento semântico, estrutura de impacto, palavras-chave da vaga,
-                                            e comparando com padrões de profissionais que foram contratados.
-                                        </div>
-                                    )}
-
-                                    {progress >= 35 && progress < 70 && (
-                                        <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                            <div style={{
-                                                background: "rgba(15, 23, 42, 0.72)",
-                                                border: "1px solid rgba(16, 185, 129, 0.35)",
-                                                borderLeft: "2px solid #10B981",
-                                                borderRadius: 8,
-                                                padding: 12,
-                                                marginBottom: 12
-                                            }}>
-                                                <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
-                                                    <CheckCircle2Icon color="#10B981" />
-                                                    ANÁLISE ESTRUTURAL CONCLUÍDA
-                                                </div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
-                                                    Identificamos os pontos exatos que impedem seu CV de passar nos filtros automáticos.
-                                                </div>
-                                            </div>
-                                            <div style={{
-                                                background: "rgba(15, 23, 42, 0.72)",
-                                                border: "1px solid rgba(56, 189, 248, 0.3)",
-                                                borderLeft: "2px solid #38BDF8",
-                                                borderRadius: 8,
-                                                padding: 12,
-                                                marginBottom: 12
-                                            }}>
-                                                <div style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600, marginBottom: 6 }}>
-                                                    REESCREVENDO CONTEÚDO
-                                                </div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.85rem" }}>
-                                                    Aplicando otimizações semânticas e reestruturando experiências com métricas de impacto.
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {progress >= 70 && (
-                                        <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6 }}>
-                                            <strong style={{ color: "#F8FAFC" }}>Seu dossiê profissional está quase pronto!</strong>
-                                            <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
-                                                <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                    <CheckCircle2Icon color="#9CA3AF" />
-                                                    <span>CV reestruturado com <strong>palavras-chave da vaga</strong></span>
-                                                </div>
-                                                <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                    <CheckCircle2Icon color="#9CA3AF" />
-                                                    <span><strong>Headline LinkedIn</strong> otimizada para recrutadores</span>
-                                                </div>
-                                                <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                    <CheckCircle2Icon color="#9CA3AF" />
-                                                    <span><strong>Biblioteca técnica</strong> personalizada para seu cargo</span>
-                                                </div>
-                                                <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
-                                                    <CheckCircle2Icon color="#9CA3AF" />
-                                                    <span><strong>Projeto prático</strong> para diferencial em entrevistas</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div style={{ color: "#64748B", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                                        Você verá primeiro o diagnóstico e depois os demais resultados aparecerão gradualmente.
+                                    </div>
                                 </div>
                             </div>
                         </div>
