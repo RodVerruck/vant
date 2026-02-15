@@ -7,6 +7,7 @@ interface DashboardLayoutProps {
     authEmail: string;
     creditsRemaining: number;
     isPremium: boolean;
+    hasPlan: boolean;
     isSyncingCredits?: boolean;
     onLogout: () => void;
     onUpgrade: () => void;
@@ -17,6 +18,7 @@ export function DashboardLayout({
     authEmail,
     creditsRemaining,
     isPremium,
+    hasPlan,
     isSyncingCredits = false,
     onLogout,
     onUpgrade,
@@ -74,10 +76,15 @@ export function DashboardLayout({
                             )}
                         </div>
 
-                        {/* Upgrade CTA for free users */}
+                        {/* Upgrade CTA - contextual based on user status */}
                         {!isPremium && (
                             <button className={styles.upgradeButton} onClick={onUpgrade}>
                                 Seja PRO
+                            </button>
+                        )}
+                        {isPremium && hasPlan && creditsRemaining === 0 && (
+                            <button className={styles.upgradeButton} onClick={onUpgrade}>
+                                Comprar Créditos
                             </button>
                         )}
 

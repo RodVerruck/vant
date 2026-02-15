@@ -35,6 +35,7 @@ export function DashboardClient() {
     // User status
     const [creditsRemaining, setCreditsRemaining] = useState(0);
     const [isPremium, setIsPremium] = useState(false);
+    const [hasPlan, setHasPlan] = useState(false);
     const [isSyncingCredits, setIsSyncingCredits] = useState(false);
 
     // Modal state
@@ -67,13 +68,14 @@ export function DashboardClient() {
             if (resp.ok) {
                 const data: UserStatus = await resp.json();
                 const credits = data.credits_remaining || 0;
-                const hasPlan = !!data.plan; // Verifica se tem plano ativo (trial, pro, etc)
+                const hasActivePlan = !!data.plan; // Verifica se tem plano ativo (trial, pro, etc)
 
                 setCreditsRemaining(credits);
-                setIsPremium(hasPlan || credits > 0); // Pro se tem plano OU créditos
+                setHasPlan(hasActivePlan);
+                setIsPremium(hasActivePlan || credits > 0); // Pro se tem plano OU créditos
                 localStorage.setItem("vant_cached_credits", String(credits));
 
-                console.log("[Dashboard] Status atualizado:", { credits, hasPlan, plan: data.plan, isPremium: hasPlan || credits > 0 });
+                console.log("[Dashboard] Status atualizado:", { credits, hasPlan: hasActivePlan, plan: data.plan, isPremium: hasActivePlan || credits > 0 });
 
                 return credits;
             }
@@ -301,8 +303,16 @@ export function DashboardClient() {
 
     // Navigate to /app for pricing/upgrade
     const handleUpgrade = () => {
-        // Save return intent so /app can show pricing
-        localStorage.setItem("vant_auth_return_stage", "pricing");
+        // Se usuário tem plano mas sem créditos, ir direto ao checkout de crédito avulso
+        if (hasPlan && creditsRemaining === 0) {
+            localStorage.setItem("vant_auth_return_stage", "checkout");
+            localStorage.setItem("vant_auth_return_plan", "credit_1");
+            console.log("[Dashboard] Usuário Pro sem créditos, indo direto ao checkout de crédito avulso");
+        } else {
+            // Usuário Free: mostrar todas as opções de planos
+            localStorage.setItem("vant_auth_return_stage", "pricing");
+            console.log("[Dashboard] Usuário Free, mostrando opções de planos");
+        }
         router.push("/app");
     };
 
@@ -370,6 +380,7 @@ export function DashboardClient() {
                 authEmail={authEmail}
                 creditsRemaining={creditsRemaining}
                 isPremium={isPremium}
+                hasPlan={hasPlan}
                 isSyncingCredits={isSyncingCredits}
                 onLogout={handleLogout}
                 onUpgrade={handleUpgrade}
