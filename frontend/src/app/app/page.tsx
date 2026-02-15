@@ -9,6 +9,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { HistoryStage } from "@/components/HistoryStage";
 import { PricingSimplified } from "@/components/PricingSimplified";
 import { NeonOffer } from "@/components/NeonOffer";
+import { NewOptimizationModal } from "@/components/NewOptimizationModal";
 import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
 
 type JsonObject = Record<string, unknown>;
@@ -428,6 +429,7 @@ export default function AppPage() {
     const [isAuthenticating, setIsAuthenticating] = useState(false);  // ← NOVO
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showSmartRedirectCreditsModal, setShowSmartRedirectCreditsModal] = useState(false);
+    const [showNewOptimizationModal, setShowNewOptimizationModal] = useState(false);
     const [timeRemaining, setTimeRemaining] = useState({ hours: 23, minutes: 45, seconds: 12 });
     const [emailSent, setEmailSent] = useState(false);
     const [resendCountdown, setResendCountdown] = useState(0);
@@ -3504,7 +3506,7 @@ export default function AppPage() {
                     reportData={reportData}
                     authUserId={authUserId}
                     creditsRemaining={creditsRemaining}
-                    onNewOptimization={() => setStage("hero")}
+                    onNewOptimization={() => setShowNewOptimizationModal(true)}
                     onUpdateReport={(updated) => setReportData(updated)}
                     onViewHistory={() => setStage("history")}
                 />
@@ -5255,6 +5257,14 @@ export default function AppPage() {
                     </div>
                 </div>
             )}
+
+            <NewOptimizationModal
+                isOpen={showNewOptimizationModal}
+                onClose={() => setShowNewOptimizationModal(false)}
+                creditsRemaining={creditsRemaining}
+                authUserId={authUserId}
+                lastCV={null}
+            />
         </main >
     );
 }
