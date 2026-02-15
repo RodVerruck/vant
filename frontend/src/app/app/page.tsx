@@ -3908,12 +3908,27 @@ export default function AppPage() {
                                     {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
                                     {data.gap_1 && data.gap_2 && (
                                         <div style={{ marginTop: 24, marginBottom: 32 }}>
-                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "rgba(255, 255, 255, 0.06)", borderRadius: 12, border: "1px solid rgba(56, 189, 248, 0.25)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 25px -6px rgba(56, 189, 248, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
-                                                <div style={{ color: "#38BDF8", fontSize: "1.1rem", fontWeight: 600, marginBottom: 4, letterSpacing: "1px" }}>
-                                                    PRÉVIA GRATUITA
+                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(239, 68, 68, 0.08) 100%)", borderRadius: 12, border: "1px solid rgba(56, 189, 248, 0.3)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), 0 0 30px -6px rgba(56, 189, 248, 0.25), 0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
+                                                <div style={{ color: "#38BDF8", fontSize: "1.1rem", fontWeight: 700, marginBottom: 8, letterSpacing: "0.5px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                                                    <span style={{ fontSize: "1.2rem" }}>🔍</span>
+                                                    ANÁLISE BÁSICA COMPLETA
                                                 </div>
-                                                <div style={{ color: "#CBD5E1", fontSize: "0.9rem" }}>
-                                                    Nossa IA analisou seu CV e identificou <strong style={{ color: "#FCA5A5" }}>2 problemas críticos</strong>
+                                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: 12 }}>
+                                                    Nossa IA identificou <strong style={{ color: "#FCA5A5" }}>problemas críticos</strong> que estão impedindo seu CV de passar nos filtros ATS
+                                                </div>
+                                                <div style={{
+                                                    background: "rgba(239, 68, 68, 0.12)",
+                                                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                    borderRadius: 8,
+                                                    padding: "12px 16px",
+                                                    marginTop: 12
+                                                }}>
+                                                    <div style={{ color: "#F87171", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                                                        <span>⚠️</span> Você está vendo apenas uma amostra
+                                                    </div>
+                                                    <div style={{ color: "#CBD5E1", fontSize: "0.82rem", lineHeight: 1.5 }}>
+                                                        Abaixo mostramos <strong>2 exemplos</strong> do que nossa IA detectou. O diagnóstico completo + solução está na versão Premium.
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -4180,18 +4195,23 @@ export default function AppPage() {
                                                 )}
 
                                                 <div style={{
-                                                    marginTop: 12,
-                                                    padding: 16,
-                                                    background: "rgba(255, 255, 255, 0.06)",
-                                                    borderRadius: 10,
-                                                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                    borderLeft: "2px solid #10B981",
+                                                    marginTop: 16,
+                                                    padding: 20,
+                                                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(56, 189, 248, 0.1) 100%)",
+                                                    borderRadius: 12,
+                                                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                                                    borderLeft: "4px solid #10B981",
                                                     backdropFilter: "blur(20px)",
                                                     WebkitBackdropFilter: "blur(20px)",
-                                                    boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 30px -6px rgba(16, 185, 129, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                                                    boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), 0 0 35px -6px rgba(16, 185, 129, 0.25), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                                 }}>
-                                                    <div style={{ color: "#4ADE80", fontSize: "1rem", fontWeight: 600, marginBottom: 16, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
-                                                        NA VERSÃO PREMIUM VOCÊ RECEBE:
+                                                    <div style={{ textAlign: "center", marginBottom: 16 }}>
+                                                        <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4, letterSpacing: "0.5px" }}>
+                                                            🔒 DESBLOQUEIE O DIAGNÓSTICO COMPLETO
+                                                        </div>
+                                                        <div style={{ color: "#E2E8F0", fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.4 }}>
+                                                            Na versão Premium você recebe:
+                                                        </div>
                                                     </div>
                                                     <div className="premium-benefits-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
                                                         <style dangerouslySetInnerHTML={{
@@ -4225,28 +4245,28 @@ export default function AppPage() {
                                                         ` }} />
                                                         {[
                                                             {
-                                                                label: <><strong>CV reescrito</strong> com palavras-chave integradas</>,
-                                                                tooltip: "Reescrevemos seu CV com termos da vaga distribuídos em experiências, competências e resumo para aumentar aderência ATS.",
+                                                                label: <>✅ <strong>Todos os problemas críticos</strong> detalhados</>,
+                                                                tooltip: "Você viu apenas 2 exemplos. No Premium, recebe diagnóstico completo de TODOS os gaps que estão bloqueando seu CV nos filtros ATS.",
                                                             },
                                                             {
-                                                                label: <>Análise de <strong>todos os critérios ATS</strong></>,
-                                                                tooltip: "Avaliação completa de palavras-chave, estrutura, legibilidade, impacto e lacunas que bloqueiam seu avanço.",
+                                                                label: <>✅ <strong>CV reescrito palavra por palavra</strong> com keywords estratégicas</>,
+                                                                tooltip: "Reescrevemos seu CV inteiro com termos da vaga distribuídos naturalmente em experiências, competências e resumo para maximizar aderência ATS.",
                                                             },
                                                             {
-                                                                label: <><strong>Headline LinkedIn</strong> para recrutadores</>,
-                                                                tooltip: "Você recebe uma headline estratégica para aumentar buscas no LinkedIn e atrair recrutadores certos.",
+                                                                label: <>✅ <strong>Verificação ATS completa</strong> (você viu apenas 3 critérios)</>,
+                                                                tooltip: "Avaliação completa de 15+ critérios: palavras-chave, estrutura, legibilidade, impacto, formatação, seções obrigatórias e lacunas críticas.",
                                                             },
                                                             {
-                                                                label: <><strong>Biblioteca técnica</strong> para seu cargo</>,
-                                                                tooltip: "Lista guiada de livros recomendados para a vaga que você está buscando.",
+                                                                label: <>✅ <strong>LinkedIn Headline</strong> otimizado para recrutadores</>,
+                                                                tooltip: "Headline estratégica para aumentar suas buscas no LinkedIn e atrair recrutadores da sua área.",
                                                             },
                                                             {
-                                                                label: <><strong>Projeto prático</strong> para entrevistas</>,
-                                                                tooltip: "Sugestão de projeto aplicado ao seu perfil para gerar portfólio e respostas mais fortes em entrevistas.",
+                                                                label: <>✅ <strong>Simulador de entrevista</strong> com IA</>,
+                                                                tooltip: "Treine perguntas técnicas e comportamentais com feedback instantâneo para melhorar clareza e confiança nas respostas.",
                                                             },
                                                             {
-                                                                label: <><strong>Simulador de Entrevista</strong> com IA</>,
-                                                                tooltip: "Treine perguntas técnicas e comportamentais com feedback instantâneo para melhorar clareza e confiança.",
+                                                                label: <>✅ <strong>Biblioteca recomendada</strong> pensada exclusivamente para sua carreira</>,
+                                                                tooltip: "Lista curada de livros, cursos e recursos específicos para a vaga que você está buscando e lacunas identificadas no seu perfil.",
                                                             },
                                                         ].map((item, i) => (
                                                             <div key={i} className="premium-benefit-item" style={{
