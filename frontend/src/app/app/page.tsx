@@ -430,6 +430,14 @@ export default function AppPage() {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showSmartRedirectCreditsModal, setShowSmartRedirectCreditsModal] = useState(false);
     const [showNewOptimizationModal, setShowNewOptimizationModal] = useState(false);
+    const [lastCVData, setLastCVData] = useState<{
+        has_last_cv: boolean;
+        filename?: string;
+        time_ago?: string;
+        is_recent?: boolean;
+        analysis_id?: string;
+        job_description?: string;
+    } | null>(null);
     const [timeRemaining, setTimeRemaining] = useState({ hours: 23, minutes: 45, seconds: 12 });
     const [emailSent, setEmailSent] = useState(false);
     const [resendCountdown, setResendCountdown] = useState(0);
@@ -3506,7 +3514,21 @@ export default function AppPage() {
                     reportData={reportData}
                     authUserId={authUserId}
                     creditsRemaining={creditsRemaining}
-                    onNewOptimization={() => setShowNewOptimizationModal(true)}
+                    onNewOptimization={async () => {
+                        // Buscar último CV antes de abrir o modal
+                        if (authUserId) {
+                            try {
+                                const resp = await fetch(`${getApiUrl()}/api/user/last-cv?user_id=${authUserId}`);
+                                if (resp.ok) {
+                                    const data = await resp.json();
+                                    setLastCVData(data);
+                                }
+                            } catch (error) {
+                                console.error("[LastCV] Erro ao buscar último CV:", error);
+                            }
+                        }
+                        setShowNewOptimizationModal(true);
+                    }}
                     onUpdateReport={(updated) => setReportData(updated)}
                     onViewHistory={() => setStage("history")}
                 />
@@ -5263,7 +5285,7 @@ export default function AppPage() {
                 onClose={() => setShowNewOptimizationModal(false)}
                 creditsRemaining={creditsRemaining}
                 authUserId={authUserId}
-                lastCV={null}
+                lastCV={lastCVData}
             />
         </main >
     );

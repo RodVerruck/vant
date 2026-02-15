@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import styles from "./NewOptimizationModal.module.css";
 
 function getApiUrl(): string {
@@ -60,6 +60,7 @@ export function NewOptimizationModal({
     lastCV,
 }: NewOptimizationModalProps) {
     const router = useRouter();
+    const pathname = usePathname();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form state
@@ -264,7 +265,12 @@ export function NewOptimizationModal({
             localStorage.setItem("vant_skip_preview", "true");
             localStorage.setItem("vant_auth_return_stage", returnStage);
 
-            router.push("/app");
+            // Se já estiver em /app, recarregar página; senão, navegar
+            if (pathname === "/app") {
+                window.location.href = "/app";
+            } else {
+                router.push("/app");
+            }
             return;
         }
 
@@ -280,8 +286,12 @@ export function NewOptimizationModal({
             localStorage.setItem("vant_skip_preview", "true"); // NEW: skip preview
             localStorage.setItem("vant_auth_return_stage", returnStage);
 
-            // 5. Navigate
-            router.push("/app");
+            // 5. Navigate - Se já estiver em /app, recarregar página; senão, navegar
+            if (pathname === "/app") {
+                window.location.href = "/app";
+            } else {
+                router.push("/app");
+            }
         };
         reader.readAsDataURL(file);
     };
