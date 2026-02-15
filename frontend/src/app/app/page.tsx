@@ -2723,6 +2723,23 @@ export default function AppPage() {
         const isHigh = creditsRemaining >= 20;
         const isLoading = creditsLoading;
 
+        // Verificar se usuário tem plano ativo
+        const hasPlan = !!localStorage.getItem('vant_cached_plan');
+
+        // Função contextual para comprar créditos
+        const handleBuyCredits = () => {
+            if (hasPlan && creditsRemaining === 0) {
+                // Usuário Pro sem créditos: ir direto ao checkout de crédito avulso
+                console.log("[FloatingCredits] Usuário Pro sem créditos, indo direto ao checkout de crédito avulso");
+                setSelectedPlan("credit_1");
+                setStage("checkout");
+            } else {
+                // Usuário Free ou Pro com créditos: mostrar pricing completo
+                console.log("[FloatingCredits] Mostrando pricing completo");
+                setStage("pricing");
+            }
+        };
+
         return (
             <div style={{
                 position: 'fixed',
@@ -2835,7 +2852,7 @@ export default function AppPage() {
                                     Ver planos
                                 </button>
                                 <button
-                                    onClick={() => setStage("pricing")}
+                                    onClick={handleBuyCredits}
                                     style={{
                                         background: 'rgba(59, 130, 246, 0.2)',
                                         border: '1px solid #3B82F6',
@@ -2863,7 +2880,7 @@ export default function AppPage() {
                             </>
                         ) : (
                             <button
-                                onClick={() => setStage("pricing")}
+                                onClick={handleBuyCredits}
                                 style={{
                                     background: 'rgba(59, 130, 246, 0.2)',
                                     border: '1px solid #3B82F6',
@@ -2884,7 +2901,7 @@ export default function AppPage() {
                                     e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
                                     e.currentTarget.style.transform = 'scale(1)';
                                 }}
-                                title="Comprar créditos"
+                                title={hasPlan && creditsRemaining === 0 ? "Comprar crédito avulso" : "Comprar créditos"}
                             >
                                 + Comprar
                             </button>
