@@ -42,6 +42,18 @@ function LockIcon({ color = "#9CA3AF", size = 16 }: { color?: string; size?: num
     );
 }
 
+function FileTextIcon({ color = "#9CA3AF", size = 16 }: { color?: string; size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <path d="M14 2v6h6" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <line x1="10" y1="9" x2="8" y2="9" />
+        </svg>
+    );
+}
+
 // IndexedDB helpers for file storage (localStorage has 5MB limit, IndexedDB doesn't)
 const IDB_NAME = "vant_files";
 const IDB_STORE = "files";
@@ -3910,23 +3922,25 @@ export default function AppPage() {
                                         <div style={{ marginTop: 24, marginBottom: 32 }}>
                                             <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(239, 68, 68, 0.08) 100%)", borderRadius: 12, border: "1px solid rgba(56, 189, 248, 0.3)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), 0 0 30px -6px rgba(56, 189, 248, 0.25), 0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
                                                 <div style={{ color: "#38BDF8", fontSize: "1.1rem", fontWeight: 700, marginBottom: 8, letterSpacing: "0.5px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                                                    <span style={{ fontSize: "1.2rem" }}>🔍</span>
+                                                    <FileTextIcon color="#38BDF8" size={18} />
                                                     ANÁLISE BÁSICA COMPLETA
                                                 </div>
                                                 <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: 12 }}>
                                                     Nossa IA identificou <strong style={{ color: "#FCA5A5" }}>problemas críticos</strong> que estão impedindo seu CV de passar nos filtros ATS
                                                 </div>
                                                 <div style={{
-                                                    background: "rgba(239, 68, 68, 0.12)",
-                                                    border: "1px solid rgba(239, 68, 68, 0.3)",
-                                                    borderRadius: 8,
-                                                    padding: "12px 16px",
-                                                    marginTop: 12
+                                                    background: "rgba(251, 191, 36, 0.14)",
+                                                    border: "1px solid rgba(251, 191, 36, 0.35)",
+                                                    borderRadius: 10,
+                                                    padding: "14px 18px",
+                                                    marginTop: 14,
+                                                    textAlign: "center"
                                                 }}>
-                                                    <div style={{ color: "#F87171", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                                                        <span>⚠️</span> Você está vendo apenas uma amostra
+                                                    <div style={{ color: "#FBBF24", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                                                        <span style={{ width: 18, height: 18, borderRadius: 999, border: "1px solid rgba(251, 191, 36, 0.7)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem" }}>i</span>
+                                                        Visão parcial do diagnóstico
                                                     </div>
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.82rem", lineHeight: 1.5 }}>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.84rem", lineHeight: 1.55 }}>
                                                         Abaixo mostramos <strong>2 exemplos</strong> do que nossa IA detectou. O diagnóstico completo + solução está na versão Premium.
                                                     </div>
                                                 </div>
