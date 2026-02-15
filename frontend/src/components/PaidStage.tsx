@@ -217,8 +217,7 @@ const globalStyles = `
 
   /* Scrollbar Customizada */
   .vant-scroll-area {
-    max-height: 500px;
-    overflow-y: auto;
+    overflow-y: visible;
     padding-right: 0.5rem;
   }
   .vant-scroll-area::-webkit-scrollbar { width: 6px; }
