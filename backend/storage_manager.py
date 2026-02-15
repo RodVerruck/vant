@@ -63,7 +63,7 @@ class StorageManager:
                 .from_(self.bucket_name) \
                 .upload(cv_path, cv_file.getvalue(), {
                     "content-type": "application/pdf",
-                    "upsert": True
+                    "upsert": "true"
                 })
             
             # Upload da job description
@@ -75,7 +75,7 @@ class StorageManager:
                 .from_(self.bucket_name) \
                 .upload(job_path, job_file.getvalue(), {
                     "content-type": "text/plain",
-                    "upsert": True
+                    "upsert": "true"
                 })
             
             # Salvar metadados no banco para fácil recuperação

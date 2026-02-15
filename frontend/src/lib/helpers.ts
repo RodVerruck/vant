@@ -44,10 +44,17 @@ export function calculateProjectedScore(
     // Converte déficit em potencial recuperável (conservador)
     const recoverableFromPillars = weightedDeficit * 0.24;
     const gapInfluence = (fatalGaps * 1.8) + (mediumGaps * 0.9);
-    const rawImprovement = recoverableFromPillars + gapInfluence;
+
+    // Reforço leve para scores muito baixos (determinístico, sem inflar demais)
+    const lowScoreLift = current < 40
+        ? clamp(Math.round((weightedDeficit * 0.18) + (gapInfluence * 0.75)), 4, 14)
+        : 0;
+
+    const rawImprovement = recoverableFromPillars + gapInfluence + lowScoreLift;
 
     // Limite de ganho por faixa (evita saltos irreais em scores já altos)
     let bandGainCap = 24;
+    if (current < 35) bandGainCap = 28;
     if (current >= 85) bandGainCap = 7;
     else if (current >= 75) bandGainCap = 10;
     else if (current >= 60) bandGainCap = 14;

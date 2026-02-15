@@ -2569,6 +2569,17 @@ export default function AppPage() {
 
         // 🎯 Cálculo inteligente do score projetado
         const projected = calculateProjectedScore(nota, gapsFatals, 0, ats, keywords, impacto);
+        const lowProjectedNote = projected.score < 55
+            ? `
+                <div style="margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(251, 191, 36, 0.35);">
+                    <div style="color: #FBBF24; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">Compatibilidade baixa com a vaga</div>
+                    <div style="color: #E2E8F0; font-size: 0.78rem; line-height: 1.5;">
+                        Mesmo com otimização, o score pode ficar abaixo do ideal porque há desalinhamento relevante com a vaga.
+                        <br />${projected.reasoning}
+                    </div>
+                </div>
+            `
+            : "";
 
         const row = (label: string, value: number, tooltip: string) => `
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
@@ -2626,6 +2637,7 @@ export default function AppPage() {
                     ${row("Palavras-chave", keywords, "Faltam termos exatos da vaga em cargos, competências e resultados. A versão otimizada distribui esses termos nos blocos mais lidos pelo ATS.")}
                     ${row("Format. ATS", ats, "Seu layout atual ainda tem padrões que dificultam parsing automático. A versão otimizada usa estrutura limpa para leitura ATS sem perda visual.")}
                 </div>
+                ${lowProjectedNote}
             </div>
         `;
     }
