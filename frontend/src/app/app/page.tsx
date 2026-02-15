@@ -1318,6 +1318,8 @@ export default function AppPage() {
             );
             // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
             const hasNonHeroStage = stage !== "hero";
+            // CRÍTICO: Se há pagamento pendente de ativação, NÃO redirecionar para dashboard
+            const hasPendingPayment = needsActivation || !!stripeSessionId || !!localStorage.getItem("vant_pending_stripe_session_id");
             const hasActiveFlow =
                 returnPlan ||
                 hasReturnStage ||
@@ -1328,7 +1330,8 @@ export default function AppPage() {
                 hasAutoStartFlag ||
                 hasPendingAutoStart ||
                 hasSkipPreviewFlag ||
-                hasSavedDraft;
+                hasSavedDraft ||
+                hasPendingPayment;
 
             console.log("[Auth] Verificando fluxo:", {
                 returnPlan: !!returnPlan,
@@ -1340,6 +1343,7 @@ export default function AppPage() {
                 hasPendingAutoStart,
                 hasSkipPreviewFlag,
                 hasSavedDraft,
+                hasPendingPayment,
                 stage
             });
 

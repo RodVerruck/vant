@@ -710,16 +710,9 @@ export function PaidStage({
                                 <div className="vant-scroll-area">
                                     {isHtmlCv ? (
                                         <div className="vant-cv-html-container">
-                                            <iframe
-                                                srcDoc={cvContent}
-                                                style={{
-                                                    width: '100%',
-                                                    minHeight: '800px',
-                                                    border: 'none',
-                                                    borderRadius: '0.75rem',
-                                                    background: 'white'
-                                                }}
-                                                title="CV Otimizado"
+                                            <div
+                                                className="cv-paper-sheet"
+                                                dangerouslySetInnerHTML={{ __html: cvContent }}
                                             />
                                         </div>
                                     ) : (
