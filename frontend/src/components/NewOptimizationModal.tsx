@@ -246,6 +246,10 @@ export function NewOptimizationModal({
             localStorage.removeItem("vant_use_generic_job");
         }
 
+        // Determinar stage de retorno baseado em créditos
+        // Se usuário tem 0 créditos, vai direto para checkout
+        const returnStage = creditsRemaining === 0 ? "checkout" : "hero";
+
         // Verificar se é CV pré-extraído (último CV reutilizado)
         const hasPreextracted = !!localStorage.getItem("vant_cv_text_preextracted");
 
@@ -258,7 +262,7 @@ export function NewOptimizationModal({
             // Set flags
             localStorage.setItem("vant_auto_start", "true");
             localStorage.setItem("vant_skip_preview", "true");
-            localStorage.setItem("vant_auth_return_stage", "hero");
+            localStorage.setItem("vant_auth_return_stage", returnStage);
 
             router.push("/app");
             return;
@@ -274,7 +278,7 @@ export function NewOptimizationModal({
             // 4. Set flag to auto-start analysis on /app and skip preview
             localStorage.setItem("vant_auto_start", "true");
             localStorage.setItem("vant_skip_preview", "true"); // NEW: skip preview
-            localStorage.setItem("vant_auth_return_stage", "hero");
+            localStorage.setItem("vant_auth_return_stage", returnStage);
 
             // 5. Navigate
             router.push("/app");
@@ -321,6 +325,11 @@ export function NewOptimizationModal({
                         {creditsRemaining > 0 && (
                             <div className={styles.creditsBadge}>
                                 ✦ {creditsRemaining} crédito{creditsRemaining !== 1 ? "s" : ""} disponível{creditsRemaining !== 1 ? "is" : ""}
+                            </div>
+                        )}
+                        {creditsRemaining <= 0 && (
+                            <div className={styles.creditsWarning}>
+                                <strong>Créditos insuficientes.</strong> Ao confirmar, você será direcionado ao checkout para comprar 1 crédito avulso.
                             </div>
                         )}
                     </div>
@@ -491,7 +500,9 @@ export function NewOptimizationModal({
                         <div className={styles.confirmationIcon}>🎯</div>
                         <h3 className={styles.confirmationTitle}>Confirme a Análise</h3>
                         <p className={styles.confirmationSubtitle}>
-                            Revise os dados abaixo antes de iniciar a otimização
+                            {creditsRemaining > 0
+                                ? "Revise os dados abaixo antes de iniciar a otimização"
+                                : "Revise os dados abaixo antes de ir para o checkout de crédito avulso"}
                         </p>
                     </div>
 
@@ -547,7 +558,7 @@ export function NewOptimizationModal({
                         >
                             {creditsRemaining > 0
                                 ? "Confirmar e Otimizar →"
-                                : "Confirmar e Analisar →"}
+                                : "Confirmar e Ir para Checkout →"}
                         </button>
                     </div>
                 </div>

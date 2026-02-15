@@ -310,8 +310,8 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
         
         print(f"[DEBUG] Assinatura ativa encontrada: plan={plan_name}, status={sub.get('subscription_status')}")
         
-        # Todos os planos de assinatura (PRO, Trial, premium_plus) usam sistema de usage com limite mensal
-        if plan_name in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
+        # Todos os planos de assinatura (PRO, Trial, pro_monthly_early_bird) usam sistema de usage com limite mensal
+        if plan_name in ["pro_monthly", "pro_annual", "trial", "pro_monthly_early_bird"]:
             has_subscription = True
             usage = (
                 supabase_admin.table("usage")
@@ -347,7 +347,7 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
     return {
         "payment_verified": total_credits > 0,
         "credits_remaining": total_credits,
-        "plan": "premium_plus" if has_subscription else None,
+        "plan": "pro_monthly_early_bird" if has_subscription else None,
     }
 
 
@@ -367,10 +367,10 @@ def _consume_one_credit(user_id: str) -> None:
     )
     sub = (subs.data or [])[0] if subs.data else None
     
-    # Todos os planos de assinatura (PRO, Trial, premium_plus) consomem do sistema de usage
+    # Todos os planos de assinatura (PRO, Trial, pro_monthly_early_bird) consomem do sistema de usage
     if sub and sub.get("subscription_status") in ["active", "trialing"]:
         plan_name = sub.get("subscription_plan")
-        if plan_name in ["pro_monthly", "pro_annual", "trial", "premium_plus"]:
+        if plan_name in ["pro_monthly", "pro_annual", "trial", "pro_monthly_early_bird"]:
             period_start = sub.get("current_period_start")
             usage = (
                 supabase_admin.table("usage")

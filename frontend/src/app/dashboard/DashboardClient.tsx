@@ -66,10 +66,16 @@ export function DashboardClient() {
             const resp = await fetch(`${getApiUrl()}/api/user/status/${userId}`);
             if (resp.ok) {
                 const data: UserStatus = await resp.json();
-                setCreditsRemaining(data.credits_remaining || 0);
-                setIsPremium(!!data.has_active_plan);
-                localStorage.setItem("vant_cached_credits", String(data.credits_remaining || 0));
-                return data.credits_remaining || 0;
+                const credits = data.credits_remaining || 0;
+                const hasPlan = !!data.plan; // Verifica se tem plano ativo (trial, pro, etc)
+
+                setCreditsRemaining(credits);
+                setIsPremium(hasPlan || credits > 0); // Pro se tem plano OU créditos
+                localStorage.setItem("vant_cached_credits", String(credits));
+
+                console.log("[Dashboard] Status atualizado:", { credits, hasPlan, plan: data.plan, isPremium: hasPlan || credits > 0 });
+
+                return credits;
             }
 
             const entitlementResp = await fetch(`${getApiUrl()}/api/entitlements/status`, {

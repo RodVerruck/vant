@@ -553,9 +553,9 @@ def run_cv_pipeline(cv_text: str, strategy_payload: dict):
 
     # Se falhou totalmente (erro de API / secrets / SDK), aborta com diagnóstico
     if not semantic_cv:
-        return {"cv_otimizado_completo": "Erro na conexão com a IA (Escrita)."}
+        return {"cv_otimizado_completo": "<p>Erro na conexão com a IA (Escrita).</p>"}
     if isinstance(semantic_cv, dict) and semantic_cv.get("_vant_error"):
-        return {"cv_otimizado_completo": semantic_cv.get("message", "Erro na conexão com a IA (Escrita).")}
+        return {"cv_otimizado_completo": f"<p>{semantic_cv.get('message', 'Erro na conexão com a IA (Escrita).')}</p>"}
 
     # Se veio do fallback, semantic_cv['texto_reescrito'] conterá o texto bruto (markdown)
     # Isso permite que o processo continue!
@@ -572,8 +572,26 @@ def run_cv_pipeline(cv_text: str, strategy_payload: dict):
         logger.warning("⚠️ Formatador falhou. Entregando texto semântico bruto.")
         raw_text = semantic_cv.get("texto_reescrito", "")
         if raw_text:
-            return {"cv_otimizado_completo": raw_text}
-        return {"cv_otimizado_completo": "Erro na formatação final do CV."}
+            # Converter para HTML mesmo no fallback
+            from logic import format_text_to_html
+            from styles import CSS_V13
+            body_html = format_text_to_html(raw_text)
+            fallback_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {CSS_V13}
+    </style>
+</head>
+<body>
+    <div class="cv-paper-sheet">
+        {body_html}
+    </div>
+</body>
+</html>"""
+            return {"cv_otimizado_completo": fallback_html}
+        return {"cv_otimizado_completo": "<p>Erro na formatação final do CV.</p>"}
 
     # Busca a chave correta (seja do JSON limpo ou do fallback)
     final_text = formatted_cv.get("cv_otimizado_texto") or formatted_cv.get("texto_reescrito")
@@ -581,7 +599,29 @@ def run_cv_pipeline(cv_text: str, strategy_payload: dict):
     if not final_text:
         return {"cv_otimizado_completo": "Erro: Conteúdo vazio gerado pela IA."}
 
-    return {"cv_otimizado_completo": final_text}
+    # Converter texto para HTML formatado com estilos
+    from logic import format_text_to_html
+    from styles import CSS_V13
+    
+    body_html = format_text_to_html(final_text)
+    
+    # Criar HTML completo com CSS inline para renderização no frontend
+    full_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        {CSS_V13}
+    </style>
+</head>
+<body>
+    <div class="cv-paper-sheet">
+        {body_html}
+    </div>
+</body>
+</html>"""
+
+    return {"cv_otimizado_completo": full_html}
 
 # ============================================================
 # AGENTES AUXILIARES (COM PROTEÇÃO CONTRA NONE)

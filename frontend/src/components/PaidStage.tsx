@@ -5,131 +5,398 @@ import type { ReportData } from "@/types";
 import { BookCard } from "./BookCard";
 import { InterviewSimulator } from "./InterviewSimulator";
 import { calculateProjectedScore } from "@/lib/helpers";
+import {
+    Zap, TrendingUp, AlertCircle, FileText, BookOpen, MessageSquare,
+    Loader, ChevronDown, ChevronUp, Linkedin, User, Search, Copy,
+    CheckCircle, ArrowLeft, Star, Clock, Target
+} from 'lucide-react';
 
-// Estilos CSS para animação de loading
-const loadingStyles = `
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
+// --- CSS PURO (Substituindo Tailwind) ---
+const globalStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  /* Container Principal */
+  .vant-premium-wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%);
+    min-height: 100vh;
+    color: #f1f5f9;
+    padding: 2rem 1rem;
+    line-height: 1.5;
+  }
+
+  .vant-container {
+    max-width: 1150px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Utilitários de Layout */
+  .vant-flex { display: flex; }
+  .vant-flex-col { flex-direction: column; }
+  .vant-items-center { align-items: center; }
+  .vant-justify-between { justify-content: space-between; }
+  .vant-justify-center { justify-content: center; }
+  .vant-gap-2 { gap: 0.5rem; }
+  .vant-gap-3 { gap: 0.75rem; }
+  .vant-gap-4 { gap: 1rem; }
+  .vant-gap-6 { gap: 1.5rem; }
+  .vant-mb-4 { margin-bottom: 1rem; }
+  .vant-mb-6 { margin-bottom: 1.5rem; }
+  .vant-mb-8 { margin-bottom: 2rem; }
+  .vant-mb-12 { margin-bottom: 3rem; }
+  .vant-mt-4 { margin-top: 1rem; }
+  .vant-w-full { width: 100%; }
+
+  /* Grid System Responsivo */
+  .vant-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .vant-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .vant-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .vant-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Tipografia */
+  .vant-title-xl { font-size: 3rem; font-weight: 300; letter-spacing: -0.02em; color: white; margin: 0; line-height: 1.1; }
+  .vant-subtitle { font-size: 1.125rem; font-weight: 300; color: #94a3b8; margin-top: 0.5rem; }
+  .vant-h2 { font-size: 1.5rem; font-weight: 600; color: white; margin: 0; }
+  .vant-h3 { font-size: 1.25rem; font-weight: 600; color: white; margin: 0; }
+  .vant-text-sm { font-size: 0.875rem; }
+  .vant-text-xs { font-size: 0.75rem; }
+  .vant-font-medium { font-weight: 500; }
+  .vant-text-slate-400 { color: #94a3b8; }
+  .vant-text-white { color: white; }
+
+  /* Cards e Glassmorphism */
+  .vant-glass-dark {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .vant-glass-dark:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .vant-glass-darker {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    padding: 2rem;
+  }
+
+  /* Botões e Interativos */
+  .vant-btn-tab {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 0.75rem 1.5rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .vant-btn-tab:hover { background: rgba(255,255,255,0.05); color: white; }
+  .vant-btn-tab.active {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .vant-btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .vant-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  }
+
+  .vant-btn-outline {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s;
+  }
+  .vant-btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+  .vant-btn-copy {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s;
+  }
+  .vant-btn-copy:hover { background: rgba(255,255,255,0.15); }
+
+  /* Elementos Específicos */
+  .vant-badge-credits {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #94a3b8;
+  }
+
+  .vant-score-bar-bg {
+    height: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 1rem;
+  }
+  .vant-score-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #94a3b8 0%, #cbd5e1 100%);
+    border-radius: 99px;
+  }
+
+  .vant-icon-circle {
+    width: 3rem; height: 3rem;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Animações */
+  @keyframes vantFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .vant-animate-fade { animation: vantFadeIn 0.6s ease-out forwards; }
+  .vant-animate-spin { animation: spin 1s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* Scrollbar Customizada */
+  .vant-scroll-area {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+  .vant-scroll-area::-webkit-scrollbar { width: 6px; }
+  .vant-scroll-area::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+  .vant-scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+  /* Utilitários de Texto Rico (HTML Render) */
+  .vant-rich-text strong { color: #34d399; font-weight: 600; }
+
+  /* Estilo do CV em texto plano (visual antigo) */
+  .vant-cv-wrapper {
+    background: radial-gradient(circle at top, rgba(59,130,246,0.08), rgba(10,16,32,0.95));
+    color: #e2e8f0;
+    padding: 2.25rem 2rem;
+    border-radius: 1.1rem;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    box-shadow: 0 25px 55px rgba(2, 6, 23, 0.75);
+  }
+
+  .vant-cv-plain {
+    margin: 0;
+    font-family: 'JetBrains Mono', 'IBM Plex Mono', 'SFMono-Regular', 'Fira Code', 'Menlo', 'Monaco', monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    line-height: 1.7;
+    color: #f8fafc;
+    white-space: pre-wrap;
+    word-break: break-word;
+    text-shadow: 0 0 9px rgba(2, 6, 23, 0.8);
+  }
+
+  /* Estilos do CV HTML (espelhando backend/styles.py) */
+  .vant-cv-html-container {
+    background: radial-gradient(circle at top, rgba(15,23,42,0.03), rgba(15,23,42,0.06));
+    padding: 2rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(148,163,184,0.3);
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .cv-paper-sheet {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 18mm;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
+    color: #334155;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    border-top: 6px solid #10b981;
+    line-height: 1.5;
+    box-sizing: border-box;
+  }
+
+  .cv-paper-sheet .vant-cv-name {
+    font-size: 24pt;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+  }
+
+  .cv-paper-sheet .vant-cv-contact-line {
+    font-size: 10pt;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 10mm;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .cv-paper-sheet .vant-cv-section {
+    font-size: 10pt;
+    font-weight: 800;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-top: 6mm;
+    margin-bottom: 4mm;
+    padding-bottom: 1mm;
+    display: flex;
+    align-items: center;
+  }
+
+  .cv-paper-sheet .vant-cv-section::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 4px;
+    background-color: #10b981;
+    margin-right: 10px;
+    border-radius: 2px;
+  }
+
+  .cv-paper-sheet p {
+    font-size: 10pt;
+    line-height: 1.55;
+    margin-bottom: 4mm;
+    color: #334155;
+  }
+
+  .cv-paper-sheet .vant-cv-job-container {
+    margin-bottom: 5mm;
+  }
+
+  .cv-paper-sheet .vant-job-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .cv-paper-sheet .vant-job-company {
+    color: #059669;
+    font-weight: 600;
+  }
+
+  .cv-paper-sheet .vant-job-date {
+    font-size: 9pt;
+    color: #94a3b8;
+    margin-bottom: 2mm;
+    display: block;
+  }
+
+  .cv-paper-sheet .vant-cv-grid-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 2mm;
+  }
+
+  .cv-paper-sheet .vant-cv-bullet-col {
+    color: #10b981;
+    font-size: 14px;
+    line-height: 1.3;
+    flex: 0 0 12px;
+    margin-right: 6px;
+  }
+
+  .cv-paper-sheet .vant-cv-text-col {
+    flex: 1;
+    font-size: 10pt;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .cv-paper-sheet .vant-skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4mm;
+  }
+
+  .cv-paper-sheet .vant-skill-chip {
+    font-size: 8pt;
+    background-color: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-weight: 600;
+  }
 `;
 
-// Adicionar estilos ao head do documento
+// Injeção de estilo no head
 if (typeof window !== "undefined") {
-    const styleElement = document.createElement("style");
-    styleElement.textContent = loadingStyles;
-    document.head.appendChild(styleElement);
+    const styleId = "vant-no-tailwind-styles";
+    if (!document.getElementById(styleId)) {
+        const style = document.createElement("style");
+        style.id = styleId;
+        style.textContent = globalStyles;
+        document.head.appendChild(style);
+    }
 }
-
-// Componente de placeholder para conteúdo carregando
-const LoadingPlaceholder = ({ title, description }: { title: string; description: string }) => (
-    <div style={{
-        background: "linear-gradient(135deg, rgba(15, 23, 42, 0.3) 0%, rgba(56, 189, 248, 0.05) 100%)",
-        border: "1px solid rgba(56, 189, 248, 0.2)",
-        borderRadius: 12,
-        padding: 24,
-        margin: "20px 0",
-        position: "relative",
-        overflow: "hidden"
-    }}>
-        <div style={{
-            position: "absolute",
-            top: -20,
-            right: -20,
-            width: 80,
-            height: 80,
-            background: "#38BDF8",
-            filter: "blur(50px)",
-            opacity: 0.1
-        }} />
-
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
-            <div
-                style={{
-                    width: "24px",
-                    height: "24px",
-                    border: "3px solid #38BDF8",
-                    borderTop: "3px solid transparent",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite"
-                }}
-            />
-            <h4 style={{ color: "#38BDF8", margin: 0, fontSize: "1.1rem", fontWeight: 600 }}>
-                {title}
-            </h4>
-        </div>
-
-        <p style={{ color: "#94A3B8", margin: 0, lineHeight: 1.6, fontSize: "0.95rem" }}>
-            {description}
-        </p>
-
-        <div style={{
-            marginTop: 16,
-            padding: 12,
-            background: "rgba(56, 189, 248, 0.1)",
-            borderRadius: 8,
-            border: "1px solid rgba(56, 189, 248, 0.2)"
-        }}>
-            <p style={{
-                color: "#38BDF8",
-                margin: 0,
-                fontSize: "0.85rem",
-                fontWeight: 500,
-                textAlign: "center"
-            }}>
-                🤖 Nossa IA está analisando seu currículo e gerando insights personalizados...
-            </p>
-        </div>
-    </div>
-);
-
-const CircularGauge = ({
-    value,
-    size,
-    color,
-    label,
-    valueLabel,
-    glow = false,
-}: {
-    value: number;
-    size: number;
-    color: string;
-    label: string;
-    valueLabel: string;
-    glow?: boolean;
-}) => {
-    const clamped = Math.max(0, Math.min(100, value));
-    return (
-        <div style={{ textAlign: "center" }}>
-            <div
-                style={{
-                    width: size,
-                    height: size,
-                    borderRadius: "50%",
-                    background: `conic-gradient(${color} ${clamped * 3.6}deg, rgba(148, 163, 184, 0.2) 0deg)`,
-                    padding: 8,
-                    boxShadow: glow ? `0 0 36px ${color}55` : "0 14px 28px rgba(2, 6, 23, 0.35)",
-                    margin: "0 auto 10px",
-                }}
-            >
-                <div
-                    style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: "50%",
-                        background: "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.16), rgba(15,23,42,0.94))",
-                        border: "1px solid rgba(255,255,255,0.18)",
-                        display: "grid",
-                        placeItems: "center",
-                    }}
-                >
-                    <div style={{ fontSize: size > 140 ? "1.9rem" : "1.45rem", fontWeight: 800, color: "#F8FAFC" }}>{valueLabel}</div>
-                </div>
-            </div>
-            <div style={{ color: "#CBD5E1", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
-        </div>
-    );
-};
 
 interface PaidStageProps {
     reportData: ReportData | null;
@@ -140,977 +407,365 @@ interface PaidStageProps {
     onViewHistory?: () => void;
 }
 
-export function PaidStage({ reportData, authUserId, creditsRemaining = 0, onNewOptimization, onUpdateReport, onViewHistory }: PaidStageProps) {
+export function PaidStage({
+    reportData,
+    creditsRemaining = 0,
+    onNewOptimization,
+    onUpdateReport
+}: PaidStageProps) {
     const [activeTab, setActiveTab] = useState<"diagnostico" | "cv" | "biblioteca" | "simulador">("diagnostico");
-    const [editedCvText, setEditedCvText] = useState("");
-    const [isEditorOpen, setIsEditorOpen] = useState(false);
-    const [copiedField, setCopiedField] = useState<"headline" | "summary" | null>(null);
-    const [openGapIndex, setOpenGapIndex] = useState<number | null>(0);
+    const [copiedField, setCopiedField] = useState<"headline" | "summary" | "xray" | null>(null);
+    const [expandedGaps, setExpandedGaps] = useState<Record<number, boolean>>({});
+    const [cvProgress, setCvProgress] = useState(35);
 
-    // Estado para controlar quais abas estão carregando
-    const [loadingTabs, setLoadingTabs] = useState<Record<string, boolean>>({
-        diagnostico: false,
-        cv: false,
-        biblioteca: false,
-        simulador: false
-    });
+    const loadingTabs = reportData ? {
+        diagnostico: !reportData.gaps_fatais || !reportData.linkedin_headline,
+        cv: !reportData.cv_otimizado_completo,
+        biblioteca: !reportData.biblioteca_tecnica || (Array.isArray(reportData.biblioteca_tecnica) && reportData.biblioteca_tecnica.length === 0),
+        simulador: false,
+    } : {
+        diagnostico: false, cv: false, biblioteca: false, simulador: false,
+    };
 
-    // Detectar quando as abas estão carregando baseado nos dados disponíveis
+    const cvStatus: "processing" | "ready" = loadingTabs.cv ? "processing" : "ready";
+
     useEffect(() => {
-        if (!reportData) return;
-
-        const newLoadingTabs = {
-            diagnostico: !reportData.gaps_fatais || !reportData.linkedin_headline || !reportData.resumo_otimizado,
-            cv: !reportData.cv_otimizado_completo,
-            biblioteca: !reportData.biblioteca_tecnica || (Array.isArray(reportData.biblioteca_tecnica) && reportData.biblioteca_tecnica.length === 0),
-            simulador: false // Simulador sempre disponível quando há dados
-        };
-
-        setLoadingTabs(newLoadingTabs);
-    }, [reportData]);
+        if (cvStatus !== "processing") return;
+        const interval = setInterval(() => {
+            setCvProgress(prev => {
+                const next = prev + 5;
+                return next >= 95 ? 95 : next;
+            });
+        }, 800);
+        return () => clearInterval(interval);
+    }, [cvStatus]);
 
     if (!reportData) {
         return (
-            <div className="hero-container">
-                <h2 style={{ color: "#EF4444" }}>Dados da sessão perdidos</h2>
-                <p style={{ color: "#94A3B8" }}>Por favor, reinicie o processo.</p>
-                <button
-                    onClick={onNewOptimization}
-                    style={{
-                        background: "#10B981",
-                        color: "white",
-                        padding: "12px 24px",
-                        borderRadius: 8,
-                        border: "none",
-                        cursor: "pointer",
-                        fontWeight: 600
-                    }}
-                >
-                    Reiniciar
-                </button>
+            <div className="vant-premium-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <Loader className="vant-animate-spin" style={{ margin: '0 auto', marginBottom: '1rem', color: '#f59e0b' }} size={32} />
+                    <p className="vant-text-slate-400">Carregando dados...</p>
+                </div>
             </div>
         );
     }
 
-    const notaEstrutural = typeof reportData.nota_ats_estrutura === "number"
-        ? reportData.nota_ats_estrutura
-        : (reportData.nota_ats ?? 0);
-    const notaConteudo = typeof reportData.nota_ats_conteudo === "number"
-        ? reportData.nota_ats_conteudo
-        : (reportData.nota_ats ?? 0);
-    const xpAtual = Math.min(100, notaEstrutural);
-
+    // Cálculos
+    const xpAtual = Math.min(100, typeof reportData.nota_ats_estrutura === "number" ? reportData.nota_ats_estrutura : (reportData.nota_ats ?? 0));
     const reportContentGapCount = Math.min(2, reportData.gaps_fatais ? reportData.gaps_fatais.length : 0);
-    const reportDataWithPreviewGaps = reportData as ReportData & { gap_1?: unknown; gap_2?: unknown };
-    const reportPreviewGapCount = (reportDataWithPreviewGaps.gap_1 ? 1 : 0) + (reportDataWithPreviewGaps.gap_2 ? 1 : 0);
-    const gapsCount = reportPreviewGapCount > 0 ? reportPreviewGapCount : reportContentGapCount;
-
     const impacto = reportData.analise_por_pilares?.impacto || 0;
     const keywords = reportData.analise_por_pilares?.keywords || 0;
     const ats = reportData.analise_por_pilares?.ats || 0;
+    const projected = calculateProjectedScore(xpAtual, reportContentGapCount, 0, ats, keywords, impacto);
 
-    const projected = calculateProjectedScore(xpAtual, gapsCount, 0, ats, keywords, impacto);
+    const gapTotal = Math.max(1, (reportData.gaps_fatais || []).length);
+    const totalCorrectionMinutes = (gapTotal * 15) + 10;
 
-    useEffect(() => {
-        if (process.env.NODE_ENV === "production") return;
-        console.log("[PaidStage][score-debug]", {
-            scoreSourceLabel: "reportData",
-            notaEstrutural,
-            notaConteudo,
-            reportNota: reportData?.nota_ats,
-            renderedNota: xpAtual,
-            renderedProjected: projected.score,
-            gapsCount,
-            pilares: { ats, keywords, impacto },
-        });
-    }, [
-        notaEstrutural,
-        notaConteudo,
-        reportData,
-        xpAtual,
-        projected.score,
-        gapsCount,
-        ats,
-        keywords,
-        impacto,
-    ]);
+    const diagnosticGaps = (reportData.gaps_fatais || []).map((gap, idx) => ({
+        id: idx + 1,
+        titulo: gap.erro,
+        severidade: idx <= 1 ? "alta" : "media",
+        impacto: "+4%",
+        evidencia: (gap.evidencia || "").replace(/\*\*/g, ""),
+        exemploAtual: gap.evidencia || "Descrição genérica...",
+        exemploOtimizado: gap.correcao_sugerida || "Sugestão otimizada...",
+    }));
 
-    let seniorityLabel = "JÚNIOR";
-    let seniorityColor = "#F59E0B";
-    let seniorityMessage = "Seu currículo já tem potencial, mas ainda transmite menos senioridade do que você realmente possui.";
+    const xraySearchString = reportData.kit_hacker?.boolean_string || `site: linkedin.com /in ("${reportData.setor_detectado || ""}")`;
 
-    if (xpAtual >= 85) {
-        seniorityLabel = "SÊNIOR";
-        seniorityColor = "#22C55E";
-        seniorityMessage = "Excelente base. Agora o foco é elevar precisão e posicionamento para vagas estratégicas.";
-    } else if (xpAtual >= 60) {
-        seniorityLabel = "PLENO";
-        seniorityColor = "#FB923C";
-        seniorityMessage = "Seu perfil está forte, com espaço claro para ganhar autoridade e aumentar competitividade.";
-    }
+    const cvContent = reportData.cv_otimizado_completo || "";
+    const isHtmlCv = /<(?:html|body|section|div|p|ul|ol|li|span|table|h[1-6]|style|head)/i.test(cvContent.trim());
 
-    const tabs = [
-        { id: "diagnostico", label: "Diagnóstico" },
-        { id: "cv", label: "CV Otimizado" },
-        { id: "biblioteca", label: "Biblioteca" },
-        { id: "simulador", label: "Simulador" },
-    ] as const;
-
-    const formatDiagnostic = (text: string) => {
-        if (!text) return "";
-        return text.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#E2E8F0">$1</strong>');
+    const copyToClipboard = async (text: string, field: "headline" | "summary" | "xray") => {
+        await navigator.clipboard.writeText(text);
+        setCopiedField(field);
+        setTimeout(() => setCopiedField(null), 2000);
     };
 
-    const handleCopyText = async (field: "headline" | "summary", content: string) => {
-        try {
-            await navigator.clipboard.writeText(content);
-            setCopiedField(field);
-            setTimeout(() => setCopiedField(null), 1800);
-        } catch (error) {
-            console.error("Erro ao copiar texto:", error);
+    const getSeveridadeStyles = (sev: string) => {
+        switch (sev) {
+            case "alta": return { bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.3)", text: "#FCA5A5", badgeBg: "#EF4444" };
+            default: return { bg: "rgba(245, 158, 11, 0.1)", border: "rgba(245, 158, 11, 0.3)", text: "#FCD34D", badgeBg: "#F59E0B" };
         }
     };
-
-    const handleSaveEdit = () => {
-        if (editedCvText && reportData) {
-            const updated = { ...reportData, cv_otimizado_completo: editedCvText };
-            onUpdateReport(updated);
-            setIsEditorOpen(false);
-        }
-    };
-
-    const handleDownloadPdf = async () => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/generate-pdf`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ data: reportData, user_id: authUserId }),
-            });
-
-            if (!response.ok) throw new Error("Falha ao gerar PDF");
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "Curriculo_VANT.pdf";
-            a.click();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            alert("Erro ao gerar PDF: " + error);
-        }
-    };
-
-    const handleDownloadWord = async () => {
-        try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/generate-word`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ data: reportData, user_id: authUserId }),
-            });
-
-            if (!response.ok) throw new Error("Falha ao gerar Word");
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "Curriculo_VANT_Editavel.docx";
-            a.click();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            alert("Erro ao gerar Word: " + error);
-        }
-    };
-
-    const formatTextToHtml = (text: string) => {
-        if (!text) return "";
-
-        // Garantir decoding correto de UTF-8
-        try {
-            // Se o texto estiver mal-decodificado, tentar corrigir
-            if (text.includes('ã£') || text.includes('ã§') || text.includes('ã©')) {
-                // Corrigir encoding problemático
-                const decoder = new TextDecoder('utf-8');
-                const encoder = new TextEncoder();
-                const bytes = encoder.encode(text);
-                text = decoder.decode(bytes);
-            }
-        } catch (e) {
-            // Se falhar, manter o texto original
-            console.warn('Erro ao corrigir encoding:', e);
-        }
-
-        text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-        let html_output: string[] = [];
-        let lines = text.split('\n');
-
-        for (let line of lines) {
-            line = line.trim();
-            if (!line) continue;
-
-            // Nome (h1)
-            if (line.startsWith('# ')) {
-                let clean = line.replace('# ', '').toUpperCase();
-                html_output.push(`<h1 class="vant-cv-name">${clean}</h1>`);
-            }
-            // Seções (h2)
-            else if (line.startsWith('###')) {
-                let clean = line.replace('###', '').trim().toUpperCase();
-                html_output.push(`<h2 class="vant-cv-section">${clean}</h2>`);
-            }
-            // Listas (experiências e tarefas)
-            else if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('• ')) {
-                let clean = line.replace(/^[-*•]\s+/, '').replace(/\*\*(.*?)\*\*/g, '<span class="vant-bold">$1</span>');
-
-                // Se tem |, é cargo/empresa/data
-                if (line.includes('|')) {
-                    let parts = clean.split('|').map(p => p.trim());
-                    let cargo = clean;
-                    let empresa = "";
-                    let data = "";
-
-                    if (parts.length >= 3) {
-                        cargo = parts[0];
-                        empresa = parts[1];
-                        data = parts[2].replace(/\*/g, '').replace('_', '').trim(); // Remove todos os asteriscos
-                    } else if (parts.length === 2) {
-                        cargo = parts[0];
-                        empresa = parts[1].replace(/\*/g, '').trim(); // Remove todos os asteriscos
-                    }
-
-                    let job_html = `
-                    <div class="vant-cv-job-container">
-                        <div class="vant-job-row-primary">
-                            <span class="vant-job-title">${cargo}</span>
-                            <span class="vant-job-sep">|</span>
-                            <span class="vant-job-company">${empresa}</span>
-                        </div>`;
-
-                    if (data) {
-                        job_html += `
-                        <div class="vant-job-row-secondary">
-                            <span class="vant-job-date">${data}</span>
-                        </div>`;
-                    }
-
-                    job_html += "</div>";
-                    html_output.push(job_html);
-                }
-                // Senão é tarefa com bullet
-                else {
-                    let row = `
-                    <div class="vant-cv-grid-row">
-                        <div class="vant-cv-bullet-col">•</div>
-                        <div class="vant-cv-text-col">${clean}</div>
-                    </div>`;
-                    html_output.push(row);
-                }
-            }
-            // Descrições de experiências (começam com ** mas não têm -)
-            else if (line.startsWith('**') && line.includes(':')) {
-                let clean = line.replace(/\*\*(.*?)\*\*/g, '<span class="vant-bold">$1</span>');
-                let row = `
-                <div class="vant-cv-grid-row">
-                    <div class="vant-cv-bullet-col"></div>
-                    <div class="vant-cv-text-col">${clean}</div>
-                </div>`;
-                html_output.push(row);
-            }
-            // Contato (linha com | ou @)
-            else if ((line.includes('|') || line.includes('@')) && line.length < 300) {
-                let clean_line = line.replace(/\*\*/g, ''); // Remove todos os ** da linha
-                let parts = clean_line.split('|').map(p => p.trim());
-                let items_html: string[] = [];
-
-                for (let p of parts) {
-                    if (p) {
-                        if (p.includes(':')) {
-                            let [label, val] = p.split(":", 2);
-                            let block = `<span class="vant-contact-block"><span class="vant-bold">${label}:</span> ${val}</span>`;
-                            items_html.push(block);
-                        } else {
-                            items_html.push(`<span class="vant-contact-block">${p}</span>`);
-                        }
-                    }
-                }
-                let full_html = items_html.join('<span class="vant-contact-separator"> • </span>');
-                html_output.push(`<div class="vant-cv-contact-row">${full_html}</div>`);
-            }
-            // Texto normal
-            else {
-                let clean = line.replace(/\*\*(.*?)\*\*/g, '<span class="vant-bold">$1</span>');
-                html_output.push(`<div class="vant-cv-text-row">${clean}</div>`);
-            }
-        }
-
-        return html_output.join('');
-    };
-
-    // Gerar link do Google X-Ray Search
-    const googleLink = reportData.kit_hacker?.boolean_string
-        ? `https://www.google.com/search?q=${encodeURIComponent(reportData.kit_hacker.boolean_string)}`
-        : `https://www.google.com/search?q=${encodeURIComponent(`site:linkedin.com/in "${reportData.setor_detectado || ''}" "${reportData.linkedin_headline}"`)}`;
-
-    const pageStyle = {
-        minHeight: "100vh",
-        color: "#F8FAFC",
-        background: "radial-gradient(900px 520px at 12% 5%, rgba(249, 115, 22, 0.16), rgba(10, 15, 30, 0) 72%), radial-gradient(1000px 620px at 88% 12%, rgba(34, 211, 238, 0.13), rgba(10, 15, 30, 0) 76%), linear-gradient(135deg, #05070f 0%, #090f1d 45%, #071226 100%)"
-    } as const;
-
-    const sectionGlassStyle = {
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: "22px 20px 18px",
-        borderRadius: 20,
-        background: "linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.45))",
-        border: "1px solid rgba(148, 163, 184, 0.18)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
-        boxShadow: "0 30px 70px rgba(2, 6, 23, 0.45), inset 0 1px 0 rgba(255,255,255,0.06)"
-    } as const;
-
-    const tabContentGlassStyle = {
-        borderRadius: 22,
-        border: "1px solid rgba(255, 255, 255, 0.12)",
-        background: "linear-gradient(140deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02))",
-        padding: "28px 20px 20px",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        boxShadow: "0 35px 80px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.15)"
-    } as const;
 
     return (
-        <div style={pageStyle}>
-            <div style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 18px 34px" }}>
-                <header style={{ marginBottom: 22 }}>
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 14,
-                        flexWrap: "wrap",
-                        marginBottom: 18
-                    }}>
-                        <div style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            color: "#F8FAFC",
-                            fontWeight: 700,
-                            letterSpacing: "0.08em"
-                        }}>
-                            <div style={{
-                                width: 34,
-                                height: 34,
-                                borderRadius: 12,
-                                background: "linear-gradient(145deg, rgba(249,115,22,0.25), rgba(255,255,255,0.08))",
-                                border: "1px solid rgba(255,255,255,0.18)",
-                                display: "grid",
-                                placeItems: "center",
-                                boxShadow: "0 14px 30px rgba(0,0,0,0.28)"
-                            }}>
-                                V
-                            </div>
-                            VANT
-                        </div>
+        <div className="vant-premium-wrapper">
+            <div className="vant-container">
 
-                        <div style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                            borderRadius: 999,
-                            padding: "8px 14px",
-                            border: "1px solid rgba(255,255,255,0.14)",
-                            background: "linear-gradient(140deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
-                            backdropFilter: "blur(20px)",
-                            WebkitBackdropFilter: "blur(20px)",
-                            color: "#E2E8F0",
-                            fontWeight: 600,
-                            fontSize: "0.9rem"
-                        }}>
-                            <span style={{ color: "#FB923C" }}>●</span>
-                            Créditos: <strong style={{ color: "#F8FAFC" }}>{creditsRemaining}</strong>
+                {/* Header */}
+                <div className="vant-flex vant-justify-between vant-items-center vant-mb-12 vant-animate-fade">
+                    <div>
+                        <h1 className="vant-title-xl">Análise Completa</h1>
+                        <p className="vant-subtitle">Diagnóstico profissional do seu currículo</p>
+                    </div>
+                    <div className="vant-badge-credits">
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+                        <span>{creditsRemaining} Créditos</span>
+                    </div>
+                </div>
+
+                {/* Score Cards */}
+                <div className="vant-grid-3 vant-mb-12 vant-animate-fade" style={{ animationDelay: '0.1s' }}>
+
+                    {/* Card Atual */}
+                    <div className="vant-glass-dark">
+                        <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
+                            <div className="vant-icon-circle"><Target size={20} color="#cbd5e1" /></div>
+                            <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Atual</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '3.5rem', fontWeight: 300, color: 'white', lineHeight: 1 }}>{xpAtual}</div>
+                            <div className="vant-text-sm vant-text-slate-400">de 100 pontos</div>
+                        </div>
+                        <div className="vant-score-bar-bg">
+                            <div className="vant-score-bar-fill" style={{ width: `${xpAtual}% ` }} />
                         </div>
                     </div>
 
-                    <div style={sectionGlassStyle}>
-                        <h1 style={{
-                            fontSize: "clamp(1.8rem, 3vw, 2.6rem)",
-                            fontWeight: 800,
-                            letterSpacing: "-0.03em",
-                            marginBottom: 6
-                        }}>
-                            Resultado da Análise
-                        </h1>
-                        <p style={{ color: "#CBD5E1", marginBottom: 20 }}>
-                            Visão estratégica do seu currículo para {reportData.setor_detectado || "sua área"}, com foco em clareza e ações de alto impacto.
-                        </p>
+                    {/* Card Potencial */}
+                    <div className="vant-glass-dark" style={{ borderColor: 'rgba(16, 185, 129, 0.3)', boxShadow: '0 0 30px rgba(16, 185, 129, 0.1)' }}>
+                        <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
+                            <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                                <Zap size={20} color="white" />
+                            </div>
+                            <span className="vant-text-sm vant-font-medium" style={{ color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Potencial</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '3.5rem', fontWeight: 300, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
+                                {projected.score}
+                            </div>
+                            <div className="vant-text-sm vant-text-slate-400">+{projected.improvement} pontos possíveis</div>
+                        </div>
+                        <div className="vant-mt-4" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '99px', color: '#34d399', fontSize: '0.875rem', fontWeight: 500 }}>
+                            <TrendingUp size={16} /> Top 5% dos candidatos
+                        </div>
+                    </div>
 
-                        <div style={{
-                            borderRadius: 20,
-                            border: "1px solid rgba(255,255,255,0.14)",
-                            background: "linear-gradient(140deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03))",
-                            backdropFilter: "blur(20px)",
-                            WebkitBackdropFilter: "blur(20px)",
-                            padding: "20px 18px",
-                            boxShadow: "0 30px 80px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.18)",
-                            position: "relative",
-                            overflow: "hidden"
-                        }}>
-                            <div style={{
-                                position: "absolute",
-                                inset: 0,
-                                background: "linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0))",
-                                pointerEvents: "none"
-                            }} />
+                    {/* Card Tempo */}
+                    <div className="vant-glass-dark">
+                        <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
+                            <div className="vant-icon-circle"><Clock size={20} color="#cbd5e1" /></div>
+                            <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estimativa</span>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '3.5rem', fontWeight: 300, color: 'white', lineHeight: 1 }}>{totalCorrectionMinutes}</div>
+                            <div className="vant-text-sm vant-text-slate-400">minutos de trabalho</div>
+                        </div>
+                        <div className="vant-text-xs vant-text-slate-400 vant-mt-4">Para aplicar correções</div>
+                    </div>
+                </div>
 
-                            <div style={{
-                                position: "relative",
-                                display: "grid",
-                                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-                                gap: 18,
-                                alignItems: "center"
-                            }}>
-                                <div style={{
-                                    borderRadius: 16,
-                                    border: "1px solid rgba(255,255,255,0.12)",
-                                    background: "rgba(10, 15, 30, 0.34)",
-                                    padding: "16px 14px"
-                                }}>
-                                    <div style={{ color: "#94A3B8", marginBottom: 8, fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                                        Senioridade Detectada
-                                    </div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                        <span style={{ fontSize: "1.3rem" }}>⚠️</span>
-                                        <strong style={{ fontSize: "1.55rem", color: seniorityColor, letterSpacing: "0.03em" }}>{seniorityLabel}</strong>
-                                    </div>
-                                    <p style={{ marginTop: 10, color: "#CBD5E1", lineHeight: 1.5 }}>
-                                        {seniorityMessage}
-                                    </p>
+                {/* Processing Banner */}
+                {cvStatus === 'processing' && (
+                    <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ padding: '1.5rem', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                        <div className="vant-flex vant-items-center vant-gap-4">
+                            <Loader className="vant-animate-spin" size={20} color="#fbbf24" />
+                            <div style={{ flex: 1 }}>
+                                <div className="vant-flex vant-justify-between vant-mb-2">
+                                    <span className="vant-text-sm vant-font-medium vant-text-white">Gerando CV Otimizado...</span>
+                                    <span className="vant-text-sm vant-text-slate-400">{cvProgress}%</span>
                                 </div>
-
-                                <div style={{
-                                    display: "flex",
-                                    gap: 18,
-                                    justifyContent: "center",
-                                    flexWrap: "wrap"
-                                }}>
-                                    <CircularGauge
-                                        value={xpAtual}
-                                        size={128}
-                                        color="#FB923C"
-                                        label="Score Atual"
-                                        valueLabel={`${xpAtual}%`}
-                                    />
-                                    <CircularGauge
-                                        value={projected.score}
-                                        size={158}
-                                        color="#22D3EE"
-                                        label="Potencial Projetado"
-                                        valueLabel={`${projected.score}/100`}
-                                        glow
-                                    />
+                                <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${cvProgress}% `, background: 'linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)', transition: 'width 0.5s ease' }} />
                                 </div>
                             </div>
-
-                            <p style={{
-                                position: "relative",
-                                marginTop: 16,
-                                color: "#E2E8F0",
-                                lineHeight: 1.6
-                            }}>
-                                Com pequenos ajustes de linguagem e estrutura, você pode evoluir <strong style={{ color: "#22D3EE" }}>+{projected.improvement}%</strong> e reduzir o risco de rejeição automática.
-                            </p>
                         </div>
                     </div>
+                )}
 
-                    <div style={{
-                        marginTop: 16,
-                        display: "flex",
-                        gap: 10,
-                        overflowX: "auto",
-                        paddingBottom: 4,
-                        scrollbarWidth: "thin"
-                    }}>
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                style={{
-                                    borderRadius: 999,
-                                    padding: "11px 16px",
-                                    border: activeTab === tab.id ? "1px solid rgba(249, 115, 22, 0.65)" : "1px solid rgba(255,255,255,0.14)",
-                                    background: activeTab === tab.id
-                                        ? "linear-gradient(140deg, rgba(249, 115, 22, 0.26), rgba(255,255,255,0.08))"
-                                        : "linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
-                                    color: activeTab === tab.id ? "#FFF7ED" : "#CBD5E1",
-                                    fontWeight: 600,
-                                    cursor: "pointer",
-                                    whiteSpace: "nowrap",
-                                    backdropFilter: "blur(18px)",
-                                    WebkitBackdropFilter: "blur(18px)",
-                                    boxShadow: activeTab === tab.id ? "0 10px 26px rgba(249,115,22,0.24)" : "none",
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 8
-                                }}
-                            >
-                                {loadingTabs[tab.id] ? (
-                                    <>
-                                        <span style={{
-                                            width: 14,
-                                            height: 14,
-                                            borderRadius: "50%",
-                                            border: "2px solid currentColor",
-                                            borderTopColor: "transparent",
-                                            animation: "spin 1s linear infinite"
-                                        }} />
-                                        IA processando
-                                    </>
-                                ) : tab.label}
-                            </button>
-                        ))}
-                    </div>
-                </header>
+                {/* Navigation Tabs */}
+                <div className="vant-flex vant-gap-2 vant-mb-8" style={{ overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                    {[
+                        { id: "diagnostico", icon: AlertCircle, label: "Diagnóstico" },
+                        { id: "cv", icon: FileText, label: "CV Otimizado" },
+                        { id: "biblioteca", icon: BookOpen, label: "Biblioteca" },
+                        { id: "simulador", icon: MessageSquare, label: "Simulador" }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`vant-btn-tab ${activeTab === tab.id ? 'active' : ''}`}
+                        >
+                            {loadingTabs[tab.id as keyof typeof loadingTabs] ? <Loader className="vant-animate-spin" size={16} /> : <tab.icon size={16} />}
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
 
-                <div style={tabContentGlassStyle}>
+                {/* Conteúdo das Abas */}
+                <div className="vant-animate-fade" style={{ animationDelay: '0.2s' }}>
+
                     {activeTab === "diagnostico" && (
-                        <div style={{ maxWidth: 980, margin: "0 auto" }}>
-                            {loadingTabs.diagnostico ? (
-                                <LoadingPlaceholder
-                                    title="🔍 Analisando seu currículo..."
-                                    description="Estamos examinando seu currículo em detalhes para identificar gaps críticos, oportunidades de melhoria e alinhamento com o mercado. Este processo leva cerca de 15-20 segundos."
-                                />
-                            ) : (
-                                <>
-                                    <h3 style={{ color: "#F8FAFC", marginBottom: 18, fontSize: "1.45rem", fontWeight: 700 }}>
-                                        Plano de Correção
-                                    </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-                                    <div style={{ display: "grid", gap: 12 }}>
-                                        {reportData.gaps_fatais?.map((gap, idx) => {
-                                            const isOpen = openGapIndex === idx;
-                                            return (
-                                                <div
-                                                    key={idx}
-                                                    style={{
-                                                        borderRadius: 16,
-                                                        border: "1px solid rgba(255,255,255,0.12)",
-                                                        background: "linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
-                                                        backdropFilter: "blur(20px)",
-                                                        WebkitBackdropFilter: "blur(20px)",
-                                                        overflow: "hidden",
-                                                        boxShadow: "0 14px 34px rgba(0,0,0,0.24)"
-                                                    }}
-                                                >
-                                                    <button
-                                                        onClick={() => setOpenGapIndex(isOpen ? null : idx)}
-                                                        style={{
-                                                            width: "100%",
-                                                            border: "none",
-                                                            background: "transparent",
-                                                            padding: "14px 16px",
-                                                            textAlign: "left",
-                                                            display: "flex",
-                                                            justifyContent: "space-between",
-                                                            alignItems: "center",
-                                                            color: "#F8FAFC",
-                                                            cursor: "pointer"
-                                                        }}
-                                                    >
-                                                        <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontWeight: 600 }}>
-                                                            <span style={{ color: "#FB923C" }}>{idx + 1 <= 2 ? "⚡" : "⚠️"}</span>
-                                                            {idx + 1}. {gap.erro}
-                                                        </span>
-                                                        <span style={{ color: "#CBD5E1", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.25s ease" }}>⌄</span>
-                                                    </button>
-
-                                                    {isOpen && (
-                                                        <div style={{ padding: "0 16px 16px" }}>
-                                                            <div
-                                                                style={{
-                                                                    color: "#CBD5E1",
-                                                                    lineHeight: 1.6,
-                                                                    marginBottom: 12,
-                                                                    fontStyle: "italic"
-                                                                }}
-                                                                dangerouslySetInnerHTML={{ __html: `Evidência: \"${formatDiagnostic(gap.evidencia)}\"` }}
-                                                            />
-
-                                                            <div
-                                                                style={{
-                                                                    borderRadius: 12,
-                                                                    border: "1px solid rgba(34, 211, 238, 0.34)",
-                                                                    background: "linear-gradient(135deg, rgba(34,211,238,0.12), rgba(255,255,255,0.05))",
-                                                                    padding: "12px 13px",
-                                                                    color: "#F8FAFC",
-                                                                    lineHeight: 1.55,
-                                                                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14)"
-                                                                }}
-                                                                dangerouslySetInnerHTML={{ __html: `💡 ${formatDiagnostic(gap.correcao_sugerida)}` }}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    <div style={{
-                                        marginTop: 24,
-                                        display: "grid",
-                                        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                                        gap: 14
-                                    }}>
-                                        <div style={{
-                                            borderRadius: 16,
-                                            border: "1px solid rgba(255,255,255,0.12)",
-                                            background: "linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
-                                            backdropFilter: "blur(20px)",
-                                            WebkitBackdropFilter: "blur(20px)",
-                                            padding: 16
-                                        }}>
-                                            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 10, alignItems: "center" }}>
-                                                <strong style={{ color: "#F8FAFC", fontSize: "1rem" }}>💼 Headline LinkedIn</strong>
-                                                <button
-                                                    onClick={() => handleCopyText("headline", reportData.linkedin_headline || "")}
-                                                    style={{
-                                                        borderRadius: 999,
-                                                        border: "1px solid rgba(255,255,255,0.14)",
-                                                        background: "rgba(255,255,255,0.08)",
-                                                        color: "#E2E8F0",
-                                                        padding: "6px 11px",
-                                                        cursor: "pointer",
-                                                        fontSize: "0.8rem"
-                                                    }}
-                                                >
-                                                    {copiedField === "headline" ? "✓ Copiado" : "📋 Copiar texto"}
-                                                </button>
+                            {/* LinkedIn Headline */}
+                            {reportData.linkedin_headline && (
+                                <div className="vant-glass-darker">
+                                    <div className="vant-flex vant-justify-between vant-mb-6">
+                                        <div className="vant-flex vant-gap-4">
+                                            <div className="vant-icon-circle" style={{ width: '3rem', height: '3rem', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', borderRadius: '1rem' }}>
+                                                <Linkedin size={24} color="white" />
                                             </div>
-                                            <pre style={{
-                                                margin: 0,
-                                                whiteSpace: "pre-wrap",
-                                                color: "#E2E8F0",
-                                                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                                                lineHeight: 1.55,
-                                                background: "rgba(5,10,20,0.42)",
-                                                borderRadius: 12,
-                                                border: "1px solid rgba(255,255,255,0.10)",
-                                                padding: 12
-                                            }}>
-                                                {reportData.linkedin_headline || "Sem conteúdo no momento."}
-                                            </pre>
-                                        </div>
-
-                                        <div style={{
-                                            borderRadius: 16,
-                                            border: "1px solid rgba(255,255,255,0.12)",
-                                            background: "linear-gradient(140deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))",
-                                            backdropFilter: "blur(20px)",
-                                            WebkitBackdropFilter: "blur(20px)",
-                                            padding: 16
-                                        }}>
-                                            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 10, alignItems: "center" }}>
-                                                <strong style={{ color: "#F8FAFC", fontSize: "1rem" }}>📝 Resumo Profissional</strong>
-                                                <button
-                                                    onClick={() => handleCopyText("summary", reportData.resumo_otimizado || "")}
-                                                    style={{
-                                                        borderRadius: 999,
-                                                        border: "1px solid rgba(255,255,255,0.14)",
-                                                        background: "rgba(255,255,255,0.08)",
-                                                        color: "#E2E8F0",
-                                                        padding: "6px 11px",
-                                                        cursor: "pointer",
-                                                        fontSize: "0.8rem"
-                                                    }}
-                                                >
-                                                    {copiedField === "summary" ? "✓ Copiado" : "📋 Copiar texto"}
-                                                </button>
+                                            <div>
+                                                <h3 className="vant-h3">LinkedIn Headline</h3>
+                                                <p className="vant-text-sm vant-text-slate-400">Otimizado para visibilidade</p>
                                             </div>
-                                            <pre style={{
-                                                margin: 0,
-                                                whiteSpace: "pre-wrap",
-                                                color: "#E2E8F0",
-                                                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                                                lineHeight: 1.55,
-                                                background: "rgba(5,10,20,0.42)",
-                                                borderRadius: 12,
-                                                border: "1px solid rgba(255,255,255,0.10)",
-                                                padding: 12
-                                            }}>
-                                                {reportData.resumo_otimizado || "Sem conteúdo no momento."}
-                                            </pre>
                                         </div>
+                                        <button onClick={() => copyToClipboard(reportData.linkedin_headline!, 'headline')} className="vant-btn-copy">
+                                            {copiedField === 'headline' ? <CheckCircle size={16} color="#34d399" /> : <Copy size={16} />}
+                                            {copiedField === 'headline' ? 'Copiado' : 'Copiar'}
+                                        </button>
                                     </div>
-
-                                    <div style={{
-                                        marginTop: 20,
-                                        borderRadius: 18,
-                                        border: "1px solid rgba(251, 146, 60, 0.5)",
-                                        background: "linear-gradient(135deg, rgba(249,115,22,0.16), rgba(34,211,238,0.07), rgba(255,255,255,0.04))",
-                                        backdropFilter: "blur(20px)",
-                                        WebkitBackdropFilter: "blur(20px)",
-                                        boxShadow: "0 24px 54px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.16)",
-                                        padding: 20
-                                    }}>
-                                        <h3 style={{ color: "#F8FAFC", marginBottom: 10, fontSize: "1.2rem" }}>
-                                            Bônus: Acesso ao Mercado Oculto (X-Ray Search)
-                                        </h3>
-                                        <p style={{ color: "#CBD5E1", marginBottom: 14, lineHeight: 1.55 }}>
-                                            Use uma busca avançada para encontrar recrutadores e gestores fora das vagas abertas tradicionais.
-                                        </p>
-
-                                        <a href={googleLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-                                            <button style={{
-                                                width: "100%",
-                                                border: "none",
-                                                borderRadius: 12,
-                                                padding: "14px 18px",
-                                                cursor: "pointer",
-                                                background: "linear-gradient(180deg, #FB923C 0%, #F97316 52%, #EA580C 100%)",
-                                                color: "#2A1202",
-                                                fontWeight: 800,
-                                                fontSize: "1rem",
-                                                boxShadow: "0 16px 34px rgba(249,115,22,0.35)"
-                                            }}>
-                                                🔍 Rodar Busca Avançada no Google
-                                            </button>
-                                        </a>
+                                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <p className="vant-text-white" style={{ fontWeight: 500 }}>{reportData.linkedin_headline}</p>
                                     </div>
-                                </>
+                                </div>
                             )}
+
+                            {/* Resumo */}
+                            {reportData.resumo_otimizado && (
+                                <div className="vant-glass-darker">
+                                    <div className="vant-flex vant-justify-between vant-mb-6">
+                                        <div className="vant-flex vant-gap-4">
+                                            <div className="vant-icon-circle" style={{ width: '3rem', height: '3rem', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', borderRadius: '1rem' }}>
+                                                <User size={24} color="white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="vant-h3">Resumo Profissional</h3>
+                                                <p className="vant-text-sm vant-text-slate-400">Pronto para seu CV e LinkedIn</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => copyToClipboard(reportData.resumo_otimizado!, 'summary')} className="vant-btn-copy">
+                                            {copiedField === 'summary' ? <CheckCircle size={16} color="#34d399" /> : <Copy size={16} />}
+                                            {copiedField === 'summary' ? 'Copiado' : 'Copiar'}
+                                        </button>
+                                    </div>
+                                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <p style={{ color: '#e2e8f0', lineHeight: 1.6 }}>{reportData.resumo_otimizado}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Gaps */}
+                            <div>
+                                <div className="vant-flex vant-justify-between vant-items-center vant-mb-6">
+                                    <h2 className="vant-h2">Plano de Correção</h2>
+                                    <span className="vant-text-sm vant-text-slate-400" style={{ background: 'rgba(255,255,255,0.1)', padding: '0.25rem 0.75rem', borderRadius: 99 }}>
+                                        {diagnosticGaps.length} pontos críticos
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {diagnosticGaps.map((gap, index) => {
+                                        const isExpanded = expandedGaps[index];
+                                        const styles = getSeveridadeStyles(gap.severidade);
+
+                                        return (
+                                            <div key={gap.id} className="vant-glass-dark" style={{ padding: 0, overflow: 'hidden' }}>
+                                                <div
+                                                    onClick={() => setExpandedGaps(prev => ({ ...prev, [index]: !prev[index] }))}
+                                                    style={{ padding: '1.5rem', cursor: 'pointer', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}
+                                                >
+                                                    <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: styles.bg, border: `1px solid ${styles.border} `, color: styles.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                                        {gap.id}
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div className="vant-flex vant-items-center vant-gap-2 vant-mb-2">
+                                                            <h3 className="vant-text-white" style={{ fontWeight: 600 }}>{gap.titulo}</h3>
+                                                            <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '4px', background: styles.bg, color: styles.text, border: `1px solid ${styles.border} `, textTransform: 'uppercase' }}>
+                                                                {gap.impacto}
+                                                            </span>
+                                                        </div>
+                                                        <p className="vant-text-slate-400 vant-text-sm">{gap.evidencia}</p>
+                                                    </div>
+                                                    {isExpanded ? <ChevronUp size={20} color="#94a3b8" /> : <ChevronDown size={20} color="#94a3b8" />}
+                                                </div>
+
+                                                {isExpanded && (
+                                                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        <div className="vant-grid-2">
+                                                            <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                                                                <div className="vant-text-xs" style={{ color: '#f87171', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase' }}>Como está agora</div>
+                                                                <p className="vant-text-sm" style={{ color: '#cbd5e1', fontStyle: 'italic' }}>"{gap.exemploAtual}"</p>
+                                                            </div>
+                                                            <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+                                                                <div className="vant-text-xs" style={{ color: '#34d399', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase' }}>Recomendação</div>
+                                                                <div className="vant-text-sm vant-rich-text" style={{ color: '#f1f5f9' }} dangerouslySetInnerHTML={{ __html: gap.exemploOtimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
                     )}
 
                     {activeTab === "cv" && (
-                        <div style={{ maxWidth: 850, margin: "0 auto" }}>
-                            {loadingTabs.cv ? (
-                                <LoadingPlaceholder
-                                    title="✍️ Otimizando seu currículo..."
-                                    description="Nossa IA está reestruturando seu currículo para destacar seus pontos fortes, adicionar métricas de impacto e alinhar com as melhores práticas do mercado. Este processo leva cerca de 20-30 segundos."
-                                />
+                        <div className="vant-glass-dark">
+                            <h2 className="vant-h2 vant-mb-6">CV Otimizado Completo</h2>
+                            {reportData.cv_otimizado_completo ? (
+                                <div className="vant-scroll-area">
+                                    {isHtmlCv ? (
+                                        <div className="vant-cv-html-container">
+                                            <iframe
+                                                srcDoc={cvContent}
+                                                style={{
+                                                    width: '100%',
+                                                    minHeight: '800px',
+                                                    border: 'none',
+                                                    borderRadius: '0.75rem',
+                                                    background: 'white'
+                                                }}
+                                                title="CV Otimizado"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="vant-cv-wrapper">
+                                            <pre className="vant-cv-plain">{cvContent}</pre>
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
-                                <>
-                                    <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>🚀 Currículo Reestruturado Integralmente</h3>
-
-                                    <details open={isEditorOpen} style={{
-                                        background: "rgba(15, 23, 42, 0.4)",
-                                        border: "1px solid rgba(255,255,255,0.05)",
-                                        borderRadius: 8,
-                                        padding: "12px",
-                                        marginBottom: 20,
-                                        cursor: "pointer"
-                                    }}>
-                                        <summary
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                setIsEditorOpen(!isEditorOpen);
-                                                if (!isEditorOpen) {
-                                                    setEditedCvText(reportData.cv_otimizado_completo || "");
-                                                }
-                                            }}
-                                            style={{ fontWeight: 600, color: "#CBD5E1", cursor: "pointer" }}
-                                        >
-                                            ✏️ ENCONTROU UM ERRO? CLIQUE PARA EDITAR O TEXTO
-                                        </summary>
-                                        {isEditorOpen && (
-                                            <div style={{ marginTop: 15 }}>
-                                                <div style={{
-                                                    background: "rgba(56, 189, 248, 0.1)",
-                                                    border: "1px solid rgba(56, 189, 248, 0.3)",
-                                                    borderRadius: 6,
-                                                    padding: 12,
-                                                    marginBottom: 12,
-                                                    color: "#38BDF8",
-                                                    fontSize: "0.85rem"
-                                                }}>
-                                                    💡 Dica: Use **texto em negrito** para destacar cargos e empresas. Use | para separar cargo | empresa | data.
-                                                </div>
-                                                <textarea
-                                                    value={editedCvText}
-                                                    onChange={(e) => setEditedCvText(e.target.value)}
-                                                    style={{
-                                                        width: "100%",
-                                                        height: 400,
-                                                        background: "rgba(15, 23, 42, 0.6)",
-                                                        border: "1px solid rgba(56, 189, 248, 0.3)",
-                                                        borderRadius: 6,
-                                                        padding: 16,
-                                                        color: "#F8FAFC",
-                                                        fontFamily: "monospace",
-                                                        fontSize: "14px",
-                                                        lineHeight: 1.6,
-                                                        resize: "vertical"
-                                                    }}
-                                                    placeholder="Cole seu currículo aqui..."
-                                                />
-                                                <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
-                                                    <button
-                                                        onClick={handleSaveEdit}
-                                                        style={{
-                                                            background: "#10B981",
-                                                            color: "white",
-                                                            border: "none",
-                                                            padding: "10px 20px",
-                                                            borderRadius: 6,
-                                                            fontWeight: 600,
-                                                            cursor: "pointer"
-                                                        }}
-                                                    >
-                                                        💾 SALVAR
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setIsEditorOpen(false)}
-                                                        style={{
-                                                            background: "transparent",
-                                                            color: "#CBD5E1",
-                                                            border: "1px solid #CBD5E1",
-                                                            padding: "10px 20px",
-                                                            borderRadius: 6,
-                                                            fontWeight: 600,
-                                                            cursor: "pointer"
-                                                        }}
-                                                    >
-                                                        CANCELAR
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </details>
-
-                                    <div className="cv-paper-sheet" style={{ padding: 32, fontSize: "15px", lineHeight: 1.7 }}>
-                                        <div dangerouslySetInnerHTML={{ __html: formatTextToHtml(reportData.cv_otimizado_completo || "") }} />
-                                    </div>
-
-                                    <div style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                                        <button
-                                            onClick={handleDownloadPdf}
-                                            style={{
-                                                background: "#10B981",
-                                                color: "white",
-                                                border: "none",
-                                                padding: "12px 20px",
-                                                borderRadius: 8,
-                                                fontWeight: 600,
-                                                cursor: "pointer"
-                                            }}
-                                        >
-                                            📄 BAIXAR PDF
-                                        </button>
-                                        <button
-                                            onClick={handleDownloadWord}
-                                            style={{
-                                                background: "transparent",
-                                                color: "#F8FAFC",
-                                                border: "2px solid #F8FAFC",
-                                                padding: "12px 20px",
-                                                borderRadius: 8,
-                                                fontWeight: 600,
-                                                cursor: "pointer"
-                                            }}
-                                        >
-                                            📝 BAIXAR WORD (EDITÁVEL)
-                                        </button>
-                                    </div>
-                                </>
+                                <div style={{ textAlign: 'center', padding: '3rem' }}>
+                                    <Loader className="vant-animate-spin" size={32} color="#94a3b8" style={{ margin: '0 auto' }} />
+                                    <p className="vant-text-slate-400 vant-mt-4">Gerando documento...</p>
+                                </div>
                             )}
                         </div>
                     )}
 
                     {activeTab === "biblioteca" && (
-                        <div style={{ maxWidth: 850, margin: "0 auto" }}>
-                            {loadingTabs.biblioteca ? (
-                                <LoadingPlaceholder
-                                    title="📚 Montando sua biblioteca técnica..."
-                                    description="Estamos compilando os melhores livros, artigos e recursos técnicos específicos para sua área e nível de senioridade. Este processo leva cerca de 15-25 segundos."
-                                />
-                            ) : (
-                                <>
-                                    <h3 style={{ color: "#F8FAFC", marginBottom: 20 }}>📚 Biblioteca Definitiva</h3>
-                                    {reportData.biblioteca_tecnica?.map((book, idx) => (
-                                        <BookCard key={idx} book={book} index={idx} />
-                                    ))}
-                                </>
-                            )}
+                        <div className="vant-grid-2">
+                            {reportData.biblioteca_tecnica?.map((book, idx) => (
+                                <BookCard key={idx} book={book} index={idx} />
+                            ))}
                         </div>
                     )}
 
                     {activeTab === "simulador" && (
-                        <div style={{ maxWidth: 850, margin: "0 auto" }}>
-                            {loadingTabs.simulador ? (
-                                <LoadingPlaceholder
-                                    title="🎙️ Preparando simulador de entrevista..."
-                                    description="Estamos gerando perguntas personalizadas baseadas no seu CV e na vaga alvo. O simulador incluirá questões comportamentais, técnicas e situacionais relevantes para sua área."
-                                />
-                            ) : (
-                                <InterviewSimulator
-                                    reportData={reportData}
-                                    onProgress={(questionIndex, total) => {
-                                        if (questionIndex === total) {
-                                            setLoadingTabs(prev => ({ ...prev, simulador: false }));
-                                        }
-                                    }}
-                                />
-                            )}
-                        </div>
+                        <InterviewSimulator reportData={reportData} onProgress={() => { }} />
                     )}
-                </div>
-            </div>
 
-            {/* Botões de Ação */}
-            <div style={{ marginTop: 30, padding: "0 0 26px" }}>
-                <div style={{
-                    maxWidth: 1200,
-                    margin: "0 auto",
-                    borderTop: "1px solid rgba(255,255,255,0.08)",
-                    paddingTop: 20,
-                    background: "rgba(2,6,23,0.55)",
-                    borderRadius: 18,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    backdropFilter: "blur(18px)",
-                    WebkitBackdropFilter: "blur(18px)",
-                    boxShadow: "0 18px 34px rgba(0,0,0,0.3)",
-                    paddingLeft: 16,
-                    paddingRight: 16,
-                    paddingBottom: 16
-                }}>
-                    <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", gap: 16, marginBottom: 0, flexWrap: "wrap" }}>
-                        <button
-                            onClick={() => { window.location.href = "/dashboard"; }}
-                            style={{
-                                background: "rgba(255,255,255,0.03)",
-                                border: "1px solid rgba(255,255,255,0.22)",
-                                color: "#E2E8F0",
-                                padding: "12px 24px",
-                                borderRadius: 50,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                flex: "1 1 260px",
-                                minHeight: 52
-                            }}
-                        >
-                            ← Voltar ao Dashboard
+                </div>
+
+                {/* Footer */}
+                <div className="vant-glass-darker vant-mt-12 vant-mb-12" style={{ textAlign: 'center' }}>
+                    <h3 className="vant-h3 vant-mb-2">Pronto para o próximo passo?</h3>
+                    <p className="vant-subtitle vant-mb-6">Aplique as melhorias e gere uma nova análise.</p>
+                    <div className="vant-flex vant-justify-center vant-gap-4" style={{ flexWrap: 'wrap' }}>
+                        <button onClick={() => window.location.href = "/dashboard"} className="vant-btn-outline">
+                            <ArrowLeft size={18} /> Voltar ao Dashboard
                         </button>
-                        <button
-                            onClick={onNewOptimization}
-                            style={{
-                                background: "linear-gradient(180deg, #FB923C 0%, #F97316 52%, #EA580C 100%)",
-                                border: "none",
-                                color: "#2A1202",
-                                padding: "12px 24px",
-                                borderRadius: 50,
-                                fontWeight: 800,
-                                cursor: "pointer",
-                                flex: "1 1 260px",
-                                minHeight: 52,
-                                boxShadow: "0 12px 30px rgba(249, 115, 22, 0.35)"
-                            }}
-                        >
-                            Aplicar Correções
+                        <button onClick={onNewOptimization} className="vant-btn-primary">
+                            <Zap size={18} /> Nova Otimização
                         </button>
                     </div>
                 </div>
+
             </div>
         </div>
     );

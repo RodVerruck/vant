@@ -407,7 +407,7 @@ export default function AppPage() {
         }
         return false;
     });
-    const [selectedPlan, setSelectedPlan] = useState<PlanType>("basico");
+    const [selectedPlan, setSelectedPlan] = useState<PlanType>("credit_1");
     const [jobDescription, setJobDescription] = useState("");
     const [useGenericJob, setUseGenericJob] = useState(false);
     const [selectedArea, setSelectedArea] = useState("");
@@ -1210,6 +1210,14 @@ export default function AppPage() {
     useEffect(() => {
         if (!authUserId || typeof window === "undefined") return;
 
+        // Abortar Smart Redirect se estivermos processando um cancelamento de pagamento
+        // Isso evita que o usuário seja jogado de volta para o checkout
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("payment") === "cancel") {
+            console.log("[Smart Redirect] Pagamento cancelado detectado, abortando redirecionamento automático.");
+            return;
+        }
+
         (async () => {
             const returnStage = localStorage.getItem("vant_auth_return_stage");
             let returnPlan = localStorage.getItem("vant_auth_return_plan");
@@ -1224,24 +1232,30 @@ export default function AppPage() {
                 if (!restored) {
                     console.warn("[Smart Redirect] Snapshot encontrado, mas dados incompletos. Mantendo fluxo padrão.");
                 } else {
-                    // Buscar créditos com cache primeiro, fallback para API
+                    // Buscar créditos com cache primeiro, mas sempre confirmar plano ativo via API
                     let credits = 0;
                     const cachedCredits = localStorage.getItem('vant_cached_credits');
                     if (cachedCredits) {
                         credits = parseInt(cachedCredits, 10) || 0;
                     }
 
-                    if (!cachedCredits) {
-                        try {
-                            const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
-                            if (resp.ok) {
-                                const data = await resp.json();
-                                credits = Number(data.credits_remaining || 0);
-                                localStorage.setItem('vant_cached_credits', String(credits));
+                    let hasPlan = false;
+                    try {
+                        const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            credits = Number(data.credits_remaining || 0);
+                            hasPlan = !!data.plan; // Verificar se tem plano ativo (trial, pro, etc)
+                            localStorage.setItem('vant_cached_credits', String(credits));
+                            if (data.plan) {
+                                localStorage.setItem('vant_cached_plan', String(data.plan));
+                            } else {
+                                localStorage.removeItem('vant_cached_plan');
                             }
-                        } catch (error) {
-                            console.warn("[Smart Redirect] Falha ao buscar créditos via API:", error);
                         }
+                    } catch (error) {
+                        console.warn("[Smart Redirect] Falha ao buscar créditos/plano via API:", error);
+                        hasPlan = !!localStorage.getItem('vant_cached_plan');
                     }
 
                     setCreditsRemaining(credits);
@@ -1250,13 +1264,27 @@ export default function AppPage() {
                     setPremiumError("");
                     setCheckoutError("");
 
-                    if (credits > 0) {
-                        setSelectedPlan("premium_plus");
-                        console.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Aguardando confirmação para consumir crédito...");
-                        setShowSmartRedirectCreditsModal(true);
+                    // Usuário é premium se tem créditos OU tem plano ativo (mesmo com 0 créditos no período)
+                    if (credits > 0 || hasPlan) {
+                        if (credits > 0) {
+                            setSelectedPlan("pro_monthly_early_bird");
+                            console.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Aguardando confirmação para consumir crédito...");
+                            setShowSmartRedirectCreditsModal(true);
+                        } else {
+                            setSelectedPlan("credit_1");
+                            console.log("[Smart Redirect] Usuário com assinatura ativa mas sem créditos disponíveis no período. Indo para checkout de crédito avulso.");
+                            setCheckoutError("Você já utilizou todos os créditos do período atual. Aguarde a renovação ou compre crédito avulso.");
+                            setStage("checkout");
+                        }
                     } else {
                         if (previewSnapshot.selectedPlan) {
-                            setSelectedPlan(previewSnapshot.selectedPlan);
+                            const raw = previewSnapshot.selectedPlan as string;
+                            const normalizedPlan = raw === "basico"
+                                ? "credit_1"
+                                : raw === "premium_plus"
+                                    ? "pro_monthly_early_bird"
+                                    : raw;
+                            setSelectedPlan(normalizedPlan as PlanType);
                         }
                         console.log("[Smart Redirect] Usuário Free detectado com análise pendente. Enviando para checkout...");
                         setStage("checkout");
@@ -1285,6 +1313,9 @@ export default function AppPage() {
             const hasAutoStartFlag = !!localStorage.getItem("vant_auto_start");
             const hasPendingAutoStart = pendingAutoStart.current;
             const hasSkipPreviewFlag = !!localStorage.getItem("vant_skip_preview");
+            const hasSavedDraft = !!localStorage.getItem("vant_jobDescription") && (
+                !!localStorage.getItem("vant_file_b64") || !!localStorage.getItem("vant_cv_text_preextracted")
+            );
             // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
             const hasNonHeroStage = stage !== "hero";
             const hasActiveFlow =
@@ -1296,7 +1327,8 @@ export default function AppPage() {
                 hasAutoProcess ||
                 hasAutoStartFlag ||
                 hasPendingAutoStart ||
-                hasSkipPreviewFlag;
+                hasSkipPreviewFlag ||
+                hasSavedDraft;
 
             console.log("[Auth] Verificando fluxo:", {
                 returnPlan: !!returnPlan,
@@ -1307,6 +1339,7 @@ export default function AppPage() {
                 hasAutoStartFlag,
                 hasPendingAutoStart,
                 hasSkipPreviewFlag,
+                hasSavedDraft,
                 stage
             });
 
@@ -1325,7 +1358,13 @@ export default function AppPage() {
                 localStorage.removeItem("vant_auth_return_stage");
             } else if (returnStage) {
                 localStorage.removeItem("vant_auth_return_stage");
-                if (returnStage !== "hero") {
+                if (returnStage === "checkout") {
+                    // Se returnStage é checkout, ir direto para checkout sem processar
+                    console.log("[Restoration] Usuário sem créditos, indo direto para checkout de crédito avulso...");
+                    setSelectedPlan("credit_1");
+                    setCheckoutError("Você precisa de créditos para processar esta análise. Compre crédito avulso para continuar.");
+                    setStage("checkout");
+                } else if (returnStage !== "hero") {
                     console.log("[Restoration] Restaurando stage:", returnStage);
                     setStage(returnStage as AppStage);
                 }
@@ -1376,7 +1415,7 @@ export default function AppPage() {
                         if (data.credits_remaining > 0) {
                             setCreditsRemaining(data.credits_remaining);
                             localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
-                            setSelectedPlan("premium_plus");
+                            setSelectedPlan("pro_monthly_early_bird");
                             console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
                         }
                     }
@@ -1499,7 +1538,7 @@ export default function AppPage() {
                     body: JSON.stringify({
                         session_id: stripeSessionId,
                         user_id: authUserId,
-                        plan_id: selectedPlan || "basico"
+                        plan_id: selectedPlan || "credit_1"
                     }),
                 });
                 let data: JsonObject = {};
@@ -1599,13 +1638,36 @@ export default function AppPage() {
         // Resetar estado de ativação ao iniciar novo checkout
         activationAttempted.current = false;
 
-        const planId = (selectedPlan || "basico").trim();
+        const rawPlanId = (selectedPlan || "credit_1").trim() as string;
+        const planId = rawPlanId === "basico"
+            ? "credit_1"
+            : rawPlanId === "premium_plus"
+                ? "pro_monthly_early_bird"
+                : rawPlanId;
 
-        // Bloquear assinatura se usuário já tem plano ativo
+        // Verificar se usuário tem plano ativo antes de permitir checkout de assinatura
         const subscriptionPlans = ["pro_monthly", "pro_monthly_early_bird", "pro_annual", "trial"];
-        if (subscriptionPlans.includes(planId) && creditsRemaining > 0) {
-            setCheckoutError("Você já possui uma assinatura ativa. Para comprar mais créditos, escolha um pacote avulso (1 ou 3 CVs).");
-            return;
+        if (subscriptionPlans.includes(planId) && authUserId) {
+            try {
+                const statusResp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                if (statusResp.ok) {
+                    const statusData = await statusResp.json();
+                    const hasPlan = !!statusData.plan;
+                    const credits = Number(statusData.credits_remaining || 0);
+
+                    if (hasPlan) {
+                        // Usuário tem assinatura ativa
+                        if (credits > 0) {
+                            setCheckoutError("Você já possui uma assinatura ativa com créditos disponíveis. Use seus créditos ou escolha um pacote avulso.");
+                        } else {
+                            setCheckoutError("Você já utilizou todos os créditos do período atual. Aguarde a renovação mensal ou compre crédito avulso (1 CV).");
+                        }
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.warn("[startCheckout] Falha ao verificar status do usuário:", error);
+            }
         }
 
         try {
@@ -1628,6 +1690,13 @@ export default function AppPage() {
             const payload = (await resp.json()) as JsonObject;
             if (!resp.ok) {
                 const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status} `;
+
+                // Tratar erro específico de assinatura ativa
+                if (err.includes("assinatura ativa") || err.includes("ACTIVE_SUBSCRIPTION_EXISTS")) {
+                    setCheckoutError("Você já possui uma assinatura ativa. Para comprar mais créditos, escolha 1 crédito avulso.");
+                    return;
+                }
+
                 throw new Error(err);
             }
             if (typeof payload.id === "string") {
@@ -2014,6 +2083,9 @@ export default function AppPage() {
                 const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
                 const hasAutoStartFlag = !!localStorage.getItem("vant_auto_start");
                 const hasSkipPreviewFlag = !!localStorage.getItem("vant_skip_preview");
+                const hasSavedDraft = !!localStorage.getItem("vant_jobDescription") && (
+                    !!localStorage.getItem("vant_file_b64") || !!localStorage.getItem("vant_cv_text_preextracted")
+                );
                 // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
                 const hasNonHeroStage = stage !== "hero";
                 const hasActiveFlow =
@@ -2023,7 +2095,8 @@ export default function AppPage() {
                     hasNonHeroStage ||
                     hasAutoProcess ||
                     hasAutoStartFlag ||
-                    hasSkipPreviewFlag;
+                    hasSkipPreviewFlag ||
+                    hasSavedDraft;
 
                 console.log("[initialAuthCheck] Verificando fluxo:", {
                     hasHistoryItem: !!hasHistoryItem,
@@ -2033,6 +2106,7 @@ export default function AppPage() {
                     hasAutoProcess,
                     hasAutoStartFlag,
                     hasSkipPreviewFlag,
+                    hasSavedDraft,
                     stage
                 });
 
@@ -4540,7 +4614,12 @@ export default function AppPage() {
                     <div className="hero-container checkout-hero-container">
                         <div className="action-island-container checkout-island-container">
                             {(() => {
-                                const planId = (selectedPlan || "premium_plus").trim();
+                                const rawPlanId = (selectedPlan || "credit_1").trim() as string;
+                                const planId = rawPlanId === "basico"
+                                    ? "credit_1"
+                                    : rawPlanId === "premium_plus"
+                                        ? "pro_monthly_early_bird"
+                                        : rawPlanId;
 
                                 const prices: any = {
                                     credit_1: {
@@ -4549,17 +4628,17 @@ export default function AppPage() {
                                         billing: "one_time",
                                         desc: "Otimização pontual"
                                     },
-                                    credit_3: {
-                                        price: 29.90,
-                                        name: "Pacote 3 Créditos",
-                                        billing: "one_time",
-                                        desc: "3 otimizações completas"
-                                    },
                                     pro_monthly: {
                                         price: 27.90,
                                         name: "VANT Pro Mensal",
                                         billing: "subscription",
                                         desc: "Otimizações ilimitadas"
+                                    },
+                                    pro_monthly_early_bird: {
+                                        price: 19.90,
+                                        name: "VANT Pro Mensal (Early Bird)",
+                                        billing: "subscription",
+                                        desc: "Preço vitalício especial"
                                     },
                                     pro_annual: {
                                         price: 239.00,
@@ -4572,22 +4651,10 @@ export default function AppPage() {
                                         name: "Trial 7 Dias",
                                         billing: "trial",
                                         desc: "Teste PRO por 7 dias"
-                                    },
-                                    premium_plus: {
-                                        price: 29.90,
-                                        name: "VANT Pro Mensal (Legacy)",
-                                        billing: "subscription",
-                                        desc: "Plano legado"
-                                    },
-                                    basico: {
-                                        price: 9.90,
-                                        name: "1 Crédito (Legacy)",
-                                        billing: "one_time",
-                                        desc: "Plano legado"
-                                    },
+                                    }
                                 };
 
-                                const plan = prices[planId] || prices.premium_plus;
+                                const plan = prices[planId] || prices.pro_monthly_early_bird || prices.credit_1;
                                 // CORREÇÃO: Trial também é um fluxo de assinatura/recorrência
                                 const isSubscription = plan.billing === "subscription" || plan.billing === "trial";
 
@@ -4950,6 +5017,47 @@ export default function AppPage() {
                                                 {checkoutError && checkoutError !== "__WRONG_PASSWORD__" && (
                                                     <div style={{ padding: 10, background: checkoutError.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", border: `1px solid ${checkoutError.startsWith("✅") ? "#10B981" : "#EF4444"}`, borderRadius: 8, color: checkoutError.startsWith("✅") ? "#10B981" : "#EF4444", fontSize: "0.85rem", textAlign: "center" }}>
                                                         {checkoutError}
+
+                                                        {/* Mostrar botão de crédito avulso se erro for de créditos esgotados */}
+                                                        {checkoutError.includes("créditos do período") && (
+                                                            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                                                                <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginBottom: 4 }}>
+                                                                    💡 Compre crédito avulso para continuar:
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSelectedPlan("credit_1");
+                                                                        setCheckoutError("");
+                                                                    }}
+                                                                    style={{
+                                                                        width: "100%",
+                                                                        padding: "14px",
+                                                                        background: "rgba(16, 185, 129, 0.15)",
+                                                                        border: "2px solid rgba(16, 185, 129, 0.5)",
+                                                                        borderRadius: 8,
+                                                                        color: "#10B981",
+                                                                        fontSize: "0.95rem",
+                                                                        fontWeight: 700,
+                                                                        cursor: "pointer",
+                                                                        transition: "all 0.2s"
+                                                                    }}
+                                                                    onMouseEnter={(e) => {
+                                                                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.25)";
+                                                                        e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.7)";
+                                                                        e.currentTarget.style.transform = "translateY(-2px)";
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.15)";
+                                                                        e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                                                                        e.currentTarget.style.transform = "translateY(0)";
+                                                                    }}
+                                                                >
+                                                                    ✨ Comprar 1 Crédito Avulso<br />
+                                                                    <span style={{ fontSize: "0.8rem", opacity: 0.9 }}>R$ 12,90 · Pagamento único</span>
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                                 <button

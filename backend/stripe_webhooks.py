@@ -14,35 +14,27 @@ import stripe
 from fastapi import Request, HTTPException
 from supabase import create_client
 
+from dependencies import (
+    supabase_admin,
+    PRICING,
+    STRIPE_SECRET_KEY,
+    STRIPE_PRICE_ID_PRO_MONTHLY,
+    STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD,
+    STRIPE_PRICE_ID_PRO_ANNUAL,
+    STRIPE_PRICE_ID_TRIAL,
+    STRIPE_PRICE_ID_CREDIT_1,
+    STRIPE_PRICE_ID_CREDIT_3,
+    STRIPE_PRICE_ID_CREDIT_5,
+)
+
 logger = logging.getLogger(__name__)
 
 # Configuração do Stripe
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+# STRIPE_SECRET_KEY já importado de dependencies
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")  # Precisa ser configurado
-
-# Configuração Supabase
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-# Pricing plans (mesma configuração do main.py)
-PRICING = {
-    "free": {"credits": 1},
-    "pro_monthly": {"credits": 30},
-    "pro_monthly_early_bird": {"credits": 30},
-    "pro_annual": {"credits": 30},
-    "trial": {"credits": 30},
-    "credit_1": {"credits": 1},
-    "credit_3": {"credits": 3},
-    "credit_5": {"credits": 5},
-}
 
 if STRIPE_SECRET_KEY:
     stripe.api_key = STRIPE_SECRET_KEY
-
-supabase_admin = None
-if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
-    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
 
 def verify_webhook_signature(payload: bytes, signature_header: str) -> bool:
     """
@@ -114,13 +106,13 @@ def determine_plan_from_price(price_id: str) -> str:
     """
     # Mapeamento reverso dos price_ids
     price_to_plan = {
-        os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY"): "pro_monthly",
-        os.getenv("STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD"): "pro_monthly_early_bird",
-        os.getenv("STRIPE_PRICE_ID_PRO_ANNUAL"): "pro_annual",
-        os.getenv("STRIPE_PRICE_ID_TRIAL"): "trial",
-        os.getenv("STRIPE_PRICE_ID_CREDIT_1"): "credit_1",
-        os.getenv("STRIPE_PRICE_ID_CREDIT_3"): "credit_3",
-        os.getenv("STRIPE_PRICE_ID_CREDIT_5"): "credit_5",
+        STRIPE_PRICE_ID_PRO_MONTHLY: "pro_monthly",
+        STRIPE_PRICE_ID_PRO_MONTHLY_EARLY_BIRD: "pro_monthly_early_bird",
+        STRIPE_PRICE_ID_PRO_ANNUAL: "pro_annual",
+        STRIPE_PRICE_ID_TRIAL: "trial",
+        STRIPE_PRICE_ID_CREDIT_1: "credit_1",
+        STRIPE_PRICE_ID_CREDIT_3: "credit_3",
+        STRIPE_PRICE_ID_CREDIT_5: "credit_5",
     }
     
     return price_to_plan.get(price_id, "unknown")

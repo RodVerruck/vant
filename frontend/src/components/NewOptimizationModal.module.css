@@ -149,6 +149,21 @@
     letter-spacing: 0.3px;
 }
 
+.creditsWarning {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    border-radius: 10px;
+    color: #fecaca;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.creditsWarning strong {
+    color: #fca5a5;
+}
+
 /* ─── Sections ─── */
 .section {
     margin-bottom: 24px;

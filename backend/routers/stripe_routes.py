@@ -43,9 +43,9 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
     if not STRIPE_SECRET_KEY:
         return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
 
-    plan_id = (payload.plan_id or "basico").strip()
+    plan_id = (payload.plan_id or "trial").strip()
     if plan_id not in PRICING:
-        plan_id = "basico"
+        plan_id = "trial"
 
     price_id = PRICING[plan_id].get("stripe_price_id")
     if not price_id:
@@ -56,11 +56,13 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
 
     billing = (PRICING[plan_id].get("billing") or "one_time").strip().lower()
     is_subscription = billing == "subscription" or billing == "trial"
+    is_one_time_credit = billing == "one_time"  # Créditos avulsos (credit_1, credit_3)
     success_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{FRONTEND_CHECKOUT_RETURN_URL}?payment=cancel"
 
-    # Block subscription purchase if user already has an active subscription
-    if is_subscription and payload.client_reference_id and supabase_admin:
+    # Block ONLY subscription purchase if user already has an active subscription
+    # Allow one-time credits (credit_1) even with active subscription
+    if is_subscription and not is_one_time_credit and payload.client_reference_id and supabase_admin:
         try:
             existing_sub = (
                 supabase_admin.table("subscriptions")
@@ -180,9 +182,9 @@ def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) 
             )
         )
         meta = session.get("metadata") or {}
-        plan_id = (meta.get("plan") or "basico").strip()
+        plan_id = (meta.get("plan") or "trial").strip()
         if plan_id not in PRICING:
-            plan_id = "basico"
+            plan_id = "trial"
 
         return JSONResponse(
             content={
@@ -222,7 +224,7 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
     user_id = payload.user_id
     subscription_id = session.get("subscription")
     customer_id = session.get("customer")
-    plan_id = session.get("metadata", {}).get("plan", "basico")
+    plan_id = session.get("metadata", {}).get("plan", "credit_1")
     payment_status = session.get("payment_status")
     
     logger.info(f"[ACTIVATE] Dados extraídos:")
@@ -247,8 +249,8 @@ def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
     
     # 5. Buscar dados do plano
     if plan_id not in PRICING:
-        plan_id = "basico"
-        logger.warning(f"[ACTIVATE] Plano não encontrado, usando basico")
+        plan_id = "credit_1"
+        logger.warning(f"[ACTIVATE] Plano não encontrado, usando credit_1")
     
     plan = PRICING[plan_id]
     credits = plan.get("credits", 30)
