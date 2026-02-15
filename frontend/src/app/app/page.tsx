@@ -428,7 +428,6 @@ export default function AppPage() {
     const [isLoginMode, setIsLoginMode] = useState(true);  // ← NOVO (true = login, false = cadastro)
     const [isAuthenticating, setIsAuthenticating] = useState(false);  // ← NOVO
     const [showAuthModal, setShowAuthModal] = useState(false);
-    const [showSmartRedirectCreditsModal, setShowSmartRedirectCreditsModal] = useState(false);
     const [showNewOptimizationModal, setShowNewOptimizationModal] = useState(false);
     const [lastCVData, setLastCVData] = useState<{
         has_last_cv: boolean;
@@ -1092,7 +1091,6 @@ export default function AppPage() {
                         setAuthEmail("");
                         setCreditsRemaining(0);
                         setCreditsLoading(false);
-                        setShowSmartRedirectCreditsModal(false);
                         smartRedirectHandledRef.current = false;
                         // Limpar cache ao fazer logout
                         localStorage.removeItem('vant_cached_credits');
@@ -1279,8 +1277,9 @@ export default function AppPage() {
                     if (credits > 0 || hasPlan) {
                         if (credits > 0) {
                             setSelectedPlan("pro_monthly_early_bird");
-                            console.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Aguardando confirmação para consumir crédito...");
-                            setShowSmartRedirectCreditsModal(true);
+                            console.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Iniciando processamento premium automaticamente...");
+                            pendingSkipPreview.current = true;
+                            setStage("processing_premium");
                         } else {
                             setSelectedPlan("credit_1");
                             console.log("[Smart Redirect] Usuário com assinatura ativa mas sem créditos disponíveis no período. Indo para checkout de crédito avulso.");
@@ -5318,88 +5317,6 @@ export default function AppPage() {
                 }}
                 onClose={() => setShowAuthModal(false)}
             />
-
-            {showSmartRedirectCreditsModal && (
-                <div
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        background: "rgba(2, 6, 23, 0.78)",
-                        backdropFilter: "blur(4px)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 10000,
-                        padding: 16,
-                    }}
-                >
-                    <div
-                        style={{
-                            width: "100%",
-                            maxWidth: 520,
-                            background: "#0f172a",
-                            border: "1px solid rgba(56, 189, 248, 0.35)",
-                            borderRadius: 14,
-                            padding: 24,
-                            boxShadow: "0 18px 40px rgba(2, 6, 23, 0.6)",
-                        }}
-                    >
-                        <div style={{ color: "#f8fafc", fontSize: "1.2rem", fontWeight: 700, marginBottom: 10 }}>
-                            Conta encontrada com créditos
-                        </div>
-                        <div style={{ color: "#cbd5e1", lineHeight: 1.5, marginBottom: 20 }}>
-                            Você já possui uma conta com <strong style={{ color: "#22c55e" }}>{creditsRemaining}</strong> crédito(s) disponível(is).<br />
-                            Deseja usar 1 crédito agora e continuar esta análise?
-                        </div>
-
-                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowSmartRedirectCreditsModal(false);
-                                    pendingSkipPreview.current = true;
-                                    console.log("[Smart Redirect] Confirmação aceita. Iniciando processamento premium...");
-                                    setStage("processing_premium");
-                                }}
-                                style={{
-                                    flex: 1,
-                                    minWidth: 220,
-                                    height: 46,
-                                    border: "none",
-                                    borderRadius: 10,
-                                    background: "#10b981",
-                                    color: "#ffffff",
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                }}
-                            >
-                                Usar 1 crédito e continuar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowSmartRedirectCreditsModal(false);
-                                    console.log("[Smart Redirect] Usuário preferiu não consumir crédito agora. Redirecionando para dashboard...");
-                                    window.location.href = "/dashboard";
-                                }}
-                                style={{
-                                    flex: 1,
-                                    minWidth: 180,
-                                    height: 46,
-                                    borderRadius: 10,
-                                    border: "1px solid rgba(148, 163, 184, 0.45)",
-                                    background: "transparent",
-                                    color: "#cbd5e1",
-                                    fontWeight: 600,
-                                    cursor: "pointer",
-                                }}
-                            >
-                                Ir para o dashboard
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <NewOptimizationModal
                 isOpen={showNewOptimizationModal}
