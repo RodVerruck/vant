@@ -4209,54 +4209,106 @@ export default function AppPage() {
                                                 )}
 
                                                 <div style={{
-                                                    marginTop: 16,
-                                                    padding: 20,
-                                                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(56, 189, 248, 0.1) 100%)",
-                                                    borderRadius: 12,
-                                                    border: "1px solid rgba(16, 185, 129, 0.3)",
-                                                    borderLeft: "4px solid #10B981",
+                                                    marginTop: 12,
+                                                    padding: 16,
+                                                    background: "rgba(255, 255, 255, 0.06)",
+                                                    borderRadius: 10,
+                                                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                                                    borderLeft: "2px solid #10B981",
                                                     backdropFilter: "blur(20px)",
                                                     WebkitBackdropFilter: "blur(20px)",
-                                                    boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), 0 0 35px -6px rgba(16, 185, 129, 0.25), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                                                    boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 30px -6px rgba(16, 185, 129, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
                                                 }}>
-                                                    <div style={{ textAlign: "center", marginBottom: 16 }}>
-                                                        <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4, letterSpacing: "0.5px" }}>
-                                                            🔒 DESBLOQUEIE O DIAGNÓSTICO COMPLETO
-                                                        </div>
-                                                        <div style={{ color: "#E2E8F0", fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.4 }}>
-                                                            Na versão Premium você recebe:
-                                                        </div>
+                                                    <div style={{ color: "#4ADE80", fontSize: "1rem", fontWeight: 600, marginBottom: 16, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
+                                                        NA VERSÃO PREMIUM VOCÊ RECEBE:
                                                     </div>
-                                                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                                    <div className="premium-benefits-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
+                                                        <style dangerouslySetInnerHTML={{
+                                                            __html: `
+                                                            @media (min-width: 768px) { .premium-benefits-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+                                                            .premium-benefit-item { position: relative; }
+                                                            .premium-benefit-tooltip {
+                                                                position: absolute;
+                                                                left: 50%;
+                                                                bottom: calc(100% + 10px);
+                                                                transform: translateX(-50%) translateY(6px);
+                                                                width: min(270px, 85vw);
+                                                                padding: 10px 12px;
+                                                                border-radius: 10px;
+                                                                border: 1px solid rgba(16, 185, 129, 0.35);
+                                                                background: rgba(15, 23, 42, 0.96);
+                                                                color: #E2E8F0;
+                                                                font-size: 0.74rem;
+                                                                line-height: 1.45;
+                                                                box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.7), 0 0 24px -12px rgba(16, 185, 129, 0.45);
+                                                                opacity: 0;
+                                                                pointer-events: none;
+                                                                z-index: 30;
+                                                                transition: opacity 0.16s ease, transform 0.16s ease;
+                                                            }
+                                                            .premium-benefit-item:hover .premium-benefit-tooltip,
+                                                            .premium-benefit-item:focus-within .premium-benefit-tooltip {
+                                                                opacity: 1;
+                                                                transform: translateX(-50%) translateY(0);
+                                                            }
+                                                        ` }} />
                                                         {[
-                                                            "Diagnóstico completo de todos os problemas críticos",
-                                                            "CV reescrito palavra por palavra com keywords estratégicas",
-                                                            "Verificação ATS completa (15+ critérios)",
-                                                            "LinkedIn Headline otimizado",
-                                                            "Simulador de entrevista com IA",
-                                                            "Biblioteca técnica personalizada"
+                                                            {
+                                                                label: <><strong>CV reescrito</strong> com palavras-chave integradas</>,
+                                                                tooltip: "Reescrevemos seu CV com termos da vaga distribuídos em experiências, competências e resumo para aumentar aderência ATS.",
+                                                            },
+                                                            {
+                                                                label: <>Análise de <strong>todos os critérios ATS</strong></>,
+                                                                tooltip: "Avaliação completa de palavras-chave, estrutura, legibilidade, impacto e lacunas que bloqueiam seu avanço.",
+                                                            },
+                                                            {
+                                                                label: <><strong>Headline LinkedIn</strong> para recrutadores</>,
+                                                                tooltip: "Você recebe uma headline estratégica para aumentar buscas no LinkedIn e atrair recrutadores certos.",
+                                                            },
+                                                            {
+                                                                label: <><strong>Biblioteca técnica</strong> para seu cargo</>,
+                                                                tooltip: "Lista guiada de livros recomendados para a vaga que você está buscando.",
+                                                            },
+                                                            {
+                                                                label: <><strong>Projeto prático</strong> para entrevistas</>,
+                                                                tooltip: "Sugestão de projeto aplicado ao seu perfil para gerar portfólio e respostas mais fortes em entrevistas.",
+                                                            },
+                                                            {
+                                                                label: <><strong>Simulador de Entrevista</strong> com IA</>,
+                                                                tooltip: "Treine perguntas técnicas e comportamentais com feedback instantâneo para melhorar clareza e confiança.",
+                                                            },
                                                         ].map((item, i) => (
-                                                            <div key={i} style={{
+                                                            <div key={i} className="premium-benefit-item" style={{
                                                                 display: "flex",
                                                                 alignItems: "center",
                                                                 gap: 12,
-                                                                padding: "12px 0",
-                                                            }}>
+                                                                padding: "16px 18px",
+                                                                background: "rgba(255, 255, 255, 0.03)",
+                                                                border: "1px solid rgba(16, 185, 129, 0.2)",
+                                                                borderRadius: 16,
+                                                                backdropFilter: "blur(12px)",
+                                                                WebkitBackdropFilter: "blur(12px)",
+                                                                cursor: "help",
+                                                            }} tabIndex={0} aria-label={item.tooltip}>
                                                                 <div style={{
-                                                                    width: 20,
-                                                                    height: 20,
+                                                                    width: 36,
+                                                                    height: 36,
                                                                     borderRadius: "50%",
-                                                                    background: "#10B981",
+                                                                    background: "rgba(16, 185, 129, 0.15)",
                                                                     display: "flex",
                                                                     alignItems: "center",
                                                                     justifyContent: "center",
                                                                     flexShrink: 0,
+                                                                    boxShadow: "0 0 15px -3px rgba(16, 185, 129, 0.4)",
                                                                 }}>
-                                                                    <span style={{ color: "#fff", fontSize: "0.75rem", fontWeight: 700 }}>✓</span>
+                                                                    <CheckCircle2Icon color="#34D399" />
                                                                 </div>
-                                                                <span style={{ color: "#F1F5F9", fontSize: "0.95rem", fontWeight: 500, lineHeight: 1.5 }}>
-                                                                    {item}
+                                                                <span style={{ color: "#F1F5F9", fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.4 }}>
+                                                                    {item.label}
                                                                 </span>
+                                                                <div className="premium-benefit-tooltip" role="tooltip">
+                                                                    {item.tooltip}
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
