@@ -347,7 +347,6 @@ export function NewOptimizationModal({
                                 checked={useGenericJob}
                                 onChange={handleGenericToggle}
                                 className={styles.toggleCheckbox}
-                                onClick={(e) => e.stopPropagation()}
                             />
                             <span className={styles.toggleText}>
                                 <span className={styles.toggleTextBold}>Não tenho uma vaga específica</span>
