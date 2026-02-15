@@ -3518,10 +3518,14 @@ export default function AppPage() {
                         // Buscar último CV antes de abrir o modal
                         if (authUserId) {
                             try {
-                                const resp = await fetch(`${getApiUrl()}/api/user/last-cv?user_id=${authUserId}`);
+                                console.log("[LastCV] Buscando último CV para usuário:", authUserId);
+                                const resp = await fetch(`${getApiUrl()}/api/user/last-cv/${authUserId}`);
                                 if (resp.ok) {
                                     const data = await resp.json();
+                                    console.log("[LastCV] Dados recebidos:", data);
                                     setLastCVData(data);
+                                } else {
+                                    console.error("[LastCV] Erro na resposta:", resp.status);
                                 }
                             } catch (error) {
                                 console.error("[LastCV] Erro ao buscar último CV:", error);
