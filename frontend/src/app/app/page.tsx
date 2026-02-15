@@ -1319,7 +1319,11 @@ export default function AppPage() {
             // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
             const hasNonHeroStage = stage !== "hero";
             // CRÍTICO: Se há pagamento pendente de ativação, NÃO redirecionar para dashboard
-            const hasPendingPayment = needsActivation || !!stripeSessionId || !!localStorage.getItem("vant_pending_stripe_session_id");
+            // Verificar DIRETAMENTE os parâmetros da URL, não depender do estado que pode não estar setado ainda
+            const urlPayment = searchParams.get("payment");
+            const urlSessionId = searchParams.get("session_id");
+            const hasPaymentInUrl = urlPayment === "success" && !!urlSessionId;
+            const hasPendingPayment = needsActivation || !!stripeSessionId || !!localStorage.getItem("vant_pending_stripe_session_id") || hasPaymentInUrl;
             const hasActiveFlow =
                 returnPlan ||
                 hasReturnStage ||
@@ -1344,6 +1348,7 @@ export default function AppPage() {
                 hasSkipPreviewFlag,
                 hasSavedDraft,
                 hasPendingPayment,
+                hasPaymentInUrl,
                 stage
             });
 
