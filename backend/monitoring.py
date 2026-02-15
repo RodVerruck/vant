@@ -14,9 +14,9 @@ def init_monitoring():
             environment=os.getenv("ENVIRONMENT", "production"),
             before_send=sanitize_pii,  # Remove dados sensíveis
         )
-        print("✅ Sentry inicializado")
+        print("[OK] Sentry inicializado")
     else:
-        print("⚠️ SENTRY_DSN não configurado - erros não serão rastreados")
+        print("[AVISO] SENTRY_DSN nao configurado - erros nao serao rastreados")
 
 def sanitize_pii(event, hint):
     """Remove dados sensíveis dos logs."""

@@ -694,7 +694,8 @@ export default function AppPage() {
             console.log("[DEBUG URL] Pagamento detectado! Setando estado...");
             setStripeSessionId(sessionId);
             setNeedsActivation(true);
-            setStage("checkout");
+            setStage("activating_payment");
+            setIsCheckingAuth(false); // Liberar renderização imediatamente para mostrar loading
             setCheckoutError("Pagamento confirmado. Ativando seu plano...");
         }
     }, [searchParams]);
@@ -1596,7 +1597,12 @@ export default function AppPage() {
 
                 // Redirecionar para dashboard — créditos já estão no cache
                 console.log("[needsActivation] Redirecionando para /dashboard...");
-                window.location.href = "/dashboard";
+
+                // Usar setTimeout para garantir que o redirecionamento aconteça
+                setTimeout(() => {
+                    console.log("[needsActivation] Executando redirecionamento agora...");
+                    window.location.href = "/dashboard";
+                }, 500);
             } catch (e: unknown) {
                 setCheckoutError(getErrorMessage(e, "Falha ao ativar plano"));
                 // Em caso de erro, resetar o flag para permitir nova tentativa
@@ -2087,6 +2093,14 @@ export default function AppPage() {
         // Função assíncrona para verificação
         const performInitialCheck = async () => {
             try {
+                // Verificação rápida: se há pagamento pendente, não fazer nada (deixar o useEffect do payment lidar)
+                const urlPayment = searchParams.get("payment");
+                const urlSessionId = searchParams.get("session_id");
+                if (urlPayment === "success" && urlSessionId) {
+                    console.log("[initialAuthCheck] Pagamento pendente detectado, ignorando verificação");
+                    return;
+                }
+
                 // Verificação rápida: se não há usuário, liberar renderização imediatamente
                 if (!authUserId) {
                     console.log("[initialAuthCheck] Sem authUserId, liberando renderização do hero");
@@ -2930,6 +2944,41 @@ export default function AppPage() {
             </div>
         );
     };
+
+    // Verificar se há pagamento pendente na URL - mostrar loading imediatamente
+    const urlPayment = searchParams.get("payment");
+    const urlSessionId = searchParams.get("session_id");
+    if (urlPayment === "success" && urlSessionId && stage !== "activating_payment") {
+        // Ainda não setou o stage, mostrar loading genérico
+        return (
+            <main>
+                <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "100vh",
+                    background: "#0F172A",
+                    color: "#94A3B8",
+                    fontSize: "1rem",
+                    fontFamily: "'Outfit', sans-serif",
+                }}>
+                    <div style={{ textAlign: "center" }}>
+                        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                        <div style={{
+                            width: 36,
+                            height: 36,
+                            border: "3px solid rgba(56, 189, 248, 0.2)",
+                            borderTop: "3px solid #38BDF8",
+                            borderRadius: "50%",
+                            animation: "spin 0.8s linear infinite",
+                            margin: "0 auto 16px",
+                        }} />
+                        Processando pagamento...
+                    </div>
+                </div>
+            </main>
+        );
+    }
 
     if (loadingHistoryItem) {
         return (
@@ -4662,6 +4711,74 @@ export default function AppPage() {
                 </div>
             )
             }
+
+            {stage === "activating_payment" && (
+                <div style={{
+                    minHeight: "100vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                    padding: "2rem"
+                }}>
+                    <div style={{
+                        background: "rgba(15, 23, 42, 0.8)",
+                        backdropFilter: "blur(20px)",
+                        border: "1px solid rgba(56, 189, 248, 0.2)",
+                        borderRadius: "24px",
+                        padding: "3rem 2rem",
+                        maxWidth: "500px",
+                        width: "100%",
+                        textAlign: "center",
+                        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.4)"
+                    }}>
+                        {/* Spinner animado */}
+                        <div style={{
+                            width: "80px",
+                            height: "80px",
+                            margin: "0 auto 2rem",
+                            border: "4px solid rgba(56, 189, 248, 0.1)",
+                            borderTop: "4px solid #38BDF8",
+                            borderRadius: "50%",
+                            animation: "spin 1s linear infinite"
+                        }} />
+
+                        <h2 style={{
+                            fontSize: "1.75rem",
+                            fontWeight: 700,
+                            color: "#F8FAFC",
+                            marginBottom: "1rem"
+                        }}>
+                            Processando Pagamento
+                        </h2>
+
+                        <p style={{
+                            fontSize: "1rem",
+                            color: "#94A3B8",
+                            lineHeight: 1.6,
+                            marginBottom: "0.5rem"
+                        }}>
+                            Estamos ativando seu crédito...
+                        </p>
+
+                        <p style={{
+                            fontSize: "0.875rem",
+                            color: "#64748B",
+                            lineHeight: 1.5
+                        }}>
+                            Você será redirecionado automaticamente em instantes.
+                        </p>
+                    </div>
+
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
+            )}
 
             {
                 stage === "checkout" && (
