@@ -2573,8 +2573,8 @@ export default function AppPage() {
         const row = (label: string, value: number, tooltip: string) => `
             <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
                 <div class="metric-hint-lite" tabindex="0" role="note" aria-label="${label}: ${tooltip}">
-                    <span style="color:#CBD5E1; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; cursor:help;">${label.toUpperCase()}</span>
-                    <span aria-hidden="true" style="width:14px; height:14px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); color:#94A3B8; font-size:0.62rem; display:inline-flex; align-items:center; justify-content:center; line-height:1; cursor:help;">i</span>
+                    <span style="color:#E2E8F0; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; cursor:help;">${label.toUpperCase()}</span>
+                    <span aria-hidden="true" style="width:14px; height:14px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); color:#CBD5E1; font-size:0.62rem; display:inline-flex; align-items:center; justify-content:center; line-height:1; cursor:help;">i</span>
                     <div class="metric-tooltip-lite">${tooltip}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -2597,27 +2597,27 @@ export default function AppPage() {
                     .analyzing-phase-container .metric-hint-lite:hover .metric-tooltip-lite, .analyzing-phase-container .metric-hint-lite:focus-visible .metric-tooltip-lite { opacity: 1; transform: translateX(-50%) translateY(0); }
                 </style>
                 <div style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #94A3B8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
+                    <span style="color: #CBD5E1; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
                     <span style="background: rgba(56, 189, 248, 0.1); color: #38BDF8; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">VERSÃO LITE</span>
                 </div>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 16px;">
                     <div>
-                        <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                        <div style="color:#E2E8F0; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:6px;">
                             SCORE ATS ATUAL
                             <span class="metric-hint-lite" tabindex="0" aria-label="Como esse score é calculado">
-                                <span aria-hidden="true" style="width:14px; height:14px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); color:#94A3B8; font-size:0.62rem; display:inline-flex; align-items:center; justify-content:center; line-height:1; cursor:help;">i</span>
+                                <span aria-hidden="true" style="width:14px; height:14px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); color:#CBD5E1; font-size:0.62rem; display:inline-flex; align-items:center; justify-content:center; line-height:1; cursor:help;">i</span>
                                 <div class="metric-tooltip-lite">Baseado em densidade de palavras-chave da vaga e legibilidade ATS do CV.</div>
                             </span>
                         </div>
-                        <div style="color:#E2E8F0; font-weight:900; font-size: 2rem; line-height: 1;">${nota}<span style="font-size:1rem; color:#94A3B8;">/100</span></div>
-                        <div style="color:#94A3B8; font-size:0.66rem; margin-top:4px; max-width:250px; line-height:1.35;">Baseado em densidade de palavras-chave e legibilidade ATS.</div>
+                        <div style="color:#E2E8F0; font-weight:900; font-size: 2rem; line-height: 1;">${nota}<span style="font-size:1rem; color:#CBD5E1;">/100</span></div>
+                        <div style="color:#CBD5E1; font-size:0.66rem; margin-top:4px; max-width:250px; line-height:1.35;">Baseado em densidade de palavras-chave e legibilidade ATS.</div>
                     </div>
                     <div style="text-align:right;">
-                         <div style="color:#CBD5E1; font-size:0.75rem; font-weight:600;">SCORE PROJETADO</div>
+                         <div style="color:#E2E8F0; font-size:0.75rem; font-weight:600;">SCORE PROJETADO</div>
                          <div style="color:#22C55E; font-weight:900; font-size: 3rem; line-height: 1; text-shadow: 0 0 12px rgba(34, 197, 94, 0.65), 0 0 26px rgba(34, 197, 94, 0.35);">${projected.score}<span style="font-size:1.15rem; color:#22C55E;">/100</span></div>
                          <div style="color:#F59E0B; font-size:0.9rem; font-weight:700; margin-top:2px;">+${projected.improvement}%</div>
-                         <div style="color:#94A3B8; font-size:0.66rem; margin-top:4px; max-width:270px; line-height:1.35;">${projected.reasoning}</div>
+                         <div style="color:#CBD5E1; font-size:0.66rem; margin-top:4px; max-width:270px; line-height:1.35;">${projected.reasoning}</div>
                     </div>
                 </div>
 
@@ -2641,16 +2641,17 @@ export default function AppPage() {
             <div style="color: #38BDF8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
                 ${title}
             </div>
-            <div style="color: #CBD5E1; font-size: 0.9rem; margin-top: 5px;">
+            <div style="color: #E2E8F0; font-size: 0.9rem; margin-top: 5px;">
                 ${subtitle}
             </div>
         </div>
 
-        <div style="padding: 20px; filter: blur(6px); user-select: none; opacity: 0.5; height: 180px; overflow: hidden;">
+        <div style="padding: 20px; filter: blur(3px); user-select: none; opacity: 0.65; height: 170px; overflow: hidden; position: relative;">
             <p style="color: #E2E8F0; line-height: 1.6;">${longContent}</p>
+            <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.75) 100%);"></div>
         </div>
 
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.1); backdrop-filter: blur(2px);">
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.45) 100%); backdrop-filter: blur(1px);">
             <div style="background: rgba(15, 23, 42, 0.9); padding: 15px 25px; border-radius: 30px; border: 1px solid #38BDF8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); display: flex; gap: 10px; align-items: center;">
                 <span style="font-size: 1.2rem;">🔒</span>
                 <span style="color: #F8FAFC; font-weight: 600; font-size: 0.9rem;">Versão Otimizada Oculta</span>
@@ -3854,16 +3855,16 @@ export default function AppPage() {
 
                         const metaHtml = `
     <div style="background: rgba(255, 255, 255, 0.06); 
-                border: 1px solid rgba(16, 185, 129, 0.28); border-left: 3px solid rgba(16, 185, 129, 0.7); border-radius: 12px; padding: 20px; margin-top: 20px;
+                border: 1px solid rgba(16, 185, 129, 0.28); border-left: 3px solid rgba(16, 185, 129, 0.7); border-radius: 12px; padding: 20px; margin-top: 16px;
                 backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 30px -6px rgba(16, 185, 129, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
         <div style="display: flex; align-items: center; gap: 15px;">
             <div style="width: 22px; height: 22px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.5);
                         display:flex; align-items:center; justify-content:center; color: #34D399; font-size: 0.8rem;">+</div>
             <div>
-                <div style="color: #E2E8F0; font-weight: 600; font-size: 1rem;">Meta de pontuação</div>
-                <div style="color: #E2E8F0; font-size: 0.9rem; margin-top: 5px;">
+                <div style="color: #E2E8F0; font-weight: 600; font-size: 1rem; margin-bottom: 4px;">Meta de pontuação</div>
+                <div style="color: #CBD5E1; font-size: 0.9rem; margin-top: 0;">
                     Com as otimizações completas, seu score pode chegar a <strong style="color: #10B981;">${projected.score}/100</strong>
-                    <br>Isso coloca você no <strong>${projected.percentile}</strong> dos candidatos.
+                    <br/>Isso coloca você no <strong>${projected.percentile}</strong> dos candidatos.
                 </div>
             </div>
         </div>
@@ -3879,20 +3880,20 @@ export default function AppPage() {
                             "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
 
                         const xrayHtml = `
-        <div style='background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-left: 3px solid rgba(56, 189, 248, 0.6); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 20px;
-                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 25px -6px rgba(56, 189, 248, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.5);'>
+        <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-left: 3px solid rgba(56, 189, 248, 0.6); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 16px;
+                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 25px -6px rgba(56, 189, 248, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
             
             <div style="display: flex; gap: 12px; align-items: start;">
                 <div style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.12); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color:#38BDF8; font-weight: 600;">XR</div>
                 <div style="flex: 1;">
-                    <h3 style='color: #E2E8F0; margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600;'>
+                    <h3 style="color: #E2E8F0; margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600;">
                         Radar de Recrutadores Ativo
                     </h3>
-                    <p style='color: #CBD5E1; font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.4;'>
+                    <p style="color: #E2E8F0; font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.4;">
                         Detectamos padrões para localizar <strong>${texto_destaque}</strong>.
                     </p>
                     
-                    <div style='background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 4px; border-left: 2px solid #38BDF8; font-family: monospace; font-size: 0.7rem; color: #38BDF8; overflow-x: hidden; white-space: nowrap; opacity: 0.8;'>
+                    <div style="background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 4px; border-left: 2px solid #38BDF8; font-family: monospace; font-size: 0.7rem; color: #38BDF8; overflow-x: hidden; white-space: nowrap; opacity: 0.8;">
                         site:linkedin.com/in/ "hiring" "${jobText.split(' ')[0]}..."
                     </div>
                 </div>
@@ -4225,31 +4226,31 @@ export default function AppPage() {
                                                     <div className="premium-benefits-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
                                                         <style dangerouslySetInnerHTML={{
                                                             __html: `
-                                                            @media (min-width: 768px) { .premium-benefits-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-                                                            .premium-benefit-item { position: relative; }
-                                                            .premium-benefit-tooltip {
-                                                                position: absolute;
-                                                                left: 50%;
-                                                                bottom: calc(100% + 10px);
-                                                                transform: translateX(-50%) translateY(6px);
-                                                                width: min(270px, 85vw);
-                                                                padding: 10px 12px;
-                                                                border-radius: 10px;
-                                                                border: 1px solid rgba(16, 185, 129, 0.35);
-                                                                background: rgba(15, 23, 42, 0.96);
-                                                                color: #E2E8F0;
-                                                                font-size: 0.74rem;
-                                                                line-height: 1.45;
-                                                                box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.7), 0 0 24px -12px rgba(16, 185, 129, 0.45);
-                                                                opacity: 0;
-                                                                pointer-events: none;
-                                                                z-index: 30;
-                                                                transition: opacity 0.16s ease, transform 0.16s ease;
+                                                            @media (min-width: 768px) { .premium - benefits - grid {grid - template - columns: repeat(3, 1fr) !important; } }
+            .premium-benefit-item {position: relative; }
+            .premium-benefit-tooltip {
+                position: absolute;
+            left: 50%;
+            bottom: calc(100% + 10px);
+            transform: translateX(-50%) translateY(6px);
+            width: min(270px, 85vw);
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            background: rgba(15, 23, 42, 0.96);
+            color: #E2E8F0;
+            font-size: 0.74rem;
+            line-height: 1.45;
+            box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.7), 0 0 24px -12px rgba(16, 185, 129, 0.45);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 30;
+            transition: opacity 0.16s ease, transform 0.16s ease;
                                                             }
-                                                            .premium-benefit-item:hover .premium-benefit-tooltip,
-                                                            .premium-benefit-item:focus-within .premium-benefit-tooltip {
-                                                                opacity: 1;
-                                                                transform: translateX(-50%) translateY(0);
+            .premium-benefit-item:hover .premium-benefit-tooltip,
+            .premium-benefit-item:focus-within .premium-benefit-tooltip {
+                opacity: 1;
+            transform: translateX(-50%) translateY(0);
                                                             }
                                                         ` }} />
                                                         {[
@@ -4312,82 +4313,85 @@ export default function AppPage() {
                                                             </div>
                                                         ))}
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                                </div >
+                                            </div >
+                                        </div >
+                                    )
+                                    }
 
                                     {/* RODAPÉ CONDICIONAL: Créditos vs Oferta de Venda */}
-                                    {authUserId && creditsRemaining > 0 ? (
-                                        <div style={{ marginTop: 32 }}>
-                                            <div style={{
-                                                background: "rgba(15, 23, 42, 0.72)",
-                                                border: "1px solid rgba(16, 185, 129, 0.35)",
-                                                borderLeft: "2px solid #10B981",
-                                                borderRadius: 16,
-                                                padding: "28px",
-                                                textAlign: "center",
-                                                boxShadow: "none"
-                                            }}>
-                                                <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-                                                    <CheckCircle2Icon color="#10B981" size={18} />
+                                    {
+                                        authUserId && creditsRemaining > 0 ? (
+                                            <div style={{ marginTop: 32 }}>
+                                                <div style={{
+                                                    background: "rgba(15, 23, 42, 0.72)",
+                                                    border: "1px solid rgba(16, 185, 129, 0.35)",
+                                                    borderLeft: "2px solid #10B981",
+                                                    borderRadius: 16,
+                                                    padding: "28px",
+                                                    textAlign: "center",
+                                                    boxShadow: "none"
+                                                }}>
+                                                    <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                                                        <CheckCircle2Icon color="#10B981" size={18} />
+                                                    </div>
+                                                    <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 600, marginBottom: 8 }}>
+                                                        Você tem {creditsRemaining} crédito(s) disponível(is)!
+                                                    </div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.95rem", marginBottom: 20, lineHeight: 1.5 }}>
+                                                        Use 1 crédito agora para desbloquear a análise completa,<br />
+                                                        CV otimizado e todas as ferramentas premium.
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onUseCreditFromPreview()}
+                                                        style={{
+                                                            width: "100%",
+                                                            maxWidth: 420,
+                                                            background: "#10B981",
+                                                            color: "#fff",
+                                                            border: "none",
+                                                            padding: "18px",
+                                                            borderRadius: 12,
+                                                            fontSize: "1.05rem",
+                                                            fontWeight: 600,
+                                                            cursor: "pointer",
+                                                            boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
+                                                            transition: "all 0.2s",
+                                                            textTransform: "uppercase",
+                                                            letterSpacing: "0.35px"
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.transform = "translateY(-2px)";
+                                                            e.currentTarget.style.boxShadow = "0 6px 18px rgba(16, 185, 129, 0.45)";
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.transform = "translateY(0)";
+                                                            e.currentTarget.style.boxShadow = "0 4px 14px rgba(16, 185, 129, 0.35)";
+                                                        }}
+                                                        onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
+                                                        onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
+                                                    >
+                                                        USAR 1 CRÉDITO E DESBLOQUEAR
+                                                    </button>
                                                 </div>
-                                                <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 600, marginBottom: 8 }}>
-                                                    Você tem {creditsRemaining} crédito(s) disponível(is)!
-                                                </div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", marginBottom: 20, lineHeight: 1.5 }}>
-                                                    Use 1 crédito agora para desbloquear a análise completa,<br />
-                                                    CV otimizado e todas as ferramentas premium.
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onUseCreditFromPreview()}
-                                                    style={{
-                                                        width: "100%",
-                                                        maxWidth: 420,
-                                                        background: "#10B981",
-                                                        color: "#fff",
-                                                        border: "none",
-                                                        padding: "18px",
-                                                        borderRadius: 12,
-                                                        fontSize: "1.05rem",
-                                                        fontWeight: 600,
-                                                        cursor: "pointer",
-                                                        boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
-                                                        transition: "all 0.2s",
-                                                        textTransform: "uppercase",
-                                                        letterSpacing: "0.35px"
-                                                    }}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.transform = "translateY(-2px)";
-                                                        e.currentTarget.style.boxShadow = "0 6px 18px rgba(16, 185, 129, 0.45)";
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.transform = "translateY(0)";
-                                                        e.currentTarget.style.boxShadow = "0 4px 14px rgba(16, 185, 129, 0.35)";
-                                                    }}
-                                                    onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                                    onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                                                >
-                                                    USAR 1 CRÉDITO E DESBLOQUEAR
-                                                </button>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div style={{ marginTop: 32 }}>
-                                            <NeonOffer
-                                                onSelectPlan={(planId) => setSelectedPlan(planId)}
-                                                onCheckout={(planId) => {
-                                                    setSelectedPlan(planId);
-                                                    setStage("checkout");
-                                                }}
-                                                authUserId={authUserId}
-                                                creditsRemaining={creditsRemaining}
-                                                timeRemaining={timeRemaining}
-                                                showHeader={true}
-                                            />
-                                        </div>
-                                    )}
+                                        ) : (
+                                            <div style={{ marginTop: 32 }}>
+                                                <NeonOffer
+                                                    onSelectPlan={(planId) => setSelectedPlan(planId)}
+                                                    onCheckout={(planId) => {
+                                                        setSelectedPlan(planId);
+                                                        setStage("checkout");
+                                                    }}
+                                                    authUserId={authUserId}
+                                                    creditsRemaining={creditsRemaining}
+                                                    timeRemaining={timeRemaining}
+                                                    showHeader={true}
+                                                />
+                                            </div>
+                                        )
+                                    }
 
                                     {/* Botão Voltar Discreto */}
                                     <div style={{ textAlign: "center", marginTop: 16 }}>
@@ -4410,7 +4414,7 @@ export default function AppPage() {
                                             ← Voltar para edição
                                         </button>
                                     </div>
-                                </div>
+                                </div >
 
                                 {showMobileStickyBuyBar && (
                                     <div className="mobile-sticky-bottom-cta md:hidden">
@@ -4430,77 +4434,79 @@ export default function AppPage() {
                             </>
                         );
                     })()}
-                </div>
+                </div >
             )
             }
 
-            {stage === "activating_payment" && (
-                <div style={{
-                    minHeight: "100vh",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
-                    padding: "2rem"
-                }}>
+            {
+                stage === "activating_payment" && (
                     <div style={{
-                        background: "rgba(15, 23, 42, 0.8)",
-                        backdropFilter: "blur(20px)",
-                        border: "1px solid rgba(56, 189, 248, 0.2)",
-                        borderRadius: "24px",
-                        padding: "3rem 2rem",
-                        maxWidth: "500px",
-                        width: "100%",
-                        textAlign: "center",
-                        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.4)"
+                        minHeight: "100vh",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                        padding: "2rem"
                     }}>
-                        {/* Spinner animado */}
                         <div style={{
-                            width: "80px",
-                            height: "80px",
-                            margin: "0 auto 2rem",
-                            border: "4px solid rgba(56, 189, 248, 0.1)",
-                            borderTop: "4px solid #38BDF8",
-                            borderRadius: "50%",
-                            animation: "spin 1s linear infinite"
-                        }} />
-
-                        <h2 style={{
-                            fontSize: "1.75rem",
-                            fontWeight: 700,
-                            color: "#F8FAFC",
-                            marginBottom: "1rem"
+                            background: "rgba(15, 23, 42, 0.8)",
+                            backdropFilter: "blur(20px)",
+                            border: "1px solid rgba(56, 189, 248, 0.2)",
+                            borderRadius: "24px",
+                            padding: "3rem 2rem",
+                            maxWidth: "500px",
+                            width: "100%",
+                            textAlign: "center",
+                            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.4)"
                         }}>
-                            Processando Pagamento
-                        </h2>
+                            {/* Spinner animado */}
+                            <div style={{
+                                width: "80px",
+                                height: "80px",
+                                margin: "0 auto 2rem",
+                                border: "4px solid rgba(56, 189, 248, 0.1)",
+                                borderTop: "4px solid #38BDF8",
+                                borderRadius: "50%",
+                                animation: "spin 1s linear infinite"
+                            }} />
 
-                        <p style={{
-                            fontSize: "1rem",
-                            color: "#94A3B8",
-                            lineHeight: 1.6,
-                            marginBottom: "0.5rem"
-                        }}>
-                            Estamos ativando seu crédito...
-                        </p>
+                            <h2 style={{
+                                fontSize: "1.75rem",
+                                fontWeight: 700,
+                                color: "#F8FAFC",
+                                marginBottom: "1rem"
+                            }}>
+                                Processando Pagamento
+                            </h2>
 
-                        <p style={{
-                            fontSize: "0.875rem",
-                            color: "#64748B",
-                            lineHeight: 1.5
-                        }}>
-                            Você será redirecionado automaticamente em instantes.
-                        </p>
-                    </div>
+                            <p style={{
+                                fontSize: "1rem",
+                                color: "#94A3B8",
+                                lineHeight: 1.6,
+                                marginBottom: "0.5rem"
+                            }}>
+                                Estamos ativando seu crédito...
+                            </p>
 
-                    <style>{`
+                            <p style={{
+                                fontSize: "0.875rem",
+                                color: "#64748B",
+                                lineHeight: 1.5
+                            }}>
+                                Você será redirecionado automaticamente em instantes.
+                            </p>
+                        </div>
+
+                        <style>{`
                         @keyframes spin {
                             0% { transform: rotate(0deg); }
                             100% { transform: rotate(360deg); }
                         }
                     `}</style>
-                </div>
-            )}
+                    </div>
+                )
+            }
 
             {
                 stage === "checkout" && (

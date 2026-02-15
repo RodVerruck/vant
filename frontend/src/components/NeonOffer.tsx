@@ -76,11 +76,11 @@ export function NeonOffer({
                 {/* 1. HEADLINE DE CONVERSÃO */}
                 <div style={{ textAlign: "center", marginBottom: 8 }}>
                     <h3 style={{ color: "#E2E8F0", fontSize: "1.2rem", fontWeight: 700, margin: "0 0 8px 0" }}>
-                        Não aposte seu futuro em uma única vaga.
+                        Construir tração exige consistência.
                     </h3>
                     <p style={{ color: "#CBD5E1", fontSize: "0.9rem", margin: 0, lineHeight: 1.5 }}>
-                        Candidatos que aplicam para <strong>10+ vagas</strong> aumentam em 5x as chances de entrevista.<br />
-                        Jogue o jogo dos números.
+                        Profissionais que aplicam para <strong>10+ vagas</strong> aumentam em 5x as chances de entrevista.<br />
+                        Tenha um CV preparado para cada oportunidade.
                     </p>
                 </div>
 
