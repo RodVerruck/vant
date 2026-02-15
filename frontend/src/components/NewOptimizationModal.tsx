@@ -165,7 +165,6 @@ export function NewOptimizationModal({
 
     // Generic toggle
     const handleGenericToggle = () => {
-        console.log("[GenericToggle] Clique detectado!");
         const newVal = !useGenericJob;
         setUseGenericJob(newVal);
         if (newVal) {
