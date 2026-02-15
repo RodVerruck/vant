@@ -165,6 +165,7 @@ export function NewOptimizationModal({
 
     // Generic toggle
     const handleGenericToggle = () => {
+        console.log("[GenericToggle] Clique detectado!");
         const newVal = !useGenericJob;
         setUseGenericJob(newVal);
         if (newVal) {
@@ -341,18 +342,19 @@ export function NewOptimizationModal({
                             Vaga Alvo
                         </div>
 
-                        <label className={styles.genericToggle} onClick={handleGenericToggle}>
+                        <div className={styles.genericToggle} onClick={handleGenericToggle}>
                             <input
                                 type="checkbox"
                                 checked={useGenericJob}
                                 onChange={handleGenericToggle}
                                 className={styles.toggleCheckbox}
+                                onClick={(e) => e.stopPropagation()}
                             />
                             <span className={styles.toggleText}>
                                 <span className={styles.toggleTextBold}>Não tenho uma vaga específica</span>
                                 {" "}— Analisar contra o mercado
                             </span>
-                        </label>
+                        </div>
 
                         {useGenericJob && (
                             <select

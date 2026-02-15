@@ -215,6 +215,10 @@
     border-color: rgba(255, 255, 255, 0.1);
 }
 
+.genericToggle:active {
+    transform: scale(0.98);
+}
+
 .toggleCheckbox {
     accent-color: #38BDF8;
     width: 16px;
