@@ -3926,7 +3926,7 @@ export default function AppPage() {
                                                     <div style={{ color: "#F87171", fontSize: "0.85rem", fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
                                                         <span>⚠️</span> Você está vendo apenas uma amostra
                                                     </div>
-                                                    <div style={{ color: "#CBD5E1", fontSize: "0.82rem", lineHeight: 1.5 }}>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.82rem", lineHeight: 1.5 }}>
                                                         Abaixo mostramos <strong>2 exemplos</strong> do que nossa IA detectou. O diagnóstico completo + solução está na versão Premium.
                                                     </div>
                                                 </div>
@@ -3964,7 +3964,7 @@ export default function AppPage() {
                                                         <div style={{ color: "#FCA5A5", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
                                                             PROBLEMA #1: {data.gap_1.titulo || "Falta de Resultados Quantificáveis"}
                                                         </div>
-                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}>
                                                             {data.gap_1.explicacao || "Seu CV usa descrições genéricas sem números ou impacto mensurável."}
                                                         </div>
                                                     </div>
@@ -3986,7 +3986,7 @@ export default function AppPage() {
                                                     }}>
                                                         <AlertCircleIcon color="#EF4444" size={14} />
                                                         <div>
-                                                            <div style={{ color: "#CBD5E1", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
                                                                 VERSÃO ATUAL (Score: {nota}/100)
                                                             </div>
                                                             <div style={{
@@ -4089,7 +4089,7 @@ export default function AppPage() {
                                                         <div style={{ color: "#FCA5A5", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
                                                             PROBLEMA #2: {data.gap_2.titulo || "Palavras-Chave da Vaga Ausentes"}
                                                         </div>
-                                                        <div style={{ color: "#CBD5E1", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}>
                                                             {data.gap_2.explicacao || "Termos críticos da vaga não aparecem no seu CV."}
                                                         </div>
                                                     </div>
@@ -4109,7 +4109,7 @@ export default function AppPage() {
                                                     }}>
                                                         <AlertCircleIcon color="#EF4444" size={14} />
                                                         <div>
-                                                            <div style={{ color: "#CBD5E1", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
                                                                 VERSÃO ATUAL (Score: {nota}/100)
                                                             </div>
                                                             <div style={{
@@ -4138,7 +4138,7 @@ export default function AppPage() {
                                                     }}>
                                                         <AlertCircleIcon color="#EF4444" size={14} />
                                                         <div style={{ flex: 1 }}>
-                                                            <div style={{ color: "#CBD5E1", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
+                                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
                                                                 TERMOS FALTANDO NO SEU CV:
                                                             </div>
                                                             <div style={{ display: "grid", gap: 4 }}>
@@ -4213,93 +4213,36 @@ export default function AppPage() {
                                                             Na versão Premium você recebe:
                                                         </div>
                                                     </div>
-                                                    <div className="premium-benefits-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
-                                                        <style dangerouslySetInnerHTML={{
-                                                            __html: `
-                                                            @media (min-width: 768px) { .premium-benefits-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-                                                            .premium-benefit-item { position: relative; }
-                                                            .premium-benefit-tooltip {
-                                                                position: absolute;
-                                                                left: 50%;
-                                                                bottom: calc(100% + 10px);
-                                                                transform: translateX(-50%) translateY(6px);
-                                                                width: min(270px, 85vw);
-                                                                padding: 10px 12px;
-                                                                border-radius: 10px;
-                                                                border: 1px solid rgba(16, 185, 129, 0.35);
-                                                                background: rgba(15, 23, 42, 0.96);
-                                                                color: #E2E8F0;
-                                                                font-size: 0.74rem;
-                                                                line-height: 1.45;
-                                                                box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.7), 0 0 24px -12px rgba(16, 185, 129, 0.45);
-                                                                opacity: 0;
-                                                                pointer-events: none;
-                                                                z-index: 30;
-                                                                transition: opacity 0.16s ease, transform 0.16s ease;
-                                                            }
-                                                            .premium-benefit-item:hover .premium-benefit-tooltip,
-                                                            .premium-benefit-item:focus-within .premium-benefit-tooltip {
-                                                                opacity: 1;
-                                                                transform: translateX(-50%) translateY(0);
-                                                            }
-                                                        ` }} />
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                                                         {[
-                                                            {
-                                                                label: <>✅ <strong>Todos os problemas críticos</strong> detalhados</>,
-                                                                tooltip: "Você viu apenas 2 exemplos. No Premium, recebe diagnóstico completo de TODOS os gaps que estão bloqueando seu CV nos filtros ATS.",
-                                                            },
-                                                            {
-                                                                label: <>✅ <strong>CV reescrito palavra por palavra</strong> com keywords estratégicas</>,
-                                                                tooltip: "Reescrevemos seu CV inteiro com termos da vaga distribuídos naturalmente em experiências, competências e resumo para maximizar aderência ATS.",
-                                                            },
-                                                            {
-                                                                label: <>✅ <strong>Verificação ATS completa</strong> (você viu apenas 3 critérios)</>,
-                                                                tooltip: "Avaliação completa de 15+ critérios: palavras-chave, estrutura, legibilidade, impacto, formatação, seções obrigatórias e lacunas críticas.",
-                                                            },
-                                                            {
-                                                                label: <>✅ <strong>LinkedIn Headline</strong> otimizado para recrutadores</>,
-                                                                tooltip: "Headline estratégica para aumentar suas buscas no LinkedIn e atrair recrutadores da sua área.",
-                                                            },
-                                                            {
-                                                                label: <>✅ <strong>Simulador de entrevista</strong> com IA</>,
-                                                                tooltip: "Treine perguntas técnicas e comportamentais com feedback instantâneo para melhorar clareza e confiança nas respostas.",
-                                                            },
-                                                            {
-                                                                label: <>✅ <strong>Biblioteca recomendada</strong> pensada exclusivamente para sua carreira</>,
-                                                                tooltip: "Lista curada de livros, cursos e recursos específicos para a vaga que você está buscando e lacunas identificadas no seu perfil.",
-                                                            },
+                                                            "Diagnóstico completo de todos os problemas críticos",
+                                                            "CV reescrito palavra por palavra com keywords estratégicas",
+                                                            "Verificação ATS completa (15+ critérios)",
+                                                            "LinkedIn Headline otimizado",
+                                                            "Simulador de entrevista com IA",
+                                                            "Biblioteca técnica personalizada"
                                                         ].map((item, i) => (
-                                                            <div key={i} className="premium-benefit-item" style={{
+                                                            <div key={i} style={{
                                                                 display: "flex",
                                                                 alignItems: "center",
                                                                 gap: 12,
-                                                                padding: "16px 18px",
-                                                                background: "rgba(255, 255, 255, 0.03)",
-                                                                border: "1px solid rgba(16, 185, 129, 0.2)",
-                                                                borderRadius: 16,
-                                                                backdropFilter: "blur(12px)",
-                                                                WebkitBackdropFilter: "blur(12px)",
-                                                                cursor: "help",
-                                                            }} tabIndex={0} aria-label={item.tooltip}>
+                                                                padding: "12px 0",
+                                                            }}>
                                                                 <div style={{
-                                                                    width: 36,
-                                                                    height: 36,
+                                                                    width: 20,
+                                                                    height: 20,
                                                                     borderRadius: "50%",
-                                                                    background: "rgba(16, 185, 129, 0.15)",
+                                                                    background: "#10B981",
                                                                     display: "flex",
                                                                     alignItems: "center",
                                                                     justifyContent: "center",
                                                                     flexShrink: 0,
-                                                                    boxShadow: "0 0 15px -3px rgba(16, 185, 129, 0.4)",
                                                                 }}>
-                                                                    <CheckCircle2Icon color="#34D399" />
+                                                                    <span style={{ color: "#fff", fontSize: "0.75rem", fontWeight: 700 }}>✓</span>
                                                                 </div>
-                                                                <span style={{ color: "#F1F5F9", fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.4 }}>
-                                                                    {item.label}
+                                                                <span style={{ color: "#F1F5F9", fontSize: "0.95rem", fontWeight: 500, lineHeight: 1.5 }}>
+                                                                    {item}
                                                                 </span>
-                                                                <div className="premium-benefit-tooltip" role="tooltip">
-                                                                    {item.tooltip}
-                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
