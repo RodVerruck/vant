@@ -102,29 +102,11 @@ def analyze_lite(request: Request, file: UploadFile = File(...), job_description
         
         cv_text = extrair_texto_pdf(io.BytesIO(file_bytes))
 
-        # Determinismo: mesmo CV + mesma vaga + mesma área retorna o mesmo resultado (cache de preview)
-        from cache_manager import CacheManager
-        cache_manager = CacheManager()
-        cache_job_key = f"{job_description.strip()}\n[AREA]{(area_of_interest or '').strip().lower()}"
-        preview_hash = cache_manager.generate_input_hash(cv_text, cache_job_key, model_version="preview-lite-v1")
-        cached_preview = cache_manager.check_cache(preview_hash)
-        if cached_preview:
-            return JSONResponse(content=cached_preview)
-        
+        # PREVIEW SEM CACHE: Sempre fresh para garantir consistência com premium
         if area_of_interest:
             data = analyze_preview_lite(cv_text, job_description, forced_area=area_of_interest)
         else:
-            data = analyze_preview_lite(cv_text, job_description)
-
-        cache_manager.save_to_cache(
-            input_hash=preview_hash,
-            user_id=None,
-            cv_text=cv_text,
-            job_description=cache_job_key,
-            result_json=data,
-            model_version="preview-lite-v1",
-            original_filename=file.filename if file and file.filename else None,
-        )
+            data = analyze_preview_lite(cv_text, job_description, forced_area=None)
         
         return JSONResponse(content=data)
     except Exception as e:

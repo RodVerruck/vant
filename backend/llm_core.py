@@ -1051,40 +1051,27 @@ def analyze_cv_orchestrator_streaming(
         else:
             modified_job_description = job_description
         
-        # ETAPA 1: Calcular nota estrutural usando a mesma lógica do /analyze-lite
+        # ETAPA 1: Calcular nota estrutural usando EXATAMENTE a mesma lógica do /analyze-lite (SEM CACHE)
         nota_ats_estrutura = None
         preview_gaps_count = None
+        pilares_estrutura = None
         try:
-            from cache_manager import CacheManager
-            cache_manager = CacheManager()
-            cache_job_key = f"{job_description.strip()}\n[AREA]{(area_of_interest or '').strip().lower()}"
-            preview_hash = cache_manager.generate_input_hash(cv_text, cache_job_key, model_version="preview-lite-v1")
-            lite_result = cache_manager.check_cache(preview_hash)
+            # SEMPRE processar fresh para garantir consistência com preview
+            if forced_area:
+                lite_result = analyze_preview_lite(cv_text, job_description, forced_area=forced_area)
+            else:
+                lite_result = analyze_preview_lite(cv_text, job_description, forced_area=None)
 
-            if not (isinstance(lite_result, dict) and lite_result):
-                if forced_area:
-                    lite_result = analyze_preview_lite(cv_text, job_description, forced_area=forced_area)
-                else:
-                    lite_result = analyze_preview_lite(cv_text, job_description)
-
-                cache_manager.save_to_cache(
-                    input_hash=preview_hash,
-                    user_id=user_id,
-                    cv_text=cv_text,
-                    job_description=cache_job_key,
-                    result_json=lite_result,
-                    model_version="preview-lite-v1",
-                    original_filename=original_filename
-                )
             if isinstance(lite_result, dict):
                 nota_ats_estrutura = int(lite_result.get("nota_ats", 0) or 0)
                 pilares_estrutura = lite_result.get("analise_por_pilares")
                 preview_gaps_count = int(bool(lite_result.get("gap_1"))) + int(bool(lite_result.get("gap_2")))
             else:
-                pilares_estrutura = None
-                preview_gaps_count = None
+                logger.warning(f"⚠️ analyze_preview_lite retornou formato inválido: {type(lite_result)}")
+                
         except Exception as lite_error:
             logger.warning(f"⚠️ Não foi possível calcular nota estrutural via analyze_preview_lite: {lite_error}")
+            nota_ats_estrutura = None
             pilares_estrutura = None
             preview_gaps_count = None
 
@@ -1095,14 +1082,22 @@ def analyze_cv_orchestrator_streaming(
             diag_result = agent_diagnosis(cv_text, modified_job_description, forced_area=forced_area)
             
             nota_ats_conteudo = int(diag_result.get("nota_ats", 0) or 0)
-            if nota_ats_estrutura is None:
-                nota_ats_estrutura = nota_ats_conteudo
+            
+            # GARANTIR CONSISTÊNCIA: Usar sempre o score do preview (analyze_preview_lite)
+            if nota_ats_estrutura is not None:
+                # Score do preview é autoritativo - usar ele como score principal
+                diag_result["nota_ats"] = int(nota_ats_estrutura)
+                diag_result["nota_ats_estrutura"] = int(nota_ats_estrutura)  # Compatibilidade
+                diag_result["nota_ats_conteudo"] = nota_ats_conteudo  # Para debug se necessário
+            else:
+                # Fallback caso preview falhe
+                diag_result["nota_ats"] = nota_ats_conteudo
+                diag_result["nota_ats_estrutura"] = nota_ats_conteudo
 
-            # Campos explícitos para o frontend diferenciar score estrutural vs conteúdo
-            diag_result["nota_ats_conteudo"] = nota_ats_conteudo
-            diag_result["nota_ats_estrutura"] = int(nota_ats_estrutura)
+            # Pilares e gaps do preview (autoritativo)
             if pilares_estrutura:
-                diag_result["analise_por_pilares_estrutura"] = pilares_estrutura
+                diag_result["analise_por_pilares"] = pilares_estrutura
+                diag_result["analise_por_pilares_estrutura"] = pilares_estrutura  # Compatibilidade
             if preview_gaps_count is not None:
                 diag_result["preview_gaps_count"] = preview_gaps_count
             

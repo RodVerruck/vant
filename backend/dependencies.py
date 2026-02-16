@@ -86,21 +86,9 @@ if STRIPE_SECRET_KEY:
 
 supabase_admin: Client | None = None
 if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
-    try:
-        # Usar timeout de 60 segundos para resolver ReadError [WinError 10035] no Windows
-        import httpx
-        timeout_config = httpx.Timeout(60.0)
-        supabase_admin = create_client(
-            SUPABASE_URL, 
-            SUPABASE_SERVICE_ROLE_KEY,
-            options=ClientOptions(postgrest_client_timeout=timeout_config)
-        )
-        logger.info("Cliente Supabase criado com timeout de 60s")
-    except Exception as e:
-        logger.warning(f"Falha ao criar cliente Supabase com timeout personalizado: {e}")
-        # Fallback para cliente básico sem timeout personalizado  
-        supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-        logger.info("Cliente Supabase criado com timeout padrão")
+    # Usar timeout padrão por enquanto para evitar ClientOptions incompatível
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    logger.info("Cliente Supabase criado com timeout padrão (ClientOptions desabilitado temporariamente)")
 
 # ============================================================
 # PRICING (SINGLE SOURCE OF TRUTH)
