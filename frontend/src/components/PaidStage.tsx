@@ -8,7 +8,7 @@ import { calculateProjectedScore } from "@/lib/helpers";
 import {
     Zap, TrendingUp, AlertCircle, FileText, BookOpen, MessageSquare,
     Loader, ChevronDown, ChevronUp, Linkedin, User, Search, Copy,
-    CheckCircle, ArrowLeft, Star, Clock, Target
+    CheckCircle, CheckCircle2, MinusCircle, ArrowLeft, Star, Target
 } from 'lucide-react';
 
 // --- CSS PURO (Substituindo Tailwind) ---
@@ -78,6 +78,12 @@ const globalStyles = `
   .vant-text-xs { font-size: 0.75rem; }
   .vant-font-medium { font-weight: 500; }
   .vant-text-slate-400 { color: #94a3b8; }
+  .vant-pulse-soft { animation: vantPulse 1.6s ease-in-out infinite; }
+  @keyframes vantPulse {
+    0% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.06); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.85; }
+  }
   .vant-text-white { color: white; }
 
   /* Cards e Glassmorphism */
@@ -491,7 +497,61 @@ export function PaidStage({
     }
 
     const gapTotal = Math.max(1, (reportData.gaps_fatais || []).length);
-    const totalCorrectionMinutes = (gapTotal * 15) + 10;
+
+    const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+
+    const getInterviewChance = (score: number) => {
+        const normalized = clamp(score, 0, 100);
+
+        if (normalized < 40) {
+            const percentage = Math.round(2 + (normalized / 40) * 13);
+            return {
+                label: "Baixa visibilidade",
+                percentage,
+                color: "#F87171",
+                icon: AlertCircle,
+                pulse: false
+            };
+        }
+
+        if (normalized < 60) {
+            const percentage = Math.round(15 + ((normalized - 40) / 20) * 25);
+            return {
+                label: "Média visibilidade",
+                percentage,
+                color: "#FBBF24",
+                icon: MinusCircle,
+                pulse: false
+            };
+        }
+
+        if (normalized < 80) {
+            const percentage = Math.round(40 + ((normalized - 60) / 20) * 35);
+            return {
+                label: "Alta visibilidade",
+                percentage,
+                color: "#34D399",
+                icon: TrendingUp,
+                pulse: true
+            };
+        }
+
+        const percentage = Math.round(75 + ((normalized - 80) / 20) * 20);
+        return {
+            label: "Muito alta",
+            percentage,
+            color: "#4ADE80",
+            icon: CheckCircle2,
+            pulse: true
+        };
+    };
+
+    const currentChance = getInterviewChance(xpAtual);
+    const projectedChance = getInterviewChance(projected.score);
+    const chanceMultiplier = projectedChance.percentage / Math.max(currentChance.percentage, 1);
+    const chanceCopy = chanceMultiplier >= 1.9
+        ? `Aumente em ${chanceMultiplier.toFixed(1)}x com as correções sugeridas`
+        : `Potencial de chegar a ${projectedChance.percentage}%`;
 
     const diagnosticGaps = (reportData.gaps_fatais || []).map((gap, idx) => ({
         id: idx + 1,
@@ -570,21 +630,29 @@ export function PaidStage({
                             <div className="vant-text-sm vant-text-slate-400">+{projected.improvement} pontos possíveis</div>
                         </div>
                         <div className="vant-mt-4" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '99px', color: '#34d399', fontSize: '0.875rem', fontWeight: 500 }}>
-                            <TrendingUp size={16} /> Top 5% dos candidatos
+                            <TrendingUp size={16} /> {projected.percentile} dos candidatos
                         </div>
                     </div>
 
-                    {/* Card Tempo */}
-                    <div className="vant-glass-dark">
+                    {/* Card Chance de Entrevista */}
+                    <div className="vant-glass-dark" style={{ borderColor: 'rgba(56, 189, 248, 0.25)', boxShadow: '0 0 30px rgba(56, 189, 248, 0.08)' }}>
                         <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
-                            <div className="vant-icon-circle"><Clock size={20} color="#cbd5e1" /></div>
-                            <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estimativa</span>
+                            <div className="vant-icon-circle">
+                                {currentChance.icon({
+                                    size: 20,
+                                    color: currentChance.color,
+                                    className: currentChance.pulse ? "vant-pulse-soft" : undefined
+                                })}
+                            </div>
+                            <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chance de entrevista</span>
                         </div>
                         <div>
-                            <div style={{ fontSize: '3.5rem', fontWeight: 300, color: 'white', lineHeight: 1 }}>{totalCorrectionMinutes}</div>
-                            <div className="vant-text-sm vant-text-slate-400">minutos de trabalho</div>
+                            <div style={{ fontSize: '3.25rem', fontWeight: 300, color: currentChance.color, lineHeight: 1 }}>
+                                {currentChance.percentage}%
+                            </div>
+                            <div className="vant-text-sm" style={{ color: currentChance.color }}>{currentChance.label}</div>
                         </div>
-                        <div className="vant-text-xs vant-text-slate-400 vant-mt-4">Para aplicar correções</div>
+                        <div className="vant-text-xs vant-text-slate-400 vant-mt-4">{chanceCopy}</div>
                     </div>
                 </div>
 

@@ -27,9 +27,25 @@ logger = logging.getLogger(__name__)
 class StorageManager:
     def __init__(self):
         self.supabase_url = os.getenv("SUPABASE_URL")
+        if self.supabase_url and not self.supabase_url.endswith("/"):
+            self.supabase_url = f"{self.supabase_url}/"
         self.supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         self.supabase = create_client(self.supabase_url, self.supabase_key)
         self.bucket_name = "vant-temp-files"
+        self._last_cleanup: Optional[datetime] = None
+
+    def _maybe_cleanup(self) -> None:
+        """Executa limpeza periódica (no máximo 1x por hora)."""
+        try:
+            now = datetime.now()
+            if self._last_cleanup and (now - self._last_cleanup) < timedelta(hours=1):
+                return
+            cleaned = self.cleanup_expired()
+            self._last_cleanup = now
+            if cleaned:
+                logger.info(f"🧹 Limpeza automática executada: {cleaned} batches expirados")
+        except Exception as e:
+            logger.warning(f"⚠️ Falha na limpeza automática: {e}")
         
     def save_temp_files(self, 
                        cv_bytes: bytes, 
@@ -42,6 +58,7 @@ class StorageManager:
             Dict com paths para acesso futuro
         """
         try:
+            self._maybe_cleanup()
             # Gerar timestamp único para este batch
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             batch_id = str(uuid.uuid4())[:8]
@@ -130,7 +147,8 @@ class StorageManager:
             
             # Verificar se não expirou
             expires_at = datetime.fromisoformat(metadata["expires_at"])
-            if datetime.now() > expires_at:
+            now = datetime.now(expires_at.tzinfo) if expires_at.tzinfo else datetime.now()
+            if now > expires_at:
                 # Auto-limpeza
                 self.cleanup_batch(batch_id)
                 return None

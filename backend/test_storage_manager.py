@@ -26,7 +26,7 @@ def test_storage_manager():
         print("\n1️⃣  Testando salvamento de arquivos...")
         cv_bytes = b"PDF mock content for testing"
         job_description = "Vaga de Teste Júnior"
-        user_id = "test-user-123"
+        user_id = None
         
         result = storage_manager.save_temp_files(cv_bytes, job_description, user_id)
         
