@@ -71,10 +71,15 @@ export function calculateProjectedScore(
     const projectedScore = clamp(current + boundedImprovement, current, dynamicCeiling);
     const improvement = projectedScore - current;
 
-    let percentile = "Top 25%";
+    // Percentis REALISTAS baseados no score projetado
+    let percentile = "Top 50%";
+    if (projectedScore >= 65) percentile = "Top 40%";
+    if (projectedScore >= 70) percentile = "Top 30%";
+    if (projectedScore >= 75) percentile = "Top 25%";
     if (projectedScore >= 80) percentile = "Top 20%";
-    if (projectedScore >= 86) percentile = "Top 15%";
-    if (projectedScore >= 91) percentile = "Top 10%";
+    if (projectedScore >= 85) percentile = "Top 15%";
+    if (projectedScore >= 90) percentile = "Top 10%";
+    if (projectedScore >= 95) percentile = "Top 5%";
 
     const reasons: string[] = [];
     if (fatalGaps + mediumGaps > 0) reasons.push(`${fatalGaps + mediumGaps} gaps relevantes identificados`);
