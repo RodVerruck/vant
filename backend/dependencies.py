@@ -17,6 +17,7 @@ from fastapi import File, Form, UploadFile, Request, HTTPException, Header
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from supabase import create_client, Client
+from supabase.lib.client_options import ClientOptions
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -85,7 +86,21 @@ if STRIPE_SECRET_KEY:
 
 supabase_admin: Client | None = None
 if SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
-    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    try:
+        # Usar timeout de 60 segundos para resolver ReadError [WinError 10035] no Windows
+        import httpx
+        timeout_config = httpx.Timeout(60.0)
+        supabase_admin = create_client(
+            SUPABASE_URL, 
+            SUPABASE_SERVICE_ROLE_KEY,
+            options=ClientOptions(postgrest_client_timeout=timeout_config)
+        )
+        logger.info("Cliente Supabase criado com timeout de 60s")
+    except Exception as e:
+        logger.warning(f"Falha ao criar cliente Supabase com timeout personalizado: {e}")
+        # Fallback para cliente básico sem timeout personalizado  
+        supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+        logger.info("Cliente Supabase criado com timeout padrão")
 
 # ============================================================
 # PRICING (SINGLE SOURCE OF TRUTH)

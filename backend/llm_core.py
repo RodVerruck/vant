@@ -1053,15 +1053,40 @@ def analyze_cv_orchestrator_streaming(
         
         # ETAPA 1: Calcular nota estrutural usando a mesma lógica do /analyze-lite
         nota_ats_estrutura = None
+        preview_gaps_count = None
         try:
-            if forced_area:
-                lite_result = analyze_preview_lite(cv_text, job_description, forced_area=forced_area)
-            else:
-                lite_result = analyze_preview_lite(cv_text, job_description)
+            from cache_manager import CacheManager
+            cache_manager = CacheManager()
+            cache_job_key = f"{job_description.strip()}\n[AREA]{(area_of_interest or '').strip().lower()}"
+            preview_hash = cache_manager.generate_input_hash(cv_text, cache_job_key, model_version="preview-lite-v1")
+            lite_result = cache_manager.check_cache(preview_hash)
+
+            if not (isinstance(lite_result, dict) and lite_result):
+                if forced_area:
+                    lite_result = analyze_preview_lite(cv_text, job_description, forced_area=forced_area)
+                else:
+                    lite_result = analyze_preview_lite(cv_text, job_description)
+
+                cache_manager.save_to_cache(
+                    input_hash=preview_hash,
+                    user_id=user_id,
+                    cv_text=cv_text,
+                    job_description=cache_job_key,
+                    result_json=lite_result,
+                    model_version="preview-lite-v1",
+                    original_filename=original_filename
+                )
             if isinstance(lite_result, dict):
                 nota_ats_estrutura = int(lite_result.get("nota_ats", 0) or 0)
+                pilares_estrutura = lite_result.get("analise_por_pilares")
+                preview_gaps_count = int(bool(lite_result.get("gap_1"))) + int(bool(lite_result.get("gap_2")))
+            else:
+                pilares_estrutura = None
+                preview_gaps_count = None
         except Exception as lite_error:
             logger.warning(f"⚠️ Não foi possível calcular nota estrutural via analyze_preview_lite: {lite_error}")
+            pilares_estrutura = None
+            preview_gaps_count = None
 
         # ETAPA 2: Diagnosis premium (conteúdo/gaps)
         logger.info("📊 Etapa 1: Processando diagnosis...")
@@ -1076,6 +1101,14 @@ def analyze_cv_orchestrator_streaming(
             # Campos explícitos para o frontend diferenciar score estrutural vs conteúdo
             diag_result["nota_ats_conteudo"] = nota_ats_conteudo
             diag_result["nota_ats_estrutura"] = int(nota_ats_estrutura)
+            if pilares_estrutura:
+                diag_result["analise_por_pilares_estrutura"] = pilares_estrutura
+            if preview_gaps_count is not None:
+                diag_result["preview_gaps_count"] = preview_gaps_count
+            
+            # Armazenar o resultado completo do preview lite para reuso exato no frontend
+            if isinstance(lite_result, dict) and lite_result:
+                diag_result["preview_lite_result"] = lite_result
 
             # Salvar diagnóstico parcial
             update_session_progress(session_id, diag_result, "diagnostico_pronto")

@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { OptimizationHero } from "@/components/OptimizationHero";
 import { HistoryGrid } from "@/components/HistoryGrid";
 import { NewOptimizationModal } from "@/components/NewOptimizationModal";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 function getApiUrl(): string {
     if (typeof window !== "undefined") {
@@ -48,19 +49,7 @@ export function DashboardClient() {
     const [lastCV, setLastCV] = useState<{ has_last_cv: boolean; filename?: string; time_ago?: string; is_recent?: boolean; analysis_id?: string; job_description?: string } | null>(null);
 
     // Supabase client (single instance)
-    const supabase = useMemo((): SupabaseClient | null => {
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        if (!url || !key) return null;
-
-        return createClient(url, key, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                storageKey: "vant-supabase-auth",
-            },
-        });
-    }, []);
+    const supabase = useMemo((): SupabaseClient | null => getSupabaseClient(), []);
 
     async function refreshUserStatus(userId: string): Promise<number> {
         try {

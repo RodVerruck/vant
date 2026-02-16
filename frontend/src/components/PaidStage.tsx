@@ -450,13 +450,45 @@ export function PaidStage({
         );
     }
 
-    // Cálculos
-    const xpAtual = Math.min(100, typeof reportData.nota_ats_estrutura === "number" ? reportData.nota_ats_estrutura : (reportData.nota_ats ?? 0));
-    const reportContentGapCount = Math.min(2, reportData.gaps_fatais ? reportData.gaps_fatais.length : 0);
-    const impacto = reportData.analise_por_pilares?.impacto || 0;
-    const keywords = reportData.analise_por_pilares?.keywords || 0;
-    const ats = reportData.analise_por_pilares?.ats || 0;
-    const projected = calculateProjectedScore(xpAtual, reportContentGapCount, 0, ats, keywords, impacto);
+    // Cálculos - usar valores exatos do preview se disponíveis
+    const previewLiteResult = (reportData as any).preview_lite_result;
+
+    let xpAtual: number;
+    let projected: { score: number; improvement: number; percentile: string; reasoning: string };
+
+    if (previewLiteResult && typeof previewLiteResult === 'object') {
+        // Usar valores exatos do preview lite
+        xpAtual = typeof previewLiteResult.nota_ats === "number" ? previewLiteResult.nota_ats : 0;
+
+        const pilares = previewLiteResult.analise_por_pilares || {};
+        const impacto = typeof pilares.impacto === "number" ? pilares.impacto : 0;
+        const keywords = typeof pilares.keywords === "number" ? pilares.keywords : 0;
+        const ats = typeof pilares.ats === "number" ? pilares.ats : 0;
+        const gapsCount = (previewLiteResult.gap_1 ? 1 : 0) + (previewLiteResult.gap_2 ? 1 : 0);
+
+        projected = calculateProjectedScore(xpAtual, gapsCount, 0, ats, keywords, impacto);
+    } else {
+        // Fallback para cálculo tradicional
+        xpAtual = Math.min(100, typeof reportData.nota_ats_estrutura === "number" ? reportData.nota_ats_estrutura : (reportData.nota_ats ?? 0));
+        const previewGapCount = typeof reportData.preview_gaps_count === "number"
+            ? Math.min(2, reportData.preview_gaps_count)
+            : null;
+        const reportContentGapCount = Math.min(2, reportData.gaps_fatais ? reportData.gaps_fatais.length : 0);
+
+        const pilaresBase = reportData.analise_por_pilares_estrutura || reportData.analise_por_pilares || {};
+        const impacto = typeof pilaresBase.impacto === "number" ? pilaresBase.impacto : 0;
+        const keywords = typeof pilaresBase.keywords === "number" ? pilaresBase.keywords : 0;
+        const ats = typeof pilaresBase.ats === "number" ? pilaresBase.ats : 0;
+
+        projected = calculateProjectedScore(
+            xpAtual,
+            previewGapCount ?? reportContentGapCount,
+            0,
+            ats,
+            keywords,
+            impacto
+        );
+    }
 
     const gapTotal = Math.max(1, (reportData.gaps_fatais || []).length);
     const totalCorrectionMinutes = (gapTotal * 15) + 10;

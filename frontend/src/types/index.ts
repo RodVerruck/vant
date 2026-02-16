@@ -85,6 +85,8 @@ export interface ReportData {
     nota_ats: number;
     nota_ats_estrutura?: number;
     nota_ats_conteudo?: number;
+    analise_por_pilares_estrutura?: PilaresData;
+    preview_gaps_count?: number;
     analise_por_pilares: PilaresData;
     linkedin_headline: string;
     resumo_otimizado: string;

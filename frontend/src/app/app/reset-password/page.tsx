@@ -2,22 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from 'next/navigation';
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 export default function ResetPasswordPage() {
     const searchParams = useSearchParams();
-    const [supabase] = useState<SupabaseClient | null>(() => {
-        if (typeof window === "undefined") return null;
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        if (!url || !key) return null;
-        return createClient(url, key, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-            }
-        });
-    });
+    const [supabase] = useState<SupabaseClient | null>(() => getSupabaseClient());
 
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");

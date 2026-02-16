@@ -61,10 +61,11 @@ class StorageManager:
             
             cv_result = self.supabase.storage \
                 .from_(self.bucket_name) \
-                .upload(cv_path, cv_file.getvalue(), {
-                    "content-type": "application/pdf",
-                    "upsert": "true"
-                })
+                .upload(
+                    path=cv_path, 
+                    file=cv_file.getvalue(),
+                    file_options={"content-type": "application/pdf"}
+                )
             
             # Upload da job description
             job_bytes = job_description.encode('utf-8')
@@ -73,10 +74,11 @@ class StorageManager:
             
             job_result = self.supabase.storage \
                 .from_(self.bucket_name) \
-                .upload(job_path, job_file.getvalue(), {
-                    "content-type": "text/plain",
-                    "upsert": "true"
-                })
+                .upload(
+                    path=job_path,
+                    file=job_file.getvalue(),
+                    file_options={"content-type": "text/plain"}
+                )
             
             # Salvar metadados no banco para fácil recuperação
             metadata = {

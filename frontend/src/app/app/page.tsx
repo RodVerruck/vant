@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap, HistoryItem } from "@/types";
 import { PaidStage } from "@/components/PaidStage";
 import { AuthModal } from "@/components/AuthModal";
@@ -11,6 +11,7 @@ import { PricingSimplified } from "@/components/PricingSimplified";
 import { NeonOffer } from "@/components/NeonOffer";
 import { NewOptimizationModal } from "@/components/NewOptimizationModal";
 import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
+import { getSupabaseClient } from "@/lib/supabaseClient";
 
 type JsonObject = Record<string, unknown>;
 
@@ -311,7 +312,7 @@ async function pollAnalysisProgress(
     setCreditsRemaining: (credits: number) => void
 ) {
     const apiUrl = getApiUrl();
-    const maxAttempts = 120; // 2 minutos com polling a cada 1s
+    const maxAttempts = 60; // ~2.5 minutos com polling a cada 2.5s
     let attempts = 0;
 
     while (attempts < maxAttempts) {
@@ -391,7 +392,7 @@ async function pollAnalysisProgress(
             }
 
             // Esperar antes do próximo polling
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 2500));
             attempts++;
 
         } catch (error) {
@@ -620,35 +621,7 @@ export default function AppPage() {
         }
     };
 
-    const supabase = useMemo((): SupabaseClient | null => {
-        // Limpar instâncias antigas do Supabase para evitar conflitos
-        if (typeof window !== 'undefined') {
-            // Limpar localStorage com padrão mais abrangente
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('supabase.auth.')) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-        }
-
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-        if (!url || !key) {
-            return null;
-        }
-
-        // Criar instância única com storage key customizada
-        return createClient(url, key, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                storageKey: 'vant-supabase-auth', // Chave única para evitar conflitos
-            }
-        });
-    }, []);
+    const supabase = useMemo((): SupabaseClient | null => getSupabaseClient(), []);
 
     // Hook do Next.js para capturar parâmetros da URL de forma robusta
     const searchParams = useSearchParams();
@@ -1558,9 +1531,13 @@ export default function AppPage() {
                     console.log("[needsActivation] Créditos cacheados:", data.credits_remaining);
                 }
 
-                // Sincronizar entitlements para garantir
+                // Sincronizar entitlements para garantir (não bloquear redirect em caso de falha)
                 if (authUserId) {
-                    await syncEntitlements(authUserId);
+                    try {
+                        await syncEntitlements(authUserId);
+                    } catch (error) {
+                        console.warn("[needsActivation] Falha ao sincronizar entitlements, seguindo fluxo:", error);
+                    }
                 }
 
                 // Sinalizar que acabou de pagar (dashboard vai detectar)
@@ -2569,7 +2546,7 @@ export default function AppPage() {
 
         // 🎯 Cálculo inteligente do score projetado
         const projected = calculateProjectedScore(nota, gapsFatals, 0, ats, keywords, impacto);
-        const lowProjectedNote = projected.score < 55
+        const lowProjectedNote = projected.score <= 60
             ? `
                 <div style="margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(251, 191, 36, 0.35);">
                     <div style="color: #FBBF24; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">Compatibilidade baixa com a vaga</div>

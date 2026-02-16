@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import io
 import logging
+import time
 from datetime import datetime
 from typing import Any
 
+import httpx
 import sentry_sdk
 from fastapi import APIRouter, File, Form, UploadFile, Request, BackgroundTasks, Response
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -47,18 +49,29 @@ def get_analysis_status(session_id: str) -> JSONResponse:
         )
     
     try:
-        response = supabase_admin.table("analysis_sessions").select(
-            "status, current_step, result_data, created_at, updated_at"
-        ).eq("id", session_id).limit(1).execute()
-        
-        if not response.data:
+        response = None
+        for attempt in range(3):
+            try:
+                response = supabase_admin.table("analysis_sessions").select(
+                    "status, current_step, result_data, created_at, updated_at"
+                ).eq("id", session_id).limit(1).execute()
+                break
+            except Exception as e:
+                is_read_error = isinstance(e, httpx.ReadError)
+                is_winerror = "WinError 10035" in str(e)
+                if attempt < 2 and (is_read_error or is_winerror):
+                    time.sleep(0.5)
+                    continue
+                raise
+
+        if not response or not response.data:
             return JSONResponse(
                 status_code=404,
                 content={"error": "Sessão não encontrada."}
             )
-        
+
         session = response.data[0]
-        
+
         return JSONResponse(content={
             "session_id": session_id,
             "status": session["status"],
@@ -67,7 +80,7 @@ def get_analysis_status(session_id: str) -> JSONResponse:
             "created_at": session["created_at"],
             "updated_at": session["updated_at"]
         })
-        
+
     except Exception as e:
         sentry_sdk.capture_exception(e)
         return JSONResponse(status_code=500, content={"error": f"{type(e).__name__}: {e}"})
