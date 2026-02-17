@@ -796,6 +796,7 @@ export default function AppPage() {
 
     // Flag para auto-start vindo do Dashboard modal
     const pendingAutoStart = useRef(false);
+    const userStatusFetched = useRef(false);
 
     // Restaurar jobDescription e file do localStorage ao montar
     useEffect(() => {
@@ -1033,6 +1034,7 @@ export default function AppPage() {
                         setAuthUserId(session.user.id);
                         setAuthEmail(session.user.email || "");
                         setCheckoutError("");
+                        userStatusFetched.current = false; // Resetar para permitir nova chamada
 
                         // Cache imediato de créditos para resposta instantânea
                         const cachedCredits = localStorage.getItem('vant_cached_credits');
@@ -1050,6 +1052,7 @@ export default function AppPage() {
                         setCreditsRemaining(0);
                         setCreditsLoading(false);
                         smartRedirectHandledRef.current = false;
+                        userStatusFetched.current = false; // Resetar ref no logout
                         // Limpar cache ao fazer logout
                         localStorage.removeItem('vant_cached_credits');
                         // Resetar estado de ativação ao fazer logout
@@ -1176,6 +1179,10 @@ export default function AppPage() {
     // Isso funciona independente se o exchangeCode falhar no Strict Mode
     useEffect(() => {
         if (!authUserId || typeof window === "undefined") return;
+        if (userStatusFetched.current) return; // Evitar chamadas duplicadas
+
+        console.log("[UserStatus] Iniciando busca de status para usuário:", authUserId);
+        console.log("[UserStatus] userStatusFetched.current:", userStatusFetched.current);
 
         // Abortar Smart Redirect se estivermos processando um cancelamento de pagamento
         // Isso evita que o usuário seja jogado de volta para o checkout
@@ -1184,6 +1191,8 @@ export default function AppPage() {
             console.log("[Smart Redirect] Pagamento cancelado detectado, abortando redirecionamento automático.");
             return;
         }
+
+        userStatusFetched.current = true; // Marcar que já buscou
 
         (async () => {
             const returnStage = localStorage.getItem("vant_auth_return_stage");
@@ -1388,29 +1397,31 @@ export default function AppPage() {
             }
             // hasHistoryItem é tratado pelo useEffect dedicado abaixo
 
-            // Sincronizar créditos em background
-            (async () => {
-                try {
-                    const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
-                        signal: getSafeSignal(10000), // 10s timeout
-                    });
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        if (data.credits_remaining > 0) {
-                            setCreditsRemaining(data.credits_remaining);
-                            localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
-                            setSelectedPlan("pro_monthly_early_bird");
-                            console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
+            // Sincronizar créditos em background (apenas uma vez)
+            if (!userStatusFetched.current) {
+                (async () => {
+                    try {
+                        const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
+                            signal: getSafeSignal(10000), // 10s timeout
+                        });
+                        if (resp.ok) {
+                            const data = await resp.json();
+                            if (data.credits_remaining > 0) {
+                                setCreditsRemaining(data.credits_remaining);
+                                localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
+                                setSelectedPlan("pro_monthly_early_bird");
+                                console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
+                            }
+                        } else {
+                            console.warn("[Auth] API respondeu com status:", resp.status);
                         }
-                    } else {
-                        console.warn("[Auth] API respondeu com status:", resp.status);
+                    } catch (e) {
+                        console.error("[Auth] Erro ao sincronizar créditos:", e);
                     }
-                } catch (e) {
-                    console.error("[Auth] Erro ao sincronizar créditos:", e);
-                }
-            })();
+                })();
+            }
         })();
-    }, [authUserId, stage, showAuthModal]);
+    }, [authUserId]); // Depender APENAS do authUserId para evitar loop
 
     // -------------------------------------------------------------------------
     // DEBUG: Restauração do Contexto de Reset de Senha
