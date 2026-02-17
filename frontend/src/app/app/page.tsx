@@ -426,12 +426,7 @@ export default function AppPage() {
     // Flag para evitar flicker ao verificar autenticação/redirecionamento
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     // Flag para evitar flash do hero ao abrir item do histórico vindo do Dashboard
-    const [loadingHistoryItem, setLoadingHistoryItem] = useState(() => {
-        if (typeof window !== "undefined" && localStorage.getItem("vant_dashboard_open_history_id")) {
-            return true;
-        }
-        return false;
-    });
+    const [loadingHistoryItem, setLoadingHistoryItem] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<PlanType>("credit_1");
     const [jobDescription, setJobDescription] = useState("");
     const [useGenericJob, setUseGenericJob] = useState(false);
@@ -638,6 +633,14 @@ export default function AppPage() {
 
     // Hook do Next.js para capturar parâmetros da URL de forma robusta
     const searchParams = useSearchParams();
+
+    // Carregar estado do localStorage após montagem no cliente (evitar problemas de hidratação)
+    useEffect(() => {
+        // Verificar se há item do histórico para carregar do Dashboard
+        if (localStorage.getItem("vant_dashboard_open_history_id")) {
+            setLoadingHistoryItem(true);
+        }
+    }, []);
 
     // NOVO: useEffect dedicado para capturar parâmetros do Stripe via useSearchParams
     // Isso é mais robusto que window.location no Next.js App Router
