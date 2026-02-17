@@ -37,6 +37,12 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 claude_client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
 
 # ============================================================
+# RETRY CONFIG (TRANSIENT LLM ERRORS)
+# ============================================================
+LLM_RETRY_ATTEMPTS = 2  # total tries = 1 + retries
+LLM_RETRY_BACKOFF_SECONDS = 1.0
+
+# ============================================================
 # PROGRESSIVE LOADING - FUNÇÃO AUXILIAR
 # ============================================================
 def update_session_progress(session_id: str, data_chunk: dict, step_name: str) -> bool:
@@ -526,17 +532,49 @@ def _call_groq(
             model_name=model_name,
         )
 
+def _is_transient_llm_error(response) -> bool:
+    if not isinstance(response, dict) or not response.get("_vant_error"):
+        return False
+    message = str(response.get("message", "")).lower()
+    transient_markers = [
+        "503",
+        "unavailable",
+        "overloaded",
+        "rate limit",
+        "timeout",
+        "temporar",
+    ]
+    return any(marker in message for marker in transient_markers)
+
+
 def call_llm(system_prompt: str, payload: str, agent_name: str):
     model = AGENT_MODEL_REGISTRY.get(agent_name, DEFAULT_MODEL)
-    
-    # Verifica se deve usar Claude
-    if model.startswith("claude"):
-        return _call_claude(system_prompt, payload, agent_name, model)
-    elif model.startswith("groq"):
-        return _call_groq(system_prompt, payload, agent_name, model)
-    else:
-        # Usa Google Gemini (padrão)
-        return _call_google_cached(system_prompt, payload, agent_name, model)
+
+    def _execute():
+        # Verifica se deve usar Claude
+        if model.startswith("claude"):
+            return _call_claude(system_prompt, payload, agent_name, model)
+        elif model.startswith("groq"):
+            return _call_groq(system_prompt, payload, agent_name, model)
+        else:
+            # Usa Google Gemini (padrão)
+            return _call_google_cached(system_prompt, payload, agent_name, model)
+
+    last_response = None
+    for attempt in range(LLM_RETRY_ATTEMPTS + 1):
+        last_response = _execute()
+        if not _is_transient_llm_error(last_response):
+            return last_response
+
+        if attempt < LLM_RETRY_ATTEMPTS:
+            wait_seconds = LLM_RETRY_BACKOFF_SECONDS * (2 ** attempt)
+            logger.warning(
+                f"⚠️ LLM temporariamente indisponível [{agent_name} | {model}]. "
+                f"Retry {attempt + 1}/{LLM_RETRY_ATTEMPTS} em {wait_seconds:.1f}s..."
+            )
+            time.sleep(wait_seconds)
+
+    return last_response
 
 # ============================================================
 # PIPELINE CV (CORE PRODUCT)
