@@ -4630,19 +4630,23 @@ export default function AppPage() {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => setShowUseCreditPrompt(false)}
+                                                        onClick={() => {
+                                                            setShowUseCreditPrompt(false);
+                                                            setSelectedPlan("credit_1");
+                                                            setShowProCreditNotice(true);
+                                                        }}
                                                         style={{
                                                             flex: "1 1 200px",
                                                             background: "transparent",
-                                                            border: "1px solid rgba(148, 163, 184, 0.4)",
-                                                            color: "#E2E8F0",
+                                                            border: "1px solid rgba(56, 189, 248, 0.4)",
+                                                            color: "#7dd3fc",
                                                             padding: "10px 14px",
                                                             borderRadius: 10,
                                                             fontWeight: 600,
                                                             cursor: "pointer"
                                                         }}
                                                     >
-                                                        Continuar no checkout
+                                                        Comprar 1 crédito avulso
                                                     </button>
                                                 </div>
                                             </div>
