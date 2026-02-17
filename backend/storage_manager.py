@@ -38,32 +38,10 @@ class StorageManager:
         logger.info("📦 StorageManager inicializado (cleanup desativado no init)")
 
     def _maybe_cleanup(self) -> None:
-        """Executa limpeza periódica (no máximo 1x por hora) - CORRIGIDO."""
-        try:
-            now = datetime.now()
-            
-            # 🔥 CORREÇÃO: Verificação robusta com timezone
-            if self._last_cleanup:
-                # Garantir que ambos tenham timezone ou nenhum
-                if self._last_cleanup.tzinfo and not now.tzinfo:
-                    now = now.replace(tzinfo=self._last_cleanup.tzinfo)
-                elif not self._last_cleanup.tzinfo and now.tzinfo:
-                    self._last_cleanup = self._last_cleanup.replace(tzinfo=now.tzinfo)
-                
-                if (now - self._last_cleanup) < timedelta(hours=1):
-                    logger.debug("⏰ Cleanup ainda não necessário (último: %s)", self._last_cleanup)
-                    return
-            
-            logger.info("🧹 Executando limpeza automática...")
-            cleaned = self.cleanup_expired()
-            self._last_cleanup = now
-            if cleaned:
-                logger.info(f"🧹 Limpeza automática executada: {cleaned} batches expirados")
-            else:
-                logger.info("🧹 Limpeza automática: nenhum batch expirado")
-                
-        except Exception as e:
-            logger.warning(f"⚠️ Falha na limpeza automática: {e}")
+        """Executa limpeza periódica (no máximo 1x por hora) - DESATIVADO."""
+        # 🔥 CORREÇÃO: Desativar cleanup automático completamente
+        # para evitar loops infinitos em produção
+        return
         
     def save_temp_files(self, 
                        cv_bytes: bytes, 
@@ -211,14 +189,19 @@ class StorageManager:
         Remove arquivos e metadados de um batch específico.
         """
         try:
-            # Recuperar metadados para saber os paths
-            metadata = self.get_temp_files(batch_id)
-            if not metadata:
+            # 🔥 CORREÇÃO: Buscar metadados diretamente sem recursão
+            response = self.supabase.table("temp_files_metadata") \
+                .select("cv_path, job_path") \
+                .eq("batch_id", batch_id) \
+                .execute()
+            
+            if not response.data:
                 return True
                 
-            # Remover arquivos do storage
+            metadata = response.data[0]
             paths_to_remove = [metadata["cv_path"], metadata["job_path"]]
             
+            # Remover arquivos do storage
             self.supabase.storage \
                 .from_(self.bucket_name) \
                 .remove(paths_to_remove)
