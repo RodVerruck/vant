@@ -2182,7 +2182,7 @@ export default function AppPage() {
                     }
 
                     // Se tem créditos, redirecionar para dashboard mantendo loading
-                    if (credits > 0) {
+                    if (credits > 0 && window.location.pathname !== "/dashboard") {
                         console.log("[initialAuthCheck] Usuário tem créditos, redirecionando para dashboard...");
                         window.location.href = "/dashboard";
                         return; // Manter isCheckingAuth como true durante redirect
