@@ -1461,12 +1461,14 @@ export default function AppPage() {
                     setReportData(fullData);
                     setPreviewData((fullData as unknown as { preview_data?: PreviewData })?.preview_data ?? null);
                     setNeedsActivation(false);
-                    if (fullData?.job_description) {
-                        setJobDescription(fullData.job_description);
+
+                    // job_description comes from the API response
+                    if (fullResult.job_description) {
+                        setJobDescription(fullResult.job_description);
                     }
                     setStage("paid");
 
-                    // 🧹 Limpar URL após carregar com sucesso (opcional, mas elegante)
+                    // Limpar URL após carregar com sucesso (opcional, mas elegante)
                     if (urlHistoryId) {
                         window.history.replaceState({}, '', '/app');
                     }
