@@ -1197,7 +1197,13 @@ export default function AppPage() {
 
                     let hasPlan = false;
                     try {
-                        const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                        const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            signal: AbortSignal.timeout(10000), // 10s timeout
+                        });
                         if (resp.ok) {
                             const data = await resp.json();
                             credits = Number(data.credits_remaining || 0);
@@ -1208,6 +1214,8 @@ export default function AppPage() {
                             } else {
                                 localStorage.removeItem('vant_cached_plan');
                             }
+                        } else {
+                            console.warn("[Smart Redirect] API respondeu com status:", resp.status);
                         }
                     } catch (error) {
                         console.warn("[Smart Redirect] Falha ao buscar créditos/plano via API:", error);
@@ -1376,7 +1384,13 @@ export default function AppPage() {
             // Sincronizar créditos em background
             (async () => {
                 try {
-                    const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                    const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        signal: AbortSignal.timeout(10000), // 10s timeout
+                    });
                     if (resp.ok) {
                         const data = await resp.json();
                         if (data.credits_remaining > 0) {
@@ -1385,6 +1399,8 @@ export default function AppPage() {
                             setSelectedPlan("pro_monthly_early_bird");
                             console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
                         }
+                    } else {
+                        console.warn("[Auth] API respondeu com status:", resp.status);
                     }
                 } catch (e) {
                     console.error("[Auth] Erro ao sincronizar créditos:", e);
@@ -1456,7 +1472,13 @@ export default function AppPage() {
 
         (async () => {
             try {
-                const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${historyId}`);
+                const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${historyId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    signal: AbortSignal.timeout(15000), // 15s timeout
+                });
                 if (!response.ok) throw new Error(`Erro ${response.status}`);
 
                 const fullResult = await response.json();
@@ -1629,7 +1651,13 @@ export default function AppPage() {
         const subscriptionPlans = ["pro_monthly", "pro_monthly_early_bird", "pro_annual", "trial"];
         if (subscriptionPlans.includes(planId) && authUserId) {
             try {
-                const statusResp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`);
+                const statusResp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    signal: AbortSignal.timeout(10000), // 10s timeout
+                });
                 if (statusResp.ok) {
                     const statusData = await statusResp.json();
                     const hasPlan = !!statusData.plan;
@@ -1645,6 +1673,8 @@ export default function AppPage() {
                         }
                         return;
                     }
+                } else {
+                    console.warn("[startCheckout] API respondeu com status:", statusResp.status);
                 }
             } catch (error) {
                 console.warn("[startCheckout] Falha ao verificar status do usuário:", error);
@@ -2028,6 +2058,7 @@ export default function AppPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: userId }),
+            signal: AbortSignal.timeout(10000), // 10s timeout
         });
         const payload = (await resp.json()) as JsonObject;
         if (!resp.ok) {
@@ -2209,7 +2240,13 @@ export default function AppPage() {
             // Caso contrário, precisamos buscar o resultado completo
             setApiError("");
 
-            const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${item.id}`);
+            const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${item.id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                signal: AbortSignal.timeout(15000), // 15s timeout
+            });
 
             if (!response.ok) {
                 throw new Error(`Erro ${response.status}: ${response.statusText}`);
