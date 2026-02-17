@@ -15,6 +15,17 @@ import { getSupabaseClient } from "@/lib/supabaseClient";
 
 type JsonObject = Record<string, unknown>;
 
+// Helper para garantir compatibilidade com navegadores que não suportam AbortSignal.timeout
+function getSafeSignal(ms: number): AbortSignal {
+    if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+        return AbortSignal.timeout(ms);
+    }
+    // Fallback manual
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), ms);
+    return controller.signal;
+}
+
 function CheckCircle2Icon({ color = "#9CA3AF", size = 16 }: { color?: string; size?: number }) {
     return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
@@ -1202,7 +1213,7 @@ export default function AppPage() {
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            signal: AbortSignal.timeout(10000), // 10s timeout
+                            signal: getSafeSignal(10000), // 10s timeout
                         });
                         if (resp.ok) {
                             const data = await resp.json();
@@ -1389,7 +1400,7 @@ export default function AppPage() {
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        signal: AbortSignal.timeout(10000), // 10s timeout
+                        signal: getSafeSignal(10000), // 10s timeout
                     });
                     if (resp.ok) {
                         const data = await resp.json();
@@ -1477,7 +1488,7 @@ export default function AppPage() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    signal: AbortSignal.timeout(15000), // 15s timeout
+                    signal: getSafeSignal(15000), // 15s timeout
                 });
                 if (!response.ok) throw new Error(`Erro ${response.status}`);
 
@@ -1656,7 +1667,7 @@ export default function AppPage() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    signal: AbortSignal.timeout(10000), // 10s timeout
+                    signal: getSafeSignal(10000), // 10s timeout
                 });
                 if (statusResp.ok) {
                     const statusData = await statusResp.json();
@@ -2058,7 +2069,7 @@ export default function AppPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: userId }),
-            signal: AbortSignal.timeout(10000), // 10s timeout
+            signal: getSafeSignal(10000), // 10s timeout
         });
         const payload = (await resp.json()) as JsonObject;
         if (!resp.ok) {
@@ -2245,7 +2256,7 @@ export default function AppPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                signal: AbortSignal.timeout(15000), // 15s timeout
+                signal: getSafeSignal(15000), // 15s timeout
             });
 
             if (!response.ok) {
