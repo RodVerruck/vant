@@ -2211,7 +2211,7 @@ export default function AppPage() {
         }, 5000);
 
         return () => clearTimeout(safetyTimeout);
-    }, [authUserId, stage]); // Dependências mínimas para evitar re-execuções desnecessárias
+    }, [authUserId, stage, hasActiveHistoryFlow]); // Re-executar quando hasActiveHistoryFlow mudar
 
     useEffect(() => {
         console.log("[useEffect syncEntitlements] Rodou.");
