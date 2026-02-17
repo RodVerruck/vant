@@ -23,7 +23,7 @@ SERVER_CONFIGS = {
         # Production - timeouts otimizados para performance
         "timeout_keep_alive": 30,       # Mantém conexão viva por 30s
         "timeout_graceful_shutdown": 30, # Tempo para shutdown gracefully
-        "workers": 3,                   # 3 workers para production
+        "workers": 1,                   # 🔥 CORREÇÃO: 1 worker para Render Free (512MB)
         "reload": False,                # Sem auto-reload em production
         "log_level": "warning",
         "access_log": False,            # Desabilitar access log em production
