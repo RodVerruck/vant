@@ -434,6 +434,7 @@ export default function AppPage() {
     const [authUserId, setAuthUserId] = useState<string | null>(null);
     const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
+    const [showProCreditNotice, setShowProCreditNotice] = useState(false);
     const [creditsRemaining, setCreditsRemaining] = useState(0);
     const [creditsLoading, setCreditsLoading] = useState(false);
     const [needsActivation, setNeedsActivation] = useState(false);
@@ -1228,7 +1229,8 @@ export default function AppPage() {
                         } else {
                             setSelectedPlan("credit_1");
                             console.log("[Smart Redirect] Usuário com assinatura ativa mas sem créditos disponíveis no período. Indo para checkout de crédito avulso.");
-                            setCheckoutError("Você já utilizou todos os créditos do período atual. Aguarde a renovação ou compre crédito avulso.");
+                            setCheckoutError("Você já é usuário Pro! Como não há créditos disponíveis no período, mudamos para a compra de Crédito Avulso para você usar agora.");
+                            setShowProCreditNotice(true);
                             setStage("checkout");
                         }
                     } else {
@@ -1605,6 +1607,10 @@ export default function AppPage() {
         return () => clearTimeout(timer);
     }, [stage]);
 
+    const showProNoCreditsNotice = () => {
+        setShowProCreditNotice(true);
+    };
+
     async function startCheckout() {
         setCheckoutError("");
 
@@ -1633,7 +1639,8 @@ export default function AppPage() {
                         if (credits > 0) {
                             setCheckoutError("Você já possui uma assinatura ativa com créditos disponíveis. Use seus créditos ou escolha um pacote avulso.");
                         } else {
-                            setCheckoutError("Você já utilizou todos os créditos do período atual. Aguarde a renovação mensal ou compre crédito avulso (1 CV).");
+                            setCheckoutError("Você já é usuário Pro! Como não há créditos disponíveis no período, escolha Crédito Avulso para usar agora.");
+                            showProNoCreditsNotice();
                         }
                         return;
                     }
@@ -1666,7 +1673,8 @@ export default function AppPage() {
 
                 // Tratar erro específico de assinatura ativa
                 if (err.includes("assinatura ativa") || err.includes("ACTIVE_SUBSCRIPTION_EXISTS")) {
-                    setCheckoutError("Você já possui uma assinatura ativa. Para comprar mais créditos, escolha 1 crédito avulso.");
+                    setCheckoutError("Você já é usuário Pro! Para análises adicionais, escolha Crédito Avulso.");
+                    showProNoCreditsNotice();
                     return;
                 }
 
@@ -4584,6 +4592,28 @@ export default function AppPage() {
                                                 Ambiente seguro e criptografado
                                             </div>
                                         </div>
+
+                                        {showProCreditNotice && authUserId && (
+                                            <div style={{ marginTop: 10, marginBottom: 26, padding: "18px 20px", background: "rgba(14, 165, 233, 0.12)", border: "1px solid rgba(56, 189, 248, 0.4)", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 16 }}>
+                                                <div style={{ fontSize: "1.25rem", marginTop: 2 }}>💡</div>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.95rem", fontWeight: 600, marginBottom: 4 }}>
+                                                        Você já é Pro — estamos ajustando para crédito avulso
+                                                    </div>
+                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                        Seus créditos atuais: <strong style={{ color: "#F8FAFC" }}>{creditsRemaining}</strong>. Como não há créditos disponíveis no período, esta compra é de Crédito Avulso para você usar agora.
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowProCreditNotice(false)}
+                                                    style={{ background: "none", border: "none", color: "#94A3B8", fontSize: "0.9rem", cursor: "pointer", padding: 0 }}
+                                                    aria-label="Fechar aviso"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        )}
 
                                         <div className="checkout-order-summary">
                                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
