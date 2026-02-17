@@ -1,6 +1,6 @@
 """
 Storage Manager - Sistema de Armazenamento Seguro para Produção
-Substitui sistema de arquivos local por Supabase Storage
+VERSÃO CORRIGIDA - Sem loop infinito
 
 🎯 OBJETIVO:
 - Arquivos temporários em Supabase Storage (bucket)
@@ -76,7 +76,9 @@ class StorageManager:
             Dict com paths para acesso futuro
         """
         try:
+            # 🔥 CORREÇÃO: Executar cleanup apenas quando necessário
             self._maybe_cleanup()
+            
             # Gerar timestamp único para este batch
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             batch_id = str(uuid.uuid4())[:8]
