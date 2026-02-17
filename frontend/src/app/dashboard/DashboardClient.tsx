@@ -51,7 +51,7 @@ export function DashboardClient() {
     // Supabase client (single instance)
     const supabase = useMemo((): SupabaseClient | null => getSupabaseClient(), []);
 
-    // Refs para evitar loops infinitos
+    // Refs para evitar loops infinitos - FIX DEPLOY 2026-02-17
     const userStatusFetched = useRef(false);
     const lastSyncTime = useRef(0);
 
