@@ -345,9 +345,9 @@ export function DashboardClient() {
         localStorage.setItem("vant_dashboard_open_history_id", item.id);
         localStorage.setItem("vant_last_active_tab", "analysis");
 
-        // 🚀 A MUDANÇA MÁGICA: Passar o ID na URL
-        // Isso garante que a próxima página saiba IMEDIATAMENTE o que fazer
-        router.push(`/app?historyId=${item.id}`);
+        // 🚀 MUDANÇA DEFINITIVA: Força reload real da página
+        // Isso garante que window.location.search estará 100% correto antes de qualquer JS rodar
+        window.location.href = `/app?historyId=${item.id}`;
     };
 
     // Loading state
