@@ -9,7 +9,7 @@ import {
     Zap, TrendingUp, AlertCircle, FileText, BookOpen, MessageSquare,
     Loader, ChevronDown, ChevronUp, Linkedin, User, Search, Copy,
     CheckCircle, CheckCircle2, MinusCircle, ArrowLeft, ArrowRight, Star, Target,
-    Info, Lock
+    Info, Lock, Lightbulb, XCircle
 } from 'lucide-react';
 
 // --- CSS PURO (Substituindo Tailwind) ---
@@ -150,6 +150,15 @@ const globalStyles = `
   .vant-btn-primary:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  }
+
+  .vant-cta-button {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25);
+  }
+  .vant-cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(16, 185, 129, 0.35);
   }
 
   .vant-btn-outline {
@@ -567,6 +576,7 @@ export function PaidStage({
     const isSeniorityGap = vereditoText.includes("sênior") || vereditoText.includes("senior") || vereditoText.includes("pleno");
     const shouldShowGapExplanation = projected.score < 70;
     const isPotentialCeiling = shouldShowGapExplanation && projected.improvement <= 8;
+    const marketLabel = xpAtual < 60 ? "Competitividade: Alta para Nível Júnior" : "Nível de Mercado: Pleno";
     const potentialGapExplanation = shouldShowGapExplanation
         ? (isCareerTransition
             ? "Detectamos uma transição de carreira agressiva. Seu CV está tecnicamente forte, mas a pontuação reflete a falta de experiência específica na nova área."
@@ -720,7 +730,7 @@ export function PaidStage({
                             </p>
                         )}
                         <div className="vant-mt-4" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: isPotentialCeiling ? 'rgba(56, 189, 248, 0.15)' : 'rgba(16, 185, 129, 0.1)', borderRadius: '99px', color: isPotentialCeiling ? '#7dd3fc' : '#34d399', fontSize: '0.875rem', fontWeight: 500 }}>
-                            <TrendingUp size={16} /> {projected.percentile} dos candidatos
+                            <TrendingUp size={16} /> {marketLabel}
                         </div>
                     </div>
 
@@ -903,9 +913,12 @@ export function PaidStage({
                                                 {isExpanded && (
                                                     <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                                                         <div className="vant-grid-2">
-                                                            <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
-                                                                <div className="vant-text-xs" style={{ color: '#f87171', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase' }}>Como está agora</div>
-                                                                <p className="vant-text-sm" style={{ color: '#cbd5e1', fontStyle: 'italic' }}>"{gap.exemploAtual}"</p>
+                                                            <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.1)', borderLeft: '4px solid rgba(239, 68, 68, 0.5)' }}>
+                                                                <div className="vant-flex vant-items-center vant-gap-2" style={{ marginBottom: '0.5rem' }}>
+                                                                    <XCircle size={14} color="#f87171" />
+                                                                    <div className="vant-text-xs" style={{ color: '#f87171', fontWeight: 700, textTransform: 'uppercase' }}>Como está agora</div>
+                                                                </div>
+                                                                <p className="vant-text-sm" style={{ color: '#d1d5db', fontStyle: 'italic' }}>"{gap.exemploAtual}"</p>
                                                             </div>
                                                             <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
                                                                 <div className="vant-text-xs" style={{ color: '#34d399', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase' }}>Solução sugerida pela IA</div>
@@ -914,6 +927,7 @@ export function PaidStage({
                                                                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                                                                     <button
                                                                         onClick={() => setActiveTab("cv")}
+                                                                        className="vant-cta-button"
                                                                         style={{
                                                                             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                                                                             color: 'white',
@@ -928,6 +942,7 @@ export function PaidStage({
                                                                         }}
                                                                     >
                                                                         {getSolutionCta(gap.titulo)}
+                                                                        <ArrowRight size={16} />
                                                                         {creditsRemaining === 0 && <Lock size={14} color="#fde68a" />}
                                                                     </button>
                                                                 </div>
@@ -938,6 +953,44 @@ export function PaidStage({
                                             </div>
                                         );
                                     })}
+                                </div>
+                            </div>
+
+                            <div className="vant-glass-dark" style={{ border: '1px solid rgba(251, 191, 36, 0.3)', background: 'rgba(251, 191, 36, 0.06)' }}>
+                                <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
+                                    <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)' }}>
+                                        <Lightbulb size={20} color="white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="vant-h3">💡 Sua Estratégia de Defesa na Entrevista</h3>
+                                        <p className="vant-text-sm vant-text-slate-400">Argumento pronto para explicar gaps de senioridade</p>
+                                    </div>
+                                </div>
+                                <div style={{ background: 'rgba(15, 23, 42, 0.5)', borderRadius: '1rem', padding: '1.25rem', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
+                                    <p className="vant-text-sm" style={{ color: '#f8fafc', lineHeight: 1.6 }}>
+                                        "Como justificar o gap de senioridade: 'Embora meu cargo anterior fosse focado em Suporte, liderei a retenção de clientes críticos durante crises. Isso desenvolveu minha resiliência e visão de Customer Success, que são fundamentais para este desafio de Growth.'"
+                                    </p>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
+                                    <button
+                                        className="vant-cta-button"
+                                        onClick={() => navigator.clipboard.writeText("Como justificar o gap de senioridade: 'Embora meu cargo anterior fosse focado em Suporte, liderei a retenção de clientes críticos durante crises. Isso desenvolveu minha resiliência e visão de Customer Success, que são fundamentais para este desafio de Growth.'")}
+                                        style={{
+                                            background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+                                            color: '#0f172a',
+                                            border: 'none',
+                                            padding: '0.7rem 1.2rem',
+                                            borderRadius: '0.9rem',
+                                            fontWeight: 700,
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Copiar Script de Defesa
+                                        <Copy size={16} />
+                                    </button>
                                 </div>
                             </div>
                         </div>

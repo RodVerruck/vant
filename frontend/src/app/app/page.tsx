@@ -435,6 +435,7 @@ export default function AppPage() {
     const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
     const [checkoutError, setCheckoutError] = useState<string | null>(null);
     const [showProCreditNotice, setShowProCreditNotice] = useState(false);
+    const [showUseCreditPrompt, setShowUseCreditPrompt] = useState(false);
     const [creditsRemaining, setCreditsRemaining] = useState(0);
     const [creditsLoading, setCreditsLoading] = useState(false);
     const [needsActivation, setNeedsActivation] = useState(false);
@@ -1223,9 +1224,9 @@ export default function AppPage() {
                     if (credits > 0 || hasPlan) {
                         if (credits > 0) {
                             setSelectedPlan("pro_monthly_early_bird");
-                            console.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Iniciando processamento premium automaticamente...");
-                            pendingSkipPreview.current = true;
-                            setStage("processing_premium");
+                            console.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Solicitando confirmação para usar crédito.");
+                            setShowUseCreditPrompt(true);
+                            setStage("checkout");
                         } else {
                             setSelectedPlan("credit_1");
                             console.log("[Smart Redirect] Usuário com assinatura ativa mas sem créditos disponíveis no período. Indo para checkout de crédito avulso.");
@@ -4592,6 +4593,60 @@ export default function AppPage() {
                                                 Ambiente seguro e criptografado
                                             </div>
                                         </div>
+
+                                        {showUseCreditPrompt && authUserId && creditsRemaining > 0 && (
+                                            <div style={{ marginTop: 10, marginBottom: 26, padding: "18px 20px", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.35)", borderRadius: 12 }}>
+                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
+                                                    <div style={{ fontSize: "1.25rem", marginTop: 2 }}>✅</div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.95rem", fontWeight: 600, marginBottom: 4 }}>
+                                                            Você já tem créditos disponíveis
+                                                        </div>
+                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                            Créditos atuais: <strong style={{ color: "#F8FAFC" }}>{creditsRemaining}</strong>. Deseja usar 1 crédito agora e iniciar a análise premium?
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setShowUseCreditPrompt(false);
+                                                            pendingSkipPreview.current = true;
+                                                            setStage("processing_premium");
+                                                        }}
+                                                        style={{
+                                                            flex: "1 1 200px",
+                                                            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                                            border: "none",
+                                                            color: "white",
+                                                            padding: "10px 14px",
+                                                            borderRadius: 10,
+                                                            fontWeight: 700,
+                                                            cursor: "pointer"
+                                                        }}
+                                                    >
+                                                        Usar 1 crédito agora
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowUseCreditPrompt(false)}
+                                                        style={{
+                                                            flex: "1 1 200px",
+                                                            background: "transparent",
+                                                            border: "1px solid rgba(148, 163, 184, 0.4)",
+                                                            color: "#E2E8F0",
+                                                            padding: "10px 14px",
+                                                            borderRadius: 10,
+                                                            fontWeight: 600,
+                                                            cursor: "pointer"
+                                                        }}
+                                                    >
+                                                        Continuar no checkout
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {showProCreditNotice && authUserId && (
                                             <div style={{ marginTop: 10, marginBottom: 26, padding: "18px 20px", background: "rgba(14, 165, 233, 0.12)", border: "1px solid rgba(56, 189, 248, 0.4)", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 16 }}>
