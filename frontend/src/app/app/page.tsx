@@ -1425,6 +1425,55 @@ export default function AppPage() {
     }, [authUserId]); // Depender APENAS do authUserId para evitar loop
 
     // -------------------------------------------------------------------------
+    // Carregar item do histórico vindo do Dashboard
+    // -------------------------------------------------------------------------
+    useEffect(() => {
+        if (!authUserId || typeof window === "undefined") return;
+
+        // Verificar se há um item do histórico para abrir (vindo do dashboard)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlHistoryId = urlParams.get('historyId');
+        const localHistoryId = localStorage.getItem("vant_dashboard_open_history_id");
+        const historyId = urlHistoryId || localHistoryId;
+
+        if (!historyId) return;
+
+        // Limpar flag imediatamente para evitar loop
+        localStorage.removeItem("vant_dashboard_open_history_id");
+
+        // Marcar que temos fluxo de histórico ativo
+        setHasActiveHistoryFlow(true);
+        setLoadingHistoryItem(true);
+
+        console.log("[Dashboard→App] Abrindo item do histórico:", historyId, "(via URL:", !!urlHistoryId, ")");
+
+        (async () => {
+            try {
+                const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${historyId}`, {
+                    signal: getSafeSignal(15000), // 15s timeout
+                });
+                if (!response.ok) throw new Error(`Erro ${response.status}`);
+
+                const fullResult = await response.json();
+                if (fullResult.data) {
+                    setReportData(fullResult.data as ReportData);
+                    setStage("paid");
+
+                    // 🧹 Limpar URL após carregar com sucesso (opcional, mas elegante)
+                    if (urlHistoryId) {
+                        window.history.replaceState({}, '', '/app');
+                    }
+                }
+            } catch (err) {
+                console.error("[Dashboard→App] Erro ao carregar histórico:", err);
+            } finally {
+                setLoadingHistoryItem(false);
+                setHasActiveHistoryFlow(false); // Finalizar fluxo de histórico
+            }
+        })();
+    }, [authUserId]); // Depender apenas do authUserId
+
+    // -------------------------------------------------------------------------
     // DEBUG: Restauração do Contexto de Reset de Senha
     // -------------------------------------------------------------------------
     useEffect(() => {
