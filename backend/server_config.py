@@ -5,6 +5,7 @@ evitando que uploads grandes ou processamentos demorados sejam interrompidos.
 """
 
 import uvicorn
+import os
 from typing import Dict, Any
 
 # Configurações de timeout por tipo de operação
@@ -45,7 +46,7 @@ def get_server_config(environment: str = "development") -> Dict[str, Any]:
     base_config = {
         "app": "main:app",
         "host": "0.0.0.0",
-        "port": 8000,
+        "port": int(os.getenv("PORT", 8000)),  # Porta dinâmica para Render, fallback 8000 para local
         "loop": "asyncio",
         "http": "httptools",
         "ws": "websockets",
