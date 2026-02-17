@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     
     # Debug
     DEBUG_API_SECRET: str = Field(default="vant_debug_2026_secure_key", description="Secret para endpoints de debug")
+
+    # Admin
+    ADMIN_CLEANUP_TOKEN: str = Field(default="", description="Token para limpeza de arquivos temporários")
     
     # Rate Limiting
     RATE_LIMIT_ANALYZE_LITE: str = Field(default="5/minute", description="Rate limit para analyze-lite")

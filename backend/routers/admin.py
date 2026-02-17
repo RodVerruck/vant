@@ -47,7 +47,12 @@ def cleanup_temp_files(x_admin_token: str | None = Header(default=None)) -> JSON
     sentry_sdk.set_tag("endpoint", "admin_cleanup_temp_files")
 
     try:
-        expected_token = os.getenv("ADMIN_CLEANUP_TOKEN")
+        try:
+            from dependencies import settings
+        except Exception:
+            settings = None
+
+        expected_token = settings.ADMIN_CLEANUP_TOKEN if settings else os.getenv("ADMIN_CLEANUP_TOKEN")
         if not expected_token:
             return JSONResponse(status_code=500, content={"error": "ADMIN_CLEANUP_TOKEN não configurado"})
         if x_admin_token != expected_token:
