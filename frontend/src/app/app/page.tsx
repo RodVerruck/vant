@@ -2134,6 +2134,7 @@ export default function AppPage() {
 
                 console.log("[initialAuthCheck] Verificando fluxo:", {
                     hasHistoryItem: !!hasHistoryItem,
+                    hasActiveHistoryFlow: !!hasActiveHistoryFlow, // Adicionar este log
                     hasReturnStage,
                     hasCheckoutPending,
                     hasNonHeroStage,
