@@ -2146,6 +2146,7 @@ export default function AppPage() {
                 });
 
                 // Se não há fluxo ativo, verificar créditos e decidir redirecionamento
+                console.log("[initialAuthCheck] hasActiveFlow final:", hasActiveFlow);
                 if (!hasActiveFlow) {
                     console.log("[initialAuthCheck] Sem fluxo ativo, verificando créditos...");
 
