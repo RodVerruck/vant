@@ -330,7 +330,12 @@ export function DashboardHistoryCard({ item, authUserId, onOpen, onDelete }: Das
     return (
         <div
             className={styles.card}
-            onClick={() => !downloading && onOpen(item)}
+            onClick={() => {
+                if (!downloading) {
+                    console.log("[DashboardHistoryCard] Clique detectado, item:", item.id);
+                    onOpen(item);
+                }
+            }}
             style={{
                 borderColor: theme.border,
                 ...(deleting ? { opacity: 0.4, pointerEvents: "none" as const, transform: "scale(0.97)" } : {}),
