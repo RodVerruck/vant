@@ -2124,6 +2124,7 @@ export default function AppPage() {
                 const hasActiveFlow =
                     hasReturnStage ||
                     hasHistoryItem ||
+                    hasActiveHistoryFlow || // Adicionar esta linha
                     hasCheckoutPending ||
                     hasNonHeroStage ||
                     hasAutoProcess ||
