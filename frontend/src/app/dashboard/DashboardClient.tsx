@@ -339,9 +339,15 @@ export function DashboardClient() {
             gaps_count: number;
         };
     }) => {
-        // Store the item ID so /app can fetch and display it
+        console.log("[Dashboard→App] Abrindo item do histórico:", item.id);
+
+        // Store the item ID so /app can fetch and display it (backup)
         localStorage.setItem("vant_dashboard_open_history_id", item.id);
-        router.push("/app");
+        localStorage.setItem("vant_last_active_tab", "analysis");
+
+        // 🚀 A MUDANÇA MÁGICA: Passar o ID na URL
+        // Isso garante que a próxima página saiba IMEDIATAMENTE o que fazer
+        router.push(`/app?historyId=${item.id}`);
     };
 
     // Loading state
