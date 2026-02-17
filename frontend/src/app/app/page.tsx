@@ -1457,7 +1457,13 @@ export default function AppPage() {
 
                 const fullResult = await response.json();
                 if (fullResult.data) {
-                    setReportData(fullResult.data as ReportData);
+                    const fullData = fullResult.data as ReportData;
+                    setReportData(fullData);
+                    setPreviewData((fullData as unknown as { preview_data?: PreviewData })?.preview_data ?? null);
+                    setNeedsActivation(false);
+                    if (fullData?.job_description) {
+                        setJobDescription(fullData.job_description);
+                    }
                     setStage("paid");
 
                     // 🧹 Limpar URL após carregar com sucesso (opcional, mas elegante)
@@ -2312,6 +2318,11 @@ export default function AppPage() {
     };
 
     useEffect(() => {
+        if (stage === "paid") {
+            console.log("[useEffect processing_premium] Já estamos em paid, abortando processamento premium.");
+            return;
+        }
+
         console.log("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
         if (stage !== "processing_premium") {
             console.log("[useEffect processing_premium] Stage não é processing_premium, saindo.");
