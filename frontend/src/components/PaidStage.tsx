@@ -638,11 +638,14 @@ export function PaidStage({
                     <div className="vant-glass-dark" style={{ borderColor: 'rgba(56, 189, 248, 0.25)', boxShadow: '0 0 30px rgba(56, 189, 248, 0.08)' }}>
                         <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
                             <div className="vant-icon-circle">
-                                {currentChance.icon({
-                                    size: 20,
-                                    color: currentChance.color,
-                                    className: currentChance.pulse ? "vant-pulse-soft" : undefined
-                                })}
+                                {(() => {
+                                    const IconComponent = currentChance.icon;
+                                    return <IconComponent
+                                        size={20}
+                                        color={currentChance.color}
+                                        className={currentChance.pulse ? "vant-pulse-soft" : undefined}
+                                    />;
+                                })()}
                             </div>
                             <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chance de entrevista</span>
                         </div>
