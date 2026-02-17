@@ -8,7 +8,8 @@ import { calculateProjectedScore } from "@/lib/helpers";
 import {
     Zap, TrendingUp, AlertCircle, FileText, BookOpen, MessageSquare,
     Loader, ChevronDown, ChevronUp, Linkedin, User, Search, Copy,
-    CheckCircle, CheckCircle2, MinusCircle, ArrowLeft, Star, Target
+    CheckCircle, CheckCircle2, MinusCircle, ArrowLeft, ArrowRight, Star, Target,
+    Info, Lock
 } from 'lucide-react';
 
 // --- CSS PURO (Substituindo Tailwind) ---
@@ -549,9 +550,7 @@ export function PaidStage({
     const currentChance = getInterviewChance(xpAtual);
     const projectedChance = getInterviewChance(projected.score);
     const chanceMultiplier = projectedChance.percentage / Math.max(currentChance.percentage, 1);
-    const chanceCopy = chanceMultiplier >= 1.9
-        ? `Aumente em ${chanceMultiplier.toFixed(1)}x com as correções sugeridas`
-        : `Potencial de chegar a ${projectedChance.percentage}%`;
+    const shouldHighlightMultiplier = chanceMultiplier >= 1.9;
 
     const diagnosticGaps = (reportData.gaps_fatais || []).map((gap, idx) => ({
         id: idx + 1,
@@ -562,6 +561,47 @@ export function PaidStage({
         exemploAtual: gap.evidencia || "Descrição genérica...",
         exemploOtimizado: gap.correcao_sugerida || "Sugestão otimizada...",
     }));
+
+    const vereditoText = (reportData.veredito || "").toLowerCase();
+    const isCareerTransition = vereditoText.includes("transi") || vereditoText.includes("carreira");
+    const isSeniorityGap = vereditoText.includes("sênior") || vereditoText.includes("senior") || vereditoText.includes("pleno");
+    const shouldShowGapExplanation = projected.score < 70;
+    const isPotentialCeiling = shouldShowGapExplanation && projected.improvement <= 8;
+    const potentialGapExplanation = shouldShowGapExplanation
+        ? (isCareerTransition
+            ? "Detectamos uma transição de carreira agressiva. Seu CV está tecnicamente forte, mas a pontuação reflete a falta de experiência específica na nova área."
+            : isSeniorityGap
+                ? "Seu perfil é sólido, mas a vaga exige senioridade que ainda não aparece no seu histórico."
+                : "Seu CV está consistente, mas a vaga pede mais profundidade técnica do que o histórico atual comprova.")
+        : null;
+
+    const getSolutionLead = (title: string) => {
+        const lowerTitle = title.toLowerCase();
+        if (lowerTitle.includes("keyword") || lowerTitle.includes("termo") || lowerTitle.includes("palavra")) {
+            return "<strong>Alinhamento Semântico:</strong> A IA analisou sua trajetória e substituiu termos genéricos por terminologia técnica equivalente onde possível. Se a experiência exata não existir, enfatizamos suas Soft Skills e capacidade de aprendizado.";
+        }
+        if (lowerTitle.includes("experi") || lowerTitle.includes("transi") || lowerTitle.includes("carreira")) {
+            return "<strong>Tradução de Competências:</strong> A IA reescreveu suas experiências anteriores usando a linguagem corporativa da vaga alvo, focando em <em>Skills Transferíveis</em> para mostrar que você está pronto para o desafio, mesmo vindo de outra área.";
+        }
+        if (lowerTitle.includes("métrica") || lowerTitle.includes("metric") || lowerTitle.includes("resultado") || lowerTitle.includes("impacto")) {
+            return "<strong>Engenharia de Bullets:</strong> Reorganizamos seus tópicos para o formato 'Ação + Contexto + Resultado'. Onde você não forneceu números exatos, a IA focou na descrição qualitativa do impacto para manter a veracidade.";
+        }
+        return "<strong>Correção Assistida por IA:</strong> Nosso copiloto aplica este ajuste direto no CV otimizado para gerar impacto imediato.";
+    };
+
+    const getSolutionCta = (title: string) => {
+        const lowerTitle = title.toLowerCase();
+        if (lowerTitle.includes("keyword") || lowerTitle.includes("termo") || lowerTitle.includes("palavra")) {
+            return "Ver Vocabulário Ajustado";
+        }
+        if (lowerTitle.includes("experi") || lowerTitle.includes("transi") || lowerTitle.includes("carreira")) {
+            return "Ver Adaptação no CV";
+        }
+        if (lowerTitle.includes("métrica") || lowerTitle.includes("metric") || lowerTitle.includes("resultado") || lowerTitle.includes("impacto")) {
+            return "Ver Nova Estrutura";
+        }
+        return "Ver Correção no CV";
+    };
 
     const xraySearchString = reportData.kit_hacker?.boolean_string || `site: linkedin.com /in ("${reportData.setor_detectado || ""}")`;
 
@@ -576,8 +616,8 @@ export function PaidStage({
 
     const getSeveridadeStyles = (sev: string) => {
         switch (sev) {
-            case "alta": return { bg: "rgba(239, 68, 68, 0.1)", border: "rgba(239, 68, 68, 0.3)", text: "#FCA5A5", badgeBg: "#EF4444" };
-            default: return { bg: "rgba(245, 158, 11, 0.1)", border: "rgba(245, 158, 11, 0.3)", text: "#FCD34D", badgeBg: "#F59E0B" };
+            case "alta": return { bg: "rgba(239, 68, 68, 0.2)", border: "rgba(248, 113, 113, 0.45)", text: "#FECACA", badgeBg: "#F87171" };
+            default: return { bg: "rgba(245, 158, 11, 0.2)", border: "rgba(251, 191, 36, 0.45)", text: "#FDE68A", badgeBg: "#FBBF24" };
         }
     };
 
@@ -616,20 +656,37 @@ export function PaidStage({
                     </div>
 
                     {/* Card Potencial */}
-                    <div className="vant-glass-dark" style={{ borderColor: 'rgba(16, 185, 129, 0.3)', boxShadow: '0 0 30px rgba(16, 185, 129, 0.1)' }}>
-                        <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
-                            <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
-                                <Zap size={20} color="white" />
+                    <div className="vant-glass-dark" style={{ borderColor: isPotentialCeiling ? 'rgba(56, 189, 248, 0.35)' : 'rgba(16, 185, 129, 0.3)', boxShadow: isPotentialCeiling ? '0 0 30px rgba(56, 189, 248, 0.12)' : '0 0 30px rgba(16, 185, 129, 0.1)' }}>
+                        <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6" style={{ justifyContent: 'space-between' }}>
+                            <div className="vant-flex vant-items-center vant-gap-3">
+                                <div className="vant-icon-circle" style={{ background: isPotentialCeiling ? 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                                    <Zap size={20} color="white" />
+                                </div>
+                                <div>
+                                    <span className="vant-text-sm vant-font-medium" style={{ color: isPotentialCeiling ? '#7dd3fc' : '#34d399', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Potencial</span>
+                                    <div className="vant-text-xs vant-text-slate-400">Compatibilidade com a vaga</div>
+                                </div>
                             </div>
-                            <span className="vant-text-sm vant-font-medium" style={{ color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Potencial</span>
+                            {isPotentialCeiling && (
+                                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0.25rem 0.6rem', borderRadius: 99, background: 'rgba(56, 189, 248, 0.16)', color: '#7dd3fc', border: '1px solid rgba(56, 189, 248, 0.4)' }}>
+                                    CV otimizado ao máximo
+                                </span>
+                            )}
                         </div>
                         <div>
-                            <div style={{ fontSize: '3.5rem', fontWeight: 300, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
+                            <div style={isPotentialCeiling
+                                ? { fontSize: '3.5rem', fontWeight: 300, color: '#7dd3fc', lineHeight: 1 }
+                                : { fontSize: '3.5rem', fontWeight: 300, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
                                 {projected.score}
                             </div>
                             <div className="vant-text-sm vant-text-slate-400">+{projected.improvement} pontos possíveis</div>
                         </div>
-                        <div className="vant-mt-4" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '99px', color: '#34d399', fontSize: '0.875rem', fontWeight: 500 }}>
+                        {shouldShowGapExplanation && potentialGapExplanation && (
+                            <p className="vant-text-sm" style={{ color: '#94a3b8', marginTop: '0.75rem', lineHeight: 1.5 }}>
+                                {potentialGapExplanation}
+                            </p>
+                        )}
+                        <div className="vant-mt-4" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: isPotentialCeiling ? 'rgba(56, 189, 248, 0.15)' : 'rgba(16, 185, 129, 0.1)', borderRadius: '99px', color: isPotentialCeiling ? '#7dd3fc' : '#34d399', fontSize: '0.875rem', fontWeight: 500 }}>
                             <TrendingUp size={16} /> {projected.percentile} dos candidatos
                         </div>
                     </div>
@@ -648,15 +705,41 @@ export function PaidStage({
                                 })()}
                             </div>
                             <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chance de entrevista</span>
+                            <span title="Esta probabilidade considera não apenas seu currículo, mas a competitividade do mercado para esta vaga específica." style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                <Info size={14} color="#94a3b8" />
+                            </span>
                         </div>
-                        <div>
-                            <div style={{ fontSize: '3.25rem', fontWeight: 300, color: currentChance.color, lineHeight: 1 }}>
-                                {currentChance.percentage}%
+
+                        <div className="vant-flex vant-items-center" style={{ gap: '1rem' }}>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '2.25rem', fontWeight: 300, color: '#f59e0b', lineHeight: 1 }}>
+                                    {currentChance.percentage}%
+                                </div>
+                                <div className="vant-text-slate-500" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                    Hoje
+                                </div>
                             </div>
-                            <div className="vant-text-sm" style={{ color: currentChance.color }}>{currentChance.label}</div>
+                            <ArrowRight size={20} color="#475569" />
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '2.4rem', fontWeight: 300, color: '#34d399', lineHeight: 1 }}>
+                                    {projectedChance.percentage}%
+                                </div>
+                                <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(16, 185, 129, 0.8)' }}>
+                                    Com correções
+                                </div>
+                            </div>
                         </div>
-                        <div className="vant-text-xs vant-text-slate-400 vant-mt-4">{chanceCopy}</div>
+                        <div className="vant-text-xs vant-text-slate-400 vant-mt-4">
+                            {shouldHighlightMultiplier ? (
+                                <>
+                                    Aumente em <span style={{ color: '#34d399', fontWeight: 600 }}>{chanceMultiplier.toFixed(1)}x</span> com as correções sugeridas
+                                </>
+                            ) : (
+                                <>Potencial de chegar a {projectedChance.percentage}%</>
+                            )}
+                        </div>
                     </div>
+
                 </div>
 
                 {/* Processing Banner */}
@@ -792,8 +875,29 @@ export function PaidStage({
                                                                 <p className="vant-text-sm" style={{ color: '#cbd5e1', fontStyle: 'italic' }}>"{gap.exemploAtual}"</p>
                                                             </div>
                                                             <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
-                                                                <div className="vant-text-xs" style={{ color: '#34d399', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase' }}>Recomendação</div>
+                                                                <div className="vant-text-xs" style={{ color: '#34d399', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase' }}>Solução sugerida pela IA</div>
+                                                                <div className="vant-text-sm" style={{ color: '#cbd5f5', marginBottom: '0.75rem', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: getSolutionLead(gap.titulo) }} />
                                                                 <div className="vant-text-sm vant-rich-text" style={{ color: '#f1f5f9' }} dangerouslySetInnerHTML={{ __html: gap.exemploOtimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                                                                    <button
+                                                                        onClick={() => setActiveTab("cv")}
+                                                                        style={{
+                                                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                                                            color: 'white',
+                                                                            border: 'none',
+                                                                            padding: '0.6rem 1.1rem',
+                                                                            borderRadius: '0.85rem',
+                                                                            fontWeight: 600,
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '0.5rem',
+                                                                            cursor: 'pointer'
+                                                                        }}
+                                                                    >
+                                                                        {getSolutionCta(gap.titulo)}
+                                                                        {creditsRemaining === 0 && <Lock size={14} color="#fde68a" />}
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -857,6 +961,7 @@ export function PaidStage({
                         </button>
                         <button onClick={onNewOptimization} className="vant-btn-primary">
                             <Zap size={18} /> Nova Otimização
+                            {creditsRemaining === 0 && <Lock size={16} color="#fde68a" />}
                         </button>
                     </div>
                 </div>
