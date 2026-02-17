@@ -1209,10 +1209,6 @@ export default function AppPage() {
                     let hasPlan = false;
                     try {
                         const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
                             signal: getSafeSignal(10000), // 10s timeout
                         });
                         if (resp.ok) {
@@ -1396,10 +1392,6 @@ export default function AppPage() {
             (async () => {
                 try {
                     const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
                         signal: getSafeSignal(10000), // 10s timeout
                     });
                     if (resp.ok) {
@@ -1484,10 +1476,6 @@ export default function AppPage() {
         (async () => {
             try {
                 const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${historyId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
                     signal: getSafeSignal(15000), // 15s timeout
                 });
                 if (!response.ok) throw new Error(`Erro ${response.status}`);
@@ -1663,10 +1651,6 @@ export default function AppPage() {
         if (subscriptionPlans.includes(planId) && authUserId) {
             try {
                 const statusResp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
                     signal: getSafeSignal(10000), // 10s timeout
                 });
                 if (statusResp.ok) {
@@ -2252,10 +2236,6 @@ export default function AppPage() {
             setApiError("");
 
             const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${item.id}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 signal: getSafeSignal(15000), // 15s timeout
             });
 
