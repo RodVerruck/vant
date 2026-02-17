@@ -2109,7 +2109,7 @@ export default function AppPage() {
                 }
 
                 // Verificar se há fluxo ativo que impede redirect ao Dashboard
-                const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
+                const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id") || hasActiveHistoryFlow;
                 const hasReturnStage = !!localStorage.getItem("vant_auth_return_stage");
                 const checkoutPending = localStorage.getItem("checkout_pending");
                 const hasCheckoutPending = !!checkoutPending;
