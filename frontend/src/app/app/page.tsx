@@ -1288,7 +1288,9 @@ export default function AppPage() {
             }
 
             // Verificar se há fluxo ativo que impede redirect ao Dashboard
-            const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id") || hasActiveHistoryFlow;
+            // Verificar também se há historyId na URL (vindo do dashboard)
+            const urlHistoryId = searchParams.get('historyId');
+            const hasHistoryItem = !!urlHistoryId || localStorage.getItem("vant_dashboard_open_history_id") || hasActiveHistoryFlow;
             const hasReturnStage = !!returnStage && returnStage !== "hero";
             const checkoutPending = localStorage.getItem("checkout_pending");
             const hasCheckoutPending = !!checkoutPending;
@@ -1431,8 +1433,7 @@ export default function AppPage() {
         if (!authUserId || typeof window === "undefined") return;
 
         // Verificar se há um item do histórico para abrir (vindo do dashboard)
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlHistoryId = urlParams.get('historyId');
+        const urlHistoryId = searchParams.get('historyId');
         const localHistoryId = localStorage.getItem("vant_dashboard_open_history_id");
         const historyId = urlHistoryId || localHistoryId;
 
@@ -1474,54 +1475,91 @@ export default function AppPage() {
     }, [authUserId]); // Depender apenas do authUserId
 
     // -------------------------------------------------------------------------
+
     // DEBUG: Restauração do Contexto de Reset de Senha
-    // -------------------------------------------------------------------------
-    useEffect(() => {
-        console.log("🔍 [RESTORE DEBUG] useEffect de restauração foi chamado!");
+    localStorage.removeItem("vant_dashboard_open_history_id");
 
-        // Leitura "crua" do LocalStorage para debug
-        const storedStage = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_to") : null;
-        const storedPlan = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_plan") : null;
+    // Marcar que temos fluxo de histórico ativo
+    setHasActiveHistoryFlow(true);
+    setLoadingHistoryItem(true);
 
-        console.log("🕵️ [RESTORE DEBUG] Rodou o efeito de restauração.");
-        console.log("🕵️ [RESTORE DEBUG] LocalStorage cru:", {
-            vant_reset_return_to: storedStage,
-            vant_reset_return_plan: storedPlan,
-            authUserId: authUserId,
-            currentStage: stage
-        });
+    console.log("[Dashboard→App] Abrindo item do histórico:", historyId, "(via URL:", !!urlHistoryId, ")");
 
-        if (storedStage === "checkout") {
-            console.log("✅ [RESTORE DEBUG] Contexto de checkout encontrado!");
+    (async () => {
+        try {
+            const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${historyId}`, {
+                signal: getSafeSignal(15000), // 15s timeout
+            });
+            if (!response.ok) throw new Error(`Erro ${response.status}`);
 
-            if (storedPlan) {
-                console.log(`🔄 [RESTORE DEBUG] Restaurando plano: ${storedPlan}`);
-                setSelectedPlan(storedPlan as PlanType);
+            const fullResult = await response.json();
+            if (fullResult.data) {
+                setReportData(fullResult.data as ReportData);
+                setStage("paid");
+
+                // 🧹 Limpar URL após carregar com sucesso (opcional, mas elegante)
+                if (urlHistoryId) {
+                    window.history.replaceState({}, '', '/app');
+                }
             }
-
-            console.log("🚀 [RESTORE DEBUG] Forçando stage para 'checkout'");
-            setStage("checkout");
-
-            if (authUserId) {
-                console.log("🧹 [RESTORE DEBUG] Usuário autenticado, limpando flags de reset.");
-                localStorage.removeItem("vant_reset_return_to");
-                localStorage.removeItem("vant_reset_return_plan");
-            }
-        } else {
-            console.log("ℹ️ [RESTORE DEBUG] Nenhum contexto de retorno encontrado.");
-        }
-    }, [authUserId]); // Re-rodar quando authUserId mudar
-
-    // Smallpdf flow: quando auth completa durante checkout, ir direto pro Stripe
-    const checkoutAuthPending = useRef(false);
-    useEffect(() => {
-        if (authUserId && stage === "checkout" && isAuthenticating === false && checkoutAuthPending.current) {
-            checkoutAuthPending.current = false;
-            console.log("[CheckoutAuth] Auth completa no checkout, chamando startCheckout...");
-            startCheckout();
+        } catch (err) {
+            console.error("[Dashboard→App] Erro ao carregar histórico:", err);
+        } finally {
+            setLoadingHistoryItem(false);
             setHasActiveHistoryFlow(false); // Finalizar fluxo de histórico
         }
     })();
+}, [authUserId]); // Depender apenas do authUserId
+
+// -------------------------------------------------------------------------
+// DEBUG: Restauração do Contexto de Reset de Senha
+// -------------------------------------------------------------------------
+useEffect(() => {
+    console.log("🔍 [RESTORE DEBUG] useEffect de restauração foi chamado!");
+
+    // Leitura "crua" do LocalStorage para debug
+    const storedStage = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_to") : null;
+    const storedPlan = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_plan") : null;
+
+    console.log("🕵️ [RESTORE DEBUG] Rodou o efeito de restauração.");
+    console.log("🕵️ [RESTORE DEBUG] LocalStorage cru:", {
+        vant_reset_return_to: storedStage,
+        vant_reset_return_plan: storedPlan,
+        authUserId: authUserId,
+        currentStage: stage
+    });
+
+    if (storedStage === "checkout") {
+        console.log("✅ [RESTORE DEBUG] Contexto de checkout encontrado!");
+
+        if (storedPlan) {
+            console.log(`🔄 [RESTORE DEBUG] Restaurando plano: ${storedPlan}`);
+            setSelectedPlan(storedPlan as PlanType);
+        }
+
+        console.log("🚀 [RESTORE DEBUG] Forçando stage para 'checkout'");
+        setStage("checkout");
+
+        if (authUserId) {
+            console.log("🧹 [RESTORE DEBUG] Usuário autenticado, limpando flags de reset.");
+            localStorage.removeItem("vant_reset_return_to");
+            localStorage.removeItem("vant_reset_return_plan");
+        }
+    } else {
+        console.log("ℹ️ [RESTORE DEBUG] Nenhum contexto de retorno encontrado.");
+    }
+}, [authUserId]); // Re-rodar quando authUserId mudar
+
+// Smallpdf flow: quando auth completa durante checkout, ir direto pro Stripe
+const checkoutAuthPending = useRef(false);
+useEffect(() => {
+    if (authUserId && stage === "checkout" && isAuthenticating === false && checkoutAuthPending.current) {
+        checkoutAuthPending.current = false;
+        console.log("[CheckoutAuth] Auth completa no checkout, chamando startCheckout...");
+        startCheckout();
+        setHasActiveHistoryFlow(false); // Finalizar fluxo de histórico
+    }
+})();
 }, [authUserId]);
 
 // useRef para controlar se ativação já foi tentada
