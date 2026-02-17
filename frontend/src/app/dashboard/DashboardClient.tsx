@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -51,7 +51,21 @@ export function DashboardClient() {
     // Supabase client (single instance)
     const supabase = useMemo((): SupabaseClient | null => getSupabaseClient(), []);
 
+    // Refs para evitar loops infinitos
+    const userStatusFetched = useRef(false);
+    const lastSyncTime = useRef(0);
+
     async function refreshUserStatus(userId: string): Promise<number> {
+        // Evitar chamadas duplicadas em curto espaço de tempo
+        const now = Date.now();
+        if (userStatusFetched.current && (now - lastSyncTime.current) < 5000) {
+            console.log("[Dashboard] Ignorando chamada duplicada de status (anti-spam)");
+            return creditsRemaining;
+        }
+
+        userStatusFetched.current = true;
+        lastSyncTime.current = now;
+
         try {
             const resp = await fetch(`${getApiUrl()}/api/user/status/${userId}`);
             if (resp.ok) {
@@ -84,6 +98,7 @@ export function DashboardClient() {
             }
         } catch (error) {
             console.error("[Dashboard] Erro ao sincronizar status/créditos:", error);
+            userStatusFetched.current = false; // Resetar em caso de erro
         }
 
         return 0;
@@ -113,8 +128,9 @@ export function DashboardClient() {
                     if (!isNaN(n)) setCreditsRemaining(n);
                 }
 
-                // 🚀 Sincronizar créditos ao entrar no dashboard
+                // 🚀 Sincronizar créditos ao entrar no dashboard (apenas uma vez)
                 console.log("[Dashboard] Sincronizando créditos na entrada...");
+                userStatusFetched.current = false; // Resetar para permitir primeira chamada
                 await refreshUserStatus(user.id);
             } else {
                 // Not authenticated — redirect to app (landing)
@@ -134,11 +150,13 @@ export function DashboardClient() {
             if (event === "SIGNED_IN" && session?.user) {
                 setAuthUserId(session.user.id);
                 setAuthEmail(session.user.email || "");
+                userStatusFetched.current = false; // Resetar para permitir nova chamada
             } else if (event === "SIGNED_OUT") {
                 setAuthUserId(null);
                 setAuthEmail("");
                 setCreditsRemaining(0);
                 setIsPremium(false);
+                userStatusFetched.current = false; // Resetar no logout
                 localStorage.removeItem("vant_cached_credits");
                 router.replace("/app");
             }
@@ -172,9 +190,9 @@ export function DashboardClient() {
         }
     };
 
-    // Fetch user status from backend
+    // Fetch user status from backend (apenas se não foi buscado recentemente)
     useEffect(() => {
-        if (!authUserId) return;
+        if (!authUserId || userStatusFetched.current) return;
 
         const fetchStatus = async () => {
             try {
@@ -209,6 +227,8 @@ export function DashboardClient() {
 
         const runSync = async () => {
             attempts += 1;
+            // Resetar flag para permitir chamada durante polling
+            userStatusFetched.current = false;
             const credits = await refreshUserStatus(authUserId);
             if (credits > 0 || attempts >= maxAttempts) {
                 if (attempts >= maxAttempts) {

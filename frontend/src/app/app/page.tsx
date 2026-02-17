@@ -797,6 +797,7 @@ export default function AppPage() {
     // Flag para auto-start vindo do Dashboard modal
     const pendingAutoStart = useRef(false);
     const userStatusFetched = useRef(false);
+    const [hasActiveHistoryFlow, setHasActiveHistoryFlow] = useState(false);
 
     // Restaurar jobDescription e file do localStorage ao montar
     useEffect(() => {
@@ -1287,7 +1288,7 @@ export default function AppPage() {
             }
 
             // Verificar se há fluxo ativo que impede redirect ao Dashboard
-            const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id");
+            const hasHistoryItem = localStorage.getItem("vant_dashboard_open_history_id") || hasActiveHistoryFlow;
             const hasReturnStage = !!returnStage && returnStage !== "hero";
             const checkoutPending = localStorage.getItem("checkout_pending");
             const hasCheckoutPending = !!checkoutPending;
@@ -1482,6 +1483,10 @@ export default function AppPage() {
         // Limpar flag imediatamente para evitar loop
         localStorage.removeItem("vant_dashboard_open_history_id");
 
+        // Marcar que temos fluxo de histórico ativo
+        setHasActiveHistoryFlow(true);
+        setLoadingHistoryItem(true);
+
         console.log("[Dashboard→App] Abrindo item do histórico:", historyId);
 
         (async () => {
@@ -1500,6 +1505,7 @@ export default function AppPage() {
                 console.error("[Dashboard→App] Erro ao carregar histórico:", err);
             } finally {
                 setLoadingHistoryItem(false);
+                setHasActiveHistoryFlow(false); // Finalizar fluxo de histórico
             }
         })();
     }, [authUserId]);
