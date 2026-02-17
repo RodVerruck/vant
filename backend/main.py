@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import Any, List
 
 import sentry_sdk
-from fastapi import FastAPI, File, Form, UploadFile, Request
+from fastapi import FastAPI, File, Form, UploadFile, Request, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -939,6 +939,40 @@ def _detect_experience_level(report_data: dict) -> str:
         return "pleno"
     else:
         return "junior"
+
+
+@app.post("/api/generate-defense-pitch")
+@limiter.limit("10/minute")
+async def generate_defense_pitch(request: Request, payload: dict = Body(...)):
+    """Generate defense pitch for interview using Gemini Flash-Lite"""
+    try:
+        prompt = payload.get("prompt", "")
+        
+        if not prompt or len(prompt) < 10:
+            raise HTTPException(status_code=400, detail="Prompt inválido")
+        
+        # Use Gemini Flash-Lite para gerar o pitch
+        from logic import AGENT_MODEL_REGISTRY, DEFAULT_MODEL
+        import google.generativeai as genai
+        
+        model_name = AGENT_MODEL_REGISTRY.get("diagnosis", DEFAULT_MODEL)
+        model = genai.GenerativeModel(model_name)
+        
+        response = model.generate_content(prompt)
+        
+        if response and response.text:
+            pitch = response.text.strip()
+            # Validar tamanho
+            if 20 <= len(pitch) <= 200:
+                return {"pitch": pitch}
+        
+        # Fallback simples
+        return {"pitch": "Minha experiência me preparou com as competências necessárias para este desafio."}
+        
+    except Exception as e:
+        print(f"Error generating defense pitch: {e}")
+        # Fallback robusto - nunca falha
+        return {"pitch": "Embora minha experiência anterior seja em outra área, desenvolvi habilidades transferíveis que me qualificam para este desafio."}
 
 
 if __name__ == "__main__":

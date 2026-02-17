@@ -432,6 +432,8 @@ export function PaidStage({
     const [copiedField, setCopiedField] = useState<"headline" | "summary" | "xray" | null>(null);
     const [expandedGaps, setExpandedGaps] = useState<Record<number, boolean>>({});
     const [cvProgress, setCvProgress] = useState(35);
+    const [defensePitch, setDefensePitch] = useState<string>("");
+    const [defensePitchLoading, setDefensePitchLoading] = useState<boolean>(false);
 
     const loadingTabs = reportData ? {
         diagnostico: !reportData.gaps_fatais || !reportData.linkedin_headline,
@@ -655,6 +657,81 @@ export function PaidStage({
     };
 
     const technicalQuality = calculateTechnicalQuality();
+
+    // Generate Defense Pitch with IA + Fallback
+    const generateDefensePitch = async (): Promise<string> => {
+        const maxRetries = 3;
+        let lastError: any = null;
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                setDefensePitchLoading(true);
+
+                const gaps = reportData.gaps_fatais || [];
+                const veredito = reportData.veredito || "";
+                const setor = reportData.setor_detectado || "a vaga";
+
+                const isSeniorityGap = veredito.toLowerCase().includes("sênior") || veredito.toLowerCase().includes("senior");
+                const isTransition = veredito.toLowerCase().includes("transi") || veredito.toLowerCase().includes("carreira");
+
+                const prompt = "Gere um script de defesa para entrevista (max 150 chars). Contexto: Gap=" + (gaps[0]?.evidencia || "Senioridade") + ", Setor=" + setor + ", Tipo=" + (isSeniorityGap ? "Senioridade" : isTransition ? "Transição" : "Competência") + ". Responda apenas com o script.";
+
+                const response = await fetch('/api/generate-defense-pitch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const pitch = data.pitch?.trim();
+                    if (pitch && pitch.length > 20 && pitch.length < 200) {
+                        return pitch;
+                    }
+                }
+
+                // Se não for OK, tentar novamente
+                if (attempt < maxRetries) {
+                    console.warn(`Attempt ${attempt} failed, retrying...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Espera crescente
+                    continue;
+                }
+
+            } catch (error) {
+                lastError = error;
+                console.warn(`Attempt ${attempt} error:`, error);
+
+                if (attempt < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Espera crescente
+                    continue;
+                }
+            }
+        }
+
+        // Todas as tentativas falharam - usar fallback
+        console.warn('All IA attempts failed, using fallback. Last error:', lastError);
+
+        // Fallback baseado no tipo de gap
+        const vereditoText = (reportData.veredito || "").toLowerCase();
+        const isCareerTransition = vereditoText.includes("transi") || vereditoText.includes("carreira");
+        const isSeniorityGap = vereditoText.includes("sênior") || vereditoText.includes("senior") || vereditoText.includes("pleno");
+
+        if (isSeniorityGap) {
+            return "Embora meu cargo anterior fosse focado em Suporte, liderei a retenção de clientes críticos durante crises. Isso desenvolveu minha resiliência e visão de Customer Success.";
+        }
+
+        if (isCareerTransition) {
+            return "Minha trajetória em [área anterior] me deu habilidades transferíveis que são diretamente aplicáveis em [setor da vaga], especialmente em [habilidade chave].";
+        }
+
+        return "Minha experiência me preparou com as competências necessárias para este desafio, focando em resultados e aprendizado contínuo.";
+    }
+
+    useEffect(() => {
+        if (reportData && !defensePitch && !defensePitchLoading) {
+            generateDefensePitch().then(setDefensePitch);
+        }
+    }, [reportData]);
 
     return (
         <div className="vant-premium-wrapper">
@@ -965,16 +1042,23 @@ export function PaidStage({
                                         <h3 className="vant-h3">💡 Sua Estratégia de Defesa na Entrevista</h3>
                                         <p className="vant-text-sm vant-text-slate-400">Argumento pronto para explicar gaps de senioridade</p>
                                     </div>
+                                    {defensePitchLoading && (
+                                        <Loader className="vant-animate-spin" size={16} color="#fbbf24" />
+                                    )}
                                 </div>
                                 <div style={{ background: 'rgba(15, 23, 42, 0.5)', borderRadius: '1rem', padding: '1.25rem', border: '1px solid rgba(251, 191, 36, 0.2)' }}>
                                     <p className="vant-text-sm" style={{ color: '#f8fafc', lineHeight: 1.6 }}>
-                                        "Como justificar o gap de senioridade: 'Embora meu cargo anterior fosse focado em Suporte, liderei a retenção de clientes críticos durante crises. Isso desenvolveu minha resiliência e visão de Customer Success, que são fundamentais para este desafio de Growth.'"
+                                        {defensePitchLoading ? (
+                                            <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Gerando argumento personalizado...</span>
+                                        ) : (
+                                            `"Como justificar o gap de senioridade: '${defensePitch}'"`
+                                        )}
                                     </p>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
                                     <button
                                         className="vant-cta-button"
-                                        onClick={() => navigator.clipboard.writeText("Como justificar o gap de senioridade: 'Embora meu cargo anterior fosse focado em Suporte, liderei a retenção de clientes críticos durante crises. Isso desenvolveu minha resiliência e visão de Customer Success, que são fundamentais para este desafio de Growth.'")}
+                                        onClick={() => navigator.clipboard.writeText(`Como justificar o gap de senioridade: '${defensePitch}'`)}
                                         style={{
                                             background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
                                             color: '#0f172a',
