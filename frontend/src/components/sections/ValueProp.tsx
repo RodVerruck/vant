@@ -63,13 +63,12 @@ const descriptionTextStyle: CSSProperties = {
     color: "#CBD5E1",
     fontSize: "0.9rem",
     lineHeight: "1.6",
-    opacity: 0.85,
 };
 
 const footerStyle: CSSProperties = {
     textAlign: "center",
     marginTop: "20px",
-    color: "#94A3B8",
+    color: "#E2E8F0",
     fontSize: "0.8rem",
     fontStyle: "italic",
 };

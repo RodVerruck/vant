@@ -5,7 +5,7 @@ const badgeTooltipStyle: CSSProperties = {
     borderBottom: "none",
     cursor: "help",
     fontSize: "0.82rem",
-    color: "#94A3B8",
+    color: "#E2E8F0",
     letterSpacing: "0.3px",
 };
 
