@@ -1092,7 +1092,8 @@ export default function AppPage() {
             const isEligibleSmartRedirectStage = stage === "hero" || stage === "checkout" || showAuthModal;
 
             // Smart Redirect: intenção de análise pendente após login
-            if (!smartRedirectHandledRef.current && isEligibleSmartRedirectStage && !needsActivation && previewSnapshot) {
+            // Só ativar se não houver fluxo ativo (sem jobDescription e file)
+            if (!smartRedirectHandledRef.current && isEligibleSmartRedirectStage && !needsActivation && previewSnapshot && !jobDescription.trim() && !file) {
                 smartRedirectHandledRef.current = true;
 
                 const restored = await restorePendingAnalysisFromSnapshot(previewSnapshot);
