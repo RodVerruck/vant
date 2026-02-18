@@ -83,41 +83,48 @@ export const VALUE_PROP_HTML = `
     <div class="hero-section" style="margin-top: 60px;">
         <div style="text-align: center; margin-bottom: 32px;">
             <h3 style="color: #F8FAFC; font-size: 1.5rem; font-weight: 700; margin: 0 0 8px 0;">Por que funciona</h3>
-            <p style="color: #94A3B8; font-size: 1rem; margin: 0; max-width: 600px; margin: 0 auto;">
-                Nossa IA analisa seu currículo e a vaga desejada para criar uma versão otimizada que passa nos filtros ATS e impressiona recrutadores.
-            </p>
+            <p style="color: #CBD5E1; font-size: 0.9rem; margin: 0;">Tecnologia baseada em dados reais de mercado</p>
         </div>
         
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(56, 189, 248, 0.1); color: #38BDF8;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; max-width: 1200px; margin: 0 auto;">
+            <div style="background: rgba(74, 158, 255, 0.06); border: 1px solid rgba(74, 158, 255, 0.15); border-radius: 16px; padding: 28px; text-align: left;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(74, 158, 255, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A9EFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
                 </div>
-                <h4 style="color: #F8FAFC; font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0;">Análise ATS Completa</h4>
-                <p style="color: #94A3B8; font-size: 0.95rem; line-height: 1.5; margin: 0;">
-                    Verificação em mais de 40 critérios dos sistemas de triagem automática usados pelas empresas.
-                </p>
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; line-height: 1.3;">
+                    IA Treinada com <span style="color: #4A9EFF; font-size: 1.3rem;">50K+</span> Vagas
+                </div>
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6; opacity: 0.85;">
+                    Analisamos milhares de descrições de vagas reais para identificar padrões de sucesso
+                </div>
             </div>
             
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 28px; text-align: left;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
                 </div>
-                <h4 style="color: #F8FAFC; font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0;">Otimização Inteligente</h4>
-                <p style="color: #94A3B8; font-size: 0.95rem; line-height: 1.5; margin: 0;">
-                    Sugestões personalizadas baseadas na vaga e nas palavras-chave que recrutadores procuram.
-                </p>
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; line-height: 1.3;">
+                    <span style="color: #10B981; font-size: 1.4rem;">43</span> Critérios ATS
+                </div>
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6; opacity: 0.85;">
+                    Verificamos os critérios que os robôs usam para aprovar seu currículo
+                </div>
             </div>
             
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(168, 85, 247, 0.1); color: #A855F7;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.15); border-radius: 16px; padding: 28px; text-align: left;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                 </div>
-                <h4 style="color: #F8FAFC; font-size: 1.1rem; font-weight: 600; margin: 0 0 8px 0;">Resultados Comprovados</h4>
-                <p style="color: #94A3B8; font-size: 0.95rem; line-height: 1.5; margin: 0;">
-                    Mais de 50.000 currículos otimizados com taxa de sucesso 3x maior na obtenção de entrevistas.
-                </p>
+                <div style="color: #F8FAFC; font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; line-height: 1.3;">
+                    Padrões de <span style="color: #F59E0B;">Mercado</span>
+                </div>
+                <div style="color: #CBD5E1; font-size: 0.9rem; line-height: 1.6; opacity: 0.85;">
+                    Otimização baseada em CVs aprovados em processos seletivos reais
+                </div>
             </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px; color: #94A3B8; font-size: 0.8rem; font-style: italic;">
+            Baseado em 50.000+ processamentos reais
         </div>
     </div>
 `;
@@ -127,33 +134,37 @@ export const ANALYSIS_CARD_HTML = `
         <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(74, 158, 255, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 32px; text-align: center; max-width: 700px; margin: 0 auto;">
             <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10B981;">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                 </svg>
             </div>
             
-            <h3 style="color: #F8FAFC; font-size: 1.3rem; font-weight: 700; margin: 0 0 12px 0;">Análise Grátis e Instantânea</h3>
-            <p style="color: #94A3B8; font-size: 1rem; line-height: 1.6; margin: 0 0 24px 0;">
-                Descubra seu score ATS atual e receba um diagnóstico completo dos pontos de melhoria do seu currículo.
+            <h3 style="color: #F8FAFC; font-size: 1.3rem; font-weight: 700; margin: 0 0 16px 0;">Análise Instantânea</h3>
+            <p style="color: #F8FAFC; font-size: 1rem; line-height: 1.2; margin: 10px 0 4px 0;">
+                Descubra seu score ATS e os erros que estão te eliminando.
             </p>
             
-            <div style="display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <span style="color: #F8FAFC; font-size: 1rem; font-weight: 700;">Sem compromisso. Sem cartão.</span>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 6L9 17l-5-5"/>
                     </svg>
-                    <span style="color: #CBD5E1; font-size: 0.9rem;">Score ATS em 10 segundos</span>
+                    <span style="color: #CBD5E1; font-size: 0.85rem;">Score ATS em segundos</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 6L9 17l-5-5"/>
                     </svg>
-                    <span style="color: #CBD5E1; font-size: 0.9rem;">Diagnóstico completo</span>
+                    <span style="color: #CBD5E1; font-size: 0.85rem;">Erros críticos detectados</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 6L9 17l-5-5"/>
                     </svg>
-                    <span style="color: #CBD5E1; font-size: 0.9rem;">Sem cadastro obrigatório</span>
+                    <span style="color: #CBD5E1; font-size: 0.85rem;">Dados destruídos após análise</span>
                 </div>
             </div>
         </div>

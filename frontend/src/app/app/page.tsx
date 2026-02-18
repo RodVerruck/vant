@@ -10,6 +10,9 @@ import { HistoryStage } from "@/components/HistoryStage";
 import { PricingSimplified } from "@/components/PricingSimplified";
 import { NeonOffer } from "@/components/NeonOffer";
 import { NewOptimizationModal } from "@/components/NewOptimizationModal";
+import { HeroHeader } from "@/components/sections/HeroHeader";
+import { ValueProp } from "@/components/sections/ValueProp";
+import { AnalysisCard } from "@/components/sections/AnalysisCard";
 import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
@@ -145,6 +148,7 @@ function getApiUrl(): string {
 
 // V3 Layout: Split into separate sections for above-the-fold CRO optimization
 // HTML constants moved to src/components/StaticContent.ts for better maintainability
+const USE_JSX_SECTIONS = process.env.NEXT_PUBLIC_USE_JSX_SECTIONS === "true";
 
 
 
@@ -2948,7 +2952,11 @@ export default function AppPage() {
                             {/* ===== LEFT COLUMN: Text + Trust ===== */}
                             <div className="hero-left-col">
                                 <div>
-                                    <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
+                                    {USE_JSX_SECTIONS ? (
+                                        <HeroHeader />
+                                    ) : (
+                                        <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
+                                    )}
                                     <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
                                 </div>
                                 <div
@@ -3301,8 +3309,20 @@ export default function AppPage() {
                         </div>{/* end hero-split-grid */}
 
                         {/* Full-width sections below the fold */}
-                        <div id="por-que-funciona" dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
-                        <div dangerouslySetInnerHTML={{ __html: ANALYSIS_CARD_HTML }} />
+                        <div id="por-que-funciona">
+                            {USE_JSX_SECTIONS ? (
+                                <ValueProp />
+                            ) : (
+                                <div dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
+                            )}
+                        </div>
+                        <div>
+                            {USE_JSX_SECTIONS ? (
+                                <AnalysisCard />
+                            ) : (
+                                <div dangerouslySetInnerHTML={{ __html: ANALYSIS_CARD_HTML }} />
+                            )}
+                        </div>
                     </div>
 
                 </>
