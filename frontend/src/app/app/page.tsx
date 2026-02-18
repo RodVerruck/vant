@@ -13,6 +13,7 @@ import { NewOptimizationModal } from "@/components/NewOptimizationModal";
 import { HeroHeader } from "@/components/sections/HeroHeader";
 import { ValueProp } from "@/components/sections/ValueProp";
 import { AnalysisCard } from "@/components/sections/AnalysisCard";
+import { TrustBar } from "@/components/sections/TrustBar";
 import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 import {
@@ -2964,7 +2965,11 @@ export default function AppPage() {
                                     ) : (
                                         <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
                                     )}
-                                    <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
+                                    {USE_JSX_SECTIONS ? (
+                                        <TrustBar />
+                                    ) : (
+                                        <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
+                                    )}
                                 </div>
                                 <div
                                     className="scroll-indicator"
