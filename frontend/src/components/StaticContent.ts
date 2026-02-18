@@ -63,14 +63,14 @@ export const TRUST_BAR_HTML = `
             
             <div class="stat-card">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <div class="stat-icon" style="background: rgba(168, 85, 247, 0.1); color: #A855F7;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8B5CF6;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     </div>
                     <div>
-                        <div class="stat-number">Top 5%</div>
+                        <div class="stat-number">100%</div>
                         <div class="stat-label">
-                            dos candidatos
-                            <span class="vant-tooltip" tabindex="0" data-tooltip="Colocação média dos usuários em processos seletivos." style="margin-left: 4px; opacity: 0.6; border-bottom: 1px dotted #CBD5E1; cursor: help;"></span>
+                            Privado e Seguro
+                            <span class="vant-tooltip" tabindex="0" data-tooltip="Seus dados são criptografados e nunca compartilhados." style="margin-left: 4px; opacity: 0.6; border-bottom: 1px dotted #CBD5E1; cursor: help;"></span>
                         </div>
                     </div>
                 </div>
