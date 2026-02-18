@@ -5,6 +5,17 @@ import type { ReportData } from "@/types";
 import { BookCard } from "./BookCard";
 import { InterviewSimulator } from "./InterviewSimulator";
 import { calculateProjectedScore } from "@/lib/helpers";
+
+// Detecta se está em desenvolvimento (localhost) e usa backend local
+function getApiUrl(): string {
+    if (typeof window !== "undefined") {
+        const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        if (isLocalhost) {
+            return "http://127.0.0.1:8000";
+        }
+    }
+    return process.env.NEXT_PUBLIC_API_URL || "https://vant-backend.onrender.com";
+}
 import {
     Zap, TrendingUp, AlertCircle, FileText, BookOpen, MessageSquare,
     Loader, ChevronDown, ChevronUp, Linkedin, User, Search, Copy,
@@ -676,7 +687,7 @@ export function PaidStage({
 
                 const prompt = "Gere um script de defesa para entrevista (max 150 chars). Contexto: Gap=" + (gaps[0]?.evidencia || "Senioridade") + ", Setor=" + setor + ", Tipo=" + (isSeniorityGap ? "Senioridade" : isTransition ? "Transição" : "Competência") + ". Responda apenas com o script.";
 
-                const response = await fetch('/api/generate-defense-pitch', {
+                const response = await fetch(`${getApiUrl()}/api/generate-defense-pitch`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt })

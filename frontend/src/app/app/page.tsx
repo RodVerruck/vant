@@ -349,7 +349,8 @@ export default function AppPage() {
     // useEffect para cancelar polling premium apenas
     useEffect(() => {
         // Se não está mais em processing_premium, cancelar polling ativo
-        if (stage !== "processing_premium" && abortControllerRef.current && isPollingActive.current) {
+        // EXCETO quando está mudando para paid no fluxo normal (diagnostico_pronto)
+        if (stage !== "processing_premium" && stage !== "paid" && abortControllerRef.current && isPollingActive.current) {
             console.log("[Polling] Cancelado por mudança de stage");
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
