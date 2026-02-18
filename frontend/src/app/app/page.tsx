@@ -320,15 +320,24 @@ async function pollAnalysisProgress(
     updateStatus: (text: string, percent: number) => Promise<void>,
     setReportData: (data: any) => void,
     setStage: (stage: AppStage) => void,
-    setCreditsRemaining: (credits: number) => void
+    setCreditsRemaining: (credits: number) => void,
+    abortSignal?: AbortSignal
 ) {
     const apiUrl = getApiUrl();
     const maxAttempts = 60; // ~2.5 minutos com polling a cada 2.5s
     let attempts = 0;
 
     while (attempts < maxAttempts) {
+        // Verificar se o polling foi cancelado
+        if (abortSignal?.aborted) {
+            console.log("[Polling] Interrompido pelo usuário");
+            return;
+        }
+
         try {
-            const response = await fetch(`${apiUrl}/api/analysis/status/${sessionId}`);
+            const response = await fetch(`${apiUrl}/api/analysis/status/${sessionId}`, {
+                signal: abortSignal
+            });
             const data = await response.json();
 
             if (!response.ok) {
@@ -402,11 +411,26 @@ async function pollAnalysisProgress(
                     throw new Error(result_data?.error || 'Falha no processamento');
             }
 
-            // Esperar antes do próximo polling
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            // Esperar antes do próximo polling (respeitando abort)
+            await new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(resolve, 2500);
+
+                if (abortSignal) {
+                    abortSignal.addEventListener('abort', () => {
+                        clearTimeout(timeoutId);
+                        reject(new DOMException('Polling abortado', 'AbortError'));
+                    }, { once: true });
+                }
+            });
             attempts++;
 
         } catch (error) {
+            // Se foi abortado, não tratar como erro
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                console.log("[Polling] Abortado silenciosamente");
+                return;
+            }
+
             console.error("[Polling] Erro:", error);
             throw error;
         }
@@ -470,6 +494,16 @@ export default function AppPage() {
             }
         };
     }, []);
+
+    // Cancelar polling quando o usuário navegar para outra tela durante processamento
+    useEffect(() => {
+        // Se não está mais em processing_premium, cancelar polling ativo
+        if (stage !== "processing_premium" && abortControllerRef.current) {
+            console.log("[Polling] Cancelado por mudança de stage");
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+    }, [stage]);
 
 
 
@@ -2448,13 +2482,18 @@ export default function AppPage() {
                     // Salvar session_id no estado
                     setSessionId(payload.session_id as string);
 
+                    // Criar AbortController para este polling
+                    const controller = new AbortController();
+                    abortControllerRef.current = controller;
+
                     // Iniciar polling para acompanhar progresso
                     await pollAnalysisProgress(
                         payload.session_id as string,
                         updateStatus,
                         setReportData,
                         setStage,
-                        setCreditsRemaining
+                        setCreditsRemaining,
+                        controller.signal
                     );
                     return;
                 }
