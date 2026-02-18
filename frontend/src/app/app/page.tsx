@@ -291,6 +291,7 @@ async function pollAnalysisProgress(
 export default function AppPage() {
     // AbortController para cancelar requisições ao navegar
     const abortControllerRef = useRef<AbortController | null>(null);
+    const isPollingActive = useRef(false);
     const smartRedirectHandledRef = useRef(false);
     const storageHydratedRef = useRef(false);
 
@@ -345,12 +346,14 @@ export default function AppPage() {
     }, []);
 
     // Cancelar polling quando o usuário navegar para outra tela durante processamento
+    // useEffect para cancelar polling premium apenas
     useEffect(() => {
         // Se não está mais em processing_premium, cancelar polling ativo
-        if (stage !== "processing_premium" && abortControllerRef.current) {
+        if (stage !== "processing_premium" && abortControllerRef.current && isPollingActive.current) {
             console.log("[Polling] Cancelado por mudança de stage");
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
+            isPollingActive.current = false;
         }
     }, [stage]);
 
@@ -2334,6 +2337,7 @@ export default function AppPage() {
                     // Criar AbortController para este polling
                     const controller = new AbortController();
                     abortControllerRef.current = controller;
+                    isPollingActive.current = true;
 
                     // Iniciar polling para acompanhar progresso
                     await pollAnalysisProgress(
@@ -2344,6 +2348,7 @@ export default function AppPage() {
                         setCreditsRemaining,
                         controller.signal
                     );
+                    isPollingActive.current = false;
                     return;
                 }
 
