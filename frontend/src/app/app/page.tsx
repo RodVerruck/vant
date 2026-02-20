@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AppStage, PlanType, PreviewData, ReportData, PilaresData, GapFatal, Book, PricesMap, HistoryItem } from "@/types";
 import { PaidStage } from "@/components/PaidStage";
+import { FreeAnalysisStage } from "@/components/FreeAnalysisStage";
 import { AuthModal } from "@/components/AuthModal";
 import { HistoryStage } from "@/components/HistoryStage";
 import { PricingSimplified } from "@/components/PricingSimplified";
@@ -3834,617 +3835,757 @@ export default function AppPage() {
             )}
 
             {stage === "preview" && (
-                <div className="hero-container mobile-preview-with-sticky" style={{ position: "relative" }}>
-                    {/* Cinematic spotlight from top-center */}
-                    <div aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: "480px", background: "radial-gradient(ellipse 70% 55% at 50% 0%, rgba(56, 189, 248, 0.18) 0%, rgba(99, 102, 241, 0.09) 40%, transparent 100%)", pointerEvents: "none", zIndex: 0 }} />
-                    {(() => {
-                        const data: Partial<PreviewData> = previewData ?? {};
-                        const nota = typeof data.nota_ats === "number" ? data.nota_ats : 0;
-                        const pilares = data.analise_por_pilares || {};
-                        const veredito = data.veredito || "ANÁLISE CONCLUÍDA";
-                        const potencial = calcPotencial(nota);
+                <div style={{
+                    minHeight: "100vh",
+                    background: "linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)",
+                    padding: "2rem 1rem",
+                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                }}>
+                    <style jsx>{`
+                        @keyframes pulse {
+                            0%, 100% {
+                                transform: scale(1);
+                                opacity: 0.9;
+                            }
+                            50% {
+                                transform: scale(1.02);
+                                opacity: 1;
+                            }
+                        }
+                    `}</style>
+                    <div style={{ maxWidth: "1150px", margin: "0 auto" }}>
 
-                        let texto_destaque = "Recrutadores e Gestores";
-                        const jobText = (jobDescription || "").toLowerCase();
-                        if (jobText.includes("nubank")) texto_destaque += " do Nubank";
-                        else if (jobText.includes("google")) texto_destaque += " do Google";
-                        else if (jobText.includes("amazon")) texto_destaque += " da Amazon";
-                        else if (jobText.includes("itaú") || jobText.includes("itau")) texto_destaque += " do Itaú";
+                        {/* Header */}
+                        <div style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: "2rem"
+                        }}>
+                            <div>
+                                <h1 style={{
+                                    fontSize: "3rem",
+                                    fontWeight: 300,
+                                    color: "white",
+                                    margin: 0,
+                                    lineHeight: 1.1
+                                }}>Seu Diagnóstico</h1>
+                                <p style={{
+                                    fontSize: "1.125rem",
+                                    fontWeight: 300,
+                                    color: "#94a3b8",
+                                    marginTop: "0.5rem"
+                                }}>Análise gratuita do seu currículo</p>
+                            </div>
+                            <div style={{
+                                background: "rgba(15, 23, 42, 0.6)",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                padding: "0.5rem 1rem",
+                                borderRadius: "99px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.5rem",
+                                fontSize: "0.875rem",
+                                color: "#94a3b8"
+                            }}>
+                                <div style={{
+                                    background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                                    color: "white",
+                                    fontSize: "0.85rem",
+                                    fontWeight: 700,
+                                    padding: "6px 16px",
+                                    borderRadius: "20px",
+                                    letterSpacing: "0.5px"
+                                }}>✨ ANÁLISE GRATUITA</div>
+                            </div>
+                        </div>
 
-                        // Calcular score projetado inteligente
-                        const impacto = typeof pilares.impacto === "number" ? pilares.impacto : 0;
-                        const keywords = typeof pilares.keywords === "number" ? pilares.keywords : 0;
-                        const ats = typeof pilares.ats === "number" ? pilares.ats : 0;
+                        {/* Meta de Pontuação */}
+                        <div style={{
+                            background: "rgba(15, 23, 42, 0.6)",
+                            backdropFilter: "blur(20px) saturate(180%)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
+                            borderRadius: "1.5rem",
+                            padding: "2rem",
+                            marginBottom: "2rem",
+                            transition: "transform 0.2s ease, border-color 0.2s ease"
+                        }}>
+                            <h2 style={{
+                                fontSize: "1.5rem",
+                                fontWeight: 600,
+                                color: "white",
+                                margin: "0 0 1.5rem 0"
+                            }}>🎯 Meta de Pontuação</h2>
+                            <div style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "2rem"
+                            }}>
+                                <div style={{ textAlign: "center" }}>
+                                    <div style={{
+                                        fontSize: "3rem",
+                                        fontWeight: 300,
+                                        color: "#10b981",
+                                        lineHeight: 1
+                                    }}>{previewData?.projected_score || 94}</div>
+                                    <div style={{
+                                        fontSize: "0.875rem",
+                                        color: "#94a3b8"
+                                    }}>Score Alvo</div>
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{
+                                        color: "#94a3b8",
+                                        marginBottom: "1rem"
+                                    }}>
+                                        Com as otimizações completas, seu score pode chegar a <strong style={{ color: "#10b981" }}>{previewData?.projected_score || 94}/100</strong>.
+                                        Isso coloca você no <strong style={{ color: "#10b981" }}>Top {previewData?.percentile || "15%"} dos candidatos</strong>.
+                                    </div>
+                                    <div style={{
+                                        height: "0.5rem",
+                                        background: "rgba(255,255,255,0.1)",
+                                        borderRadius: "99px",
+                                        overflow: "hidden",
+                                        marginTop: "1rem"
+                                    }}>
+                                        <div style={{
+                                            height: "100%",
+                                            width: `${previewData?.projected_score || 94}%`,
+                                            background: "linear-gradient(90deg, #10b981 0%, #059669 100%)",
+                                            borderRadius: "99px"
+                                        }} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                        // Contar gaps baseado nos gaps identificados no preview
-                        const gapsCount = (data.gap_1 ? 1 : 0) + (data.gap_2 ? 1 : 0);
+                        {/* Diagnóstico Inicial */}
+                        <div style={{
+                            background: "rgba(15, 23, 42, 0.6)",
+                            backdropFilter: "blur(20px) saturate(180%)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
+                            borderRadius: "1.5rem",
+                            padding: "2rem",
+                            marginBottom: "2rem"
+                        }}>
+                            <div style={{
+                                display: "grid",
+                                gridTemplateColumns: "1fr auto 1fr",
+                                gap: "2rem",
+                                alignItems: "center",
+                                marginBottom: "2rem"
+                            }}>
+                                {/* Score ATS Atual */}
+                                <div style={{
+                                    background: previewData?.nota < 50 ? "rgba(239, 68, 68, 0.2)" :
+                                        previewData?.nota < 70 ? "rgba(251, 146, 60, 0.2)" :
+                                            "rgba(56, 189, 248, 0.2)",
+                                    border: previewData?.nota < 50 ? "2px solid rgba(239, 68, 68, 0.5)" :
+                                        previewData?.nota < 70 ? "2px solid rgba(251, 146, 60, 0.5)" :
+                                            "2px solid rgba(56, 189, 248, 0.5)",
+                                    borderRadius: "1rem",
+                                    padding: "1.5rem",
+                                    textAlign: "center",
+                                    position: "relative",
+                                    boxShadow: previewData?.nota < 50 ? "0 0 20px rgba(239, 68, 68, 0.3)" :
+                                        previewData?.nota < 70 ? "0 0 20px rgba(251, 146, 60, 0.3)" :
+                                            "0 0 20px rgba(56, 189, 248, 0.3)"
+                                }}>
+                                    <div style={{
+                                        fontSize: "0.875rem",
+                                        color: previewData?.nota < 50 ? "#f87171" :
+                                            previewData?.nota < 70 ? "#fbbf24" :
+                                                "#38bdf8",
+                                        marginBottom: "0.5rem",
+                                        textTransform: "uppercase",
+                                        letterSpacing: "0.05em",
+                                        fontWeight: 600
+                                    }}>SCORE ATS ATUAL</div>
+                                    <div style={{
+                                        fontSize: "3.5rem",
+                                        fontWeight: 300,
+                                        color: previewData?.nota < 50 ? "#ef4444" :
+                                            previewData?.nota < 70 ? "#f59e0b" :
+                                                "#38bdf8",
+                                        lineHeight: 1,
+                                        marginBottom: "0.5rem"
+                                    }}>{previewData?.nota || 0}</div>
+                                    <div style={{
+                                        fontSize: "1rem",
+                                        color: previewData?.nota < 50 ? "#fca5a5" :
+                                            previewData?.nota < 70 ? "#fcd34d" :
+                                                "#7dd3fc"
+                                    }}>de 100 pontos</div>
+                                </div>
 
-                        const projected = calculateProjectedScore(nota, gapsCount, 0, ats, keywords, impacto);
-
-                        const metaHtml = `
-    <div style="background: rgba(255, 255, 255, 0.06); 
-                border: 1px solid rgba(16, 185, 129, 0.28); border-left: 3px solid rgba(16, 185, 129, 0.7); border-radius: 12px; padding: 20px; margin-top: 16px;
-                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 30px -6px rgba(16, 185, 129, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="width: 22px; height: 22px; border-radius: 999px; border: 1px solid rgba(16, 185, 129, 0.5);
-                        display:flex; align-items:center; justify-content:center; color: #34D399; font-size: 0.8rem;">+</div>
-            <div>
-                <div style="color: #E2E8F0; font-weight: 600; font-size: 1rem; margin-bottom: 4px;">Meta de pontuação</div>
-                <div style="color: #CBD5E1; font-size: 0.9rem; margin-top: 0;">
-                    Com as otimizações completas, seu score pode chegar a <strong style="color: #10B981;">${projected.score}/100</strong>
-                    <br/>Isso coloca você no <strong>${projected.percentile}</strong> dos candidatos.
-                </div>
-            </div>
-        </div>
-    </div>
-    `;
-
-                        const dashHtml = renderDashboardMetricsHtml(nota, veredito, potencial, pilares, gapsCount);
-
-                        const setorDetectado = typeof pilares.setor_detectado === "string" ? pilares.setor_detectado : "Gestão Estratégica";
-                        const gap2ExampleAtual = (data.gap_2 as { exemplo_atual?: string } | undefined)?.exemplo_atual;
-                        const exemploMelhoria = `Especialista em ${setorDetectado} com histórico de ` +
-                            "liderança em projetos de alta complexidade. Otimizou o budget operacional em 22%..." +
-                            "Implementação de frameworks ágeis e reestruturação de governança corporativa.";
-
-                        const xrayHtml = `
-        <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-left: 3px solid rgba(56, 189, 248, 0.6); padding: 16px; border-radius: 12px; position: relative; overflow: hidden; margin-top: 16px;
-                    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 25px -6px rgba(56, 189, 248, 0.15), 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
-            
-            <div style="display: flex; gap: 12px; align-items: start;">
-                <div style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.12); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color:#38BDF8; font-weight: 600;">XR</div>
-                <div style="flex: 1;">
-                    <h3 style="color: #E2E8F0; margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600;">
-                        Radar de Recrutadores Ativo
-                    </h3>
-                    <p style="color: #E2E8F0; font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.4;">
-                        Detectamos padrões para localizar <strong>${texto_destaque}</strong>.
-                    </p>
-                    
-                    <div style="background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 4px; border-left: 2px solid #38BDF8; font-family: monospace; font-size: 0.7rem; color: #38BDF8; overflow-x: hidden; white-space: nowrap; opacity: 0.8;">
-                        site:linkedin.com/in/ "hiring" "${jobText.split(' ')[0]}..."
-                    </div>
-                </div>
-            </div>
-        </div>
-        `;
-
-                        const showMobileStickyBuyBar = !(authUserId && creditsRemaining > 0);
-
-                        return (
-                            <>
-                                <div className="mobile-sticky-top-score md:hidden" aria-hidden={false}>
-                                    <div className="mobile-sticky-top-score-inner">
-                                        <span>Score Atual: <strong>{nota}</strong></span>
-                                        <span style={{ opacity: 0.75 }}>→</span>
-                                        <span className="mobile-sticky-top-score-meta">Meta: <strong>{projected.score}</strong></span>
+                                {/* Seta Visual */}
+                                <div style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "2rem",
+                                    color: "#94a3b8"
+                                }}>
+                                    <div style={{
+                                        width: "60px",
+                                        height: "2px",
+                                        background: "linear-gradient(90deg, #94a3b8 0%, transparent 100%)",
+                                        position: "relative"
+                                    }}>
+                                        <div style={{
+                                            position: "absolute",
+                                            right: "-8px",
+                                            top: "-4px",
+                                            width: "0",
+                                            height: "0",
+                                            borderTopLeft: "8px solid transparent",
+                                            borderTopRight: "8px solid transparent",
+                                            borderTop: "2px solid #94a3b8"
+                                        }} />
                                     </div>
                                 </div>
 
-                                <div dangerouslySetInnerHTML={{ __html: metaHtml }} />
+                                {/* Score Projetado */}
+                                <div style={{
+                                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)",
+                                    border: "2px solid rgba(16, 185, 129, 0.5)",
+                                    borderRadius: "1rem",
+                                    padding: "1.5rem",
+                                    textAlign: "center",
+                                    position: "relative",
+                                    boxShadow: "0 0 30px rgba(16, 185, 129, 0.4)",
+                                    animation: "pulse 2s ease-in-out infinite"
+                                }}>
+                                    <div style={{
+                                        fontSize: "0.875rem",
+                                        color: "#34d399",
+                                        marginBottom: "0.5rem",
+                                        textTransform: "uppercase",
+                                        letterSpacing: "0.05em",
+                                        fontWeight: 600
+                                    }}>SCORE PROJETADO</div>
+                                    <div style={{
+                                        fontSize: "3.5rem",
+                                        fontWeight: 300,
+                                        background: "linear-gradient(to right, #34d399, #2dd4bf)",
+                                        WebkitBackgroundClip: "text",
+                                        WebkitTextFillColor: "transparent",
+                                        lineHeight: 1,
+                                        marginBottom: "0.5rem"
+                                    }}>{previewData?.projected_score || 94}</div>
+                                    <div style={{
+                                        fontSize: "1rem",
+                                        color: "#7dd3fc"
+                                    }}>de 100 pontos</div>
 
-                                <div className="action-island-container" style={{ textAlign: "left", marginTop: 18, position: "relative", zIndex: 1 }}>
-                                    <div dangerouslySetInnerHTML={{ __html: dashHtml }} />
+                                    {/* Efeito Neon/Glow */}
+                                    <div style={{
+                                        position: "absolute",
+                                        inset: "-2px",
+                                        borderRadius: "1rem",
+                                        background: "linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.3) 100%)",
+                                        zIndex: -1,
+                                        filter: "blur(8px)"
+                                    }} />
+                                </div>
+                            </div>
 
-                                    {/* PRÉVIA DE VALOR - Sugestões Concretas da IA */}
-                                    {data.gap_1 && data.gap_2 && (
-                                        <div style={{ marginTop: 24, marginBottom: 32 }}>
-                                            <div style={{ textAlign: "center", marginBottom: 20, padding: "20px", background: "linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(239, 68, 68, 0.08) 100%)", borderRadius: 12, border: "1px solid rgba(56, 189, 248, 0.3)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.08), 0 0 30px -6px rgba(56, 189, 248, 0.25), 0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
-                                                <div style={{ color: "#38BDF8", fontSize: "1.1rem", fontWeight: 700, marginBottom: 8, letterSpacing: "0.5px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                                                    <FileTextIcon color="#38BDF8" size={18} />
-                                                    ANÁLISE BÁSICA COMPLETA
-                                                </div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: 12 }}>
-                                                    Nossa IA identificou <strong style={{ color: "#FCA5A5" }}>problemas críticos</strong> que estão impedindo seu CV de passar nos filtros ATS
-                                                </div>
-                                                <div style={{
-                                                    background: "rgba(251, 191, 36, 0.14)",
-                                                    border: "1px solid rgba(251, 191, 36, 0.35)",
-                                                    borderRadius: 10,
-                                                    padding: "14px 18px",
-                                                    marginTop: 14,
-                                                    textAlign: "center"
-                                                }}>
-                                                    <div style={{ color: "#FBBF24", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.6px", textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                                                        <span style={{ width: 18, height: 18, borderRadius: 999, border: "1px solid rgba(251, 191, 36, 0.7)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem" }}>i</span>
-                                                        Visão parcial do diagnóstico
-                                                    </div>
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.84rem", lineHeight: 1.55 }}>
-                                                        Abaixo mostramos <strong>2 exemplos</strong> do que nossa IA detectou. O diagnóstico completo + solução está na versão Premium.
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Gap 1 - Dados reais da IA */}
+                            {/* Barras de Progresso */}
+                            <div style={{ display: "grid", gap: "1rem" }}>
+                                {previewData?.pilares?.map((pilar: any, idx: number) => (
+                                    <div key={idx}>
+                                        <div style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            marginBottom: "0.5rem"
+                                        }}>
+                                            <span style={{ color: "white", fontSize: "0.875rem" }}>{pilar.nome}</span>
+                                            <span style={{ color: "#94a3b8", fontSize: "0.875rem" }}>{pilar.pontos}%</span>
+                                        </div>
+                                        <div style={{
+                                            height: "0.5rem",
+                                            background: "rgba(255,255,255,0.1)",
+                                            borderRadius: "99px",
+                                            overflow: "hidden"
+                                        }}>
                                             <div style={{
-                                                background: "rgba(255, 255, 255, 0.06)",
-                                                border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                borderLeft: "4px solid #EF4444",
-                                                borderRadius: 12,
-                                                padding: 20,
-                                                marginBottom: 16,
-                                                backdropFilter: "blur(20px)",
-                                                WebkitBackdropFilter: "blur(20px)",
-                                                boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
-                                            }}>
-                                                <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
-                                                    <div style={{
-                                                        background: "rgba(239, 68, 68, 0.15)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.45)",
-                                                        borderRadius: "50%",
-                                                        width: 32,
-                                                        height: 32,
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        fontSize: "1rem",
-                                                        flexShrink: 0,
-                                                        boxShadow: "0 0 16px -2px rgba(239, 68, 68, 0.45)"
-                                                    }}>
-                                                        <AlertCircleIcon color="#F87171" size={14} />
-                                                    </div>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ color: "#FCA5A5", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
-                                                            PROBLEMA #1: {data.gap_1.titulo || "Falta de Resultados Quantificáveis"}
-                                                        </div>
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                            {data.gap_1.explicacao || "Seu CV usa descrições genéricas sem números ou impacto mensurável."}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                height: "100%",
+                                                width: `${pilar.pontos}%`,
+                                                background: pilar.pontos >= 70 ? "linear-gradient(90deg, #10b981 0%, #059669 100%)" :
+                                                    pilar.pontos >= 50 ? "linear-gradient(90deg, #f59e0b 0%, #d97706 100%)" :
+                                                        "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)",
+                                                borderRadius: "99px"
+                                            }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-                                                {data.gap_1.exemplo_atual && (
-                                                    <div style={{
-                                                        background: "rgba(255, 255, 255, 0.06)",
-                                                        border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                        borderLeft: "2px solid #EF4444",
-                                                        borderRadius: 6,
-                                                        padding: "12px 12px 12px 16px",
-                                                        marginBottom: 12,
-                                                        display: "flex",
-                                                        alignItems: "start",
-                                                        gap: 10,
-                                                        backdropFilter: "blur(20px)",
-                                                        WebkitBackdropFilter: "blur(20px)"
-                                                    }}>
-                                                        <AlertCircleIcon color="#EF4444" size={14} />
-                                                        <div>
-                                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
-                                                                VERSÃO ATUAL (Score: {nota}/100)
-                                                            </div>
-                                                            <div style={{
-                                                                color: "#F1F5F9",
-                                                                fontSize: "0.85rem",
-                                                                fontStyle: "italic",
-                                                                lineHeight: 1.5
-                                                            }}>
-                                                                &ldquo;{data.gap_1.exemplo_atual}&rdquo;
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
+                        {/* Análise Básica Completa */}
+                        <div style={{
+                            background: "rgba(15, 23, 42, 0.85)",
+                            backdropFilter: "blur(24px)",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            borderRadius: "1.5rem",
+                            padding: "2rem",
+                            marginBottom: "2rem"
+                        }}>
+                            <h2 style={{
+                                fontSize: "1.5rem",
+                                fontWeight: 600,
+                                color: "white",
+                                margin: "0 0 1rem 0",
+                                textAlign: "center"
+                            }}>📊 Análise Básica Completa</h2>
 
-                                                {data.gap_1.exemplo_otimizado && (
-                                                    <div style={{
-                                                        background: "rgba(255, 255, 255, 0.06)",
-                                                        border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                        borderLeft: "2px solid #10B981",
-                                                        borderRadius: 10,
-                                                        padding: 14,
-                                                        backdropFilter: "blur(20px)",
-                                                        WebkitBackdropFilter: "blur(20px)"
-                                                    }}>
-                                                        <div style={{
-                                                            display: "flex",
-                                                            justifyContent: "space-between",
-                                                            alignItems: "center",
-                                                            marginBottom: 4,
-                                                            gap: 8
-                                                        }}>
-                                                            <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                                                                <CheckCircle2Icon color="#10B981" />
-                                                                VERSÃO OTIMIZADA (Score: 94/100)
-                                                            </div>
-                                                            <div style={{
-                                                                background: "#10B981",
-                                                                color: "#fff",
-                                                                fontSize: "0.65rem",
-                                                                fontWeight: 700,
-                                                                padding: "3px 10px",
-                                                                borderRadius: 999
-                                                            }}>
-                                                                +{94 - nota} pts
-                                                            </div>
-                                                        </div>
-                                                        <div style={{ color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 500, lineHeight: 1.6 }}
-                                                            dangerouslySetInnerHTML={{ __html: data.gap_1.exemplo_otimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                                                    </div>
-                                                )}
+                            <p style={{
+                                color: "#94a3b8",
+                                textAlign: "center",
+                                marginBottom: "1.5rem",
+                                fontSize: "1.1rem"
+                            }}>
+                                Nossa IA identificou problemas críticos que estão impedindo seu CV de passar nos filtros ATS.
+                            </p>
 
-                                                <div style={{
-                                                    marginTop: 12,
-                                                    padding: 10,
-                                                    background: "rgba(255, 255, 255, 0.06)",
-                                                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                    borderLeft: "2px solid #38BDF8",
-                                                    borderRadius: 6,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: 8,
-                                                    backdropFilter: "blur(20px)",
-                                                    WebkitBackdropFilter: "blur(20px)"
-                                                }}>
-                                                    <AlertCircleIcon color="#38BDF8" size={14} />
-                                                    <span style={{ color: "#38BDF8", fontSize: "0.8rem", fontWeight: 600 }}>
-                                                        Impacto: +{94 - nota} pontos no score ATS
-                                                    </span>
-                                                </div>
-                                            </div>
+                            <div style={{
+                                background: "rgba(251, 146, 60, 0.1)",
+                                border: "1px solid rgba(251, 146, 60, 0.3)",
+                                borderRadius: "12px",
+                                padding: "1rem",
+                                marginBottom: "2rem",
+                                textAlign: "center"
+                            }}>
+                                <span style={{ color: "#fbbf24", fontSize: "0.9rem" }}>
+                                    ⚠️ Visão parcial do diagnóstico - Abaixo mostramos 2 exemplos do que nossa IA detectou...
+                                </span>
+                            </div>
 
-                                            {/* Gap 2 - Dados reais da IA */}
+                            {/* Card Problema #1 */}
+                            {previewData?.gap_1 && (
+                                <div style={{
+                                    background: "rgba(15, 23, 42, 0.4)",
+                                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                                    borderRadius: "12px",
+                                    padding: "1.5rem",
+                                    marginBottom: "1.5rem"
+                                }}>
+                                    <h3 style={{
+                                        fontSize: "1.25rem",
+                                        fontWeight: 600,
+                                        color: "white",
+                                        margin: "0 0 1rem 0"
+                                    }}>PROBLEMA #1</h3>
+                                    <p style={{
+                                        color: "#94a3b8",
+                                        marginBottom: "1rem",
+                                        fontSize: "1.1rem",
+                                        fontWeight: 500
+                                    }}>{previewData.gap_1.titulo}</p>
+
+                                    <div style={{
+                                        display: "grid",
+                                        gridTemplateColumns: "1fr 1fr",
+                                        gap: "1rem",
+                                        marginBottom: "1rem"
+                                    }}>
+                                        <div style={{
+                                            background: "rgba(15, 23, 42, 0.6)",
+                                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                                            borderRadius: "8px",
+                                            padding: "1rem"
+                                        }}>
+                                            <h4 style={{
+                                                fontSize: "0.875rem",
+                                                fontWeight: 500,
+                                                color: "#94a3b8",
+                                                marginBottom: "0.5rem"
+                                            }}>VERSÃO ATUAL</h4>
                                             <div style={{
-                                                background: "rgba(255, 255, 255, 0.06)",
-                                                border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                borderLeft: "4px solid #EF4444",
-                                                borderRadius: 12,
-                                                padding: 20,
-                                                backdropFilter: "blur(20px)",
-                                                WebkitBackdropFilter: "blur(20px)",
-                                                boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
+                                                color: "#f87171",
+                                                fontSize: "0.95rem",
+                                                lineHeight: 1.6
+                                            }}>{previewData.gap_1.exemplo_atual}</div>
+                                        </div>
+                                        <div style={{
+                                            background: "rgba(15, 23, 42, 0.6)",
+                                            border: "1px solid rgba(16, 185, 129, 0.3)",
+                                            borderRadius: "8px",
+                                            padding: "1rem"
+                                        }}>
+                                            <h4 style={{
+                                                fontSize: "0.875rem",
+                                                fontWeight: 500,
+                                                color: "#34d399",
+                                                marginBottom: "0.5rem"
+                                            }}>VERSÃO OTIMIZADA</h4>
+                                            <div style={{
+                                                color: "white",
+                                                fontSize: "0.95rem",
+                                                lineHeight: 1.6,
+                                                marginBottom: "0.5rem"
+                                            }}>{previewData.gap_1.exemplo_otimizado}</div>
+                                            <span style={{
+                                                background: "rgba(16, 185, 129, 0.2)",
+                                                color: "#34d399",
+                                                padding: "0.25rem 0.75rem",
+                                                borderRadius: "99px",
+                                                fontSize: "0.75rem",
+                                                fontWeight: 600
+                                            }}>+{previewData.gap_1.pontos || 15} pts</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Card Problema #2 */}
+                            {previewData?.gap_2 && (
+                                <div style={{
+                                    background: "rgba(15, 23, 42, 0.4)",
+                                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                                    borderRadius: "12px",
+                                    padding: "1.5rem",
+                                    marginBottom: "1.5rem"
+                                }}>
+                                    <h3 style={{
+                                        fontSize: "1.25rem",
+                                        fontWeight: 600,
+                                        color: "white",
+                                        margin: "0 0 1rem 0"
+                                    }}>PROBLEMA #2</h3>
+                                    <p style={{
+                                        color: "#94a3b8",
+                                        marginBottom: "1rem",
+                                        fontSize: "1.1rem",
+                                        fontWeight: 500
+                                    }}>{previewData.gap_2.titulo}</p>
+
+                                    <div style={{
+                                        display: "grid",
+                                        gridTemplateColumns: "1fr 1fr",
+                                        gap: "1rem",
+                                        marginBottom: "1rem"
+                                    }}>
+                                        <div style={{
+                                            background: "rgba(15, 23, 42, 0.6)",
+                                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                                            borderRadius: "8px",
+                                            padding: "1rem"
+                                        }}>
+                                            <h4 style={{
+                                                fontSize: "0.875rem",
+                                                fontWeight: 500,
+                                                color: "#94a3b8",
+                                                marginBottom: "0.5rem"
+                                            }}>TERMOS FALTANDO NO SEU CV</h4>
+                                            <div style={{
+                                                color: "#f87171",
+                                                fontSize: "0.95rem",
+                                                lineHeight: 1.6
                                             }}>
-                                                <div style={{ display: "flex", alignItems: "start", gap: 12, marginBottom: 12 }}>
-                                                    <div style={{
-                                                        background: "rgba(239, 68, 68, 0.15)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.45)",
-                                                        borderRadius: "50%",
-                                                        width: 32,
-                                                        height: 32,
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "center",
-                                                        fontSize: "1rem",
-                                                        flexShrink: 0,
-                                                        boxShadow: "0 0 16px -2px rgba(239, 68, 68, 0.45)"
-                                                    }}>
-                                                        <AlertCircleIcon color="#F87171" size={14} />
-                                                    </div>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ color: "#FCA5A5", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>
-                                                            PROBLEMA #2: {data.gap_2.titulo || "Palavras-Chave da Vaga Ausentes"}
-                                                        </div>
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                            {data.gap_2.explicacao || "Termos críticos da vaga não aparecem no seu CV."}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {gap2ExampleAtual && (
-                                                    <div style={{
-                                                        background: "rgba(15, 23, 42, 0.8)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.28)",
-                                                        borderLeft: "2px solid #EF4444",
-                                                        borderRadius: 6,
-                                                        padding: "12px 12px 12px 16px",
-                                                        marginBottom: 12,
-                                                        display: "flex",
-                                                        alignItems: "start",
-                                                        gap: 10
-                                                    }}>
-                                                        <AlertCircleIcon color="#EF4444" size={14} />
-                                                        <div>
-                                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
-                                                                VERSÃO ATUAL (Score: {nota}/100)
-                                                            </div>
-                                                            <div style={{
-                                                                color: "#F1F5F9",
-                                                                fontSize: "0.85rem",
-                                                                fontStyle: "italic",
-                                                                lineHeight: 1.5
-                                                            }}>
-                                                                &ldquo;{gap2ExampleAtual}&rdquo;
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
-                                                    <div style={{
-                                                        background: "rgba(15, 23, 42, 0.8)",
-                                                        border: "1px solid rgba(239, 68, 68, 0.28)",
-                                                        borderLeft: "2px solid #EF4444",
-                                                        borderRadius: 6,
-                                                        padding: "12px 12px 12px 16px",
-                                                        marginBottom: 12,
-                                                        display: "flex",
-                                                        alignItems: "start",
-                                                        gap: 10
-                                                    }}>
-                                                        <AlertCircleIcon color="#EF4444" size={14} />
-                                                        <div style={{ flex: 1 }}>
-                                                            <div style={{ color: "#E2E8F0", fontSize: "0.75rem", fontWeight: 600, marginBottom: 4 }}>
-                                                                TERMOS FALTANDO NO SEU CV:
-                                                            </div>
-                                                            <div style={{ display: "grid", gap: 4 }}>
-                                                                {data.gap_2.termos_faltando.slice(0, 5).map((term: string, i: number) => (
-                                                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                                                        <span style={{ width: 5, height: 5, borderRadius: 999, background: "#F87171", flexShrink: 0 }} />
-                                                                        <span style={{ color: "#F1F5F9", fontSize: "0.82rem", lineHeight: 1.45 }}>
-                                                                            {term}
-                                                                        </span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {data.gap_2.termos_faltando && data.gap_2.termos_faltando.length > 0 && (
-                                                    <div style={{
-                                                        background: "rgba(255, 255, 255, 0.06)",
-                                                        border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                        borderLeft: "2px solid #10B981",
-                                                        borderRadius: 10,
-                                                        padding: 14,
-                                                        backdropFilter: "blur(20px)",
-                                                        WebkitBackdropFilter: "blur(20px)",
-                                                        marginBottom: 12
-                                                    }}>
-                                                        <div style={{
-                                                            display: "flex",
-                                                            justifyContent: "space-between",
-                                                            alignItems: "center",
-                                                            marginBottom: 4,
-                                                            gap: 8
-                                                        }}>
-                                                            <div style={{ color: "#10B981", fontSize: "0.8rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                                                                <CheckCircle2Icon color="#10B981" />
-                                                                VERSÃO OTIMIZADA (Score: 94/100)
-                                                            </div>
-                                                            <div style={{
-                                                                background: "#10B981",
-                                                                color: "#fff",
-                                                                fontSize: "0.65rem",
-                                                                fontWeight: 700,
-                                                                padding: "3px 10px",
-                                                                borderRadius: 999
-                                                            }}>
-                                                                +{94 - nota} pts
-                                                            </div>
-                                                        </div>
-                                                        <div style={{ color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 500, lineHeight: 1.6, fontStyle: "italic" }}>
-                                                            &ldquo;Na minha experiência recente, conduzi iniciativas de <strong>{data.gap_2.termos_faltando[0] || "análise de dados"}</strong> para melhorar a tomada de decisão e implementei práticas de <strong>{data.gap_2.termos_faltando[1] || "gestão de indicadores"}</strong>, resultando em ganho de eficiência operacional e melhor alinhamento com metas estratégicas.&rdquo;
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                <div style={{
-                                                    marginTop: 12,
-                                                    padding: 16,
-                                                    background: "rgba(255, 255, 255, 0.06)",
-                                                    borderRadius: 10,
-                                                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                                                    borderLeft: "2px solid #10B981",
-                                                    backdropFilter: "blur(20px)",
-                                                    WebkitBackdropFilter: "blur(20px)",
-                                                    boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.06), 0 0 30px -6px rgba(16, 185, 129, 0.18), 0 25px 50px -12px rgba(0, 0, 0, 0.5)"
-                                                }}>
-                                                    <div style={{ color: "#4ADE80", fontSize: "1rem", fontWeight: 600, marginBottom: 16, textAlign: "center", textTransform: "uppercase", letterSpacing: "1px" }}>
-                                                        NA VERSÃO PREMIUM VOCÊ RECEBE:
-                                                    </div>
-                                                    <div className="premium-benefits-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px" }}>
-                                                        <style dangerouslySetInnerHTML={{
-                                                            __html: `
-                                                            @media (min-width: 768px) { .premium - benefits - grid {grid - template - columns: repeat(3, 1fr) !important; } }
-            .premium-benefit-item {position: relative; }
-            .premium-benefit-tooltip {
-                position: absolute;
-            left: 50%;
-            bottom: calc(100% + 10px);
-            transform: translateX(-50%) translateY(6px);
-            width: min(270px, 85vw);
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(16, 185, 129, 0.35);
-            background: rgba(15, 23, 42, 0.96);
-            color: #E2E8F0;
-            font-size: 0.74rem;
-            line-height: 1.45;
-            box-shadow: 0 10px 22px -10px rgba(0, 0, 0, 0.7), 0 0 24px -12px rgba(16, 185, 129, 0.45);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 30;
-            transition: opacity 0.16s ease, transform 0.16s ease;
-                                                            }
-            .premium-benefit-item:hover .premium-benefit-tooltip,
-            .premium-benefit-item:focus-within .premium-benefit-tooltip {
-                opacity: 1;
-            transform: translateX(-50%) translateY(0);
-                                                            }
-                                                        ` }} />
-                                                        {[
-                                                            {
-                                                                label: <><strong>CV reescrito</strong> com palavras-chave integradas</>,
-                                                                tooltip: "Reescrevemos seu CV com termos da vaga distribuídos em experiências, competências e resumo para aumentar aderência ATS.",
-                                                            },
-                                                            {
-                                                                label: <>Análise de <strong>todos os critérios ATS</strong></>,
-                                                                tooltip: "Avaliação completa de palavras-chave, estrutura, legibilidade, impacto e lacunas que bloqueiam seu avanço.",
-                                                            },
-                                                            {
-                                                                label: <><strong>Headline LinkedIn</strong> para recrutadores</>,
-                                                                tooltip: "Você recebe uma headline estratégica para aumentar buscas no LinkedIn e atrair recrutadores certos.",
-                                                            },
-                                                            {
-                                                                label: <><strong>Biblioteca técnica</strong> para seu cargo</>,
-                                                                tooltip: "Lista guiada de livros recomendados para a vaga que você está buscando.",
-                                                            },
-                                                            {
-                                                                label: <><strong>Projeto prático</strong> para entrevistas</>,
-                                                                tooltip: "Sugestão de projeto aplicado ao seu perfil para gerar portfólio e respostas mais fortes em entrevistas.",
-                                                            },
-                                                            {
-                                                                label: <><strong>Simulador de Entrevista</strong> com IA</>,
-                                                                tooltip: "Treine perguntas técnicas e comportamentais com feedback instantâneo para melhorar clareza e confiança.",
-                                                            },
-                                                        ].map((item, i) => (
-                                                            <div key={i} className="premium-benefit-item" style={{
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                gap: 12,
-                                                                padding: "16px 18px",
-                                                                background: "rgba(255, 255, 255, 0.03)",
-                                                                border: "1px solid rgba(16, 185, 129, 0.2)",
-                                                                borderRadius: 16,
-                                                                backdropFilter: "blur(12px)",
-                                                                WebkitBackdropFilter: "blur(12px)",
-                                                                cursor: "help",
-                                                            }} tabIndex={0} aria-label={item.tooltip}>
-                                                                <div style={{
-                                                                    width: 36,
-                                                                    height: 36,
-                                                                    borderRadius: "50%",
-                                                                    background: "rgba(16, 185, 129, 0.15)",
-                                                                    display: "flex",
-                                                                    alignItems: "center",
-                                                                    justifyContent: "center",
-                                                                    flexShrink: 0,
-                                                                    boxShadow: "0 0 15px -3px rgba(16, 185, 129, 0.4)",
-                                                                }}>
-                                                                    <CheckCircle2Icon color="#34D399" />
-                                                                </div>
-                                                                <span style={{ color: "#F1F5F9", fontSize: "0.85rem", fontWeight: 500, lineHeight: 1.4 }}>
-                                                                    {item.label}
-                                                                </span>
-                                                                <div className="premium-benefit-tooltip" role="tooltip">
-                                                                    {item.tooltip}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div >
-                                            </div >
-                                        </div >
-                                    )
-                                    }
-
-                                    {/* RODAPÉ CONDICIONAL: Créditos vs Oferta de Venda */}
-                                    {
-                                        authUserId && creditsRemaining > 0 ? (
-                                            <div style={{ marginTop: 32 }}>
-                                                <div style={{
-                                                    background: "rgba(15, 23, 42, 0.72)",
-                                                    border: "1px solid rgba(16, 185, 129, 0.35)",
-                                                    borderLeft: "2px solid #10B981",
-                                                    borderRadius: 16,
-                                                    padding: "28px",
-                                                    textAlign: "center",
-                                                    boxShadow: "none"
-                                                }}>
-                                                    <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-                                                        <CheckCircle2Icon color="#10B981" size={18} />
-                                                    </div>
-                                                    <div style={{ color: "#10B981", fontSize: "1.1rem", fontWeight: 600, marginBottom: 8 }}>
-                                                        Você tem {creditsRemaining} crédito(s) disponível(is)!
-                                                    </div>
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.95rem", marginBottom: 20, lineHeight: 1.5 }}>
-                                                        Use 1 crédito agora para desbloquear a análise completa,<br />
-                                                        CV otimizado e todas as ferramentas premium.
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => onUseCreditFromPreview()}
-                                                        style={{
-                                                            width: "100%",
-                                                            maxWidth: 420,
-                                                            background: "#10B981",
-                                                            color: "#fff",
-                                                            border: "none",
-                                                            padding: "18px",
-                                                            borderRadius: 12,
-                                                            fontSize: "1.05rem",
-                                                            fontWeight: 600,
-                                                            cursor: "pointer",
-                                                            boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
-                                                            transition: "all 0.2s",
-                                                            textTransform: "uppercase",
-                                                            letterSpacing: "0.35px"
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.transform = "translateY(-2px)";
-                                                            e.currentTarget.style.boxShadow = "0 6px 18px rgba(16, 185, 129, 0.45)";
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.transform = "translateY(0)";
-                                                            e.currentTarget.style.boxShadow = "0 4px 14px rgba(16, 185, 129, 0.35)";
-                                                        }}
-                                                        onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
-                                                        onMouseUp={(e) => e.currentTarget.style.transform = "translateY(-2px)"}
-                                                    >
-                                                        USAR 1 CRÉDITO E DESBLOQUEAR
-                                                    </button>
-                                                </div>
+                                                {previewData.gap_2.termos_faltando?.map((termo: string, idx: number) => (
+                                                    <div key={idx} style={{ marginBottom: "0.25rem" }}>• {termo}</div>
+                                                ))}
                                             </div>
-                                        ) : (
-                                            <div style={{ marginTop: 32 }}>
-                                                <NeonOffer
-                                                    onSelectPlan={(planId) => setSelectedPlan(planId)}
-                                                    onCheckout={(planId) => {
-                                                        setSelectedPlan(planId);
-                                                        setStage("checkout");
-                                                    }}
-                                                    authUserId={authUserId}
-                                                    creditsRemaining={creditsRemaining}
-                                                    timeRemaining={timeRemaining}
-                                                    showHeader={true}
-                                                />
-                                            </div>
-                                        )
-                                    }
-
-                                    {/* Botão Voltar Discreto */}
-                                    <div style={{ textAlign: "center", marginTop: 16 }}>
-                                        <button
-                                            type="button"
-                                            onClick={() => setStage("hero")}
-                                            style={{
-                                                background: "none",
-                                                border: "none",
-                                                color: "#475569",
-                                                fontSize: "0.85rem",
-                                                cursor: "pointer",
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                gap: 6,
-                                                padding: "10px"
-                                            }}
-                                        >
-                                            ← Voltar para edição
-                                        </button>
+                                        </div>
+                                        <div style={{
+                                            background: "rgba(15, 23, 42, 0.6)",
+                                            border: "1px solid rgba(16, 185, 129, 0.3)",
+                                            borderRadius: "8px",
+                                            padding: "1rem"
+                                        }}>
+                                            <h4 style={{
+                                                fontSize: "0.875rem",
+                                                fontWeight: 500,
+                                                color: "#34d399",
+                                                marginBottom: "0.5rem"
+                                            }}>VERSÃO OTIMIZADA</h4>
+                                            <div style={{
+                                                color: "white",
+                                                fontSize: "0.95rem",
+                                                lineHeight: 1.6,
+                                                marginBottom: "0.5rem"
+                                            }}>{previewData.gap_2.exemplo_otimizado}</div>
+                                            <span style={{
+                                                background: "rgba(16, 185, 129, 0.2)",
+                                                color: "#34d399",
+                                                padding: "0.25rem 0.75rem",
+                                                borderRadius: "99px",
+                                                fontSize: "0.75rem",
+                                                fontWeight: 600
+                                            }}>+{previewData.gap_2.pontos || 12} pts</span>
+                                        </div>
                                     </div>
-                                </div >
+                                </div>
+                            )}
+                        </div>
 
-                                {showMobileStickyBuyBar && (
-                                    <div className="mobile-sticky-bottom-cta md:hidden">
-                                        <div className="mobile-sticky-bottom-cta-price">7 Dias por R$ 1,99</div>
-                                        <button
-                                            type="button"
-                                            className="mobile-sticky-bottom-cta-button"
-                                            onClick={() => {
-                                                setSelectedPlan("trial");
-                                                setStage("checkout");
-                                            }}
-                                        >
-                                            Desbloquear
-                                        </button>
+                        {/* Grid "Na versão premium você recebe" */}
+                        <div style={{
+                            background: "rgba(15, 23, 42, 0.6)",
+                            backdropFilter: "blur(20px) saturate(180%)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
+                            borderRadius: "1.5rem",
+                            padding: "2rem",
+                            marginBottom: "2rem"
+                        }}>
+                            <h2 style={{
+                                fontSize: "1.5rem",
+                                fontWeight: 600,
+                                color: "white",
+                                margin: "0 0 1.5rem 0",
+                                textAlign: "center"
+                            }}>Na versão premium você recebe:</h2>
+
+                            <div style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(2, 1fr)",
+                                gap: "1rem"
+                            }}>
+                                {[
+                                    { icon: "📄", title: "CV reescrito com palavras-chave" },
+                                    { icon: "💼", title: "Headline LinkedIn otimizada" },
+                                    { icon: "🎯", title: "Projeto prático para seu portfólio" },
+                                    { icon: "📊", title: "Análise de todos critérios ATS" },
+                                    { icon: "📚", title: "Biblioteca técnica recomendada" },
+                                    { icon: "🎙️", title: "Simulador de entrevista" }
+                                ].map((item, idx) => (
+                                    <div key={idx} style={{
+                                        background: "rgba(255, 255, 255, 0.05)",
+                                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                                        borderRadius: "12px",
+                                        padding: "1rem",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "0.75rem",
+                                        transition: "all 0.2s ease"
+                                    }}>
+                                        <div style={{
+                                            fontSize: "1.5rem",
+                                            width: "2.5rem",
+                                            height: "2.5rem",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            background: "rgba(16, 185, 129, 0.1)",
+                                            borderRadius: "8px"
+                                        }}>{item.icon}</div>
+                                        <div style={{
+                                            color: "white",
+                                            fontSize: "0.9rem",
+                                            fontWeight: 500
+                                        }}>{item.title}</div>
                                     </div>
-                                )}
-                            </>
-                        );
-                    })()}
-                </div >
-            )
-            }
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Seção de Preços */}
+                        <div style={{
+                            textAlign: "center",
+                            marginBottom: "3rem"
+                        }}>
+                            <h2 style={{
+                                fontSize: "2rem",
+                                fontWeight: 600,
+                                color: "white",
+                                margin: "0 0 1rem 0"
+                            }}>Alcance o Score 94/100 agora. Desbloqueie seu CV Otimizado em 1 clique.</h2>
+                            <p style={{
+                                color: "#94a3b8",
+                                fontSize: "1.1rem",
+                                marginBottom: "2rem"
+                            }}>Transforme seu currículo em uma máquina de conseguir entrevistas...</p>
+
+                            <div style={{
+                                display: "grid",
+                                gridTemplateColumns: "1fr 1fr",
+                                gap: "2rem",
+                                maxWidth: "800px",
+                                margin: "0 auto"
+                            }}>
+                                {/* Plano Avulso */}
+                                <div style={{
+                                    background: "rgba(15, 23, 42, 0.6)",
+                                    backdropFilter: "blur(20px)",
+                                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                                    borderRadius: "1rem",
+                                    padding: "2rem",
+                                    textAlign: "center"
+                                }}>
+                                    <h3 style={{
+                                        color: "white",
+                                        fontSize: "1.25rem",
+                                        fontWeight: 600,
+                                        marginBottom: "1rem"
+                                    }}>Crédito Avulso</h3>
+                                    <div style={{
+                                        fontSize: "2.5rem",
+                                        fontWeight: 300,
+                                        color: "#38bdf8",
+                                        marginBottom: "0.5rem"
+                                    }}>R$ 12,90</div>
+                                    <div style={{
+                                        color: "#94a3b8",
+                                        marginBottom: "1.5rem"
+                                    }}>Pagamento único</div>
+                                    <button style={{
+                                        background: "rgba(56, 189, 248, 0.1)",
+                                        color: "#38bdf8",
+                                        border: "1px solid rgba(56, 189, 248, 0.3)",
+                                        padding: "0.75rem 1.5rem",
+                                        borderRadius: "0.5rem",
+                                        fontWeight: 500,
+                                        cursor: "pointer",
+                                        width: "100%"
+                                    }}>
+                                        Liberar CV Otimizado (R$ 12,90)
+                                    </button>
+                                </div>
+
+                                {/* Plano Pro Mensal - Destacado */}
+                                <div style={{
+                                    background: "rgba(15, 23, 42, 0.8)",
+                                    backdropFilter: "blur(20px)",
+                                    border: "2px solid #10b981",
+                                    borderRadius: "1rem",
+                                    padding: "2rem",
+                                    textAlign: "center",
+                                    position: "relative",
+                                    boxShadow: "0 0 30px rgba(16, 185, 129, 0.3)"
+                                }}>
+                                    <div style={{
+                                        position: "absolute",
+                                        top: "-12px",
+                                        left: "50%",
+                                        transform: "translateX(-50%)",
+                                        background: "#10b981",
+                                        color: "white",
+                                        padding: "0.25rem 1rem",
+                                        borderRadius: "99px",
+                                        fontSize: "0.75rem",
+                                        fontWeight: 600
+                                    }}>Recomendado</div>
+
+                                    <h3 style={{
+                                        color: "white",
+                                        fontSize: "1.25rem",
+                                        fontWeight: 600,
+                                        marginBottom: "1rem"
+                                    }}>Vant Pro Mensal</h3>
+
+                                    <div style={{
+                                        color: "#fbbf24",
+                                        fontSize: "0.875rem",
+                                        fontWeight: 600,
+                                        marginBottom: "1rem"
+                                    }}>Oferta por tempo limitado</div>
+
+                                    <div style={{
+                                        fontSize: "2.5rem",
+                                        fontWeight: 300,
+                                        color: "#10b981",
+                                        marginBottom: "0.5rem"
+                                    }}>7 dias por R$ 1,99</div>
+
+                                    <div style={{
+                                        color: "#94a3b8",
+                                        marginBottom: "1.5rem"
+                                    }}>Depois R$ 27,90/mês</div>
+
+                                    <div style={{ textAlign: "left", marginBottom: "1.5rem" }}>
+                                        <div style={{ color: "white", marginBottom: "0.5rem" }}>✓ CV otimizado</div>
+                                        <div style={{ color: "white", marginBottom: "0.5rem" }}>✓ Simulador de entrevista</div>
+                                        <div style={{ color: "white", marginBottom: "0.5rem" }}>✓ Biblioteca técnica</div>
+                                        <div style={{ color: "white", marginBottom: "0.5rem" }}>✓ Análise ATS completa</div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            setSelectedPlan("trial");
+                                            setStage("checkout");
+                                        }}
+                                        style={{
+                                            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                            color: "white",
+                                            border: "none",
+                                            padding: "1rem 2rem",
+                                            borderRadius: "0.5rem",
+                                            fontWeight: 600,
+                                            cursor: "pointer",
+                                            width: "100%",
+                                            fontSize: "1.1rem",
+                                            boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)",
+                                            transition: "transform 0.2s, box-shadow 0.2s"
+                                        }}
+                                    >
+                                        COMEÇAR AGORA
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Rodapé */}
+                        <div style={{
+                            background: "rgba(15, 23, 42, 0.85)",
+                            backdropFilter: "blur(24px)",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            borderRadius: "1.5rem",
+                            padding: "1.5rem",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center"
+                        }}>
+                            <div>
+                                <div style={{
+                                    color: "white",
+                                    fontWeight: 500,
+                                    marginBottom: "0.25rem"
+                                }}>🎉 Análise gratuita concluída!</div>
+                                <div style={{
+                                    color: "#94a3b8",
+                                    fontSize: "0.875rem"
+                                }}>Você tem 1 análise gratuita disponível</div>
+                            </div>
+                            <div style={{ display: "flex", gap: "1rem" }}>
+                                <button
+                                    onClick={() => setStage("hero")}
+                                    style={{
+                                        background: "transparent",
+                                        color: "#94a3b8",
+                                        border: "1px solid rgba(255,255,255,0.1)",
+                                        padding: "0.75rem 1.5rem",
+                                        borderRadius: "0.5rem",
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Voltar para edição
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedPlan("trial");
+                                        setStage("checkout");
+                                    }}
+                                    style={{
+                                        background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                        color: "white",
+                                        border: "none",
+                                        padding: "0.75rem 1.5rem",
+                                        borderRadius: "0.5rem",
+                                        fontWeight: 600,
+                                        cursor: "pointer"
+                                    }}
+                                >
+                                    Ver Planos PRO
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {
                 stage === "activating_payment" && (

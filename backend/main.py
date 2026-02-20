@@ -184,6 +184,12 @@ def health() -> JSONResponse:
     return JSONResponse(content=status)
 
 
+@app.get("/ping")
+def ping() -> JSONResponse:
+    """Endpoint simples para keep-alive do cronjob."""
+    return JSONResponse(content={"status": "ok", "message": "pong"})
+
+
 @app.get("/api/test-sentry-error")
 def test_sentry_error() -> JSONResponse:
     """Endpoint de teste para verificar integração com Sentry."""
