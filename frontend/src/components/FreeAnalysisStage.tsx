@@ -849,7 +849,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               🎯 Teste por R$ 1,99 durante 7 dias
             </div>
             <div style={{ fontSize: '0.95rem', color: '#cbd5e1', textAlign: 'center', lineHeight: 1.6 }}>
-              Depois <strong style={{ color: '#f8fafc' }}>R$ 19,90/mês</strong> (desconto vitalício) ou <strong style={{ color: '#f8fafc' }}>R$ 239/ano</strong> (economize 29%)
+              Depois, apenas <strong style={{ color: '#f8fafc' }}>R$ 19,90/mês</strong>
             </div>
             <div style={{ fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center', marginTop: '0.5rem' }}>
               Cancele quando quiser • Reembolso em 48h
