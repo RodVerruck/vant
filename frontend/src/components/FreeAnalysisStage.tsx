@@ -238,17 +238,38 @@ const globalStyles = `
     padding: 1rem;
   }
 
-  .benefit-item {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 1rem;
-    transition: all 0.2s ease;
+  .benefit-card {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
   }
 
-  .benefit-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+  .benefit-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(56, 189, 248, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .benefit-card:hover {
+    transform: translateY(-4px);
     border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+
+  .benefit-card:hover::before {
+    opacity: 1;
   }
 
   .benefit-icon {
@@ -336,7 +357,7 @@ const globalStyles = `
   .benefits-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 1.25rem;
   }
   @media (min-width: 768px) {
     .benefits-grid { grid-template-columns: repeat(2, 1fr); }
@@ -344,14 +365,20 @@ const globalStyles = `
 
   /* Ícone círculo colorido para benefícios */
   .benefit-icon-box {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 12px;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.35rem;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .benefit-card:hover .benefit-icon-box {
+    transform: scale(1.1) rotate(5deg);
   }
 
   /* Card versão atual (vermelho) */
@@ -876,22 +903,24 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
           <div className="benefits-grid">
             {([
-              { icon: <FileCheck size={18} color="#38bdf8" />, bg: 'rgba(56,189,248,0.12)', title: 'CV otimizado pronto para usar', desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.' },
-              { icon: <Mic size={18} color="#a78bfa" />, bg: 'rgba(167,139,250,0.12)', title: 'Simulador de entrevistas com IA', desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.' },
-              { icon: <BookOpen size={18} color="#fb923c" />, bg: 'rgba(251,146,60,0.12)', title: 'Biblioteca personalizada', desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.' },
-              { icon: <Search size={18} color="#f87171" />, bg: 'rgba(248,113,113,0.12)', title: 'Diagnóstico completo', desc: 'Todos os problemas identificados com exemplos práticos de correção, não apenas os 2 primeiros.' },
-              { icon: <RefreshCw size={18} color="#34d399" />, bg: 'rgba(52,211,153,0.12)', title: 'Múltiplas otimizações', desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.' }
+              { icon: <FileCheck size={20} color="#38bdf8" />, bg: 'rgba(56,189,248,0.15)', title: 'CV otimizado pronto para usar', desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.' },
+              { icon: <Mic size={20} color="#a78bfa" />, bg: 'rgba(167,139,250,0.15)', title: 'Simulador de entrevistas com IA', desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.' },
+              { icon: <BookOpen size={20} color="#fb923c" />, bg: 'rgba(251,146,60,0.15)', title: 'Biblioteca personalizada', desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.' },
+              { icon: <Search size={20} color="#f87171" />, bg: 'rgba(248,113,113,0.15)', title: 'Diagnóstico completo', desc: 'Todos os problemas identificados com exemplos práticos de correção, não apenas os 2 primeiros.' },
+              { icon: <RefreshCw size={20} color="#34d399" />, bg: 'rgba(52,211,153,0.15)', title: 'Múltiplas otimizações', desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.' }
             ] as Array<{ icon: React.ReactNode; bg: string; title: string; desc: string }>).map((benefit, idx) => (
-              <div key={idx} className="benefit-item vant-flex vant-gap-3" style={{ alignItems: 'flex-start', padding: '1.25rem', background: 'rgba(255,255,255,0.025)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <div className="benefit-icon-box" style={{ background: benefit.bg, flexShrink: 0 }}>
-                  {benefit.icon}
-                </div>
-                <div className="vant-flex-1">
-                  <div className="vant-text-white vant-font-medium" style={{ marginBottom: '0.4rem', fontSize: '0.95rem', lineHeight: 1.35 }}>
-                    {benefit.title}
+              <div key={idx} className="benefit-card">
+                <div className="vant-flex vant-gap-4" style={{ alignItems: 'flex-start' }}>
+                  <div className="benefit-icon-box" style={{ background: benefit.bg }}>
+                    {benefit.icon}
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.6 }}>
-                    {benefit.desc}
+                  <div style={{ flex: 1 }}>
+                    <h3 className="vant-text-white" style={{ marginBottom: '0.5rem', fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
+                      {benefit.title}
+                    </h3>
+                    <p className="vant-text-support" style={{ fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
+                      {benefit.desc}
+                    </p>
                   </div>
                 </div>
               </div>
