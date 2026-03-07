@@ -377,6 +377,20 @@ const globalStyles = `
     padding: 0.08rem 0.3rem;
     border-radius: 0.35rem;
     box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.18);
+    animation: optimizedHighlightFade 0.45s ease-out both;
+  }
+
+  @keyframes optimizedHighlightFade {
+    0% {
+      background: rgba(16, 185, 129, 0.02);
+      box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.08), 0 0 0 rgba(52, 211, 153, 0);
+      opacity: 0.7;
+    }
+    100% {
+      background: rgba(16, 185, 129, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.18), 0 0 0 rgba(52, 211, 153, 0);
+      opacity: 1;
+    }
   }
 
   /* Chips de termos faltando */
