@@ -564,75 +564,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
         </div>
 
-        {/* Seção de Problemas - Só mostrar se houver problemas */}
-        {problems.length > 0 && (
-          <div className="vant-glass-darker vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.2s' }}>
-            <div className="vant-flex vant-justify-between vant-items-center vant-mb-6">
-              <h2 className="vant-h2">🚨 Problemas Identificados</h2>
-              <span className="vant-text-sm vant-text-slate-400" style={{ background: 'rgba(255,255,255,0.1)', padding: '0.25rem 0.75rem', borderRadius: 99 }}>
-                {problems.length} pontos críticos
-              </span>
-            </div>
-
-            {visibleProblems.map((problem: any, idx: number) => (
-              <div key={idx} className="problem-card vant-mb-4">
-                <h3 className="vant-h3 vant-text-white" style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                  {problem.titulo || "Problema Detectado"}
-                </h3>
-                <p className="vant-text-slate-400 vant-text-sm" style={{ lineHeight: 1.6 }}>
-                  {problem.descricao || "Descrição não disponível"}
-                </p>
-
-                {/* Renderização de Termos Faltando (gap_2) */}
-                {problem.termos_faltando && Array.isArray(problem.termos_faltando) && problem.termos_faltando.length > 0 && (
-                  <div className="vant-mt-3">
-                    <h4 className="vant-text-sm vant-font-medium" style={{ color: '#f87171', marginBottom: '0.5rem' }}>
-                      🚨 Termos Faltando:
-                    </h4>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                      {problem.termos_faltando.map((termo: string, termIdx: number) => (
-                        <li key={termIdx} className="vant-text-sm" style={{ color: '#fca5a5', marginBottom: '0.25rem' }}>
-                          • {termo}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {hiddenCount > 0 && (
-              <div className="blur-overlay">
-                <div className="blur-content">
-                  <div className="problem-card">
-                    <h3 className="vant-h3 vant-text-white" style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                      Mais {hiddenCount} problemas detectados
-                    </h3>
-                    <p className="vant-text-slate-400 vant-text-sm" style={{ lineHeight: 1.6 }}>
-                      Faça upgrade para ver todos os problemas e receber sugestões completas de otimização...
-                    </p>
-                  </div>
-                </div>
-                <div className="unlock-banner">
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔓</div>
-                  <div className="vant-text-white" style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                    Desbloqueie a Análise Completa
-                  </div>
-                  <div className="vant-text-slate-400" style={{ fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-                    Veja todos os {hiddenCount} problemas restantes + sugestões de correção
-                  </div>
-                  <button className="vant-btn-primary" onClick={onUpgrade}>
-                    Ver Planos PRO
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-
-        {/* Radar de Recrutadores */}
-        <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.4s' }}>
+        {/* Radar de Recrutadores - Movido para cima para criar urgência */}
+        <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.3s' }}>
           <h2 className="vant-h2 vant-mb-6">📡 Radar de Recrutadores Ativo</h2>
           <div className="vant-flex vant-items-center vant-gap-4 vant-mb-4">
             <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' }}>
@@ -652,8 +585,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           </div>
         </div>
 
-        {/* Análise Básica Completa */}
-        <div className="vant-glass-darker vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.5s' }}>
+        {/* Análise Detalhada dos Problemas */}
+        <div className="vant-glass-darker vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.4s' }}>
           <h2 className="vant-h2 vant-mb-6">📊 Análise Detalhada dos Problemas</h2>
 
           <div className="vant-text-slate-400" style={{ marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.7 }}>
