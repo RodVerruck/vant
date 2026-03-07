@@ -843,7 +843,10 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
         {/* Grid de Diagnóstico e Problemas */}
         <div className="vant-diagnostic-wrapper vant-mb-12 vant-animate-fade" style={{ animationDelay: '0.2s' }}>
-          <h3 className="vant-h3 vant-mb-6" style={{ fontSize: '1rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8' }}>Diagnóstico Detalhado</h3>
+          <div style={{ marginBottom: '1.75rem' }}>
+            <h3 className="vant-h3" style={{ fontSize: '1.35rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.5rem', letterSpacing: '-0.01em' }}>Diagnóstico Detalhado</h3>
+            <p style={{ fontSize: '0.95rem', color: '#cbd5e1', margin: 0, lineHeight: 1.6 }}>Veja onde seu currículo perde força hoje</p>
+          </div>
 
           <div className={`vant-grid-${problems.length > 0 ? '2' : '1'}`}>
             {/* Barras de Progresso dos Pilares */}
@@ -856,13 +859,13 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 return (
                   <div key={label} style={{ marginBottom: '1.25rem' }}>
                     <div className="vant-flex vant-items-center vant-gap-3" style={{ marginBottom: '0.3rem' }}>
-                      <span className="vant-text-sm vant-font-medium" style={{ color: '#cbd5e1', minWidth: '110px' }}>{label}</span>
+                      <span className="vant-text-sm vant-font-medium" style={{ color: '#e2e8f0', minWidth: '120px', fontSize: '0.9rem' }}>{label}</span>
                       <div style={{ flex: 1, height: '0.5rem', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${value}%`, background: barColor, borderRadius: '99px', transition: 'width 0.8s ease' }} />
                       </div>
                       <span className="vant-text-sm vant-font-medium" style={{ minWidth: '38px', textAlign: 'right', color: textColor, fontWeight: 700 }}>{value}%</span>
                     </div>
-                    <div style={{ paddingLeft: '110px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <div style={{ paddingLeft: '120px', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem' }}>
                       <span className="bar-status-label" style={{ color: textColor }}>{statusLabel}</span>
                     </div>
                   </div>
@@ -878,15 +881,18 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                     <AlertCircle size={16} color="white" />
                   </div>
                   <div>
-                    <span className="vant-text-sm vant-font-medium" style={{ color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gaps Encontrados</span>
-                    <div className="vant-text-xs vant-text-support">Impedem sua seleção agora</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fca5a5', marginBottom: '0.25rem' }}>Principais Bloqueios</div>
+                    <div className="vant-text-xs" style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Reduzem suas chances no filtro inicial</div>
                   </div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                   {problems.map((p: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', padding: '0.65rem 0.75rem', background: 'rgba(239,68,68,0.07)', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.15)' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 1rem', background: 'rgba(239,68,68,0.08)', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.18)' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,0.15)', borderRadius: '99px', width: '1.4rem', height: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '0.05rem' }}>{i + 1}</span>
-                      <span style={{ fontSize: '0.85rem', color: '#fca5a5', lineHeight: 1.4, fontWeight: 500 }}>{p.titulo || `Problema ${i + 1}`}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.9rem', color: '#fecaca', lineHeight: 1.5, fontWeight: 600, marginBottom: '0.25rem' }}>{p.titulo || `Problema ${i + 1}`}</div>
+                        {p.impacto && <div style={{ fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5 }}>{p.impacto}</div>}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -941,7 +947,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
                   {/* Termos faltando como chips */}
                   {problem.termos_faltando && Array.isArray(problem.termos_faltando) && problem.termos_faltando.length > 0 && (
-                    <div style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ marginBottom: '1.5rem' }}>
                       <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Termos ausentes</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                         {problem.termos_faltando.map((termo: string, termIdx: number) => (
