@@ -376,9 +376,9 @@ export default function AppPage() {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState(60); // segundos
     const [sessionId, setSessionId] = useState<string | null>(null); // ← Progressive loading
-    const ANALYZING_TOTAL_MS = 10000;
-    const ANALYZING_PHASE_1_MS = 3333;
-    const ANALYZING_PHASE_2_MS = 3333;
+    const ANALYZING_TOTAL_MS = 8000; // 8 segundos até 90%
+    const ANALYZING_PHASE_1_MS = 2666; // 33.3% do tempo (0-35% progresso)
+    const ANALYZING_PHASE_2_MS = 2667; // 33.3% do tempo (35-75% progresso)
 
     function getAnalyzingPhaseByElapsed(elapsedMs: number): 1 | 2 | 3 {
         if (elapsedMs < ANALYZING_PHASE_1_MS) return 1;
@@ -688,6 +688,7 @@ export default function AppPage() {
 
     // Flag para auto-start vindo do Dashboard modal
     const pendingAutoStart = useRef(false);
+    const pendingSkipPreview = useRef(false);
     const userStatusFetched = useRef(false);
     const [hasActiveHistoryFlow, setHasActiveHistoryFlow] = useState(false);
 
@@ -1183,195 +1184,52 @@ export default function AppPage() {
             // Verificar se há fluxo ativo que impede redirect ao Dashboard
             // Verificar também se há historyId na URL (vindo do dashboard)
             const urlHistoryId = searchParams.get('historyId');
-            const hasHistoryItem = !!urlHistoryId || localStorage.getItem("vant_dashboard_open_history_id") || hasActiveHistoryFlow;
-            const hasReturnStage = !!returnStage && returnStage !== "hero";
-            const checkoutPending = localStorage.getItem("checkout_pending");
-            const hasCheckoutPending = !!checkoutPending;
-            const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
-            const hasAutoStartFlag = !!localStorage.getItem("vant_auto_start");
-            const hasPendingAutoStart = pendingAutoStart.current;
-            const hasSkipPreviewFlag = !!localStorage.getItem("vant_skip_preview");
-            const hasSavedDraft = !!localStorage.getItem("vant_jobDescription") && (
-                !!localStorage.getItem("vant_file_b64") || !!localStorage.getItem("vant_cv_text_preextracted")
-            );
-            // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
-            const hasNonHeroStage = stage !== "hero";
-            // CRÍTICO: Se há pagamento pendente de ativação, NÃO redirecionar para dashboard
-            // Verificar DIRETAMENTE os parâmetros da URL, não depender do estado que pode não estar setado ainda
-            const urlPayment = searchParams.get("payment");
-            const urlSessionId = searchParams.get("session_id");
-            const hasPaymentInUrl = urlPayment === "success" && !!urlSessionId;
-            const hasPendingPayment = needsActivation || !!stripeSessionId || !!localStorage.getItem("vant_pending_stripe_session_id") || hasPaymentInUrl;
-            const hasActiveFlow =
-                returnPlan ||
-                hasReturnStage ||
-                hasHistoryItem ||
-                hasCheckoutPending ||
-                hasNonHeroStage ||
-                hasAutoProcess ||
-                hasAutoStartFlag ||
-                hasPendingAutoStart ||
-                hasSkipPreviewFlag ||
-                hasSavedDraft ||
-                hasPendingPayment;
+            const localHistoryId = localStorage.getItem("vant_dashboard_open_history_id");
+            const historyId = urlHistoryId || localHistoryId;
 
-            console.log("[Auth] Verificando fluxo:", {
-                returnPlan: !!returnPlan,
-                hasReturnStage,
-                hasCheckoutPending,
-                hasNonHeroStage,
-                hasAutoProcess,
-                hasAutoStartFlag,
-                hasPendingAutoStart,
-                hasSkipPreviewFlag,
-                hasSavedDraft,
-                hasPendingPayment,
-                hasPaymentInUrl,
-                stage
-            });
+            if (!historyId) return;
 
-            if (!hasActiveFlow) {
-                console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
-                window.location.href = "/dashboard";
-                return;
-            }
+            // Limpar flag imediatamente para evitar loop
+            localStorage.removeItem("vant_dashboard_open_history_id");
 
-            // Processar fluxo ativo normalmente (pagamento, history, etc.)
-            if (returnPlan) {
-                console.log("[Restoration] Restaurando plano e indo para checkout...");
-                setSelectedPlan(returnPlan as PlanType);
-                localStorage.removeItem("vant_auth_return_plan");
-                setStage("checkout");
-                localStorage.removeItem("vant_auth_return_stage");
-            } else if (returnStage) {
-                localStorage.removeItem("vant_auth_return_stage");
-                if (returnStage === "checkout") {
-                    // Se returnStage é checkout, ir direto para checkout sem processar
-                    console.log("[Restoration] Usuário sem créditos, indo direto para checkout de crédito avulso...");
-                    setSelectedPlan("credit_1");
-                    setCheckoutError("Você precisa de créditos para processar esta análise. Compre crédito avulso para continuar.");
-                    setStage("checkout");
-                } else if (returnStage !== "hero") {
-                    console.log("[Restoration] Restaurando stage:", returnStage);
-                    setStage(returnStage as AppStage);
-                }
-            } else if (hasCheckoutPending) {
+            // Marcar que temos fluxo de histórico ativo
+            setHasActiveHistoryFlow(true);
+            setLoadingHistoryItem(true);
+
+            console.log("[Dashboard→App] Abrindo item do histórico:", historyId, "(via URL:", !!urlHistoryId, ")");
+
+            (async () => {
                 try {
-                    const data = JSON.parse(checkoutPending!);
-                    localStorage.removeItem("checkout_pending");
-                    console.log("[Auth] Processando checkout_pending:", data);
-                    setSelectedPlan(data.plan);
-                    setStage("checkout");
-                } catch (error) {
-                    console.error("[Auth] Erro ao processar checkout_pending:", error);
-                    localStorage.removeItem("checkout_pending");
-                }
-            } else if (hasAutoProcess) {
-                // Veio do dashboard após pagamento — restaurar CV/vaga e iniciar processamento
-                localStorage.removeItem("vant_auto_process");
-                const savedJob = localStorage.getItem("vant_jobDescription");
+                    const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${historyId}`, {
+                        signal: getSafeSignal(15000), // 15s timeout
+                    });
+                    if (!response.ok) throw new Error(`Erro ${response.status}`);
 
-                if (savedJob) {
-                    setJobDescription(savedJob);
-                }
+                    const fullResult = await response.json();
+                    if (fullResult.data) {
+                        const fullData = fullResult.data as ReportData;
+                        setReportData(fullData);
+                        setPreviewData((fullData as unknown as { preview_data?: PreviewData })?.preview_data ?? null);
+                        setNeedsActivation(false);
 
-                // Restaurar arquivo do IndexedDB (async)
-                (async () => {
-                    const restoredFile = await getFileFromIDB();
-                    console.log("[Auth] Auto-process: dados encontrados:", { hasJob: !!savedJob, hasFile: !!restoredFile });
-
-                    if (savedJob && restoredFile) {
-                        setFile(restoredFile);
-                        await clearFileFromIDB();
-                        console.log("[Auth] Auto-process: arquivo restaurado do IndexedDB, iniciando processing_premium");
-                        setStage("processing_premium");
-                    } else {
-                        console.log("[Auth] Auto-process: dados incompletos, indo para hero com vaga preenchida");
-                        setStage("hero");
-                    }
-                })();
-            }
-            // hasHistoryItem é tratado pelo useEffect dedicado abaixo
-
-            // Sincronizar créditos em background (apenas uma vez)
-            if (!userStatusFetched.current) {
-                (async () => {
-                    try {
-                        const resp = await fetch(`${getApiUrl()}/api/user/status/${authUserId}`, {
-                            signal: getSafeSignal(10000), // 10s timeout
-                        });
-                        if (resp.ok) {
-                            const data = await resp.json();
-                            if (data.credits_remaining > 0) {
-                                setCreditsRemaining(data.credits_remaining);
-                                localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
-                                setSelectedPlan("pro_monthly_early_bird");
-                                console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
-                            }
-                        } else {
-                            console.warn("[Auth] API respondeu com status:", resp.status);
+                        // job_description comes from the API response
+                        if (fullResult.job_description) {
+                            setJobDescription(fullResult.job_description);
                         }
-                    } catch (e) {
-                        console.error("[Auth] Erro ao sincronizar créditos:", e);
+                        setStage("paid");
+
+                        // Limpar URL após carregar com sucesso (opcional, mas elegante)
+                        if (urlHistoryId) {
+                            window.history.replaceState({}, '', '/app');
+                        }
                     }
-                })();
-            }
-        })();
-    }, [authUserId]); // Depender APENAS do authUserId para evitar loop
-
-    // -------------------------------------------------------------------------
-    // Carregar item do histórico vindo do Dashboard
-    // -------------------------------------------------------------------------
-    useEffect(() => {
-        if (!authUserId || typeof window === "undefined") return;
-
-        // Verificar se há um item do histórico para abrir (vindo do dashboard)
-        const urlHistoryId = searchParams.get('historyId');
-        const localHistoryId = localStorage.getItem("vant_dashboard_open_history_id");
-        const historyId = urlHistoryId || localHistoryId;
-
-        if (!historyId) return;
-
-        // Limpar flag imediatamente para evitar loop
-        localStorage.removeItem("vant_dashboard_open_history_id");
-
-        // Marcar que temos fluxo de histórico ativo
-        setHasActiveHistoryFlow(true);
-        setLoadingHistoryItem(true);
-
-        console.log("[Dashboard→App] Abrindo item do histórico:", historyId, "(via URL:", !!urlHistoryId, ")");
-
-        (async () => {
-            try {
-                const response = await fetch(`${getApiUrl()}/api/user/history/detail?id=${historyId}`, {
-                    signal: getSafeSignal(15000), // 15s timeout
-                });
-                if (!response.ok) throw new Error(`Erro ${response.status}`);
-
-                const fullResult = await response.json();
-                if (fullResult.data) {
-                    const fullData = fullResult.data as ReportData;
-                    setReportData(fullData);
-                    setPreviewData((fullData as unknown as { preview_data?: PreviewData })?.preview_data ?? null);
-                    setNeedsActivation(false);
-
-                    // job_description comes from the API response
-                    if (fullResult.job_description) {
-                        setJobDescription(fullResult.job_description);
-                    }
-                    setStage("paid");
-
-                    // Limpar URL após carregar com sucesso (opcional, mas elegante)
-                    if (urlHistoryId) {
-                        window.history.replaceState({}, '', '/app');
-                    }
+                } catch (err) {
+                    console.error("[Dashboard→App] Erro ao carregar histórico:", err);
+                } finally {
+                    setLoadingHistoryItem(false);
+                    setHasActiveHistoryFlow(false); // Finalizar fluxo de histórico
                 }
-            } catch (err) {
-                console.error("[Dashboard→App] Erro ao carregar histórico:", err);
-            } finally {
-                setLoadingHistoryItem(false);
-                setHasActiveHistoryFlow(false); // Finalizar fluxo de histórico
-            }
+            })();
         })();
     }, [authUserId]); // Depender apenas do authUserId
 
@@ -1785,87 +1643,6 @@ export default function AppPage() {
         }
     }
 
-    // Recuperar senha inline (sem sair da página)
-    async function handleForgotPassword() {
-        if (!supabase) {
-            setCheckoutError("Erro de configuração. Tente recarregar a página.");
-            return;
-        }
-
-        // Validação de email mais robusta
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!authEmail || !emailRegex.test(authEmail)) {
-            setCheckoutError("Digite um e-mail válido para receber o link de recuperação (ex: nome@dominio.com).");
-            return;
-        }
-
-        try {
-            setIsAuthenticating(true); // Feedback visual
-
-            // 1. Determina a URL base correta (Localhost ou Produção)
-            const origin = window.location.origin;
-            const redirectUrl = new URL(`${origin}/app/reset-password`);
-
-            // 2. Anexa o contexto do checkout (O Pulo do Gato 🐈)
-            // Isso garante que o link no email já saiba para onde voltar
-            if (stage === "checkout") {
-                redirectUrl.searchParams.set("return_to", "checkout");
-                if (selectedPlan) {
-                    redirectUrl.searchParams.set("return_plan", selectedPlan);
-                }
-            }
-
-            console.log("🚀 [ForgotPassword] URL Gerada para Redirect:", redirectUrl.toString());
-
-            const client = supabase as SupabaseClient;
-            const { error } = await client.auth.resetPasswordForEmail(authEmail.trim().toLowerCase(), {
-                redirectTo: redirectUrl.toString(),
-            });
-
-            if (error) throw error;
-
-            // Ativar estado de espera ativa
-            setEmailSent(true);
-            setCheckoutError(""); // Limpar erro anterior
-
-            // Iniciar countdown para reenvio (30 segundos)
-            setResendCountdown(30);
-            const countdownInterval = setInterval(() => {
-                setResendCountdown((prev: number) => {
-                    if (prev <= 1) {
-                        clearInterval(countdownInterval);
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-
-            console.log("✅ [ForgotPassword] Email de recuperação enviado para:", authEmail);
-
-        } catch (e: unknown) {
-            console.error("[ForgotPassword] Erro ao enviar email:", e);
-
-            // Tratamento de erros mais específico
-            if (e instanceof Error) {
-                const errorMsg = e.message.toLowerCase();
-
-                if (errorMsg.includes("too many requests") || errorMsg.includes("rate limit")) {
-                    setCheckoutError("Muitas tentativas de recuperação. Aguarde 10 minutos antes de tentar novamente.");
-                } else if (errorMsg.includes("user not found") || errorMsg.includes("not found")) {
-                    setCheckoutError("Este e-mail não está cadastrado em nosso sistema.");
-                } else if (errorMsg.includes("invalid email") || errorMsg.includes("email format")) {
-                    setCheckoutError("Formato de e-mail inválido. Verifique o endereço digitado.");
-                } else {
-                    setCheckoutError("Erro ao enviar email de recuperação. Tente novamente em alguns instantes.");
-                }
-            } else {
-                setCheckoutError("Erro inesperado ao enviar email. Tente novamente ou contate o suporte.");
-            }
-        } finally {
-            setIsAuthenticating(false);
-        }
-    }
-
     // Login com Email + Senha
     async function handleEmailPasswordAuth() {
         setCheckoutError("");
@@ -1942,7 +1719,7 @@ export default function AppPage() {
 
         try {
             // Salvar o stage e plano atual para restaurar após o login
-            // Só salvar plano se NÃO estiver no hero (evita redirect indevido ao checkout)
+            // Só salvar plano se NÃO estiver no hero (evitar redirect indevido ao checkout)
             if (typeof window !== "undefined") {
                 localStorage.setItem("vant_auth_return_stage", stage);
                 if (selectedPlan && stage !== "hero") {
@@ -2270,1076 +2047,562 @@ export default function AppPage() {
             if (jobDescription) localStorage.setItem("vant_jobDescription", jobDescription);
             // Não armazenamos o File em localStorage (muito grande), mas podemos avisar se ele foi perdido
         }
+    }, [stage, authUserId, jobDescription, file, isRestoringData]);
 
-        (async () => {
-            setPremiumError("");
+    // Derivar previewPillarItems dos dados reais de previewData
+    const previewPillarSource = !Array.isArray(previewData?.pilares) && previewData?.pilares
+        ? previewData.pilares
+        : previewData?.analise_por_pilares ?? {};
+
+    const previewPillarItems = [
+        { nome: "ATS", pontos: typeof previewPillarSource.ats === "number" ? previewPillarSource.ats : 0 },
+        { nome: "Keywords", pontos: typeof previewPillarSource.keywords === "number" ? previewPillarSource.keywords : 0 },
+        { nome: "Impacto", pontos: typeof previewPillarSource.impacto === "number" ? previewPillarSource.impacto : 0 },
+    ];
+
+    // Função para recuperação de senha
+    const handleForgotPassword = async () => {
+        if (!authEmail.trim()) {
+            setApiError("Digite seu email primeiro.");
+            return;
+        }
+        try {
+            const { error } = await supabase!.auth.resetPasswordForEmail(authEmail.trim());
+            if (error) throw error;
+            setEmailSent(true);
+            setResendCountdown(60);
+        } catch (err: any) {
+            setApiError(err?.message || "Erro ao enviar email de recuperação.");
+        }
+    };
+
+    // Função para iniciar análise
+    const onStart = async () => {
+        if (!file || !jobDescription.trim()) {
+            setApiError("Por favor, envie seu CV e descreva a vaga.");
+            return;
+        }
+        setApiError("");
+        setStage("analyzing");
+    };
+
+    // Função para abrir dialog de upload de CV
+    const openFileDialog = () => {
+        uploaderInputRef.current?.click();
+    };
+
+    // Função para abrir dialog de arquivos concorrentes
+    const openCompetitorFileDialog = () => {
+        competitorUploaderInputRef.current?.click();
+    };
+
+    // useEffect para iniciar análise quando stage muda para "analyzing"
+    useEffect(() => {
+        if (stage !== "analyzing" || !file || !jobDescription.trim()) return;
+
+        let progressInterval: NodeJS.Timeout;
+        const startTime = Date.now();
+
+        const startAnalysis = async () => {
             setProgress(0);
-            setStatusText("");
-            try {
-                const updateStatus = async (text: string, percent: number) => {
-                    setStatusText(text);
-                    setProgress(percent);
-                    // Quando backend atualiza, zera o timer estimado
-                    if (percent >= 90) {
-                        setEstimatedTimeRemaining(5);
-                    }
-                    await sleep(220);
-                };
+            setStatusText("Iniciando análise...");
+            setApiError("");
 
-                await updateStatus("🔒 PAGAMENTO VERIFICADO. INICIANDO IA GENERATIVA...", 10);
-                await updateStatus("REESCREVENDO SEU CV (AGENT)...", 35);
+            // Animação de progresso suave baseada em tempo decorrido (8 segundos até 100%)
+            progressInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const calculatedProgress = getAnalyzingProgressByElapsed(elapsed);
+                setProgress(calculatedProgress);
 
-                // Cancelar requisições anteriores
-                if (abortControllerRef.current) {
-                    abortControllerRef.current.abort();
-                }
-                abortControllerRef.current = new AbortController();
-
-                const form = new FormData();
-                form.append("user_id", authUserId);
-                form.append("job_description", jobDescription);
-
-                // Verificar se há cv_text pré-extraído (último CV reutilizado)
-                const cvTextPreextracted = typeof window !== "undefined" ? localStorage.getItem("vant_cv_text_preextracted") : null;
-                if (cvTextPreextracted) {
-                    form.append("cv_text", cvTextPreextracted);
-                    localStorage.removeItem("vant_cv_text_preextracted");
-                    console.log("[LastCV] Enviando cv_text pré-extraído ao invés de arquivo PDF");
+                // Atualizar mensagem baseado no progresso
+                if (calculatedProgress < 35) {
+                    setStatusText("Extraindo texto do CV...");
+                } else if (calculatedProgress < 75) {
+                    setStatusText("Analisando compatibilidade com a vaga...");
+                } else if (calculatedProgress < 100) {
+                    setStatusText("Identificando pontos de melhoria...");
                 } else {
-                    form.append("file", file);
+                    setStatusText("Finalizando análise...");
                 }
+            }, 50); // Atualiza a cada 50ms para animação suave
 
-                // Adicionar área de interesse se for vaga genérica
-                if (useGenericJob && selectedArea) {
-                    form.append("area_of_interest", selectedArea);
-                }
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("job_description", jobDescription);
 
-                if (competitorFiles && competitorFiles.length) {
-                    for (const cf of competitorFiles) {
-                        form.append("competitor_files", cf);
-                    }
-                }
-
-                const resp = await fetch(`${getApiUrl()}/api/analyze-premium-paid`, {
+            try {
+                const response = await fetch(`${getApiUrl()}/api/analyze-free`, {
                     method: "POST",
-                    body: form,
-                    signal: abortControllerRef.current.signal
+                    body: formData,
                 });
-                const payload = (await resp.json()) as JsonObject;
-                if (!resp.ok) {
-                    const err = typeof payload.error === "string" ? payload.error : `HTTP ${resp.status}`;
-                    throw new Error(err);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
                 }
 
-                // Verificar se é resposta de progressive loading
-                if (payload.session_id && payload.status === "processing") {
-                    console.log("[Progressive Loading] Recebido session_id:", payload.session_id);
+                const data = await response.json();
+                console.log("[Analyzing] Análise concluída:", data);
 
-                    // Salvar session_id no estado
-                    setSessionId(payload.session_id as string);
-
-                    // Criar AbortController para este polling
-                    const controller = new AbortController();
-                    abortControllerRef.current = controller;
-                    isPollingActive.current = true;
-
-                    // Iniciar polling para acompanhar progresso
-                    await pollAnalysisProgress(
-                        payload.session_id as string,
-                        updateStatus,
-                        setReportData,
-                        setStage,
-                        setCreditsRemaining,
-                        controller.signal
-                    );
-                    isPollingActive.current = false;
-                    return;
+                // Aguardar animação chegar a 100% se ainda não chegou
+                const elapsed = Date.now() - startTime;
+                if (elapsed < 8000) {
+                    // Esperar até completar 8 segundos
+                    setTimeout(() => {
+                        clearInterval(progressInterval);
+                        setProgress(100);
+                        setStatusText("Análise concluída!");
+                        setTimeout(() => {
+                            setPreviewData(data);
+                            setStage("preview");
+                        }, 500);
+                    }, 8000 - elapsed);
+                } else {
+                    // Já passou 8 segundos, mostrar resultado imediatamente
+                    clearInterval(progressInterval);
+                    setProgress(100);
+                    setStatusText("Análise concluída!");
+                    setTimeout(() => {
+                        setPreviewData(data);
+                        setStage("preview");
+                    }, 500);
                 }
-
-                // Sistema antigo (fallback)
-                await updateStatus("FINALIZANDO DOSSIÊ...", 90);
-                await sleep(350);
-                await updateStatus("DOSSIÊ PRONTO.", 100);
-                await sleep(200);
-
-                const report = payload.data;
-                setReportData(report && typeof report === "object" ? (report as ReportData) : null);
-
-                const entitlements = payload.entitlements;
-                if (entitlements && typeof entitlements === "object") {
-                    const cr = (entitlements as JsonObject).credits_remaining;
-                    if (typeof cr === "number") {
-                        setCreditsRemaining(cr);
-                    }
-                }
-                setStage("paid");
-            } catch (e: unknown) {
-                // Ignorar AbortError (navegação entre abas)
-                if (e instanceof Error && e.name === 'AbortError') {
-                    console.log('Processamento premium cancelado ao navegar');
-                    return;
-                }
-                setPremiumError(getErrorMessage(e, "Erro na geração premium"));
+            } catch (error: any) {
+                console.error("[Analyzing] Erro na análise:", error);
+                clearInterval(progressInterval);
+                setApiError(error.message || "Erro ao analisar CV");
                 setStage("hero");
             }
-        })();
-    }, [authUserId, competitorFiles, stage, jobDescription, file]);
+        };
 
-    // Ref para auto-trigger premium após lite (skip preview do modal Dashboard)
-    const pendingSkipPreview = useRef(false);
+        startAnalysis();
 
-    async function onStart() {
-        console.log("[onStart] Chamado.");
+        // Cleanup: limpar interval se componente desmontar
+        return () => {
+            if (progressInterval) clearInterval(progressInterval);
+        };
+    }, [stage, file, jobDescription]);
 
-        if (!jobDescription.trim() || !file) {
-            console.warn("[onStart] Retorno antecipado: jobDescription ou file vazios.");
-            return;
-        }
-
-        // Se skipPreview ativo (modal Dashboard), pular lite inteiro e ir direto para premium
-        if (pendingSkipPreview.current) {
-            pendingSkipPreview.current = false;
-            console.log("[onStart] skipPreview ativo, pulando analyze-lite e indo direto para processing_premium...");
-            setApiError("");
-            setReportData(null);
-            setPremiumError("");
-            setProgress(0);
-            setStatusText("");
-            setStage("processing_premium");
-            return;
-        }
-
-        console.log("[onStart] Iniciando análise (diagnóstico) para todos os usuários...");
-
-        // 1. Resetar estados visuais
-        setApiError("");
-        setPreviewData(null);
-        setReportData(null);
-        setPremiumError("");
-        setProgress(0);
-        setStatusText("");
-        setStage("analyzing");
-
-        // 2. Preparar o FormData
-        const form = new FormData();
-        form.append("job_description", jobDescription);
-        form.append("file", file);
-
-        // Adicionar área de interesse se for vaga genérica
-        if (useGenericJob && selectedArea) {
-            form.append("area_of_interest", selectedArea);
-        }
-
-        try {
-            // 3. Disparar a requisição em BACKGROUND (sem await imediato)
-            // A API trabalha enquanto rodamos o roteiro visual
-
-            // Cancelar requisições anteriores
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
-            }
-            abortControllerRef.current = new AbortController();
-            const analyzingStartedAt = Date.now();
-            let timelineInterval: ReturnType<typeof setInterval> | null = null;
-
-            const apiRequestPromise = fetch(`${getApiUrl()}/api/analyze-lite`, {
-                method: "POST",
-                body: form,
-                signal: abortControllerRef.current.signal
-            });
-
-            const visualTimelinePromise = new Promise<void>((resolve) => {
-                const syncVisualState = () => {
-                    const elapsed = Date.now() - analyzingStartedAt;
-                    const cappedElapsed = Math.min(elapsed, ANALYZING_TOTAL_MS);
-                    const phase = getAnalyzingPhaseByElapsed(cappedElapsed);
-
-                    if (phase === 1) {
-                        setStatusText("Iniciando análise profunda do perfil...");
-                    } else if (phase === 2) {
-                        setStatusText("Verificando compatibilidade com a vaga...");
-                    } else {
-                        setStatusText("Gerando pontuação final...");
-                    }
-
-                    setProgress(getAnalyzingProgressByElapsed(cappedElapsed));
-
-                    if (cappedElapsed >= ANALYZING_TOTAL_MS) {
-                        if (timelineInterval) {
-                            clearInterval(timelineInterval);
-                        }
-                        resolve();
-                    }
-                };
-
-                syncVisualState();
-                timelineInterval = setInterval(syncVisualState, 90);
-            });
-
-            const resp = await apiRequestPromise;
-
-            if (!resp.ok) {
-                const text = await resp.text();
-                throw new Error(text || `HTTP ${resp.status}`);
-            }
-
-            const data = (await resp.json()) as unknown;
-
-            // Garantir timeline visual fixa de 10s e sincronizada com as fases
-            await visualTimelinePromise;
-
-            setProgress(100);
-            setStatusText("Gerando pontuação final...");
-
-            setPreviewData(data as PreviewData);
-            setStage("preview");
-
-        } catch (e: unknown) {
-            // Ignorar AbortError (navegação entre abas)
-            if (e instanceof Error && e.name === 'AbortError') {
-                console.log('Processamento lite cancelado ao navegar');
-                return;
-            }
-
-            const message = getErrorMessage(e, "Erro no Scanner Lite");
-            setApiError(message);
-            setStage("hero");
-        }
-    }
-    function openFileDialog() {
-        uploaderInputRef.current?.click();
-    }
-
-    function openCompetitorFileDialog() {
-        competitorUploaderInputRef.current?.click();
-    }
-
-    function onUseCreditFromPreview() {
-        console.log("[onUseCreditFromPreview] Usuário clicou em usar crédito a partir do diagnóstico.");
-
-        if (!authUserId || creditsRemaining <= 0) {
-            console.error("[onUseCreditFromPreview] Sem créditos ou não autenticado.");
-            return;
-        }
-
-        if (!jobDescription.trim() || !file) {
-            console.error("[onUseCreditFromPreview] Dados incompletos para processamento premium");
-            setPremiumError("Preencha a vaga e envie seu CV antes de continuar.");
-            setStage("hero");
-            return;
-        }
-
-        console.log("[onUseCreditFromPreview] Dados OK, iniciando processamento premium...");
-        setApiError("");
-        setReportData(null);
-        setPremiumError("");
-        setProgress(0);
-        setStatusText("");
-        setStage("processing_premium");
-    }
-
-    function renderDashboardMetricsHtml(nota: number, veredito: string, potencial: number, pilares: PilaresData, gapsFatals: number = 0) {
-        const getNum = (v: unknown) => (typeof v === "number" ? v : 0);
-        const impacto = getNum(pilares.impacto);
-        const keywords = getNum(pilares.keywords);
-        const ats = getNum(pilares.ats);
-
-        // 🎯 Cálculo inteligente do score projetado
-        const projected = calculateProjectedScore(nota, gapsFatals, 0, ats, keywords, impacto);
-        const lowProjectedNote = projected.score <= 60
-            ? `
-                <div style="margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(251, 191, 36, 0.35);">
-                    <div style="color: #FBBF24; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px;">Compatibilidade baixa com a vaga</div>
-                    <div style="color: #E2E8F0; font-size: 0.78rem; line-height: 1.5;">
-                        Mesmo com otimização, o score pode ficar abaixo do ideal porque há desalinhamento relevante com a vaga.
-                        <br />${projected.reasoning}
-                    </div>
-                </div>
-            `
-            : "";
-
-        const row = (label: string, value: number, tooltip: string) => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:6px; align-items:center;">
-                <div class="metric-hint-lite" tabindex="0" role="note" aria-label="${label}: ${tooltip}">
-                    <span style="color:#E2E8F0; font-size:0.75rem; font-weight:600; letter-spacing:0.5px; cursor:help;">${label.toUpperCase()}</span>
-                    <span aria-hidden="true" style="width:14px; height:14px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); color:#CBD5E1; font-size:0.62rem; display:inline-flex; align-items:center; justify-content:center; line-height:1; cursor:help;">i</span>
-                    <div class="metric-tooltip-lite">${tooltip}</div>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div style="width:60px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
-                        <div style="width:${value}%; height:100%; background:${value > 70 ? '#10B981' : value > 40 ? '#F59E0B' : '#EF4444'};"></div>
-                    </div>
-                    <span style="color:#F8FAFC; font-size:0.8rem; font-weight:700; font-family:monospace; width:28px; text-align:right;">${value}%</span>
-                </div>
-            </div>
-        `;
-
-        return `
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 12px; padding: 16px;">
-                <style>
-                    .metric-hint-lite { position: relative; display: inline-flex; align-items: center; gap: 6px; outline: none; }
-                    .metric-tooltip-lite { position: absolute; left: 0; top: calc(100% + 8px); width: 230px; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.96); border: 1px solid rgba(56, 189, 248, 0.28); color: #E2E8F0; font-size: 0.72rem; font-weight: 500; line-height: 1.45; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.65), 0 0 20px -10px rgba(56,189,248,0.35); opacity: 0; transform: translateY(4px); transition: opacity 0.16s ease, transform 0.16s ease; pointer-events: none; z-index: 20; }
-                    .metric-hint-lite:hover .metric-tooltip-lite, .metric-hint-lite:focus-visible .metric-tooltip-lite { opacity: 1; transform: translateY(0); }
-                    .analyzing-phase-container .metric-hint-lite { display: flex; flex-direction: column; width: 100%; }
-                    .analyzing-phase-container .metric-hint-lite .metric-tooltip-lite { left: 50%; transform: translateX(-50%) translateY(4px); }
-                    .analyzing-phase-container .metric-hint-lite:hover .metric-tooltip-lite, .analyzing-phase-container .metric-hint-lite:focus-visible .metric-tooltip-lite { opacity: 1; transform: translateX(-50%) translateY(0); }
-                </style>
-                <div style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #CBD5E1; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">DIAGNÓSTICO INICIAL</span>
-                    <span style="background: rgba(56, 189, 248, 0.1); color: #38BDF8; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 700;">VERSÃO LITE</span>
-                </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom: 16px;">
-                    <div>
-                        <div style="color:#E2E8F0; font-size:0.75rem; font-weight:600; display:flex; align-items:center; gap:6px;">
-                            SCORE ATS ATUAL
-                            <span class="metric-hint-lite" tabindex="0" aria-label="Como esse score é calculado">
-                                <span aria-hidden="true" style="width:14px; height:14px; border-radius:999px; border:1px solid rgba(148,163,184,0.45); color:#CBD5E1; font-size:0.62rem; display:inline-flex; align-items:center; justify-content:center; line-height:1; cursor:help;">i</span>
-                                <div class="metric-tooltip-lite">Baseado em densidade de palavras-chave da vaga e legibilidade ATS do CV.</div>
-                            </span>
-                        </div>
-                        <div style="color:#E2E8F0; font-weight:900; font-size: 2rem; line-height: 1;">${nota}<span style="font-size:1rem; color:#CBD5E1;">/100</span></div>
-                        <div style="color:#CBD5E1; font-size:0.66rem; margin-top:4px; max-width:250px; line-height:1.35;">Baseado em densidade de palavras-chave e legibilidade ATS.</div>
-                    </div>
-                    <div style="text-align:right;">
-                         <div style="color:#E2E8F0; font-size:0.75rem; font-weight:600;">SCORE PROJETADO</div>
-                         <div style="color:#22C55E; font-weight:900; font-size: 3rem; line-height: 1; text-shadow: 0 0 12px rgba(34, 197, 94, 0.65), 0 0 26px rgba(34, 197, 94, 0.35);">${projected.score}<span style="font-size:1.15rem; color:#22C55E;">/100</span></div>
-                         <div style="color:#F59E0B; font-size:0.9rem; font-weight:700; margin-top:2px;">+${projected.improvement}%</div>
-                         <div style="color:#CBD5E1; font-size:0.66rem; margin-top:4px; max-width:270px; line-height:1.35;">${projected.reasoning}</div>
-                    </div>
-                </div>
-
-                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
-                    ${row("Impacto", impacto, "Seu CV ainda usa descrições genéricas e verbos passivos. A versão otimizada prioriza verbos de ação e resultados mensuráveis.")}
-                    ${row("Palavras-chave", keywords, "Faltam termos exatos da vaga em cargos, competências e resultados. A versão otimizada distribui esses termos nos blocos mais lidos pelo ATS.")}
-                    ${row("Format. ATS", ats, "Seu layout atual ainda tem padrões que dificultam parsing automático. A versão otimizada usa estrutura limpa para leitura ATS sem perda visual.")}
-                </div>
-                ${lowProjectedNote}
-            </div>
-        `;
-    }
-
-    function renderLockedBlur(title: string, subtitle: string, contentPreview: string) {
-        const longContent = `${contentPreview} <br><br> ` +
-            "Impacto Técnico: Implementação de rotinas de backup que reduziram incidentes em 15%. ".repeat(3) +
-            "Gestão de Tickets: SLA mantido acima de 98% com ferramenta GLPI e Jira. ";
-
-        return `
-    <div class="locked-container" style="position: relative; overflow: hidden; border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; background: rgba(15, 23, 42, 0.6);">
-        <div style="padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <div style="color: #38BDF8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
-                ${title}
-            </div>
-            <div style="color: #E2E8F0; font-size: 0.9rem; margin-top: 5px;">
-                ${subtitle}
-            </div>
-        </div>
-
-        <div style="padding: 20px; filter: blur(3px); user-select: none; opacity: 0.65; height: 170px; overflow: hidden; position: relative;">
-            <p style="color: #E2E8F0; line-height: 1.6;">${longContent}</p>
-            <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.75) 100%);"></div>
-        </div>
-
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.45) 100%); backdrop-filter: blur(1px);">
-            <div style="background: rgba(15, 23, 42, 0.9); padding: 15px 25px; border-radius: 30px; border: 1px solid #38BDF8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); display: flex; gap: 10px; align-items: center;">
-                <span style="font-size: 1.2rem;">🔒</span>
-                <span style="color: #F8FAFC; font-weight: 600; font-size: 0.9rem;">Versão Otimizada Oculta</span>
-            </div>
-        </div>
-    </div>
-    `;
-    }
-
-    function renderOfferCard(itensChecklist: string[]) {
-        let listaHtml = "";
-        for (const item of itensChecklist) {
-            listaHtml += `
-        <li style="margin-bottom:12px; display:flex; align-items:start; gap:10px; line-height:1.4;">
-            <div style="
-                min-width: 20px; height: 20px; 
-                background: rgba(74, 222, 128, 0.2); 
-                color: #4ADE80; 
-                border-radius: 50%; 
-                display:flex; align-items:center; justify-content:center; 
-                font-size:0.75rem; font-weight:bold; flex-shrink: 0;
-            ">✓</div>
-            <span style="color:#E2E8F0; font-size:0.9rem;">${item}</span>
-        </li>
-        `;
-        }
-
-        return `
-    <div style="
-        background: rgba(15, 23, 42, 0.8);
-        background-image: linear-gradient(160deg, rgba(56, 189, 248, 0.05), rgba(129, 140, 248, 0.05));
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-bottom: none; 
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
-        border-bottom-left-radius: 0; 
-        border-bottom-right-radius: 0; 
-        padding: 24px;
-        backdrop-filter: blur(12px);
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.2); 
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        margin-bottom: -5px; 
-    ">
-        <div>
-            <div style="text-align:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:15px;">
-                <h3 style="margin:0; color:#F8FAFC; font-size:1.1rem; font-weight:700; letter-spacing:0.5px;">DOSSIÊ PROFISSIONAL</h3>
-                <p style="margin:4px 0 0 0; color:#CBD5E1; font-size:0.75rem;">Acesso Vitalício • VANT-PRO</p>
-            </div>
-            <ul style="list-style:none; padding:0; margin:0;">
-                ${listaHtml}
-            </ul>
-        </div>
-
-        <div style="text-align:center; margin-top: 20px;">
-            <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
-                <span style="text-decoration: line-through; color: #94A3B8; font-size: 0.8rem;">R$ 97,90</span>
-                <span style="background:#10B981; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; font-weight:700;">-70% OFF</span>
-            </div>
-            <div style="font-size: 3rem; font-weight: 800; color: #fff; line-height:1; margin-bottom: 5px;">
-                <span style="font-size:1.5rem; vertical-align:top; color:#CBD5E1;">R$</span>29<span style="font-size:1rem; color:#CBD5E1;">,90</span>
-            </div>
-        </div>
-    </div>
-    `;
-    }
-
-
-    // Verificar se há pagamento pendente na URL - mostrar loading imediatamente
-    const urlPayment = searchParams.get("payment");
-    const urlSessionId = searchParams.get("session_id");
-    if (urlPayment === "success" && urlSessionId && stage !== "activating_payment") {
-        // Ainda não setou o stage, mostrar loading genérico
+    // Renderização condicional baseada no estado de verificação
+    if (isCheckingAuth || loadingHistoryItem) {
         return (
-            <main>
-                <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minHeight: "100vh",
-                    background: "#0F172A",
-                    color: "#94A3B8",
-                    fontSize: "1rem",
-                    fontFamily: "'Outfit', sans-serif",
-                }}>
-                    <div style={{ textAlign: "center" }}>
-                        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-                        <div style={{
-                            width: 36,
-                            height: 36,
-                            border: "3px solid rgba(56, 189, 248, 0.2)",
-                            borderTop: "3px solid #38BDF8",
-                            borderRadius: "50%",
-                            animation: "spin 0.8s linear infinite",
-                            margin: "0 auto 16px",
-                        }} />
-                        Processando pagamento...
-                    </div>
+            <div style={{
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#0f172a"
+            }}>
+                <div style={{ textAlign: "center" }}>
+                    <div style={{
+                        width: "48px",
+                        height: "48px",
+                        border: "3px solid rgba(56, 189, 248, 0.3)",
+                        borderTopColor: "#38BDF8",
+                        borderRadius: "50%",
+                        animation: "spin 0.8s linear infinite",
+                        margin: "0 auto 16px"
+                    }} />
+                    <p style={{ color: "#94A3B8", fontSize: "0.875rem" }}>
+                        {loadingHistoryItem ? "Carregando análise..." : "Verificando autenticação..."}
+                    </p>
                 </div>
-            </main>
-        );
-    }
-
-    if (loadingHistoryItem) {
-        return (
-            <main>
-                <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minHeight: "100vh",
-                    background: "#0F172A",
-                    color: "#94A3B8",
-                    fontSize: "1rem",
-                    fontFamily: "'Outfit', sans-serif",
-                }}>
-                    <div style={{ textAlign: "center" }}>
-                        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-                        <div style={{
-                            width: 36,
-                            height: 36,
-                            border: "3px solid rgba(56, 189, 248, 0.2)",
-                            borderTop: "3px solid #38BDF8",
-                            borderRadius: "50%",
-                            animation: "spin 0.8s linear infinite",
-                            margin: "0 auto 16px",
-                        }} />
-                        Carregando análise...
-                    </div>
-                </div>
-            </main>
+                <style>{`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `}</style>
+            </div>
         );
     }
 
     return (
-        <main>
+        <main style={{ minHeight: "100vh", background: "#0f172a" }}>
             {stage === "hero" && (
-                <>
-                    {/* Indicador de Status do Usuário */}
-                    {authUserId && (
-                        <div>
-                            <div style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                padding: "14px 20px 12px"
-                            }}>
-                                <span style={{
-                                    fontWeight: 900,
-                                    fontSize: "1.35rem",
-                                    letterSpacing: "2.5px",
-                                    color: "#F8FAFC",
-                                    userSelect: "none",
-                                    fontFamily: "'Outfit', sans-serif"
-                                }}>VANT<span style={{ color: "#38BDF8", marginLeft: 1 }}>.</span></span>
+                <div className="hero-container">
+                    {/* V4 Split-Screen: 2-column grid */}
+                    <div className="hero-split-grid">
+
+                        {/* ===== LEFT COLUMN: Text + Trust ===== */}
+                        <div className="hero-left-col">
+                            <div>
+                                {USE_JSX_SECTIONS ? (
+                                    <HeroHeader />
+                                ) : (
+                                    <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
+                                )}
+                                {USE_JSX_SECTIONS ? (
+                                    <TrustBar />
+                                ) : (
+                                    <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
+                                )}
                             </div>
-                            <div style={{
-                                background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
-                                border: "1px solid rgba(16, 185, 129, 0.3)",
-                                borderRadius: 12,
-                                padding: "16px 20px",
-                                margin: "0 auto 20px",
-                                maxWidth: "100%",
-                                textAlign: "center"
-                            }}>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-                                    <div style={{
-                                        width: 40,
-                                        height: 40,
-                                        borderRadius: "50%",
-                                        background: "rgba(16, 185, 129, 0.2)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        fontSize: "1.2rem"
-                                    }}>
-                                        ✅
-                                    </div>
-                                    <div style={{ flex: 1, textAlign: "left" }}>
-                                        <div style={{ color: "#10B981", fontSize: "0.9rem", fontWeight: 700, marginBottom: 2 }}>
-                                            Logado como {authEmail}
-                                        </div>
-                                        <div style={{ color: "#94A3B8", fontSize: "0.8rem" }}>
-                                            {creditsRemaining > 0
-                                                ? `Você tem ${creditsRemaining} crédito(s) disponível(is)`
-                                                : "Pronto para analisar seu CV"
-                                            }
-                                        </div>
-                                    </div>
+                            <div
+                                className="scroll-indicator"
+                                onClick={() => document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' })}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => { if (e.key === 'Enter') document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' }); }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 16, height: 16 }}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                                <span>Veja por que funciona</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="#4ADE80" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, marginLeft: 4 }}><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                            </div>
+                        </div>
+
+                        {/* ===== RIGHT COLUMN: Form ===== */}
+                        <div className="hero-right-col">
+                            <div className="action-island-container">
+                                {/* Tab Switcher: Com Vaga / Análise Geral */}
+                                <div style={{
+                                    display: "flex",
+                                    background: "rgba(15, 23, 42, 0.6)",
+                                    borderRadius: 8,
+                                    padding: 3,
+                                    marginBottom: 16,
+                                    border: "1px solid rgba(255,255,255,0.06)"
+                                }}>
                                     <button
                                         type="button"
-                                        onClick={async () => {
-                                            if (supabase) {
-                                                // Verificação de tipo explícita para evitar never
-                                                const client = supabase as SupabaseClient;
-
-                                                await client.auth.signOut();
-                                            }
+                                        onClick={() => {
+                                            setUseGenericJob(false);
+                                            setJobDescription("");
+                                            setSelectedArea("");
                                         }}
                                         style={{
-                                            background: "none",
-                                            border: "1px solid rgba(239, 68, 68, 0.3)",
-                                            color: "#EF4444",
+                                            flex: 1,
+                                            padding: "7px 12px",
                                             borderRadius: 6,
-                                            padding: "6px 12px",
-                                            fontSize: "0.75rem",
+                                            border: "none",
                                             cursor: "pointer",
-                                            transition: "all 0.2s"
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.background = "none";
+                                            fontSize: "0.8rem",
+                                            fontWeight: 600,
+                                            letterSpacing: "0.2px",
+                                            transition: "all 0.2s ease",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "center",
+                                            gap: 1,
+                                            background: !useGenericJob ? "rgba(56, 189, 248, 0.15)" : "rgba(255, 255, 255, 0.04)",
+                                            color: !useGenericJob ? "#38BDF8" : "#CBD5E1",
+                                            boxShadow: !useGenericJob ? "0 1px 3px rgba(0,0,0,0.2)" : "none"
                                         }}
                                     >
-                                        Sair
+                                        <span>Tenho uma vaga</span>
+                                        <span style={{ fontSize: "0.6rem", opacity: 0.5, fontWeight: 400 }}>colar descrição</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setUseGenericJob(true);
+                                            setJobDescription("Busco oportunidades profissionais que valorizem minhas habilidades e experiência. Estou aberto a posições desafiadoras que permitam meu crescimento e contribuição para os objetivos da empresa, com foco em resultados e inovação.");
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: "7px 12px",
+                                            borderRadius: 6,
+                                            border: "none",
+                                            cursor: "pointer",
+                                            fontSize: "0.8rem",
+                                            fontWeight: 600,
+                                            letterSpacing: "0.2px",
+                                            transition: "all 0.2s ease",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "center",
+                                            gap: 1,
+                                            background: useGenericJob ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.04)",
+                                            color: useGenericJob ? "#10B981" : "#CBD5E1",
+                                            boxShadow: useGenericJob ? "0 1px 3px rgba(0,0,0,0.2)" : "none"
+                                        }}
+                                    >
+                                        <span>Não tenho uma vaga</span>
+                                        <span style={{ fontSize: "0.6rem", opacity: 0.5, fontWeight: 400 }}>selecionar área</span>
                                     </button>
                                 </div>
-                            </div>
-                        </div>
-                    )}
 
-                    {/* Header nav — VANT logo left, login right */}
-                    {!authUserId && (
-                        <div style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            padding: "14px 20px 0"
-                        }}>
-                            <span style={{
-                                fontWeight: 900,
-                                fontSize: "1.35rem",
-                                letterSpacing: "2.5px",
-                                color: "#F8FAFC",
-                                userSelect: "none",
-                                fontFamily: "'Outfit', sans-serif"
-                            }}>VANT<span style={{ color: "#38BDF8", marginLeft: 1 }}>.</span></span>
-                            <button
-                                type="button"
-                                onClick={() => setShowAuthModal(true)}
-                                data-cy="login-button"
-                                style={{
-                                    background: "rgba(56, 189, 248, 0.1)",
-                                    color: "#38BDF8",
-                                    border: "1px solid rgba(56, 189, 248, 0.25)",
-                                    borderRadius: 50,
-                                    padding: "7px 18px",
-                                    fontSize: "0.8rem",
-                                    fontWeight: 600,
-                                    cursor: "pointer",
-                                    transition: "all 0.2s",
+                                {/* Vaga textarea — hidden when useGenericJob */}
+                                {!useGenericJob && (
+                                    <div style={{ marginBottom: 16 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                                            <span style={{ color: "#38BDF8", fontSize: "0.75rem", fontWeight: 700, background: "rgba(56, 189, 248, 0.1)", borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>1</span>
+                                            <span style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Cole a descrição da vaga</span>
+                                        </div>
+                                        <div className="stTextArea">
+                                            <textarea
+                                                value={jobDescription}
+                                                onChange={(e) => setJobDescription(e.target.value)}
+                                                placeholder="Cole a descrição da vaga aqui..."
+                                                disabled={useGenericJob}
+                                                style={{
+                                                    height: 100,
+                                                    width: "100%",
+                                                    boxSizing: "border-box"
+                                                }}
+                                            />
+                                        </div>
+                                        <div style={{
+                                            marginTop: 4,
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "center",
+                                            color: jobDescription && jobDescription.length >= 500 ? "#10B981" : "#64748B",
+                                            fontSize: "0.75rem"
+                                        }}>
+                                            <span>{jobDescription ? jobDescription.length : 0}/5000</span>
+                                            <span style={{ color: "#94A3B8", fontSize: "0.7rem" }}>
+                                                Descrição completa = melhor resultado
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Area selector — only when generic job */}
+                                {useGenericJob && (
+                                    <div style={{ marginBottom: 16 }}>
+                                        <label style={{ display: "block", marginBottom: 6, fontSize: "0.8rem", color: "#CBD5E1", fontWeight: 500 }}>
+                                            Área de interesse (opcional):
+                                        </label>
+                                        <select
+                                            value={selectedArea}
+                                            onChange={(e) => setSelectedArea(e.target.value)}
+                                            style={{
+                                                width: "100%",
+                                                padding: "8px 12px",
+                                                backgroundColor: "#1E293B",
+                                                border: "1px solid rgba(255, 255, 255, 0.1)",
+                                                borderRadius: "6px",
+                                                color: "#E2E8F0",
+                                                fontSize: "0.85rem"
+                                            }}
+                                        >
+                                            <option value="">Selecione uma área...</option>
+                                            <option value="ti_dados_ai">Tecnologia/Dados/IA</option>
+                                            <option value="ti_dev_gen">Desenvolvimento de Software</option>
+                                            <option value="ti_suporte">TI/Suporte Técnico</option>
+                                            <option value="produto_agil">Produto/Agile</option>
+                                            <option value="marketing_growth">Marketing/Growth</option>
+                                            <option value="vendas_cs">Vendas/Customer Success</option>
+                                            <option value="rh_lideranca">RH/Liderança</option>
+                                            <option value="financeiro_corp">Financeiro/Corporativo</option>
+                                            <option value="global_soft_skills">Geral/Soft Skills</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* CV Upload */}
+                                <div style={{ marginBottom: 14 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                                        <span style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, background: "rgba(16, 185, 129, 0.1)", borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{useGenericJob ? "1" : "2"}</span>
+                                        <span style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Seu Currículo (PDF)</span>
+                                    </div>
+                                    {file ? (
+                                        <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                                            <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>✅ Arquivo carregado</div>
+                                            <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>{file.name}</div>
+                                            {pdfMetadata && (
+                                                <div style={{ background: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.25)", borderRadius: 6, padding: 8, marginTop: 6 }}>
+                                                    <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 700, marginBottom: 2 }}>📊 DETALHES:</div>
+                                                    {pdfMetadata.pages && (
+                                                        <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>
+                                                            <strong>Páginas:</strong> {pdfMetadata.pages}
+                                                            {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6, color: "#10B981" }}>- Otimizaremos para 1-2 ✓</span>}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            <button type="button" onClick={() => setFile(null)} style={{ marginTop: 8, fontSize: "0.7rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                Remover
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div data-testid="stFileUploader" data-cy="cv-upload-area">
+                                            <section
+                                                onClick={openFileDialog}
+                                                data-cy="cv-upload-section"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        openFileDialog();
+                                                    }
+                                                }}
+                                                style={{ cursor: "pointer" }}
+                                                tabIndex={0}
+                                            >
+                                                <div>
+                                                    <div><span>Arraste ou clique para enviar</span></div>
+                                                    <small>✓ PDF ou DOCX • Máx. 10MB</small>
+                                                    <button type="button" onClick={openFileDialog} style={{ marginTop: "6px", fontSize: "0.8rem", opacity: 0.7 }}>Escolher arquivo</button>
+                                                    <input ref={uploaderInputRef} type="file" accept="application/pdf" data-cy="cv-file-input" style={{ display: "none" }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                                                </div>
+                                            </section>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Trust badge — privacy signal near upload */}
+                                <div style={{
                                     display: "flex",
                                     alignItems: "center",
-                                    gap: 6
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = "rgba(56, 189, 248, 0.2)";
-                                    e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.5)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = "rgba(56, 189, 248, 0.1)";
-                                    e.currentTarget.style.borderColor = "rgba(56, 189, 248, 0.25)";
-                                }}
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>
-                                Entrar
-                            </button>
-                        </div>
-                    )}
-
-                    {/* UI de Erro Premium (também aparece no hero) */}
-                    {premiumError && (
-                        <div style={{
-                            background: "rgba(239, 68, 68, 0.1)",
-                            border: "2px solid #EF4444",
-                            borderRadius: 12,
-                            padding: "20px",
-                            margin: "0 auto 20px",
-                            maxWidth: "100%",
-                            textAlign: "center"
-                        }}>
-                            <div style={{ fontSize: "2rem", marginBottom: "12px" }}>⚠️</div>
-                            <div style={{ color: "#EF4444", fontSize: "1.1rem", fontWeight: 700, marginBottom: "8px" }}>
-                                {premiumError}
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setPremiumError("")}
-                                style={{
-                                    background: "none",
-                                    border: "1px solid rgba(239, 68, 68, 0.3)",
-                                    color: "#EF4444",
-                                    borderRadius: 6,
-                                    padding: "6px 12px",
-                                    fontSize: "0.8rem",
-                                    cursor: "pointer",
-                                    marginTop: "8px"
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = "none";
-                                }}
-                            >
-                                Entendido
-                            </button>
-                        </div>
-                    )}
-
-                    <div className="hero-container">
-                        {/* V4 Split-Screen: 2-column grid */}
-                        <div className="hero-split-grid">
-
-                            {/* ===== LEFT COLUMN: Text + Trust ===== */}
-                            <div className="hero-left-col">
-                                <div>
-                                    {USE_JSX_SECTIONS ? (
-                                        <HeroHeader />
-                                    ) : (
-                                        <div dangerouslySetInnerHTML={{ __html: HERO_HEADER_HTML }} />
-                                    )}
-                                    {USE_JSX_SECTIONS ? (
-                                        <TrustBar />
-                                    ) : (
-                                        <div dangerouslySetInnerHTML={{ __html: TRUST_BAR_HTML }} />
-                                    )}
+                                    gap: 8,
+                                    padding: "8px 12px",
+                                    borderRadius: 8,
+                                    background: "rgba(16, 185, 129, 0.06)",
+                                    border: "1px solid rgba(16, 185, 129, 0.12)",
+                                    marginBottom: 12,
+                                    marginTop: 4
+                                }}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                                    <span style={{ color: "#94A3B8", fontSize: "0.7rem", lineHeight: 1.4 }}>
+                                        <span style={{ color: "#4ADE80", fontWeight: 600 }}>Seus dados não são salvos</span> · Privacidade total garantida
+                                    </span>
                                 </div>
-                                <div
-                                    className="scroll-indicator"
-                                    onClick={() => document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' })}
-                                    role="button"
-                                    tabIndex={0}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') document.getElementById('por-que-funciona')?.scrollIntoView({ behavior: 'smooth' }); }}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 16, height: 16 }}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                                    <span>Veja por que funciona</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="#4ADE80" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, marginLeft: 4 }}><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                                </div>
-                            </div>
 
-                            {/* ===== RIGHT COLUMN: Form ===== */}
-                            <div className="hero-right-col">
-                                <div className="action-island-container">
-                                    {/* Tab Switcher: Com Vaga / Análise Geral */}
-                                    <div style={{
-                                        display: "flex",
-                                        background: "rgba(15, 23, 42, 0.6)",
-                                        borderRadius: 8,
-                                        padding: 3,
-                                        marginBottom: 16,
-                                        border: "1px solid rgba(255,255,255,0.06)"
-                                    }}>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setUseGenericJob(false);
-                                                setJobDescription("");
-                                                setSelectedArea("");
-                                            }}
-                                            style={{
-                                                flex: 1,
-                                                padding: "7px 12px",
-                                                borderRadius: 6,
-                                                border: "none",
-                                                cursor: "pointer",
-                                                fontSize: "0.8rem",
-                                                fontWeight: 600,
-                                                letterSpacing: "0.2px",
-                                                transition: "all 0.2s ease",
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                gap: 1,
-                                                background: !useGenericJob ? "rgba(56, 189, 248, 0.15)" : "rgba(255, 255, 255, 0.04)",
-                                                color: !useGenericJob ? "#38BDF8" : "#CBD5E1",
-                                                boxShadow: !useGenericJob ? "0 1px 3px rgba(0,0,0,0.2)" : "none"
-                                            }}
-                                        >
-                                            <span>Tenho uma vaga</span>
-                                            <span style={{ fontSize: "0.6rem", opacity: 0.5, fontWeight: 400 }}>colar descrição</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setUseGenericJob(true);
-                                                setJobDescription("Busco oportunidades profissionais que valorizem minhas habilidades e experiência. Estou aberto a posições desafiadoras que permitam meu crescimento e contribuição para os objetivos da empresa, com foco em resultados e inovação.");
-                                            }}
-                                            style={{
-                                                flex: 1,
-                                                padding: "7px 12px",
-                                                borderRadius: 6,
-                                                border: "none",
-                                                cursor: "pointer",
-                                                fontSize: "0.8rem",
-                                                fontWeight: 600,
-                                                letterSpacing: "0.2px",
-                                                transition: "all 0.2s ease",
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                gap: 1,
-                                                background: useGenericJob ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.04)",
-                                                color: useGenericJob ? "#10B981" : "#CBD5E1",
-                                                boxShadow: useGenericJob ? "0 1px 3px rgba(0,0,0,0.2)" : "none"
-                                            }}
-                                        >
-                                            <span>Não tenho uma vaga</span>
-                                            <span style={{ fontSize: "0.6rem", opacity: 0.5, fontWeight: 400 }}>selecionar área</span>
-                                        </button>
-                                    </div>
-
-                                    {/* Vaga textarea — hidden when useGenericJob */}
-                                    {!useGenericJob && (
-                                        <div style={{ marginBottom: 16 }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                                                <span style={{ color: "#38BDF8", fontSize: "0.75rem", fontWeight: 700, background: "rgba(56, 189, 248, 0.1)", borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>1</span>
-                                                <span style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Cole a descrição da vaga</span>
-                                            </div>
-                                            <div className="stTextArea">
-                                                <textarea
-                                                    value={jobDescription}
-                                                    onChange={(e) => setJobDescription(e.target.value)}
-                                                    placeholder="Cole a descrição da vaga aqui..."
-                                                    disabled={useGenericJob}
-                                                    style={{
-                                                        height: 100,
-                                                        width: "100%",
-                                                        boxSizing: "border-box"
-                                                    }}
-                                                />
-                                            </div>
-                                            <div style={{
-                                                marginTop: 4,
-                                                display: "flex",
-                                                justifyContent: "space-between",
-                                                alignItems: "center",
-                                                color: jobDescription && jobDescription.length >= 500 ? "#10B981" : "#64748B",
-                                                fontSize: "0.75rem"
-                                            }}>
-                                                <span>{jobDescription ? jobDescription.length : 0}/5000</span>
-                                                <span style={{ color: "#94A3B8", fontSize: "0.7rem" }}>
-                                                    Descrição completa = melhor resultado
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Area selector — only when generic job */}
-                                    {useGenericJob && (
-                                        <div style={{ marginBottom: 16 }}>
-                                            <label style={{ display: "block", marginBottom: 6, fontSize: "0.8rem", color: "#CBD5E1", fontWeight: 500 }}>
-                                                Área de interesse (opcional):
-                                            </label>
-                                            <select
-                                                value={selectedArea}
-                                                onChange={(e) => setSelectedArea(e.target.value)}
-                                                style={{
-                                                    width: "100%",
-                                                    padding: "8px 12px",
-                                                    backgroundColor: "#1E293B",
-                                                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                                                    borderRadius: "6px",
-                                                    color: "#E2E8F0",
-                                                    fontSize: "0.85rem"
-                                                }}
-                                            >
-                                                <option value="">Selecione uma área...</option>
-                                                <option value="ti_dados_ai">Tecnologia/Dados/IA</option>
-                                                <option value="ti_dev_gen">Desenvolvimento de Software</option>
-                                                <option value="ti_suporte">TI/Suporte Técnico</option>
-                                                <option value="produto_agil">Produto/Agile</option>
-                                                <option value="marketing_growth">Marketing/Growth</option>
-                                                <option value="vendas_cs">Vendas/Customer Success</option>
-                                                <option value="rh_lideranca">RH/Liderança</option>
-                                                <option value="financeiro_corp">Financeiro/Corporativo</option>
-                                                <option value="global_soft_skills">Geral/Soft Skills</option>
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    {/* CV Upload */}
-                                    <div style={{ marginBottom: 14 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                                            <span style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, background: "rgba(16, 185, 129, 0.1)", borderRadius: "50%", width: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{useGenericJob ? "1" : "2"}</span>
-                                            <span style={{ color: "#94A3B8", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Seu Currículo (PDF)</span>
-                                        </div>
-                                        {file ? (
-                                            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid #10B981", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                                                <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>✅ Arquivo carregado</div>
-                                                <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>{file.name}</div>
-                                                {pdfMetadata && (
-                                                    <div style={{ background: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.25)", borderRadius: 6, padding: 8, marginTop: 6 }}>
-                                                        <div style={{ color: "#F59E0B", fontSize: "0.7rem", fontWeight: 700, marginBottom: 2 }}>📊 DETALHES:</div>
-                                                        {pdfMetadata.pages && (
-                                                            <div style={{ color: "#E2E8F0", fontSize: "0.8rem" }}>
-                                                                <strong>Páginas:</strong> {pdfMetadata.pages}
-                                                                {pdfMetadata.pages > 3 && <span style={{ marginLeft: 6, color: "#10B981" }}>- Otimizaremos para 1-2 ✓</span>}
-                                                            </div>
-                                                        )}
+                                {/* Advanced Options: Referência Ideal (hidden by default) */}
+                                <details className="advanced-options-toggle">
+                                    <summary>Configurações Avançadas (Opcional)</summary>
+                                    <div className="details-content">
+                                        <div style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            gap: 12,
+                                            marginBottom: competitorFiles.length > 0 ? 12 : 0
+                                        }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+                                                <div style={{ fontSize: "1.4rem" }}>📑</div>
+                                                <div>
+                                                    <div style={{ color: "#F8FAFC", fontSize: "0.85rem", fontWeight: 700 }}>
+                                                        Comparar com outro CV
                                                     </div>
-                                                )}
-                                                <button type="button" onClick={() => setFile(null)} style={{ marginTop: 8, fontSize: "0.7rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                                                    <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 2 }}>
+                                                        {competitorFiles.length > 0 ? `${competitorFiles.length} comparativo(s)` : "Tem uma referência? Suba para ver quem vence."}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {competitorFiles.length > 0 ? (
+                                                <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#10B981", fontWeight: 700, fontSize: "0.8rem" }}>
+                                                    <span>✓</span> Pronto
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={openCompetitorFileDialog}
+                                                    style={{
+                                                        background: "transparent", color: "#94A3B8",
+                                                        border: "1px solid rgba(148, 163, 184, 0.4)",
+                                                        borderRadius: 16, padding: "6px 12px",
+                                                        fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
+                                                        whiteSpace: "nowrap", transition: "all 0.2s ease"
+                                                    }}
+                                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
+                                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
+                                                >
+                                                    + Adicionar Comparativo
+                                                </button>
+                                            )}
+                                            <input ref={competitorUploaderInputRef} type="file" accept="application/pdf" multiple style={{ display: "none" }} onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))} />
+                                        </div>
+                                        {competitorFiles.length > 0 && (
+                                            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, padding: 10, marginTop: 8 }}>
+                                                <div style={{ color: "#E2E8F0", fontSize: "0.75rem" }}>
+                                                    {competitorFiles.map((f, i) => (
+                                                        <div key={i} style={{ marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                                                            <span style={{ color: "#64748B" }}>📄</span>{f.name}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <button type="button" onClick={() => setCompetitorFiles([])} style={{ marginTop: 6, fontSize: "0.7rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
                                                     Remover
                                                 </button>
                                             </div>
-                                        ) : (
-                                            <div data-testid="stFileUploader" data-cy="cv-upload-area">
-                                                <section
-                                                    onClick={openFileDialog}
-                                                    data-cy="cv-upload-section"
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter' || e.key === ' ') {
-                                                            e.preventDefault();
-                                                            openFileDialog();
-                                                        }
-                                                    }}
-                                                    style={{ cursor: "pointer" }}
-                                                    tabIndex={0}
-                                                >
-                                                    <div>
-                                                        <div><span>Arraste ou clique para enviar</span></div>
-                                                        <small>✓ PDF ou DOCX • Máx. 10MB</small>
-                                                        <button type="button" onClick={openFileDialog} style={{ marginTop: "6px", fontSize: "0.8rem", opacity: 0.7 }}>Escolher arquivo</button>
-                                                        <input ref={uploaderInputRef} type="file" accept="application/pdf" data-cy="cv-file-input" style={{ display: "none" }} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-                                                    </div>
-                                                </section>
-                                            </div>
                                         )}
                                     </div>
+                                </details>
 
-                                    {/* Trust badge — privacy signal near upload */}
+                                {/* Credits indicator */}
+                                {authUserId && creditsRemaining > 0 && (
                                     <div style={{
-                                        display: "flex",
+                                        background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
+                                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                                        borderRadius: 8, padding: "10px", marginTop: 14, textAlign: "center"
+                                    }}>
+                                        <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 700 }}>
+                                            ✅ {creditsRemaining} crédito(s) disponível(is)
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CTA Button */}
+                                <div data-testid="stButton" className="stButton" style={{ width: "100%", marginTop: 14 }}>
+                                    <button
+                                        type="button"
+                                        data-kind="primary"
+                                        data-cy="main-cta"
+                                        onClick={onStart}
+                                        style={{
+                                            width: "100%",
+                                            transition: "all 0.2s ease",
+                                            cursor: "pointer",
+                                            background: "linear-gradient(to bottom, #FFD54F 0%, #FF8F00 50%, #EF6C00 100%)",
+                                            boxShadow: "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)",
+                                            fontWeight: 600, letterSpacing: "1px", color: "#210B00",
+                                            border: "none", borderRadius: "50px", padding: "12px 20px", fontSize: "1rem"
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform = "translateY(-2px)";
+                                            e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 8px 30px rgba(255, 143, 0, 0.7), 0 4px 10px rgba(255, 87, 34, 0.6)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform = "translateY(0)";
+                                            e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)";
+                                        }}
+                                        onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.98)"; }}
+                                        onMouseUp={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
+                                    >
+                                        {authUserId && creditsRemaining > 0 ? "OTIMIZAR MEU CV" : "ANALISAR CV GRÁTIS"}
+                                    </button>
+                                </div>
+
+                                {/* Trust signal — no credit card required */}
+                                <div style={{
+                                    textAlign: "center",
+                                    marginTop: 8
+                                }}>
+                                    <span style={{
+                                        color: "#E2E8F0",
+                                        fontSize: "0.75rem",
+                                        fontWeight: 600,
+                                        display: "inline-flex",
                                         alignItems: "center",
-                                        gap: 8,
-                                        padding: "8px 12px",
-                                        borderRadius: 8,
-                                        background: "rgba(16, 185, 129, 0.06)",
-                                        border: "1px solid rgba(16, 185, 129, 0.12)",
-                                        marginBottom: 12,
-                                        marginTop: 4
+                                        gap: 5
                                     }}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                                        <span style={{ color: "#94A3B8", fontSize: "0.7rem", lineHeight: 1.4 }}>
-                                            <span style={{ color: "#4ADE80", fontWeight: 600 }}>Seus dados não são salvos</span> · Privacidade total garantida
-                                        </span>
-                                    </div>
-
-                                    {/* Advanced Options: Referência Ideal (hidden by default) */}
-                                    <details className="advanced-options-toggle">
-                                        <summary>Configurações Avançadas (Opcional)</summary>
-                                        <div className="details-content">
-                                            <div style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                gap: 12,
-                                                marginBottom: competitorFiles.length > 0 ? 12 : 0
-                                            }}>
-                                                <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
-                                                    <div style={{ fontSize: "1.4rem" }}>📑</div>
-                                                    <div>
-                                                        <div style={{ color: "#F8FAFC", fontSize: "0.85rem", fontWeight: 700 }}>
-                                                            Comparar com outro CV
-                                                        </div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginTop: 2 }}>
-                                                            {competitorFiles.length > 0 ? `${competitorFiles.length} comparativo(s)` : "Tem uma referência? Suba para ver quem vence."}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {competitorFiles.length > 0 ? (
-                                                    <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#10B981", fontWeight: 700, fontSize: "0.8rem" }}>
-                                                        <span>✓</span> Pronto
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={openCompetitorFileDialog}
-                                                        style={{
-                                                            background: "transparent", color: "#94A3B8",
-                                                            border: "1px solid rgba(148, 163, 184, 0.4)",
-                                                            borderRadius: 16, padding: "6px 12px",
-                                                            fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
-                                                            whiteSpace: "nowrap", transition: "all 0.2s ease"
-                                                        }}
-                                                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
-                                                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.4)"; e.currentTarget.style.color = "#94A3B8"; }}
-                                                    >
-                                                        + Adicionar Comparativo
-                                                    </button>
-                                                )}
-                                                <input ref={competitorUploaderInputRef} type="file" accept="application/pdf" multiple style={{ display: "none" }} onChange={(e) => setCompetitorFiles(Array.from(e.target.files ?? []))} />
-                                            </div>
-                                            {competitorFiles.length > 0 && (
-                                                <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, padding: 10, marginTop: 8 }}>
-                                                    <div style={{ color: "#E2E8F0", fontSize: "0.75rem" }}>
-                                                        {competitorFiles.map((f, i) => (
-                                                            <div key={i} style={{ marginBottom: 2, display: "flex", alignItems: "center", gap: 6 }}>
-                                                                <span style={{ color: "#64748B" }}>📄</span>{f.name}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                    <button type="button" onClick={() => setCompetitorFiles([])} style={{ marginTop: 6, fontSize: "0.7rem", color: "#94A3B8", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
-                                                        Remover
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </details>
-
-                                    {/* Credits indicator */}
-                                    {authUserId && creditsRemaining > 0 && (
-                                        <div style={{
-                                            background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.1))",
-                                            border: "1px solid rgba(16, 185, 129, 0.3)",
-                                            borderRadius: 8, padding: "10px", marginTop: 14, textAlign: "center"
-                                        }}>
-                                            <div style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 700 }}>
-                                                ✅ {creditsRemaining} crédito(s) disponível(is)
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* CTA Button */}
-                                    <div data-testid="stButton" className="stButton" style={{ width: "100%", marginTop: 14 }}>
-                                        <button
-                                            type="button"
-                                            data-kind="primary"
-                                            data-cy="main-cta"
-                                            onClick={onStart}
-                                            style={{
-                                                width: "100%",
-                                                transition: "all 0.2s ease",
-                                                cursor: "pointer",
-                                                background: "linear-gradient(to bottom, #FFD54F 0%, #FF8F00 50%, #EF6C00 100%)",
-                                                boxShadow: "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)",
-                                                fontWeight: 600, letterSpacing: "1px", color: "#210B00",
-                                                border: "none", borderRadius: "50px", padding: "12px 20px", fontSize: "1rem"
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = "translateY(-2px)";
-                                                e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 8px 30px rgba(255, 143, 0, 0.7), 0 4px 10px rgba(255, 87, 34, 0.6)";
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = "translateY(0)";
-                                                e.currentTarget.style.boxShadow = "inset 0 2px 1px rgba(255, 255, 255, 0.6), 0 4px 20px rgba(255, 143, 0, 0.5), 0 2px 5px rgba(255, 87, 34, 0.4)";
-                                            }}
-                                            onMouseDown={(e) => { e.currentTarget.style.transform = "scale(0.98)"; }}
-                                            onMouseUp={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; }}
-                                        >
-                                            {authUserId && creditsRemaining > 0 ? "OTIMIZAR MEU CV" : "ANALISAR CV GRÁTIS"}
-                                        </button>
-                                    </div>
-
-                                    {/* Trust signal — no credit card required */}
-                                    <div style={{
-                                        textAlign: "center",
-                                        marginTop: 8
-                                    }}>
-                                        <span style={{
-                                            color: "#E2E8F0",
-                                            fontSize: "0.75rem",
-                                            fontWeight: 600,
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            gap: 5
-                                        }}>
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                            Sem cartão de crédito
-                                        </span>
-                                    </div>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                        Sem cartão de crédito
+                                    </span>
                                 </div>
                             </div>
-
-                        </div>{/* end hero-split-grid */}
-
-                        {/* Full-width sections below the fold */}
-                        <div id="por-que-funciona">
-                            {USE_JSX_SECTIONS ? (
-                                <ValueProp />
-                            ) : (
-                                <div dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
-                            )}
                         </div>
-                        <div>
-                            {USE_JSX_SECTIONS ? (
-                                <AnalysisCard />
-                            ) : (
-                                <div dangerouslySetInnerHTML={{ __html: ANALYSIS_CARD_HTML }} />
-                            )}
-                        </div>
+
+                    </div>{/* end hero-split-grid */}
+
+                    {/* Full-width sections below the fold */}
+                    <div id="por-que-funciona">
+                        {USE_JSX_SECTIONS ? (
+                            <ValueProp />
+                        ) : (
+                            <div dangerouslySetInnerHTML={{ __html: VALUE_PROP_HTML }} />
+                        )}
                     </div>
-
-                </>
-
+                    <div>
+                        {USE_JSX_SECTIONS ? (
+                            <AnalysisCard />
+                        ) : (
+                            <div dangerouslySetInnerHTML={{ __html: ANALYSIS_CARD_HTML }} />
+                        )}
+                    </div>
+                </div>
             )}
 
             {stage === "paid" && (
@@ -3834,7 +3097,18 @@ export default function AppPage() {
                 </>
             )}
 
-            {stage === "preview" && (
+            {stage === "preview" && previewData && (
+                <FreeAnalysisStage
+                    previewData={previewData}
+                    onUpgrade={() => {
+                        setSelectedPlan("trial");
+                        setStage("checkout");
+                    }}
+                    onTryAnother={() => setStage("hero")}
+                />
+            )}
+
+            {stage === "diagnostico_pronto" && previewData && (
                 <div style={{
                     minHeight: "100vh",
                     background: "linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)",
@@ -4040,8 +3314,8 @@ export default function AppPage() {
                                             top: "-4px",
                                             width: "0",
                                             height: "0",
-                                            borderTopLeft: "8px solid transparent",
-                                            borderTopRight: "8px solid transparent",
+                                            borderLeft: "8px solid transparent",
+                                            borderRight: "8px solid transparent",
                                             borderTop: "2px solid #94a3b8"
                                         }} />
                                     </div>
@@ -4094,7 +3368,7 @@ export default function AppPage() {
 
                             {/* Barras de Progresso */}
                             <div style={{ display: "grid", gap: "1rem" }}>
-                                {previewData?.pilares?.map((pilar: any, idx: number) => (
+                                {previewPillarItems.map((pilar: { nome: string; pontos: number }, idx: number) => (
                                     <div key={idx}>
                                         <div style={{
                                             display: "flex",
@@ -4587,134 +3861,131 @@ export default function AppPage() {
                 </div>
             )}
 
-            {
-                stage === "activating_payment" && (
+            {stage === "activating_payment" && (
+                <div style={{
+                    minHeight: "100vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                    padding: "2rem"
+                }}>
                     <div style={{
-                        minHeight: "100vh",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
-                        padding: "2rem"
+                        background: "rgba(15, 23, 42, 0.8)",
+                        backdropFilter: "blur(20px)",
+                        border: "1px solid rgba(56, 189, 248, 0.2)",
+                        borderRadius: "24px",
+                        padding: "3rem 2rem",
+                        maxWidth: "500px",
+                        width: "100%",
+                        textAlign: "center",
+                        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.4)"
                     }}>
+                        {/* Spinner animado */}
                         <div style={{
-                            background: "rgba(15, 23, 42, 0.8)",
-                            backdropFilter: "blur(20px)",
-                            border: "1px solid rgba(56, 189, 248, 0.2)",
-                            borderRadius: "24px",
-                            padding: "3rem 2rem",
-                            maxWidth: "500px",
-                            width: "100%",
-                            textAlign: "center",
-                            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.4)"
+                            width: "80px",
+                            height: "80px",
+                            margin: "0 auto 2rem",
+                            border: "4px solid rgba(56, 189, 248, 0.1)",
+                            borderTop: "4px solid #38BDF8",
+                            borderRadius: "50%",
+                            animation: "spin 1s linear infinite"
+                        }} />
+
+                        <h2 style={{
+                            fontSize: "1.75rem",
+                            fontWeight: 700,
+                            color: "#F8FAFC",
+                            marginBottom: "1rem"
                         }}>
-                            {/* Spinner animado */}
-                            <div style={{
-                                width: "80px",
-                                height: "80px",
-                                margin: "0 auto 2rem",
-                                border: "4px solid rgba(56, 189, 248, 0.1)",
-                                borderTop: "4px solid #38BDF8",
-                                borderRadius: "50%",
-                                animation: "spin 1s linear infinite"
-                            }} />
+                            Processando Pagamento
+                        </h2>
 
-                            <h2 style={{
-                                fontSize: "1.75rem",
-                                fontWeight: 700,
-                                color: "#F8FAFC",
-                                marginBottom: "1rem"
-                            }}>
-                                Processando Pagamento
-                            </h2>
+                        <p style={{
+                            fontSize: "1rem",
+                            color: "#94A3B8",
+                            lineHeight: 1.6,
+                            marginBottom: "0.5rem"
+                        }}>
+                            Estamos ativando seu crédito...
+                        </p>
 
-                            <p style={{
-                                fontSize: "1rem",
-                                color: "#94A3B8",
-                                lineHeight: 1.6,
-                                marginBottom: "0.5rem"
-                            }}>
-                                Estamos ativando seu crédito...
-                            </p>
+                        <p style={{
+                            fontSize: "0.875rem",
+                            color: "#64748B",
+                            lineHeight: 1.5
+                        }}>
+                            Você será redirecionado automaticamente em instantes.
+                        </p>
+                    </div>
 
-                            <p style={{
-                                fontSize: "0.875rem",
-                                color: "#64748B",
-                                lineHeight: 1.5
-                            }}>
-                                Você será redirecionado automaticamente em instantes.
-                            </p>
-                        </div>
-
-                        <style>{`
+                    <style>{`
                         @keyframes spin {
                             0% { transform: rotate(0deg); }
                             100% { transform: rotate(360deg); }
                         }
                     `}</style>
-                    </div>
-                )
-            }
+                </div>
+            )}
 
-            {
-                stage === "checkout" && (
-                    <div className="hero-container checkout-hero-container">
-                        <div className="action-island-container checkout-island-container">
-                            {(() => {
-                                const rawPlanId = (selectedPlan || "credit_1").trim() as string;
-                                const planId = rawPlanId === "basico"
-                                    ? "credit_1"
-                                    : rawPlanId === "premium_plus"
-                                        ? "pro_monthly_early_bird"
-                                        : rawPlanId;
+            {stage === "checkout" && (
+                <div className="hero-container checkout-hero-container">
+                    <div className="action-island-container checkout-island-container">
+                        {(() => {
+                            const rawPlanId = (selectedPlan || "credit_1").trim() as string;
+                            const planId = rawPlanId === "basico"
+                                ? "credit_1"
+                                : rawPlanId === "premium_plus"
+                                    ? "pro_monthly_early_bird"
+                                    : rawPlanId;
 
-                                const prices: any = {
-                                    credit_1: {
-                                        price: 12.90,
-                                        name: "1 Crédito Avulso",
-                                        billing: "one_time",
-                                        desc: "Otimização pontual"
-                                    },
-                                    pro_monthly: {
-                                        price: 27.90,
-                                        name: "VANT Pro Mensal",
-                                        billing: "subscription",
-                                        desc: "Otimizações ilimitadas"
-                                    },
-                                    pro_monthly_early_bird: {
-                                        price: 19.90,
-                                        name: "VANT Pro Mensal (Early Bird)",
-                                        billing: "subscription",
-                                        desc: "Preço vitalício especial"
-                                    },
-                                    pro_annual: {
-                                        price: 239.00,
-                                        name: "VANT Pro Anual",
-                                        billing: "subscription",
-                                        desc: "Economize 29% vs mensal"
-                                    },
-                                    trial: {
-                                        price: 1.99,
-                                        name: "Trial 7 Dias",
-                                        billing: "trial",
-                                        desc: "Teste PRO por 7 dias"
-                                    }
-                                };
-
-                                const plan = prices[planId] || prices.pro_monthly_early_bird || prices.credit_1;
-                                // CORREÇÃO: Trial também é um fluxo de assinatura/recorrência
-                                const isSubscription = plan.billing === "subscription" || plan.billing === "trial";
-
-                                let billingLine = "✅ Pagamento único · Acesso vitalício aos créditos";
-                                // CORREÇÃO: Melhorar o texto de billing para trial
-                                if (plan.billing === "trial") {
-                                    billingLine = "✅ 7 dias de teste por R$ 1,99, depois assinatura mensal";
-                                } else if (plan.billing === "subscription") {
-                                    billingLine = "✅ Assinatura mensal · Cancele quando quiser";
+                            const prices: any = {
+                                credit_1: {
+                                    price: 12.90,
+                                    name: "1 Crédito Avulso",
+                                    billing: "one_time",
+                                    desc: "Otimização pontual"
+                                },
+                                pro_monthly: {
+                                    price: 27.90,
+                                    name: "VANT Pro Mensal",
+                                    billing: "subscription",
+                                    desc: "Otimizações ilimitadas"
+                                },
+                                pro_monthly_early_bird: {
+                                    price: 19.90,
+                                    name: "VANT Pro Mensal (Early Bird)",
+                                    billing: "subscription",
+                                    desc: "Preço vitalício especial"
+                                },
+                                pro_annual: {
+                                    price: 239.00,
+                                    name: "VANT Pro Anual",
+                                    billing: "subscription",
+                                    desc: "Economize 29% vs mensal"
+                                },
+                                trial: {
+                                    price: 1.99,
+                                    name: "Trial 7 Dias",
+                                    billing: "trial",
+                                    desc: "Teste PRO por 7 dias"
                                 }
+                            };
 
-                                const boxHtml = `
+                            const plan = prices[planId] || prices.pro_monthly_early_bird || prices.credit_1;
+                            // CORREÇÃO: Trial também é um fluxo de assinatura/recorrência
+                            const isSubscription = plan.billing === "subscription" || plan.billing === "trial";
+
+                            let billingLine = "✅ Pagamento único · Acesso vitalício aos créditos";
+                            // CORREÇÃO: Melhorar o texto de billing para trial
+                            if (plan.billing === "trial") {
+                                billingLine = "✅ 7 dias de teste por R$ 1,99, depois assinatura mensal";
+                            } else if (plan.billing === "subscription") {
+                                billingLine = "✅ Assinatura mensal · Cancele quando quiser";
+                            }
+
+                            const boxHtml = `
                             <div style="background: rgba(15, 23, 42, 0.6); padding: 24px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(56, 189, 248, 0.2);">
                                 <div style="display:flex; justify-content: space-between; align-items:start; margin-bottom: 12px;">
                                     <div>
@@ -4734,343 +4005,129 @@ export default function AppPage() {
                             </div>
                             `;
 
-                                return (
-                                    <>
-                                        <div className="checkout-header">
-                                            <div className="checkout-title">
-                                                Finalizar Compra
-                                            </div>
-                                            <div className="checkout-subtitle">
-                                                Ambiente seguro e criptografado
-                                            </div>
+                            return (
+                                <>
+                                    <div className="checkout-header">
+                                        <div className="checkout-title">
+                                            Finalizar Compra
                                         </div>
+                                        <div className="checkout-subtitle">
+                                            Ambiente seguro e criptografado
+                                        </div>
+                                    </div>
 
-                                        {showUseCreditPrompt && authUserId && creditsRemaining > 0 && (
-                                            <div style={{ marginTop: 10, marginBottom: 26, padding: "18px 20px", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.35)", borderRadius: 12 }}>
-                                                <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
-                                                    <div style={{ fontSize: "1.25rem", marginTop: 2 }}>✅</div>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.95rem", fontWeight: 600, marginBottom: 4 }}>
-                                                            Você já tem créditos disponíveis
-                                                        </div>
-                                                        <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                            Créditos atuais: <strong style={{ color: "#F8FAFC" }}>{creditsRemaining}</strong>. Deseja usar 1 crédito agora e iniciar a análise premium?
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setShowUseCreditPrompt(false);
-                                                            pendingSkipPreview.current = true;
-                                                            setStage("processing_premium");
-                                                        }}
-                                                        style={{
-                                                            flex: "1 1 200px",
-                                                            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                                                            border: "none",
-                                                            color: "white",
-                                                            padding: "10px 14px",
-                                                            borderRadius: 10,
-                                                            fontWeight: 700,
-                                                            cursor: "pointer"
-                                                        }}
-                                                    >
-                                                        Usar 1 crédito agora
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setShowUseCreditPrompt(false);
-                                                            setSelectedPlan("credit_1");
-                                                            setShowProCreditNotice(true);
-                                                        }}
-                                                        style={{
-                                                            flex: "1 1 200px",
-                                                            background: "transparent",
-                                                            border: "1px solid rgba(56, 189, 248, 0.4)",
-                                                            color: "#7dd3fc",
-                                                            padding: "10px 14px",
-                                                            borderRadius: 10,
-                                                            fontWeight: 600,
-                                                            cursor: "pointer"
-                                                        }}
-                                                    >
-                                                        Comprar 1 crédito avulso
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {showProCreditNotice && authUserId && (
-                                            <div style={{ marginTop: 10, marginBottom: 26, padding: "18px 20px", background: "rgba(14, 165, 233, 0.12)", border: "1px solid rgba(56, 189, 248, 0.4)", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 16 }}>
-                                                <div style={{ fontSize: "1.25rem", marginTop: 2 }}>💡</div>
+                                    {showUseCreditPrompt && authUserId && creditsRemaining > 0 && (
+                                        <div style={{ marginTop: 10, marginBottom: 26, padding: "18px 20px", background: "rgba(16, 185, 129, 0.12)", border: "1px solid rgba(16, 185, 129, 0.35)", borderRadius: 12 }}>
+                                            <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
+                                                <div style={{ fontSize: "1.25rem", marginTop: 2 }}>✅</div>
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ color: "#E2E8F0", fontSize: "0.95rem", fontWeight: 600, marginBottom: 4 }}>
-                                                        Você já é Pro — estamos ajustando para crédito avulso
+                                                        Você já tem créditos disponíveis
                                                     </div>
                                                     <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
-                                                        Seus créditos atuais: <strong style={{ color: "#F8FAFC" }}>{creditsRemaining}</strong>. Como não há créditos disponíveis no período, esta compra é de Crédito Avulso para você usar agora.
+                                                        Créditos atuais: <strong style={{ color: "#F8FAFC" }}>{creditsRemaining}</strong>. Deseja usar 1 crédito agora e iniciar a análise premium?
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setShowProCreditNotice(false)}
-                                                    style={{ background: "none", border: "none", color: "#94A3B8", fontSize: "0.9rem", cursor: "pointer", padding: 0 }}
-                                                    aria-label="Fechar aviso"
+                                                    onClick={() => {
+                                                        setShowUseCreditPrompt(false);
+                                                        pendingSkipPreview.current = true;
+                                                        setStage("processing_premium");
+                                                    }}
+                                                    style={{
+                                                        flex: "1 1 200px",
+                                                        background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                                        border: "none",
+                                                        color: "white",
+                                                        padding: "10px 14px",
+                                                        borderRadius: 10,
+                                                        fontWeight: 700,
+                                                        cursor: "pointer"
+                                                    }}
                                                 >
-                                                    ✕
+                                                    Usar 1 crédito agora
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setShowUseCreditPrompt(false);
+                                                        setSelectedPlan("credit_1");
+                                                        setShowProCreditNotice(true);
+                                                    }}
+                                                    style={{
+                                                        flex: "1 1 200px",
+                                                        background: "transparent",
+                                                        border: "1px solid rgba(56, 189, 248, 0.4)",
+                                                        color: "#7dd3fc",
+                                                        padding: "10px 14px",
+                                                        borderRadius: 10,
+                                                        fontWeight: 600,
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    Comprar 1 crédito avulso
                                                 </button>
                                             </div>
-                                        )}
-
-                                        <div className="checkout-order-summary">
-                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
-                                                <div>
-                                                    <div style={{ color: "#94A3B8", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Resumo do Pedido</div>
-                                                    <strong style={{ color: "#F8FAFC", fontSize: "1.1rem" }}>{plan.name}</strong>
-                                                    <div style={{ color: "#64748B", fontSize: "0.85rem", marginTop: "4px" }}>{plan.desc}</div>
-                                                </div>
-                                                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-                                                    <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-                                                        <div style={{ color: "#10B981", fontSize: "1.5rem", fontWeight: "700", lineHeight: "1" }}>
-                                                            R$ {plan.price.toFixed(2).replace(".", ",")}
-                                                        </div>
-                                                        {/* Mostrar botão Alterar apenas se não for crédito avulso (credit_1) */}
-                                                        {planId !== "credit_1" && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setStage("preview")}
-                                                                style={{
-                                                                    background: "none",
-                                                                    border: "none",
-                                                                    color: "#94A3B8",
-                                                                    fontSize: "0.75rem",
-                                                                    cursor: "pointer",
-                                                                    padding: "2px 4px",
-                                                                    borderRadius: "4px",
-                                                                    textDecoration: "underline",
-                                                                    transition: "all 0.2s ease",
-                                                                    whiteSpace: "nowrap",
-                                                                    marginLeft: "8px"
-                                                                }}
-                                                                onMouseEnter={(e) => {
-                                                                    e.currentTarget.style.color = "#F8FAFC";
-                                                                    e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
-                                                                }}
-                                                                onMouseLeave={(e) => {
-                                                                    e.currentTarget.style.color = "#94A3B8";
-                                                                    e.currentTarget.style.background = "none";
-                                                                }}
-                                                            >
-                                                                Alterar
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "16px 0" }}></div>
-                                            <div style={{ color: "#E2E8F0", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "8px" }}>
-                                                {billingLine}
-                                            </div>
                                         </div>
+                                    )}
 
-                                        {emailSent ? (
-                                            /* ESTADO DE ESPERA ATIVA - EMAIL ENVIADO */
-                                            <div className="checkout-email-sent">
-                                                <div className="checkout-email-card">
-                                                    <div className="checkout-email-icon">
-                                                        📬
-                                                    </div>
-
-                                                    <h2 style={{
-                                                        color: "#F8FAFC",
-                                                        fontSize: "1.5rem",
-                                                        fontWeight: 600,
-                                                        marginBottom: 8
-                                                    }}>
-                                                        Enviamos um e-mail para você!
-                                                    </h2>
-
-                                                    <p style={{
-                                                        color: "#94A3B8",
-                                                        fontSize: "0.95rem",
-                                                        lineHeight: 1.5,
-                                                        marginBottom: 24
-                                                    }}>
-                                                        Para sua segurança, enviamos um link de recuperação para <strong>{authEmail}</strong>.<br />
-                                                        Clique no link do e-mail e nós traremos você de volta para finalizar sua compra automaticamente.
-                                                    </p>
-
-                                                    <div style={{
-                                                        background: "rgba(16, 185, 129, 0.1)",
-                                                        border: "1px solid #10B981",
-                                                        borderRadius: 8,
-                                                        padding: 12,
-                                                        color: "#10B981",
-                                                        fontSize: "0.9rem",
-                                                        marginBottom: 20
-                                                    }}>
-                                                        ✅ Link enviado com sucesso!
-                                                    </div>
-
-                                                    {resendCountdown > 0 ? (
-                                                        <p style={{
-                                                            color: "#64748B",
-                                                            fontSize: "0.8rem",
-                                                            margin: 0
-                                                        }}>
-                                                            Não recebeu? Reenviar em {resendCountdown}s
-                                                        </p>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setEmailSent(false);
-                                                                setResendCountdown(0);
-                                                                handleForgotPassword();
-                                                            }}
-                                                            style={{
-                                                                background: "rgba(59, 130, 246, 0.1)",
-                                                                border: "1px solid rgba(59, 130, 246, 0.3)",
-                                                                borderRadius: 8,
-                                                                color: "#3B82F6",
-                                                                fontSize: "0.9rem",
-                                                                fontWeight: 500,
-                                                                cursor: "pointer",
-                                                                padding: "8px 16px",
-                                                                transition: "all 0.2s"
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)";
-                                                                e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.5)";
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-                                                                e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)";
-                                                            }}
-                                                        >
-                                                            🔄 Reenviar e-mail
-                                                        </button>
-                                                    )}
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setEmailSent(false)}
-                                                        style={{
-                                                            background: "none",
-                                                            border: "none",
-                                                            color: "#94A3B8",
-                                                            fontSize: "0.8rem",
-                                                            cursor: "pointer",
-                                                            textDecoration: "underline",
-                                                            marginTop: 16,
-                                                            padding: 0
-                                                        }}
-                                                    >
-                                                        ← Voltar para o formulário
-                                                    </button>
+                                    {showProCreditNotice && authUserId && (
+                                        <div style={{ marginTop: 10, marginBottom: 26, padding: "18px 20px", background: "rgba(14, 165, 233, 0.12)", border: "1px solid rgba(56, 189, 248, 0.4)", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 16 }}>
+                                            <div style={{ fontSize: "1.25rem", marginTop: 2 }}>💡</div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ color: "#E2E8F0", fontSize: "0.95rem", fontWeight: 600, marginBottom: 4 }}>
+                                                    Você já é Pro — estamos ajustando para crédito avulso
+                                                </div>
+                                                <div style={{ color: "#94A3B8", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                                    Seus créditos atuais: <strong style={{ color: "#F8FAFC" }}>{creditsRemaining}</strong>. Como não há créditos disponíveis no período, esta compra é de Crédito Avulso para você usar agora.
                                                 </div>
                                             </div>
-                                        ) : authUserId ? (
-                                            <>
-                                                <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
-                                                    <div style={{ fontSize: "1.2rem" }}>👤</div>
-                                                    <div style={{ overflow: "hidden" }}>
-                                                        <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase" }}>Logado como</div>
-                                                        <div style={{ color: "#E2E8F0", fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{authEmail}</div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowProCreditNotice(false)}
+                                                style={{ background: "none", border: "none", color: "#94A3B8", fontSize: "0.9rem", cursor: "pointer", padding: 0 }}
+                                                aria-label="Fechar aviso"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <div className="checkout-order-summary">
+                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "12px" }}>
+                                            <div>
+                                                <div style={{ color: "#94A3B8", fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Resumo do Pedido</div>
+                                                <strong style={{ color: "#F8FAFC", fontSize: "1.1rem" }}>{plan.name}</strong>
+                                                <div style={{ color: "#64748B", fontSize: "0.85rem", marginTop: "4px" }}>{plan.desc}</div>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                                                <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+                                                    <div style={{ color: "#10B981", fontSize: "1.5rem", fontWeight: "700", lineHeight: "1" }}>
+                                                        R$ {plan.price.toFixed(2).replace(".", ",")}
                                                     </div>
-                                                </div>
-                                                <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
-                                                    <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%", height: 56, fontSize: "1.1rem", background: "#10B981", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)" }}>
-                                                        IR PARA PAGAMENTO SEGURO
-                                                    </button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <form onSubmit={(e) => { e.preventDefault(); handleCheckoutWithAuth(); }} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                                                <div style={{ color: "#94A3B8", fontSize: "0.8rem", textAlign: "center", marginBottom: 16, marginTop: 8 }}>
-                                                    Crie sua conta ou faça login para salvar seus créditos
-                                                </div>
-                                                <div>
-                                                    <label style={{
-                                                        display: "block",
-                                                        color: "#94A3B8",
-                                                        fontSize: "0.75rem",
-                                                        fontWeight: 600,
-                                                        marginBottom: "6px",
-                                                        letterSpacing: "0.5px",
-                                                        textTransform: "uppercase"
-                                                    }}>
-                                                        E-mail
-                                                    </label>
-                                                    <input
-                                                        type="email"
-                                                        placeholder="seu@email.com"
-                                                        value={authEmail}
-                                                        onChange={(e) => setAuthEmail(e.target.value)}
-                                                        autoComplete="email"
-                                                        style={{
-                                                            width: "100%", padding: "14px 16px", background: "rgba(15, 23, 42, 0.8)",
-                                                            border: "1px solid rgba(148, 163, 184, 0.3)", borderRadius: 8,
-                                                            color: "#F8FAFC", fontSize: "1rem", outline: "none",
-                                                            boxSizing: "border-box",
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label style={{
-                                                        display: "block",
-                                                        color: "#94A3B8",
-                                                        fontSize: "0.75rem",
-                                                        fontWeight: 600,
-                                                        marginBottom: "6px",
-                                                        letterSpacing: "0.5px",
-                                                        textTransform: "uppercase"
-                                                    }}>
-                                                        Senha
-                                                    </label>
-                                                    <div style={{ position: "relative", width: "100%" }}>
-                                                        <input
-                                                            type={showPassword ? "text" : "password"}
-                                                            placeholder="mínimo 6 caracteres"
-                                                            value={authPassword}
-                                                            onChange={(e) => setAuthPassword(e.target.value)}
-                                                            autoComplete="new-password"
-                                                            style={{
-                                                                width: "100%",
-                                                                padding: "14px 48px 14px 16px",
-                                                                background: "rgba(15, 23, 42, 0.8)",
-                                                                border: `1px solid ${checkoutError === "__WRONG_PASSWORD__" ? "#EF4444" : "rgba(148, 163, 184, 0.3)"}`,
-                                                                borderRadius: 8,
-                                                                color: "#F8FAFC",
-                                                                fontSize: "1rem",
-                                                                outline: "none",
-                                                                boxSizing: "border-box",
-                                                            }}
-                                                        />
+                                                    {/* Mostrar botão Alterar apenas se não for crédito avulso (credit_1) */}
+                                                    {planId !== "credit_1" && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => setShowPassword(!showPassword)}
+                                                            onClick={() => setStage("preview")}
                                                             style={{
-                                                                position: "absolute",
-                                                                right: "12px",
-                                                                top: "50%",
-                                                                transform: "translateY(-50%)",
                                                                 background: "none",
                                                                 border: "none",
                                                                 color: "#94A3B8",
+                                                                fontSize: "0.75rem",
                                                                 cursor: "pointer",
-                                                                padding: "4px",
+                                                                padding: "2px 4px",
                                                                 borderRadius: "4px",
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "center",
-                                                                transition: "all 0.2s ease"
+                                                                textDecoration: "underline",
+                                                                transition: "all 0.2s ease",
+                                                                whiteSpace: "nowrap",
+                                                                marginLeft: "8px"
                                                             }}
                                                             onMouseEnter={(e) => {
-                                                                e.currentTarget.style.color = "#CBD5E1";
+                                                                e.currentTarget.style.color = "#F8FAFC";
                                                                 e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
                                                             }}
                                                             onMouseLeave={(e) => {
@@ -5078,192 +4135,405 @@ export default function AppPage() {
                                                                 e.currentTarget.style.background = "none";
                                                             }}
                                                         >
-                                                            {showPassword ? (
-                                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                                                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                                                                </svg>
-                                                            ) : (
-                                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                                                    <circle cx="12" cy="12" r="3"></circle>
-                                                                </svg>
-                                                            )}
+                                                            Alterar
                                                         </button>
-                                                    </div>
-                                                    {checkoutError === "__WRONG_PASSWORD__" && (
-                                                        <div style={{ marginTop: 8 }}>
-                                                            <div style={{
-                                                                padding: 12,
-                                                                background: "rgba(239, 68, 68, 0.1)",
-                                                                border: "1px solid rgba(239, 68, 68, 0.3)",
-                                                                borderRadius: 8,
-                                                                marginBottom: 8,
-                                                                display: "flex",
-                                                                justifyContent: "space-between",
-                                                                alignItems: "center"
-                                                            }}>
-                                                                <p style={{
-                                                                    color: "#EF4444",
-                                                                    fontSize: "0.85rem",
-                                                                    margin: 0,
-                                                                    lineHeight: 1.4,
-                                                                    flex: 1
-                                                                }}>
-                                                                    😅 Ops! Essa não é a senha correta para este e-mail.
-                                                                </p>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={handleForgotPassword}
-                                                                    disabled={isAuthenticating}
-                                                                    style={{
-                                                                        background: "none",
-                                                                        border: "none",
-                                                                        color: "#3B82F6",
-                                                                        fontSize: "0.8rem",
-                                                                        cursor: isAuthenticating ? "wait" : "pointer",
-                                                                        textDecoration: "underline",
-                                                                        padding: "2px 4px",
-                                                                        borderRadius: "4px",
-                                                                        transition: "all 0.2s",
-                                                                        whiteSpace: "nowrap"
-                                                                    }}
-                                                                    onMouseEnter={(e) => {
-                                                                        if (!isAuthenticating) {
-                                                                            e.currentTarget.style.color = "#2563EB";
-                                                                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
-                                                                        }
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.color = "#3B82F6";
-                                                                        e.currentTarget.style.background = "none";
-                                                                    }}
-                                                                >
-                                                                    Esqueci minha senha
-                                                                </button>
-                                                            </div>
-                                                        </div>
                                                     )}
                                                 </div>
-                                                {checkoutError && checkoutError !== "__WRONG_PASSWORD__" && (
-                                                    <div style={{ padding: 10, background: checkoutError.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", border: `1px solid ${checkoutError.startsWith("✅") ? "#10B981" : "#EF4444"}`, borderRadius: 8, color: checkoutError.startsWith("✅") ? "#10B981" : "#EF4444", fontSize: "0.85rem", textAlign: "center" }}>
-                                                        {checkoutError}
+                                            </div>
+                                        </div>
+                                        <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "16px 0" }}></div>
+                                        <div style={{ color: "#E2E8F0", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                            {billingLine}
+                                        </div>
+                                    </div>
 
-                                                        {/* Mostrar botão de crédito avulso se erro for de créditos esgotados */}
-                                                        {checkoutError.includes("créditos do período") && (
-                                                            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                                                                <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginBottom: 4 }}>
-                                                                    💡 Compre crédito avulso para continuar:
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setSelectedPlan("credit_1");
-                                                                        setCheckoutError("");
-                                                                    }}
-                                                                    style={{
-                                                                        width: "100%",
-                                                                        padding: "14px",
-                                                                        background: "rgba(16, 185, 129, 0.15)",
-                                                                        border: "2px solid rgba(16, 185, 129, 0.5)",
-                                                                        borderRadius: 8,
-                                                                        color: "#10B981",
-                                                                        fontSize: "0.95rem",
-                                                                        fontWeight: 700,
-                                                                        cursor: "pointer",
-                                                                        transition: "all 0.2s"
-                                                                    }}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.25)";
-                                                                        e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.7)";
-                                                                        e.currentTarget.style.transform = "translateY(-2px)";
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.background = "rgba(16, 185, 129, 0.15)";
-                                                                        e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
-                                                                        e.currentTarget.style.transform = "translateY(0)";
-                                                                    }}
-                                                                >
-                                                                    ✨ Comprar 1 Crédito Avulso<br />
-                                                                    <span style={{ fontSize: "0.8rem", opacity: 0.9 }}>R$ 12,90 · Pagamento único</span>
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                    {emailSent ? (
+                                        /* ESTADO DE ESPERA ATIVA - EMAIL ENVIADO */
+                                        <div className="checkout-email-sent">
+                                            <div className="checkout-email-card">
+                                                <div className="checkout-email-icon">
+                                                    📬
+                                                </div>
+
+                                                <h2 style={{
+                                                    color: "#F8FAFC",
+                                                    fontSize: "1.5rem",
+                                                    fontWeight: 600,
+                                                    marginBottom: 8
+                                                }}>
+                                                    Enviamos um e-mail para você!
+                                                </h2>
+
+                                                <p style={{
+                                                    color: "#94A3B8",
+                                                    fontSize: "0.95rem",
+                                                    lineHeight: 1.5,
+                                                    marginBottom: 24
+                                                }}>
+                                                    Para sua segurança, enviamos um link de recuperação para <strong>{authEmail}</strong>.<br />
+                                                    Clique no link do e-mail e nós traremos você de volta para finalizar sua compra automaticamente.
+                                                </p>
+
+                                                <div style={{
+                                                    background: "rgba(16, 185, 129, 0.1)",
+                                                    border: "1px solid #10B981",
+                                                    borderRadius: 8,
+                                                    padding: 12,
+                                                    color: "#10B981",
+                                                    fontSize: "0.9rem",
+                                                    marginBottom: 20
+                                                }}>
+                                                    ✅ Link enviado com sucesso!
+                                                </div>
+
+                                                {resendCountdown > 0 ? (
+                                                    <p style={{
+                                                        color: "#64748B",
+                                                        fontSize: "0.8rem",
+                                                        margin: 0
+                                                    }}>
+                                                        Não recebeu? Reenviar em {resendCountdown}s
+                                                    </p>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setEmailSent(false);
+                                                            setResendCountdown(0);
+                                                            handleForgotPassword();
+                                                        }}
+                                                        style={{
+                                                            background: "rgba(59, 130, 246, 0.1)",
+                                                            border: "1px solid rgba(59, 130, 246, 0.3)",
+                                                            borderRadius: 8,
+                                                            color: "#3B82F6",
+                                                            fontSize: "0.9rem",
+                                                            fontWeight: 500,
+                                                            cursor: "pointer",
+                                                            padding: "8px 16px",
+                                                            transition: "all 0.2s"
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)";
+                                                            e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.5)";
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                                                            e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)";
+                                                        }}
+                                                    >
+                                                        🔄 Reenviar e-mail
+                                                    </button>
                                                 )}
-                                                <button
-                                                    type="submit"
-                                                    disabled={isAuthenticating}
-                                                    style={{
-                                                        width: "100%", height: 56, fontSize: "1.1rem",
-                                                        background: isAuthenticating ? "#64748B" : "#10B981",
-                                                        color: "#fff", border: "none", borderRadius: 10,
-                                                        fontWeight: 700, cursor: isAuthenticating ? "wait" : "pointer",
-                                                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)",
-                                                        transition: "all 0.2s",
-                                                    }}
-                                                >
-                                                    {isAuthenticating ? "Processando..." : "IR PARA PAGAMENTO SEGURO"}
-                                                </button>
-
-                                                <div style={{ color: "#64748B", fontSize: "0.7rem", textAlign: "center", lineHeight: 1.4 }}>
-                                                    Ao continuar, você concorda com nossos <a href="/termos" target="_blank" style={{ color: "#94A3B8", textDecoration: "underline" }}>Termos de Uso</a> e <a href="/privacidade" target="_blank" style={{ color: "#94A3B8", textDecoration: "underline" }}>Política de Privacidade</a>. Uma conta será criada automaticamente se você ainda não tiver uma.
-                                                </div>
-
-                                                <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0" }}>
-                                                    <div style={{ flex: 1, height: 1, background: "rgba(148, 163, 184, 0.2)" }} />
-                                                    <span style={{ color: "#64748B", fontSize: "0.8rem" }}>ou</span>
-                                                    <div style={{ flex: 1, height: 1, background: "rgba(148, 163, 184, 0.2)" }} />
-                                                </div>
 
                                                 <button
                                                     type="button"
-                                                    onClick={handleGoogleLogin}
-                                                    disabled={isAuthenticating}
+                                                    onClick={() => setEmailSent(false)}
                                                     style={{
-                                                        width: "100%", height: 48, background: "#fff", color: "#1f2937",
-                                                        border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
-                                                        fontSize: "0.95rem", fontWeight: 600, display: "flex",
-                                                        alignItems: "center", justifyContent: "center", gap: 10,
-                                                        cursor: isAuthenticating ? "not-allowed" : "pointer",
-                                                        opacity: isAuthenticating ? 0.6 : 1,
+                                                        background: "none",
+                                                        border: "none",
+                                                        color: "#94A3B8",
+                                                        fontSize: "0.8rem",
+                                                        cursor: "pointer",
+                                                        textDecoration: "underline",
+                                                        marginTop: 16,
+                                                        padding: 0
                                                     }}
                                                 >
-                                                    <svg width="18" height="18" viewBox="0 0 18 18">
-                                                        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
-                                                        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
-                                                        <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
-                                                        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
-                                                    </svg>
-                                                    Continuar com Google
+                                                    ← Voltar para o formulário
                                                 </button>
-                                            </form>
-                                        )}
-
-                                        <div className="payment-methods-section" style={{ marginTop: "24px", padding: "24px" }}>
-                                            <div className="payment-icons-container">
-                                                <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
-                                                <img src="/icons/visa.svg" alt="Visa" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
-                                                <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
-                                                <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
                                             </div>
                                         </div>
-
-                                        <div className="trust-signals-section">
-                                            <div className="trust-security-text">
-                                                <span style={{ fontSize: "0.9rem" }}>🔒</span>
-                                                <span>
-                                                    Pagamento processado via Stripe • Dados Criptografados
-                                                </span>
+                                    ) : authUserId ? (
+                                        <>
+                                            <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                                                <div style={{ fontSize: "1.2rem" }}>👤</div>
+                                                <div style={{ overflow: "hidden" }}>
+                                                    <div style={{ color: "#10B981", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase" }}>Logado como</div>
+                                                    <div style={{ color: "#E2E8F0", fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{authEmail}</div>
+                                                </div>
                                             </div>
+                                            <div data-testid="stButton" className="stButton" style={{ width: "100%" }}>
+                                                <button type="button" data-kind="primary" onClick={startCheckout} style={{ width: "100%", height: 56, fontSize: "1.1rem", background: "#10B981", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)" }}>
+                                                    IR PARA PAGAMENTO SEGURO
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <form onSubmit={(e) => { e.preventDefault(); handleCheckoutWithAuth(); }} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                            <div style={{ color: "#94A3B8", fontSize: "0.8rem", textAlign: "center", marginBottom: 16, marginTop: 8 }}>
+                                                Crie sua conta ou faça login para salvar seus créditos
+                                            </div>
+                                            <div>
+                                                <label style={{
+                                                    display: "block",
+                                                    color: "#94A3B8",
+                                                    fontSize: "0.75rem",
+                                                    fontWeight: 600,
+                                                    marginBottom: "6px",
+                                                    letterSpacing: "0.5px",
+                                                    textTransform: "uppercase"
+                                                }}>
+                                                    E-mail
+                                                </label>
+                                                <input
+                                                    type="email"
+                                                    placeholder="seu@email.com"
+                                                    value={authEmail}
+                                                    onChange={(e) => setAuthEmail(e.target.value)}
+                                                    autoComplete="email"
+                                                    style={{
+                                                        width: "100%", padding: "14px 16px", background: "rgba(15, 23, 42, 0.8)",
+                                                        border: "1px solid rgba(148, 163, 184, 0.3)", borderRadius: 8,
+                                                        color: "#F8FAFC", fontSize: "1rem", outline: "none",
+                                                        boxSizing: "border-box",
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label style={{
+                                                    display: "block",
+                                                    color: "#94A3B8",
+                                                    fontSize: "0.75rem",
+                                                    fontWeight: 600,
+                                                    marginBottom: "6px",
+                                                    letterSpacing: "0.5px",
+                                                    textTransform: "uppercase"
+                                                }}>
+                                                    Senha
+                                                </label>
+                                                <div style={{ position: "relative", width: "100%" }}>
+                                                    <input
+                                                        type={showPassword ? "text" : "password"}
+                                                        placeholder="mínimo 6 caracteres"
+                                                        value={authPassword}
+                                                        onChange={(e) => setAuthPassword(e.target.value)}
+                                                        autoComplete="new-password"
+                                                        style={{
+                                                            width: "100%",
+                                                            padding: "14px 48px 14px 16px",
+                                                            background: "rgba(15, 23, 42, 0.8)",
+                                                            border: `1px solid ${checkoutError === "__WRONG_PASSWORD__" ? "#EF4444" : "rgba(148, 163, 184, 0.3)"}`,
+                                                            borderRadius: 8,
+                                                            color: "#F8FAFC",
+                                                            fontSize: "1rem",
+                                                            outline: "none",
+                                                            boxSizing: "border-box",
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        style={{
+                                                            position: "absolute",
+                                                            right: "12px",
+                                                            top: "50%",
+                                                            transform: "translateY(-50%)",
+                                                            background: "none",
+                                                            border: "none",
+                                                            color: "#94A3B8",
+                                                            cursor: "pointer",
+                                                            padding: "4px",
+                                                            borderRadius: "4px",
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "center",
+                                                            transition: "all 0.2s ease"
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.color = "#CBD5E1";
+                                                            e.currentTarget.style.background = "rgba(148, 163, 184, 0.1)";
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.color = "#94A3B8";
+                                                            e.currentTarget.style.background = "none";
+                                                        }}
+                                                    >
+                                                        {showPassword ? (
+                                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                                                            </svg>
+                                                        ) : (
+                                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                                <circle cx="12" cy="12" r="3"></circle>
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                                {checkoutError === "__WRONG_PASSWORD__" && (
+                                                    <div style={{ marginTop: 8 }}>
+                                                        <div style={{
+                                                            padding: 12,
+                                                            background: "rgba(239, 68, 68, 0.1)",
+                                                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                                                            borderRadius: 8,
+                                                            marginBottom: 8,
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            alignItems: "center"
+                                                        }}>
+                                                            <p style={{
+                                                                color: "#EF4444",
+                                                                fontSize: "0.85rem",
+                                                                margin: 0,
+                                                                lineHeight: 1.4,
+                                                                flex: 1
+                                                            }}>
+                                                                😅 Ops! Essa não é a senha correta para este e-mail.
+                                                            </p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleForgotPassword}
+                                                                disabled={isAuthenticating}
+                                                                style={{
+                                                                    background: "none",
+                                                                    border: "none",
+                                                                    color: "#3B82F6",
+                                                                    fontSize: "0.8rem",
+                                                                    cursor: isAuthenticating ? "wait" : "pointer",
+                                                                    textDecoration: "underline",
+                                                                    padding: "2px 4px",
+                                                                    borderRadius: "4px",
+                                                                    transition: "all 0.2s",
+                                                                    whiteSpace: "nowrap"
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    if (!isAuthenticating) {
+                                                                        e.currentTarget.style.color = "#2563EB";
+                                                                        e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+                                                                    }
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.color = "#3B82F6";
+                                                                    e.currentTarget.style.background = "none";
+                                                                }}
+                                                            >
+                                                                Esqueci minha senha
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {checkoutError && checkoutError !== "__WRONG_PASSWORD__" && (
+                                                <div style={{ padding: 10, background: checkoutError.startsWith("✅") ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)", border: `1px solid ${checkoutError.startsWith("✅") ? "#10B981" : "#EF4444"}`, borderRadius: 8, color: checkoutError.startsWith("✅") ? "#10B981" : "#EF4444", fontSize: "0.85rem", textAlign: "center" }}>
+                                                    {checkoutError}
+
+                                                    {/* Mostrar botão de crédito avulso se erro for de créditos esgotados */}
+                                                    {checkoutError.includes("créditos do período") && (
+                                                        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                                                            <div style={{ color: "#94A3B8", fontSize: "0.75rem", marginBottom: 4 }}>
+                                                                💡 Compre crédito avulso para continuar:
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedPlan("credit_1");
+                                                                    setCheckoutError("");
+                                                                }}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    padding: "14px",
+                                                                    background: "rgba(16, 185, 129, 0.15)",
+                                                                    border: "2px solid rgba(16, 185, 129, 0.5)",
+                                                                    borderRadius: 8,
+                                                                    color: "#10B981",
+                                                                    fontSize: "0.95rem",
+                                                                    fontWeight: 700,
+                                                                    cursor: "pointer",
+                                                                    transition: "all 0.2s"
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.background = "rgba(16, 185, 129, 0.25)";
+                                                                    e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.7)";
+                                                                    e.currentTarget.style.transform = "translateY(-2px)";
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.background = "rgba(16, 185, 129, 0.15)";
+                                                                    e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.5)";
+                                                                    e.currentTarget.style.transform = "translateY(0)";
+                                                                }}
+                                                            >
+                                                                ✨ Comprar 1 Crédito Avulso<br />
+                                                                <span style={{ fontSize: "0.8rem", opacity: 0.9 }}>R$ 12,90 · Pagamento único</span>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                            <button
+                                                type="submit"
+                                                disabled={isAuthenticating}
+                                                style={{
+                                                    width: "100%", height: 56, fontSize: "1.1rem",
+                                                    background: isAuthenticating ? "#64748B" : "#10B981",
+                                                    color: "#fff", border: "none", borderRadius: 10,
+                                                    fontWeight: 700, cursor: isAuthenticating ? "wait" : "pointer",
+                                                    boxShadow: "0 4px 12px rgba(16, 185, 129, 0.4)",
+                                                    transition: "all 0.2s",
+                                                }}
+                                            >
+                                                {isAuthenticating ? "Processando..." : "IR PARA PAGAMENTO SEGURO"}
+                                            </button>
+
+                                            <div style={{ color: "#64748B", fontSize: "0.7rem", textAlign: "center", lineHeight: 1.4 }}>
+                                                Ao continuar, você concorda com nossos <a href="/termos" target="_blank" style={{ color: "#94A3B8", textDecoration: "underline" }}>Termos de Uso</a> e <a href="/privacidade" target="_blank" style={{ color: "#94A3B8", textDecoration: "underline" }}>Política de Privacidade</a>. Uma conta será criada automaticamente se você ainda não tiver uma.
+                                            </div>
+
+                                            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0" }}>
+                                                <div style={{ flex: 1, height: 1, background: "rgba(148, 163, 184, 0.2)" }} />
+                                                <span style={{ color: "#64748B", fontSize: "0.8rem" }}>ou</span>
+                                                <div style={{ flex: 1, height: 1, background: "rgba(148, 163, 184, 0.2)" }} />
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={handleGoogleLogin}
+                                                disabled={isAuthenticating}
+                                                style={{
+                                                    width: "100%", height: 48, background: "#fff", color: "#1f2937",
+                                                    border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8,
+                                                    fontSize: "0.95rem", fontWeight: 600, display: "flex",
+                                                    alignItems: "center", justifyContent: "center", gap: 10,
+                                                    cursor: isAuthenticating ? "not-allowed" : "pointer",
+                                                    opacity: isAuthenticating ? 0.6 : 1,
+                                                }}
+                                            >
+                                                <svg width="18" height="18" viewBox="0 0 18 18">
+                                                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
+                                                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
+                                                    <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" />
+                                                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
+                                                </svg>
+                                                Continuar com Google
+                                            </button>
+                                        </form>
+                                    )}
+
+                                    <div className="payment-methods-section" style={{ marginTop: "24px", padding: "24px" }}>
+                                        <div className="payment-icons-container">
+                                            <img src="/icons/pix.svg" alt="Pix" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
+                                            <img src="/icons/visa.svg" alt="Visa" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
+                                            <img src="/icons/mastercard.svg" alt="Mastercard" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
+                                            <img src="/icons/amex.svg" alt="American Express" style={{ height: "24px", width: "auto", opacity: "0.8" }} />
                                         </div>
-                                    </>
-                                );
-                            })()}
-                        </div>
+                                    </div>
+
+                                    <div className="trust-signals-section">
+                                        <div className="trust-security-text">
+                                            <span style={{ fontSize: "0.9rem" }}>🔒</span>
+                                            <span>
+                                                Pagamento processado via Stripe • Dados Criptografados
+                                            </span>
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </div>
-                )
-            }
+                </div>
+            )}
 
             <AuthModal
                 isOpen={showAuthModal}
@@ -5286,6 +4556,6 @@ export default function AppPage() {
                 authUserId={authUserId}
                 lastCV={lastCVData}
             />
-        </main >
+        </main>
     );
 }

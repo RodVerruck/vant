@@ -1,6 +1,11 @@
-export type AppStage = "hero" | "analyzing" | "preview" | "pricing" | "checkout" | "activating_payment" | "processing_premium" | "paid" | "history" | "simulador";
+export type AppStage = "hero" | "analyzing" | "preview" | "diagnostico_pronto" | "pricing" | "checkout" | "activating_payment" | "processing_premium" | "paid" | "history" | "simulador";
 export type PlanType = "free" | "pro_monthly" | "pro_monthly_early_bird" | "pro_annual" | "trial" | "credit_1" | "credit_3" | "credit_5";
 export type BillingType = "one_time" | "subscription";
+
+export interface PilarItem {
+    nome: string;
+    pontos: number;
+}
 
 export interface PilaresData {
     impacto?: number;
@@ -10,23 +15,33 @@ export interface PilaresData {
     [key: string]: unknown;
 }
 
+export type PilaresArray = PilarItem[];
+
+// Union type that can be either object with numeric properties OR array of PilarItem
+export type PilaresFlexible = PilaresData | PilaresArray;
+
 export interface PreviewData {
     nota: number;
     nota_ats: number;
     veredito: string;
     potencial: number;
-    pilares: PilaresData;
+    pilares: PilaresFlexible;
     analise_por_pilares: PilaresData;
+    projected_score?: number;
+    percentile?: string;
     gap_1?: {
         titulo?: string;
         explicacao?: string;
         exemplo_atual?: string;
         exemplo_otimizado?: string;
+        pontos?: number;
     };
     gap_2?: {
         titulo?: string;
         explicacao?: string;
         termos_faltando?: string[];
+        exemplo_otimizado?: string;
+        pontos?: number;
     };
 }
 
