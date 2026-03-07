@@ -717,6 +717,46 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
   const currentScoreColors = getScoreColor(score);
 
+  const explanationTone = score < 50
+    ? {
+      label: 'Crítico',
+      color: '#f87171',
+      background: 'rgba(239,68,68,0.12)',
+      border: '1px solid rgba(239,68,68,0.22)',
+      text: 'Seu CV está sendo rejeitado automaticamente pela maioria dos sistemas ATS. Com a versão PRO, você recebe o CV otimizado pronto que pode aumentar suas chances em até 3x.'
+    }
+    : score < 70
+      ? {
+        label: 'Atenção',
+        color: '#60a5fa',
+        background: 'rgba(96,165,250,0.12)',
+        border: '1px solid rgba(96,165,250,0.22)',
+        text: `Seu CV passa em alguns filtros ATS, mas perde oportunidades. A versão PRO entrega o CV reformulado para alcançar o ${projected.percentile}.`
+      }
+      : score < 80
+        ? {
+          label: 'Em evolução',
+          color: '#fbbf24',
+          background: 'rgba(251,191,36,0.12)',
+          border: '1px solid rgba(251,191,36,0.22)',
+          text: `Seu CV está no caminho certo. A versão PRO aplica ajustes estratégicos para alcançar o ${projected.percentile} e se destacar da concorrência.`
+        }
+        : score < 90
+          ? {
+            label: 'Competitivo',
+            color: '#34d399',
+            background: 'rgba(52,211,153,0.12)',
+            border: '1px solid rgba(52,211,153,0.22)',
+            text: `Seu CV está competitivo. A versão PRO faz pequenas otimizações que te colocam no ${projected.percentile} e maximizam suas oportunidades.`
+          }
+          : {
+            label: 'Destaque',
+            color: '#c4b5fd',
+            background: 'rgba(196,181,253,0.12)',
+            border: '1px solid rgba(196,181,253,0.22)',
+            text: `Excelente. A versão PRO aplica ajustes finais para te levar ao ${projected.percentile} e garantir destaque máximo.`
+          };
+
   return (
     <div className="vant-premium-wrapper">
       <div className="vant-container">
@@ -786,13 +826,18 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             </div>
 
             {/* Explicação */}
-            <p className="vant-text-sm vant-text-support" style={{ marginTop: '1.5rem', lineHeight: 1.7, textAlign: 'center', maxWidth: '600px', margin: '1.5rem auto 0' }}>
-              {score < 50 && "⚠️ Seu CV está sendo rejeitado automaticamente pela maioria dos sistemas ATS. Com a versão PRO, você recebe o CV otimizado pronto que pode aumentar suas chances em até 3x."}
-              {score >= 50 && score < 70 && "📊 Seu CV passa em alguns filtros ATS, mas perde oportunidades. A versão PRO entrega o CV reformulado para alcançar o " + projected.percentile + "."}
-              {score >= 70 && score < 80 && "⚡ Seu CV está no caminho certo! A versão PRO aplica ajustes estratégicos para alcançar o " + projected.percentile + " e se destacar da concorrência."}
-              {score >= 80 && score < 90 && "✅ Seu CV está competitivo. A versão PRO faz pequenas otimizações que te colocam no " + projected.percentile + " e maximizam suas oportunidades."}
-              {score >= 90 && "🌟 Excelente! A versão PRO aplica ajustes finais para te levar ao " + projected.percentile + " e garantir destaque máximo."}
-            </p>
+            <div style={{ margin: '1.5rem auto 0', maxWidth: '640px', textAlign: 'center' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.45rem 0.8rem', borderRadius: '99px', background: explanationTone.background, border: explanationTone.border, marginBottom: '0.85rem' }}>
+                <span style={{ width: '0.45rem', height: '0.45rem', borderRadius: '99px', background: explanationTone.color, boxShadow: `0 0 0 4px ${explanationTone.background}` }} />
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: explanationTone.color }}>
+                  {explanationTone.label}
+                </span>
+              </div>
+
+              <p className="vant-text-sm vant-text-support" style={{ lineHeight: 1.7, margin: 0 }}>
+                {explanationTone.text}
+              </p>
+            </div>
           </div>
         </div>
 
