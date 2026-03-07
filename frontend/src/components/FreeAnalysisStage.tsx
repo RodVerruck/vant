@@ -460,11 +460,11 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
             {/* Explicação */}
             <p className="vant-text-sm vant-text-slate-400" style={{ marginTop: '1.5rem', lineHeight: 1.7, textAlign: 'center', maxWidth: '600px', margin: '1.5rem auto 0' }}>
-              {score < 50 && "⚠️ Seu CV está sendo rejeitado automaticamente pela maioria dos sistemas ATS. Com otimização profissional, você pode aumentar suas chances em até 300%."}
-              {score >= 50 && score < 70 && "📊 Seu CV passa em alguns filtros ATS, mas perde oportunidades. Com otimização, você pode dobrar suas chances e alcançar o " + projected.percentile + "."}
-              {score >= 70 && score < 80 && "⚡ Seu CV está no caminho certo! Com ajustes estratégicos, você pode alcançar o " + projected.percentile + " e se destacar significativamente da concorrência."}
-              {score >= 80 && score < 90 && "✅ Seu CV está competitivo e passa na maioria dos filtros ATS. Pequenas otimizações podem te colocar no " + projected.percentile + " e maximizar suas oportunidades."}
-              {score >= 90 && "🌟 Excelente! Seu CV está otimizado para ATS. Ajustes finais podem te levar ao " + projected.percentile + " e garantir destaque máximo."}
+              {score < 50 && "⚠️ Seu CV está sendo rejeitado automaticamente pela maioria dos sistemas ATS. Com a versão PRO, você recebe o CV otimizado pronto que pode aumentar suas chances em até 3x."}
+              {score >= 50 && score < 70 && "📊 Seu CV passa em alguns filtros ATS, mas perde oportunidades. A versão PRO entrega o CV reformulado para alcançar o " + projected.percentile + "."}
+              {score >= 70 && score < 80 && "⚡ Seu CV está no caminho certo! A versão PRO aplica ajustes estratégicos para alcançar o " + projected.percentile + " e se destacar da concorrência."}
+              {score >= 80 && score < 90 && "✅ Seu CV está competitivo. A versão PRO faz pequenas otimizações que te colocam no " + projected.percentile + " e maximizam suas oportunidades."}
+              {score >= 90 && "🌟 Excelente! A versão PRO aplica ajustes finais para te levar ao " + projected.percentile + " e garantir destaque máximo."}
             </p>
           </div>
         </div>
@@ -564,33 +564,12 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
         </div>
 
-        {/* Radar de Recrutadores - Movido para cima para criar urgência */}
-        <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.3s' }}>
-          <h2 className="vant-h2 vant-mb-6">📡 Radar de Recrutadores Ativo</h2>
-          <div className="vant-flex vant-items-center vant-gap-4 vant-mb-4">
-            <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' }}>
-              <Search size={24} color="white" />
-            </div>
-            <div>
-              <div className="vant-text-white" style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '0.25rem' }}>
-                Seu perfil está <span style={{ color: '#38bdf8' }}>visível para 247 recrutadores</span>
-              </div>
-              <div className="vant-text-slate-400 vant-text-sm">
-                Ative o PRO para ver quem está visualizando seu perfil e receber alertas em tempo real
-              </div>
-            </div>
-          </div>
-          <div className="vant-text-slate-400" style={{ lineHeight: 1.7, fontSize: '0.95rem' }}>
-            💼 Neste momento, <strong style={{ color: '#38bdf8' }}>247 recrutadores ativos</strong> estão buscando profissionais com seu perfil. Com o plano PRO, você recebe notificações quando recrutadores visualizam seu currículo, pode ver quais empresas estão interessadas e tem acesso ao <strong style={{ color: '#34d399' }}>X-Ray Search</strong> para encontrar recrutadores específicos da sua área.
-          </div>
-        </div>
-
         {/* Análise Detalhada dos Problemas */}
         <div className="vant-glass-darker vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.4s' }}>
           <h2 className="vant-h2 vant-mb-6">📊 Análise Detalhada dos Problemas</h2>
 
           <div className="vant-text-slate-400" style={{ marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.7 }}>
-            Nossa IA identificou problemas críticos que estão impedindo seu CV de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê <strong style={{ color: '#38bdf8' }}>2 exemplos práticos</strong> de como seu CV está atualmente e como ficaria após a otimização profissional. Na versão PRO, você recebe a análise completa com todos os problemas identificados e as correções prontas para aplicar.
+            Nossa IA identificou <strong style={{ color: '#38bdf8' }}>{problems.length} problemas críticos</strong> que estão impedindo seu CV de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê os <strong style={{ color: '#38bdf8' }}>2 primeiros exemplos</strong> de como seu CV está atualmente e como ficaria após a otimização. Na versão PRO, você recebe a análise completa de todos os {problems.length} problemas com as correções prontas para aplicar.
           </div>
 
           {problems.length > 0 ? (
@@ -658,15 +637,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             {[
               {
                 icon: '🎯',
-                title: 'Passe pelos filtros ATS e chegue aos recrutadores',
-                desc: 'CV otimizado com formatação profissional, palavras-chave estratégicas e estrutura que passa em 95% dos sistemas automáticos. Download em PDF e Word prontos para enviar.',
-                highlight: 'ATS-proof garantido'
-              },
-              {
-                icon: '💼',
-                title: 'Descubra quem está contratando na sua área agora',
-                desc: 'Ferramenta exclusiva de X-Ray Search para encontrar recrutadores ativos, ver empresas que estão contratando e fazer networking direto com quem decide.',
-                highlight: 'Acesso direto aos decisores'
+                title: 'CV otimizado pronto para enviar',
+                desc: 'Currículo reformulado com formatação profissional, palavras-chave estratégicas e estrutura otimizada para sistemas ATS. Download em PDF e Word prontos para usar.',
+                highlight: 'Formatação profissional'
               },
               {
                 icon: '🎙️',
@@ -677,7 +650,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               {
                 icon: '📚',
                 title: 'Evolua continuamente com recursos personalizados',
-                desc: 'Biblioteca premium com cursos, livros e recursos recomendados especificamente para sua área e nível de experiência, atualizada mensalmente.',
+                desc: 'Biblioteca premium com cursos, livros e recursos recomendados especificamente para sua área e nível de experiência.',
                 highlight: 'Desenvolvimento contínuo'
               },
               {
@@ -687,10 +660,10 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 highlight: 'Diagnóstico preciso'
               },
               {
-                icon: '♾️',
-                title: 'Teste e otimize quantas vezes precisar',
-                desc: 'Otimizações ilimitadas para ajustar seu CV para diferentes vagas, testar versões e acompanhar a evolução do seu score ao longo do tempo.',
-                highlight: 'Sem limites'
+                icon: '🔄',
+                title: 'Múltiplas otimizações incluídas',
+                desc: 'Ajuste seu CV para diferentes vagas, teste versões e acompanhe a evolução do seu score ao longo do tempo com créditos incluídos no plano.',
+                highlight: 'Flexibilidade total'
               }
             ].map((benefit, idx) => (
               <div key={idx} className="benefit-item vant-flex vant-gap-4" style={{ alignItems: 'flex-start', padding: '1.5rem', background: 'rgba(255, 255, 255, 0.03)' }}>
@@ -821,7 +794,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           <div style={{ display: 'grid', gap: '0.75rem', margin: '1.5rem 0', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
             <div className="vant-flex vant-items-center vant-gap-3 vant-text-slate-400" style={{ justifyContent: 'center' }}>
               <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.3rem' }}>✓</span>
-              <span>30 Otimizações para testar</span>
+              <span>Análise Completa de Todos os Problemas</span>
             </div>
             <div className="vant-flex vant-items-center vant-gap-3 vant-text-slate-400" style={{ justifyContent: 'center' }}>
               <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.3rem' }}>✓</span>
@@ -830,10 +803,6 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             <div className="vant-flex vant-items-center vant-gap-3 vant-text-slate-400" style={{ justifyContent: 'center' }}>
               <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.3rem' }}>✓</span>
               <span>Simulador de Entrevista com IA</span>
-            </div>
-            <div className="vant-flex vant-items-center vant-gap-3 vant-text-slate-400" style={{ justifyContent: 'center' }}>
-              <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.3rem' }}>✓</span>
-              <span>X-Ray Search - Encontre Recrutadores</span>
             </div>
             <div className="vant-flex vant-items-center vant-gap-3 vant-text-slate-400" style={{ justifyContent: 'center' }}>
               <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.3rem' }}>✓</span>
