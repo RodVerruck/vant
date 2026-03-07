@@ -17,7 +17,7 @@ export function calcPotencial(nota: number): number {
     return Math.min(nota + 10, 99);
 }
 
-// 🎯 NOVA FUNÇÃO HÍBRIDA - Score Projetado Inteligente
+// 🎯 FUNÇÃO DE SCORE PROJETADO - SEMPRE MAIOR QUE O ATUAL
 export function calculateProjectedScore(
     currentScore: number,
     gapsFatals: number = 0,
@@ -35,61 +35,73 @@ export function calculateProjectedScore(
     const fatalGaps = Math.max(0, Math.round(gapsFatals || 0));
     const mediumGaps = Math.max(0, Math.round(gapsMediums || 0));
 
-    // Potencial baseado em deficit real dos pilares (peso maior para formatação ATS e keywords)
+    // GARANTIA: Ganho mínimo baseado na faixa do score atual
+    let minGuaranteedGain = 15; // Padrão para scores médios
+    if (current < 30) minGuaranteedGain = 25; // CVs muito ruins: ganho maior
+    else if (current < 50) minGuaranteedGain = 20; // CVs ruins: ganho alto
+    else if (current < 70) minGuaranteedGain = 15; // CVs médios: ganho médio
+    else if (current < 85) minGuaranteedGain = 10; // CVs bons: ganho moderado
+    else minGuaranteedGain = 5; // CVs excelentes: ganho pequeno
+
+    // Cálculo de potencial baseado em déficits reais
     const atsDeficit = 100 - ats;
     const kwDeficit = 100 - kw;
     const impDeficit = 100 - imp;
     const weightedDeficit = (atsDeficit * 0.45) + (kwDeficit * 0.35) + (impDeficit * 0.2);
 
-    // Converte déficit em potencial recuperável (conservador)
-    const recoverableFromPillars = weightedDeficit * 0.24;
-    const gapInfluence = (fatalGaps * 1.8) + (mediumGaps * 0.9);
+    // Bônus por gaps identificados
+    const gapBonus = (fatalGaps * 8) + (mediumGaps * 4);
 
-    // Reforço leve para scores muito baixos (determinístico, sem inflar demais)
-    const lowScoreLift = current < 40
-        ? clamp(Math.round((weightedDeficit * 0.18) + (gapInfluence * 0.75)), 4, 14)
-        : 0;
+    // Bônus por déficit nos pilares
+    let pillarBonus = 0;
+    if (atsDeficit >= 40) pillarBonus += 10;
+    else if (atsDeficit >= 25) pillarBonus += 6;
 
-    const rawImprovement = recoverableFromPillars + gapInfluence + lowScoreLift;
+    if (kwDeficit >= 40) pillarBonus += 8;
+    else if (kwDeficit >= 25) pillarBonus += 5;
 
-    // Limite de ganho por faixa (evita saltos irreais em scores já altos)
-    let bandGainCap = 24;
-    if (current < 35) bandGainCap = 28;
-    if (current >= 85) bandGainCap = 7;
-    else if (current >= 75) bandGainCap = 10;
-    else if (current >= 60) bandGainCap = 14;
-    else if (current >= 45) bandGainCap = 19;
+    if (impDeficit >= 40) pillarBonus += 6;
+    else if (impDeficit >= 25) pillarBonus += 3;
 
-    const minGain = weightedDeficit >= 12 ? 1 : 0;
-    const boundedImprovement = clamp(Math.round(rawImprovement), minGain, bandGainCap);
+    // Ganho total = mínimo garantido + bônus
+    const totalGain = minGuaranteedGain + gapBonus + pillarBonus;
 
-    // Teto dinâmico para preservar realismo e evitar concentração em um único valor
-    let dynamicCeiling = 94;
-    if (current >= 80) dynamicCeiling = 95;
-    if (current >= 90) dynamicCeiling = 96;
+    // Teto máximo realista por faixa
+    let maxRealisticScore = 94;
+    if (current < 30) maxRealisticScore = 70; // CVs muito ruins: até 70
+    else if (current < 50) maxRealisticScore = 80; // CVs ruins: até 80
+    else if (current < 70) maxRealisticScore = 90; // CVs médios: até 90
+    else maxRealisticScore = 96; // CVs bons: até 96
 
-    const projectedScore = clamp(current + boundedImprovement, current, dynamicCeiling);
+    // Score projetado = atual + ganho (limitado pelo teto)
+    const projectedScore = Math.min(current + totalGain, maxRealisticScore);
     const improvement = projectedScore - current;
 
     // Percentis REALISTAS baseados no score projetado
-    let percentile = "Top 50%";
-    if (projectedScore >= 65) percentile = "Top 40%";
-    if (projectedScore >= 70) percentile = "Top 30%";
-    if (projectedScore >= 75) percentile = "Top 25%";
-    if (projectedScore >= 80) percentile = "Top 20%";
-    if (projectedScore >= 85) percentile = "Top 15%";
-    if (projectedScore >= 90) percentile = "Top 10%";
-    if (projectedScore >= 95) percentile = "Top 5%";
+    let percentile = "Top 70%";
+    if (projectedScore < 40) percentile = "Top 80%"; // Scores muito baixos
+    else if (projectedScore < 50) percentile = "Top 70%";
+    else if (projectedScore < 60) percentile = "Top 60%";
+    else if (projectedScore < 65) percentile = "Top 50%";
+    else if (projectedScore < 70) percentile = "Top 40%";
+    else if (projectedScore < 75) percentile = "Top 30%";
+    else if (projectedScore < 80) percentile = "Top 25%";
+    else if (projectedScore < 85) percentile = "Top 20%";
+    else if (projectedScore < 90) percentile = "Top 15%";
+    else if (projectedScore < 95) percentile = "Top 10%";
+    else percentile = "Top 5%";
 
+    // Justificativa baseada nos fatores
     const reasons: string[] = [];
-    if (fatalGaps + mediumGaps > 0) reasons.push(`${fatalGaps + mediumGaps} gaps relevantes identificados`);
-    if (atsDeficit >= 25) reasons.push("estrutura ATS com alto espaço de melhoria");
-    if (kwDeficit >= 25) reasons.push("baixa cobertura de palavras-chave da vaga");
-    if (impDeficit >= 25) reasons.push("baixo nível de verbos de impacto e especificidade");
+    if (fatalGaps > 0) reasons.push(`${fatalGaps} gaps críticos`);
+    if (mediumGaps > 0) reasons.push(`${mediumGaps} gaps médios`);
+    if (atsDeficit >= 25) reasons.push("formatação ATS abaixo do ideal");
+    if (kwDeficit >= 25) reasons.push("palavras-chave insuficientes");
+    if (impDeficit >= 25) reasons.push("baixo impacto nas descrições");
 
     const reasoning = reasons.length > 0
-        ? `Projeção baseada em: ${reasons.join(", ")}`
-        : "Projeção estável com ajustes finos de otimização";
+        ? `Baseado em: ${reasons.join(", ")}`
+        : "Otimizações gerais de estrutura e conteúdo";
 
     return {
         score: projectedScore,

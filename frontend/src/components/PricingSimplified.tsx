@@ -342,20 +342,22 @@ export function PricingSimplified({ onSelectPlan, onCheckout, currentPlan, showT
 
         .credit-cta {
           width: 100%;
-          padding: 10px 20px;
-          background: rgba(74, 158, 255, 0.1);
-          color: #4A9EFF;
-          border: 2px solid rgba(74, 158, 255, 0.3);
+          padding: 12px 20px;
+          background: linear-gradient(135deg, #4A9EFF 0%, #3B82F6 100%);
+          color: white;
+          border: none;
           border-radius: 8px;
-          font-size: 0.9rem;
+          font-size: 0.95rem;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
         }
 
         .credit-cta:hover {
-          background: rgba(74, 158, 255, 0.2);
-          border-color: #4A9EFF;
+          background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(74, 158, 255, 0.4);
         }
 
         .guarantee-section {
@@ -426,7 +428,8 @@ export function PricingSimplified({ onSelectPlan, onCheckout, currentPlan, showT
                 <span className="price-currency">R$</span>
                 <span className="price-amount">1,99</span>
               </div>
-              <div className="price-detail">Após 7 dias: R$ 19,90/mês (desconto vitalício)</div>
+              <div className="price-detail" style={{ fontSize: '1rem', fontWeight: 700, color: '#F8FAFC', marginTop: '8px' }}>Depois R$ 19,90/mês</div>
+              <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '4px' }}>Desconto vitalício • Cancele quando quiser</div>
             </div>
 
             <ul className="tier-features">
@@ -438,7 +441,9 @@ export function PricingSimplified({ onSelectPlan, onCheckout, currentPlan, showT
               <li>Reembolso automático se cancelar em 48h</li>
             </ul>
 
-            <button className="tier-cta" onClick={() => handleCheckout("trial", 1.99)}>COMEÇAR TRIAL R$ 1,99</button>
+            <button className="tier-cta" onClick={() => handleCheckout("trial", 1.99)}>
+              Começar teste por R$ 1,99
+            </button>
           </div>
         )}
 
@@ -512,7 +517,7 @@ export function PricingSimplified({ onSelectPlan, onCheckout, currentPlan, showT
             <div className="credit-name">Crédito Único</div>
             <div className="credit-price">R$ 12,90</div>
             <div className="credit-detail">1 otimização completa</div>
-            <button className="credit-cta" onClick={() => handleCheckout("credit_1", 12.90)}>COMPRAR CRÉDITO</button>
+            <button className="credit-cta" onClick={() => handleCheckout("credit_1", 12.90)}>Liberar CV Otimizado</button>
           </div>
 
           <div className="credit-card popular" data-cy="plan-credit-3" onClick={() => onSelectPlan("credit_3")}>
@@ -520,7 +525,7 @@ export function PricingSimplified({ onSelectPlan, onCheckout, currentPlan, showT
             <div className="credit-name">Pacote 3 CVs</div>
             <div className="credit-price">R$ 29,90</div>
             <div className="credit-detail">R$ 9,97 por CV • Válido 6 meses</div>
-            <button className="credit-cta" onClick={() => handleCheckout("credit_3", 29.90)}>COMPRAR PACOTE</button>
+            <button className="credit-cta" onClick={() => handleCheckout("credit_3", 29.90)}>Comprar 3 Créditos</button>
           </div>
 
           <div className="credit-card" data-cy="plan-credit-5" onClick={() => onSelectPlan("credit_5")}>
@@ -528,7 +533,7 @@ export function PricingSimplified({ onSelectPlan, onCheckout, currentPlan, showT
             <div className="credit-name">Pacote 5 CVs</div>
             <div className="credit-price">R$ 49,90</div>
             <div className="credit-detail">R$ 9,98 por CV • Válido 6 meses</div>
-            <button className="credit-cta" onClick={() => handleCheckout("credit_5", 49.90)}>COMPRAR PACOTE</button>
+            <button className="credit-cta" onClick={() => handleCheckout("credit_5", 49.90)}>Comprar 5 Créditos</button>
           </div>
         </div>
       </div>

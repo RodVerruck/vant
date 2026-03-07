@@ -1,0 +1,5 @@
+JOÃO SILVA
+Desenvolvedor Python Sênior
+Experiência: 5 anos
+Python, Django, PostgreSQL
+Desenvolvimento de sistemas web

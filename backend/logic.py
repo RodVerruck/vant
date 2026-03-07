@@ -1072,38 +1072,58 @@ INSTRUÇÕES ESPECÍFICAS:
 6. Seja direto e objetivo
 7. **VERIFICAÇÃO OBRIGATÓRIA**: Não inclua "métricas", "números", "resultados quantitativos" em nenhum gap
 8. **VERIFICAÇÃO OBRIGATÓRIA**: Revise sua resposta antes de enviar para garantir que não há gaps sobre métricas
-9. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "rh_lideranca", foque em gaps como:
+
+**CÁLCULO OBRIGATÓRIO DOS PILARES (analise_por_pilares):**
+9. **impacto (0-100)**: Avalie o uso de verbos de ação, resultados e especificidade. 
+   - 90-100: Excelente uso de verbos de ação e resultados específicos
+   - 70-89: Bom, mas pode melhorar em especificidade
+   - 50-69: Médio, linguagem passiva ou genérica
+   - 0-49: Fraco, sem verbos de ação ou resultados
+10. **keywords (0-100)**: Avalie cobertura de palavras-chave relevantes PARA A ÁREA.
+    - 90-100: Excelente cobertura de termos técnicos da área
+    - 70-89: Boa cobertura, mas faltam alguns termos importantes
+    - 50-69: Média, termos genéricos ou básicos
+    - 0-49: Fraca, poucos ou nenhum termo relevante da área
+11. **ats (0-100)**: Avalie formatação, estrutura e compatibilidade com sistemas ATS.
+    - 90-100: Formatação impecável, bullets claros, estrutura otimizada
+    - 70-89: Boa formatação, mas pode melhorar organização
+    - 50-69: Média, parágrafos longos ou estrutura confusa
+    - 0-49: Fraca, formatação inadequada para ATS
+
+12. **OBRIGATÓRIO**: Calcule os scores dos pilares BASEADO NO CV REAL, não use placeholders.
+
+13. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "rh_lideranca", foque em gaps como:
    - Falta de termos de RH: "recrutamento", "seleção", "treinamento", "desenvolvimento", "gestão de pessoas"
    - Experiências sem foco em liderança ou gestão
    - Ausência de indicadores de RH (KPIs, metas, resultados com equipes)
    - Descrições operacionais em vez de estratégicas
-10. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "ti_dev_gen", foque em gaps como:
+14. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "ti_dev_gen", foque em gaps como:
     - Falta de termos técnicos: "python", "java", "javascript", "react", "api", "microserviços"
     - Tecnologias desatualizadas ou frameworks antigos
     - Ausência de projetos ou GitHub/portfólio
     - Descrições sem menção a arquitetura ou padrões
-11. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "ti_dados_ai", foque em gaps como:
+15. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "ti_dados_ai", foque em gaps como:
     - Falta de termos: "python", "sql", "machine learning", "analytics", "dashboard", "bi"
     - Ausência de ferramentas: "pandas", "numpy", "tensorflow", "power bi", "tableau"
     - Projetos sem resultados ou insights gerados
     - Falta de estatística ou matemática aplicada
-12. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "marketing_growth", foque em gaps como:
+16. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "marketing_growth", foque em gaps como:
     - Falta de termos: "seo", "sem", "tráfego", "conversão", "funil", "crm", "mídias sociais"
     - Ausência de métricas de marketing: "cpa", "roi", "cac", "ltv"
     - Campanhas sem resultados ou KPIs
     - Descrições sem menção a estratégias ou canais
-13. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "vendas_cs", foque em gaps como:
+17. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "vendas_cs", foque em gaps como:
     - Falta de termos: "negociação", "fechamento", "prospecção", "pipeline", "crm", "follow-up"
     - Ausência de metas de vendas ou resultados
     - Experiências sem menção a clientes ou contratos
     - Falta de técnicas de vendas ou metodologias
-14. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "financeiro_corp", foque em gaps como:
+18. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "financeiro_corp", foque em gaps como:
     - Falta de termos: "orçamento", "fluxo de caixa", "demonstrativos", "balanço", "kpis"
     - Ausência de ferramentas: "excel", "sap", "erp", "sistema financeiro"
     - Projetos sem impacto financeiro mensurável
     - Descrições sem menção a controles ou auditoria
 
-5. DETECTE A ÁREA ESPECÍFICA:
+19. DETECTE A ÁREA ESPECÍFICA:
    
    {"⚠️ ÁREA FORÇADA ESPECÍFICA: Use exatamente '" + forced_area.replace('_', ' ').upper() + "' como setor_detectado. Ignore outras detecções." if forced_area else ""}
    
@@ -1132,11 +1152,11 @@ INSTRUÇÕES ESPECÍFICAS:
 
 OUTPUT JSON (OBRIGATÓRIO - COPIE EXATAMENTE):
 {{
-  "nota_ats": 0,
+  "nota_ats": [CALCULE O SCORE REAL BASEADO NO CV],
   "analise_por_pilares": {{
-    "impacto": 0,
-    "keywords": 0,
-    "ats": 0,
+    "impacto": [CALCULE BASEADO NO IMPACTO DO CV],
+    "keywords": [CALCULE BASEADO NAS KEYWORDS DO CV],
+    "ats": [CALCULE BASEADO NA FORMATAÇÃO ATS],
     "setor_detectado": "TECNOLOGIA"
   }},
   "gap_1": {{
@@ -1154,11 +1174,12 @@ OUTPUT JSON (OBRIGATÓRIO - COPIE EXATAMENTE):
 
 IMPORTANTE: 
 - Retorne APENAS o JSON válido, sem texto adicional
-- nota_ats: 0-100 baseado no matching REAL
-- pilares: 0-100 baseados em análise específica
+- nota_ats: **OBRIGATÓRIO CALCULAR** score real 0-100 baseado na qualidade do CV vs vaga
+- pilares: **OBRIGATÓRIO CALCULAR** scores 0-100 baseados em análise específica
 - setor_detectado: área exata detectada acima
 - NÃO ADICIONE setores fora do lugar
 - **PROIBIDO IDENTIFICAR "FALTA DE MÉTRICAS" OU "FALTA DE NÚMEROS" COMO PROBLEMA**
+- **CRÍTICO**: NÃO use 0 como placeholder - calcule scores reais!
 """
     
     try:
@@ -1244,9 +1265,9 @@ IMPORTANTE:
             "veredito": "ANÁLISE INICIAL CONCLUÍDA",
             "nota_ats": nota_ats,
             "analise_por_pilares": {
-                "impacto": int(pilares.get("impacto", nota_ats - 5)),
-                "keywords": int(pilares.get("keywords", nota_ats)),
-                "ats": int(pilares.get("ats", nota_ats + 5)),
+                "impacto": int(pilares.get("impacto", max(nota_ats - 10, 20))),
+                "keywords": int(pilares.get("keywords", max(nota_ats - 5, 25))),
+                "ats": int(pilares.get("ats", max(nota_ats - 15, 30))),
                 "setor_detectado": str(setor_detectado).upper()
             },
             "gap_1": gap_1,
@@ -1284,11 +1305,11 @@ CV: {cv_text[:2000]}
 
 Retorne JSON exato:
 {{
-  "nota_ats": 0,
+  "nota_ats": [CALCULE O SCORE REAL BASEADO NO CV],
   "analise_por_pilares": {{
-    "impacto": 0,
-    "keywords": 0,
-    "ats": 0,
+    "impacto": [CALCULE BASEADO NO IMPACTO DO CV],
+    "keywords": [CALCULE BASEADO NAS KEYWORDS DO CV],
+    "ats": [CALCULE BASEADO NA FORMATAÇÃO ATS],
     "setor_detectado": "TECNOLOGIA"
   }},
   "gap_1": {{
@@ -1305,12 +1326,13 @@ Retorne JSON exato:
 }}
 
 Regras:
-- nota_ats: 0-100 baseado em matching real
-- pilares: 0-100 baseados em análise específica
+- nota_ats: **OBRIGATÓRIO CALCULAR** score real 0-100 baseado em matching real
+- pilares: **OBRIGATÓRIO CALCULAR** scores 0-100 baseados em análise específica
 - setor: área detectada (SUPORTE TI, VENDAS, MARKETING, etc)
 - gaps: problemas reais do CV
 - exemplo_atual: copie trecho exato do CV
 - exemplo_otimizado: mesmo trecho com melhorias linguísticas (sem números/percentagens)
+- **CRÍTICO**: NÃO use 0 como placeholder - calcule scores reais!
 """
                 
                 response_obj = groq_client.chat.completions.create(

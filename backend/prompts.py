@@ -77,7 +77,7 @@ OUTPUT JSON (SIGA ESTRITAMENTE):
     "ats": 0,
     "setor_detectado": "TECNOLOGIA"
   }},
-  "nota_ats": 0,
+  "nota_ats": [CALCULE SCORE REAL BASEADO NO CV],
   "veredito": "Frase curta (máx 10 palavras).",
   "gaps_fatais": [
     {{

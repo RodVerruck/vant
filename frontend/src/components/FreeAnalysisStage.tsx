@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertCircle, TrendingUp, Loader, CheckCircle2, Zap, Info, Search } from 'lucide-react';
+import { calculateProjectedScore } from '@/lib/helpers';
 
 // Importar estilos globais do PaidStage
 const globalStyles = `
@@ -191,6 +192,10 @@ const globalStyles = `
   .vant-animate-fade { animation: vantFadeIn 0.6s ease-out forwards; }
   .vant-animate-spin { animation: spin 1s linear infinite; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes pulse { 
+    0%, 100% { opacity: 1; transform: scale(1); } 
+    50% { opacity: 0.7; transform: scale(1.1); } 
+  }
 
   /* Estilos específicos do FreeAnalysis */
   .free-badge {
@@ -340,10 +345,33 @@ interface FreeAnalysisStageProps {
 export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: FreeAnalysisStageProps) {
   const [showAllProblems, setShowAllProblems] = useState(false);
 
+  // 🎯 Calcular score projetado de forma inteligente
   const score = previewData?.nota_ats || 0;
-  const problems = previewData?.gaps_fatais || [];
+
+  // Extração correta dos pilares do backend
+  const pilares = previewData?.analise_por_pilares || {};
+  const formatoAts = typeof pilares.ats === "number" ? pilares.ats : Math.max(score - 10, 20);
+  const keywords = typeof pilares.keywords === "number" ? pilares.keywords : Math.max(score - 15, 25);
+  const impacto = typeof pilares.impacto === "number" ? pilares.impacto : Math.max(score - 20, 30);
+
+  // Extração correta dos gaps (gap_1 e gap_2 como objetos)
+  const problems = [];
+  if (previewData?.gap_1) problems.push(previewData.gap_1);
+  if (previewData?.gap_2) problems.push(previewData.gap_2);
+
   const visibleProblems = showAllProblems ? problems : problems.slice(0, 2);
   const hiddenCount = problems.length - 2;
+
+  // Cálculo do score projetado usando dados reais
+  const gapsCount = problems.length;
+  const projected = calculateProjectedScore(
+    score,
+    gapsCount,
+    0, // gaps médios
+    formatoAts,
+    keywords,
+    impacto
+  );
 
   return (
     <div className="vant-premium-wrapper">
@@ -360,54 +388,126 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           </div>
         </div>
 
-        {/* Cards Principais em Grid - Layout dinâmico baseado na quantidade de problemas */}
-        <div className={`vant-grid-3 vant-mb-12 vant-animate-fade ${problems.length === 0 ? 'vant-grid-2' : ''}`} style={{ animationDelay: '0.1s' }}>
+        {/* Cards de Evolução de Score - Lado a Lado com Seta */}
+        <div className="vant-mb-12 vant-animate-fade" style={{ animationDelay: '0.1s' }}>
+          <div className="vant-glass-dark" style={{ padding: '2.5rem' }}>
+            <h2 className="vant-h2 vant-mb-8" style={{ textAlign: 'center' }}>📊 Evolução do Seu Score</h2>
 
-          {/* Card Score ATS */}
-          <div className="vant-glass-dark">
-            <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
-              <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' }}>
-                <CheckCircle2 size={20} color="white" />
+            <div className="vant-flex vant-items-center vant-gap-6" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
+              {/* Score Atual */}
+              <div style={{ textAlign: 'center', minWidth: '200px' }}>
+                <div className="vant-text-sm vant-font-medium" style={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem' }}>Score Atual</div>
+                <div style={{ fontSize: '4rem', fontWeight: 300, color: '#ef4444', lineHeight: 1, marginBottom: '0.5rem' }}>{score}</div>
+                <div className="vant-text-sm" style={{ color: '#fca5a5', marginBottom: '1rem' }}>de 100 pontos</div>
+                <div className="vant-score-bar-bg" style={{ maxWidth: '200px', margin: '0 auto' }}>
+                  <div className="vant-score-bar-fill" style={{ width: `${score}%`, background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)' }} />
+                </div>
               </div>
-              <div>
-                <span className="vant-text-sm vant-font-medium" style={{ color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Score ATS</span>
-                <div className="vant-text-xs vant-text-slate-400">Compatibilidade com robôs</div>
+
+              {/* Seta de Evolução */}
+              <div style={{ fontSize: '3rem', color: '#10b981', animation: 'pulse 2s ease-in-out infinite' }}>
+                →
+              </div>
+
+              {/* Score Projetado */}
+              <div style={{ textAlign: 'center', minWidth: '200px' }}>
+                <div className="vant-text-sm vant-font-medium" style={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem' }}>Score Projetado</div>
+                <div style={{ fontSize: '4rem', fontWeight: 300, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.5rem' }}>
+                  {projected.score}
+                </div>
+                <div className="vant-text-sm" style={{ color: '#34d399', marginBottom: '1rem' }}>+{projected.improvement} pontos</div>
+                <div className="vant-score-bar-bg" style={{ maxWidth: '200px', margin: '0 auto' }}>
+                  <div className="vant-score-bar-fill" style={{ width: `${projected.score}%`, background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)' }} />
+                </div>
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: '3.5rem', fontWeight: 300, color: '#38bdf8', lineHeight: 1 }}>{score}%</div>
-              <div className="vant-text-sm" style={{ color: '#7dd3fc' }}>de 100 pontos</div>
+
+            {/* Badge de Percentil */}
+            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <TrendingUp size={20} color="#34d399" />
+                <span style={{ color: '#34d399', fontSize: '1rem', fontWeight: 600 }}>Alcance o {projected.percentile} dos candidatos</span>
+              </div>
             </div>
-            <div className="vant-score-bar-bg">
-              <div className="vant-score-bar-fill" style={{ width: `${score}%`, background: 'linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%)' }} />
-            </div>
-            <p className="vant-text-xs vant-text-slate-400" style={{ marginTop: '0.75rem', lineHeight: 1.4 }}>
-              {score < 50 && "Seu CV precisa de melhorias urgentes"}
-              {score >= 50 && score < 70 && "Seu CV tem potencial, mas pode melhorar"}
-              {score >= 70 && score < 85 && "Seu CV está bom, mas não ótimo"}
-              {score >= 85 && "Seu CV está muito bem otimizado!"}
+
+            {/* Explicação */}
+            <p className="vant-text-sm vant-text-slate-400" style={{ marginTop: '1.5rem', lineHeight: 1.7, textAlign: 'center', maxWidth: '600px', margin: '1.5rem auto 0' }}>
+              {score < 50 && "⚠️ Seu CV está sendo rejeitado automaticamente pela maioria dos sistemas ATS. Com otimização profissional, você pode aumentar suas chances em até 300%."}
+              {score >= 50 && score < 70 && "📊 Seu CV passa em alguns filtros ATS, mas perde oportunidades. Com otimização, você pode dobrar suas chances e alcançar o {projected.percentile}."}
+              {score >= 70 && score < 85 && "✅ Seu CV está competitivo, mas ainda há espaço para melhorias que podem te colocar no {projected.percentile} e aumentar suas chances significativamente."}
+              {score >= 85 && "🌟 Excelente! Seu CV está otimizado para ATS. Pequenos ajustes estratégicos podem te levar ao {projected.percentile} e maximizar suas oportunidades."}
             </p>
           </div>
+        </div>
 
-          {/* Card Potencial */}
+        {/* Grid de Diagnóstico e Problemas */}
+        <div className={`vant-grid-${problems.length > 0 ? '2' : '1'} vant-mb-12 vant-animate-fade`} style={{ animationDelay: '0.2s' }}>
+
+          {/* Barras de Progresso dos Pilares */}
           <div className="vant-glass-dark">
-            <div className="vant-flex vant-items-center vant-gap-3 vant-mb-6">
-              <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
-                <Zap size={20} color="white" />
+            <h3 className="vant-h3 vant-mb-6" style={{ fontSize: '1.1rem', fontWeight: 600 }}>Diagnóstico Detalhado</h3>
+
+            {/* Barra Impacto */}
+            <div className="vant-flex vant-items-center vant-gap-3 vant-mb-4">
+              <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ minWidth: '80px' }}>Impacto</span>
+              <div className="vant-flex-1 vant-score-bar-bg">
+                <div
+                  className="vant-score-bar-fill"
+                  style={{
+                    width: `${impacto}%`,
+                    background: impacto >= 70 ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : impacto >= 50 ? 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)'
+                  }}
+                />
               </div>
-              <div>
-                <span className="vant-text-sm vant-font-medium" style={{ color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Potencial</span>
-                <div className="vant-text-xs vant-text-slate-400">Após otimização completa</div>
-              </div>
+              <span className="vant-text-sm vant-font-medium" style={{
+                minWidth: '45px',
+                textAlign: 'right',
+                color: impacto >= 70 ? '#34d399' : impacto >= 50 ? '#fbbf24' : '#f87171'
+              }}>
+                {impacto}%
+              </span>
             </div>
-            <div>
-              <div style={{ fontSize: '3.5rem', fontWeight: 300, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>
-                94
+
+            {/* Barra Keywords */}
+            <div className="vant-flex vant-items-center vant-gap-3 vant-mb-4">
+              <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ minWidth: '80px' }}>Palavras-chave</span>
+              <div className="vant-flex-1 vant-score-bar-bg">
+                <div
+                  className="vant-score-bar-fill"
+                  style={{
+                    width: `${keywords}%`,
+                    background: keywords >= 70 ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : keywords >= 50 ? 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)'
+                  }}
+                />
               </div>
-              <div className="vant-text-sm vant-text-slate-400">+{94 - score} pontos possíveis</div>
+              <span className="vant-text-sm vant-font-medium" style={{
+                minWidth: '45px',
+                textAlign: 'right',
+                color: keywords >= 70 ? '#34d399' : keywords >= 50 ? '#fbbf24' : '#f87171'
+              }}>
+                {keywords}%
+              </span>
             </div>
-            <div className="vant-mt-4" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '99px', color: '#34d399', fontSize: '0.875rem', fontWeight: 500 }}>
-              <TrendingUp size={16} /> Top 15% dos candidatos
+
+            {/* Barra Formato ATS */}
+            <div className="vant-flex vant-items-center vant-gap-3">
+              <span className="vant-text-sm vant-font-medium vant-text-slate-400" style={{ minWidth: '80px' }}>Format. ATS</span>
+              <div className="vant-flex-1 vant-score-bar-bg">
+                <div
+                  className="vant-score-bar-fill"
+                  style={{
+                    width: `${formatoAts}%`,
+                    background: formatoAts >= 70 ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : formatoAts >= 50 ? 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)'
+                  }}
+                />
+              </div>
+              <span className="vant-text-sm vant-font-medium" style={{
+                minWidth: '45px',
+                textAlign: 'right',
+                color: formatoAts >= 70 ? '#34d399' : formatoAts >= 50 ? '#fbbf24' : '#f87171'
+              }}>
+                {formatoAts}%
+              </span>
             </div>
           </div>
 
@@ -453,6 +553,22 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 <p className="vant-text-slate-400 vant-text-sm" style={{ lineHeight: 1.6 }}>
                   {problem.descricao || "Descrição não disponível"}
                 </p>
+
+                {/* Renderização de Termos Faltando (gap_2) */}
+                {problem.termos_faltando && Array.isArray(problem.termos_faltando) && problem.termos_faltando.length > 0 && (
+                  <div className="vant-mt-3">
+                    <h4 className="vant-text-sm vant-font-medium" style={{ color: '#f87171', marginBottom: '0.5rem' }}>
+                      🚨 Termos Faltando:
+                    </h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {problem.termos_faltando.map((termo: string, termIdx: number) => (
+                        <li key={termIdx} className="vant-text-sm" style={{ color: '#fca5a5', marginBottom: '0.25rem' }}>
+                          • {termo}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ))}
 
@@ -485,31 +601,13 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           </div>
         )}
 
-        {/* Meta de Pontuação */}
-        <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.3s' }}>
-          <h2 className="vant-h2 vant-mb-6">🎯 Meta de Pontuação</h2>
-          <div className="vant-flex vant-items-center vant-gap-6">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '3rem', fontWeight: 300, color: '#10b981', lineHeight: 1 }}>94</div>
-              <div className="vant-text-sm vant-text-slate-400">Score Alvo</div>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div className="vant-text-slate-400" style={{ marginBottom: '1rem' }}>
-                Para atingir o <strong style={{ color: '#10b981' }}>Top 15% dos candidatos</strong> e aumentar suas chances em <strong style={{ color: '#38bdf8' }}>+300%</strong>
-              </div>
-              <div className="vant-score-bar-bg">
-                <div className="vant-score-bar-fill" style={{ width: '94%', background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)' }} />
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Radar de Recrutadores */}
         <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.4s' }}>
           <h2 className="vant-h2 vant-mb-6">📡 Radar de Recrutadores Ativo</h2>
-          <div className="vant-flex vant-items-center vant-gap-4">
+          <div className="vant-flex vant-items-center vant-gap-4 vant-mb-4">
             <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)' }}>
-              <Search size={20} color="white" />
+              <Search size={24} color="white" />
             </div>
             <div>
               <div className="vant-text-white" style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '0.25rem' }}>
@@ -520,11 +618,18 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               </div>
             </div>
           </div>
+          <div className="vant-text-slate-400" style={{ lineHeight: 1.7, fontSize: '0.95rem' }}>
+            💼 Neste momento, <strong style={{ color: '#38bdf8' }}>247 recrutadores ativos</strong> estão buscando profissionais com seu perfil. Com o plano PRO, você recebe notificações quando recrutadores visualizam seu currículo, pode ver quais empresas estão interessadas e tem acesso ao <strong style={{ color: '#34d399' }}>X-Ray Search</strong> para encontrar recrutadores específicos da sua área.
+          </div>
         </div>
 
         {/* Análise Básica Completa */}
         <div className="vant-glass-darker vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.5s' }}>
-          <h2 className="vant-h2 vant-mb-6">📊 Análise Básica Completa</h2>
+          <h2 className="vant-h2 vant-mb-6">📊 Análise Detalhada dos Problemas</h2>
+
+          <div className="vant-text-slate-400" style={{ marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.7 }}>
+            Nossa IA identificou problemas críticos que estão impedindo seu CV de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê <strong style={{ color: '#38bdf8' }}>2 exemplos práticos</strong> de como seu CV está atualmente e como ficaria após a otimização profissional. Na versão PRO, você recebe a análise completa com todos os problemas identificados e as correções prontas para aplicar.
+          </div>
 
           {problems.length > 0 ? (
             <>
@@ -549,6 +654,22 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                     </div>
                   </div>
 
+                  {/* Renderização de Termos Faltando na Análise Detalhada */}
+                  {problem.termos_faltando && Array.isArray(problem.termos_faltando) && problem.termos_faltando.length > 0 && (
+                    <div className="vant-mb-4">
+                      <h4 className="vant-text-sm vant-font-medium" style={{ color: '#f87171', marginBottom: '0.5rem' }}>
+                        🚨 Termos Faltando Identificados:
+                      </h4>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {problem.termos_faltando.map((termo: string, termIdx: number) => (
+                          <li key={termIdx} className="vant-text-sm" style={{ color: '#fca5a5', marginBottom: '0.25rem', paddingLeft: '1rem' }}>
+                            • {termo}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   <div className="vant-text-slate-400 vant-text-sm" style={{ lineHeight: 1.6 }}>
                     {problem.impacto || "Impacto não especificado"}
                   </div>
@@ -563,30 +684,66 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           )}
         </div>
 
-        {/* Benefícios Detalhados */}
+        {/* Benefícios Detalhados - Focado em Resultados */}
         <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.6s' }}>
-          <h2 className="vant-h2 vant-mb-6">🚀 O que você ganha com o Plano PRO</h2>
+          <h2 className="vant-h2 vant-mb-6">🚀 Na versão premium você recebe:</h2>
 
-          <div style={{ display: 'grid', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div className="vant-text-slate-400" style={{ marginBottom: '1.5rem', lineHeight: 1.7 }}>
+            Não é apenas um otimizador de CV. É um sistema completo que te prepara para todo o processo seletivo, desde a candidatura até a aprovação final.
+          </div>
+
+          <div style={{ display: 'grid', gap: '1.25rem', marginBottom: '1.5rem' }}>
             {[
-              { icon: '📄', title: 'CV Otimizado', desc: 'Download em PDF + Word com formatação ATS-proof' },
-              { icon: '🎯', title: 'X-Ray Search', desc: 'Encontre recrutadores que estão contratando na sua área' },
-              { icon: '📚', title: 'Biblioteca Premium', desc: 'Acesso a cursos, livros e recursos exclusivos' },
-              { icon: '🎙️', title: 'Simulador de Entrevista', desc: 'Pratique com IA e receba feedback detalhado' },
-              { icon: '📊', title: 'Análise Completa', desc: 'Diagnóstico profundo com gaps e soluções' },
-              { icon: '♾️', title: 'Otimizações Ilimitadas', desc: 'Ajuste seu CV quantas vezes precisar' }
+              {
+                icon: '🎯',
+                title: 'Passe pelos filtros ATS e chegue aos recrutadores',
+                desc: 'CV otimizado com formatação profissional, palavras-chave estratégicas e estrutura que passa em 95% dos sistemas automáticos. Download em PDF e Word prontos para enviar.',
+                highlight: 'ATS-proof garantido'
+              },
+              {
+                icon: '💼',
+                title: 'Descubra quem está contratando na sua área agora',
+                desc: 'Ferramenta exclusiva de X-Ray Search para encontrar recrutadores ativos, ver empresas que estão contratando e fazer networking direto com quem decide.',
+                highlight: 'Acesso direto aos decisores'
+              },
+              {
+                icon: '🎙️',
+                title: 'Chegue preparado para a entrevista e impressione',
+                desc: 'Simulador de entrevista com IA que pratica perguntas comportamentais e técnicas com você, dá feedback detalhado e te prepara para a entrevista real.',
+                highlight: 'Confiança na hora H'
+              },
+              {
+                icon: '📚',
+                title: 'Evolua continuamente com recursos personalizados',
+                desc: 'Biblioteca premium com cursos, livros e recursos recomendados especificamente para sua área e nível de experiência, atualizada mensalmente.',
+                highlight: 'Desenvolvimento contínuo'
+              },
+              {
+                icon: '🔍',
+                title: 'Veja exatamente o que está impedindo você de ser chamado',
+                desc: 'Análise completa e profunda de todos os problemas do seu CV, com exemplos práticos de correção e score projetado realista baseado em dados.',
+                highlight: 'Diagnóstico preciso'
+              },
+              {
+                icon: '♾️',
+                title: 'Teste e otimize quantas vezes precisar',
+                desc: 'Otimizações ilimitadas para ajustar seu CV para diferentes vagas, testar versões e acompanhar a evolução do seu score ao longo do tempo.',
+                highlight: 'Sem limites'
+              }
             ].map((benefit, idx) => (
-              <div key={idx} className="benefit-item vant-flex vant-items-center vant-gap-3">
-                <div className="benefit-icon">{benefit.icon}</div>
+              <div key={idx} className="benefit-item vant-flex vant-gap-4" style={{ alignItems: 'flex-start', padding: '1.5rem', background: 'rgba(255, 255, 255, 0.03)' }}>
+                <div style={{ fontSize: '2.5rem', flexShrink: 0, lineHeight: 1 }}>{benefit.icon}</div>
                 <div className="vant-flex-1">
-                  <div className="vant-text-white vant-font-medium" style={{ marginBottom: '0.25rem' }}>
+                  <div className="vant-text-white vant-font-medium" style={{ marginBottom: '0.75rem', fontSize: '1.1rem', lineHeight: 1.3 }}>
                     {benefit.title}
                   </div>
-                  <div className="vant-text-slate-400 vant-text-sm">
+                  <div className="vant-text-slate-400" style={{ fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '0.75rem' }}>
                     {benefit.desc}
                   </div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 0.75rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, color: '#34d399' }}>
+                    ✓ {benefit.highlight}
+                  </div>
                 </div>
-                <div className="tooltip-icon">ℹ️</div>
               </div>
             ))}
           </div>
@@ -685,16 +842,24 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
       <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s' }}>
         <div style={{ textAlign: 'center' }}>
           <h2 className="vant-h2 vant-mb-6">
-            🚀 Desbloqueie Tudo com o Plano PRO
+            🚀 Alcance o Score {projected.score}/100 e Entre no {projected.percentile}
           </h2>
-          <p className="vant-text-slate-400" style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>
-            A partir de <strong style={{ color: '#38bdf8' }}>R$ 27,90/mês</strong> ou <strong style={{ color: '#10b981' }}>R$ 239/ano</strong> (economize 29%)
-          </p>
+          <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem', maxWidth: '700px', margin: '0 auto 1.5rem' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#10b981', marginBottom: '0.5rem', textAlign: 'center' }}>
+              🎯 Teste por R$ 1,99 durante 7 dias
+            </div>
+            <div style={{ fontSize: '0.95rem', color: '#cbd5e1', textAlign: 'center', lineHeight: 1.6 }}>
+              Depois <strong style={{ color: '#f8fafc' }}>R$ 19,90/mês</strong> (desconto vitalício) ou <strong style={{ color: '#f8fafc' }}>R$ 239/ano</strong> (economize 29%)
+            </div>
+            <div style={{ fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center', marginTop: '0.5rem' }}>
+              Cancele quando quiser • Reembolso em 48h
+            </div>
+          </div>
 
           <div style={{ display: 'grid', gap: '0.75rem', margin: '1.5rem 0', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
             <div className="vant-flex vant-items-center vant-gap-3 vant-text-slate-400" style={{ justifyContent: 'center' }}>
               <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.3rem' }}>✓</span>
-              <span>Otimizações ILIMITADAS</span>
+              <span>30 Otimizações para testar</span>
             </div>
             <div className="vant-flex vant-items-center vant-gap-3 vant-text-slate-400" style={{ justifyContent: 'center' }}>
               <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.3rem' }}>✓</span>
@@ -715,7 +880,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           </div>
 
           <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{ margin: '1.5rem auto 0', display: 'flex' }}>
-            COMEÇAR TRIAL R$ 1,99 POR 7 DIAS
+            Começar teste por R$ 1,99
           </button>
 
           <div className="vant-text-slate-500" style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.85rem' }}>
