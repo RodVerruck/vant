@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, TrendingUp } from 'lucide-react';
+import { AlertCircle, TrendingUp, FileCheck, Mic, BookOpen, Search, RefreshCw, Zap, X, Check, Shield, LockOpen, CheckCircle2 } from 'lucide-react';
 import { calculateProjectedScore } from '@/lib/helpers';
 
 // Importar estilos globais do PaidStage
@@ -524,7 +524,10 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             <p className="vant-subtitle">Análise gratuita do seu currículo</p>
           </div>
           <div className="vant-badge-credits">
-            <div className="free-badge">✨ ANÁLISE GRATUITA</div>
+            <div className="free-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Zap size={13} color="#f8fafc" />
+              ANÁLISE GRATUITA
+            </div>
           </div>
         </div>
 
@@ -668,7 +671,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                   <div className="vant-grid-2 vant-mb-4">
                     <div className="version-card-bad">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem' }}>
-                        <span style={{ fontSize: '0.95rem' }}>❌</span>
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.1rem', height: '1.1rem', borderRadius: '99px', background: 'rgba(239,68,68,0.2)', flexShrink: 0 }}><X size={9} color="#f87171" strokeWidth={3} /></span>
                         <h4 style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Versão Atual</h4>
                       </div>
                       <div className="vant-text-white" style={{ fontSize: '0.9rem', lineHeight: 1.6, color: '#e2e8f0' }}>
@@ -677,7 +680,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                     </div>
                     <div className="version-card-good">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem' }}>
-                        <span style={{ fontSize: '0.95rem' }}>✅</span>
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.1rem', height: '1.1rem', borderRadius: '99px', background: 'rgba(16,185,129,0.2)', flexShrink: 0 }}><Check size={9} color="#34d399" strokeWidth={3} /></span>
                         <h4 style={{ fontSize: '0.72rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Versão Otimizada</h4>
                       </div>
                       <div className="vant-text-white" style={{ fontSize: '0.9rem', lineHeight: 1.6, color: '#e2e8f0' }}>
@@ -706,7 +709,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             </>
           ) : (
             <div className="vant-text-slate-400" style={{ textAlign: 'center', padding: '2rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                <CheckCircle2 size={48} color="#10b981" strokeWidth={1.5} />
+              </div>
               <div>Nenhum problema crítico detectado em seu currículo!</div>
             </div>
           )}
@@ -718,46 +723,16 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.5rem' }}>Um sistema completo do CV à entrevista.</p>
 
           <div className="benefits-grid">
-            {[
-              {
-                icon: '🎯',
-                color: '#38bdf8',
-                bg: 'rgba(56,189,248,0.12)',
-                title: 'CV otimizado pronto para usar',
-                desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.'
-              },
-              {
-                icon: '🎤',
-                color: '#a78bfa',
-                bg: 'rgba(167,139,250,0.12)',
-                title: 'Simulador de entrevistas com IA',
-                desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.'
-              },
-              {
-                icon: '📚',
-                color: '#fb923c',
-                bg: 'rgba(251,146,60,0.12)',
-                title: 'Biblioteca personalizada',
-                desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.'
-              },
-              {
-                icon: '🔍',
-                color: '#f87171',
-                bg: 'rgba(248,113,113,0.12)',
-                title: 'Diagnóstico completo',
-                desc: 'Todos os problemas identificados com exemplos práticos de correção, não apenas os 2 primeiros.'
-              },
-              {
-                icon: '🔄',
-                color: '#34d399',
-                bg: 'rgba(52,211,153,0.12)',
-                title: 'Múltiplas otimizações',
-                desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.'
-              }
-            ].map((benefit, idx) => (
+            {([
+              { icon: <FileCheck size={18} color="#38bdf8" />, bg: 'rgba(56,189,248,0.12)', title: 'CV otimizado pronto para usar', desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.' },
+              { icon: <Mic size={18} color="#a78bfa" />, bg: 'rgba(167,139,250,0.12)', title: 'Simulador de entrevistas com IA', desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.' },
+              { icon: <BookOpen size={18} color="#fb923c" />, bg: 'rgba(251,146,60,0.12)', title: 'Biblioteca personalizada', desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.' },
+              { icon: <Search size={18} color="#f87171" />, bg: 'rgba(248,113,113,0.12)', title: 'Diagnóstico completo', desc: 'Todos os problemas identificados com exemplos práticos de correção, não apenas os 2 primeiros.' },
+              { icon: <RefreshCw size={18} color="#34d399" />, bg: 'rgba(52,211,153,0.12)', title: 'Múltiplas otimizações', desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.' }
+            ] as Array<{ icon: React.ReactNode; bg: string; title: string; desc: string }>).map((benefit, idx) => (
               <div key={idx} className="benefit-item vant-flex vant-gap-3" style={{ alignItems: 'flex-start', padding: '1.25rem', background: 'rgba(255,255,255,0.025)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div className="benefit-icon-box" style={{ background: benefit.bg, flexShrink: 0 }}>
-                  <span style={{ fontSize: '1.35rem' }}>{benefit.icon}</span>
+                  {benefit.icon}
                 </div>
                 <div className="vant-flex-1">
                   <div className="vant-text-white vant-font-medium" style={{ marginBottom: '0.4rem', fontSize: '0.95rem', lineHeight: 1.35 }}>
@@ -785,7 +760,11 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               </div>
             </div>
             <div className="unlock-banner">
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🔓</div>
+              <div style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ width: '3rem', height: '3rem', borderRadius: '99px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LockOpen size={22} color="#34d399" />
+                </div>
+              </div>
               <div className="vant-text-white" style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                 Desbloqueie a Análise Completa
               </div>
@@ -903,7 +882,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
           {/* Garantia em destaque */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem', padding: '0.6rem 1.25rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '99px' }}>
-            <span style={{ fontSize: '1rem' }}>🛡️</span>
+            <Shield size={15} color="#34d399" />
             <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#34d399' }}>Garantia de 7 dias — dinheiro de volta sem burocracia</span>
           </div>
         </div>
