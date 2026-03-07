@@ -59,7 +59,7 @@ const globalStyles = `
     gap: 1.5rem;
   }
   @media (min-width: 768px) {
-    .vant-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .vant-grid-2 { grid-template-columns: repeat(2, 1fr); gap: 2rem; }
   }
 
   /* Tipografia */
@@ -857,16 +857,14 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 const textColor = value >= 70 ? '#34d399' : value >= 50 ? '#fbbf24' : '#f87171';
                 const statusLabel = value >= 70 ? 'Bom' : value >= 50 ? 'Atenção' : 'Crítico';
                 return (
-                  <div key={label} style={{ marginBottom: '1.25rem' }}>
-                    <div className="vant-flex vant-items-center vant-gap-3" style={{ marginBottom: '0.3rem' }}>
-                      <span className="vant-text-sm vant-font-medium" style={{ color: '#e2e8f0', minWidth: '120px', fontSize: '0.9rem' }}>{label}</span>
+                  <div key={label} style={{ marginBottom: '1.1rem' }}>
+                    <div className="vant-flex vant-items-center" style={{ alignItems: 'center', gap: '1rem' }}>
+                      <span className="vant-text-sm vant-font-medium" style={{ color: '#e2e8f0', fontSize: '0.9rem', minWidth: '135px' }}>{label}</span>
                       <div style={{ flex: 1, height: '0.5rem', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${value}%`, background: barColor, borderRadius: '99px', transition: 'width 0.8s ease' }} />
                       </div>
-                      <span className="vant-text-sm vant-font-medium" style={{ minWidth: '38px', textAlign: 'right', color: textColor, fontWeight: 700 }}>{value}%</span>
-                    </div>
-                    <div style={{ paddingLeft: '120px', display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem' }}>
-                      <span className="bar-status-label" style={{ color: textColor }}>{statusLabel}</span>
+                      <span className="vant-text-sm vant-font-medium" style={{ color: textColor, fontWeight: 700, fontSize: '0.95rem', minWidth: '45px', textAlign: 'right' }}>{value}%</span>
+                      <span className="bar-status-label" style={{ color: textColor, fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: '70px', textAlign: 'center' }}>{statusLabel}</span>
                     </div>
                   </div>
                 );
@@ -876,22 +874,12 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             {/* Card Problemas - Só mostrar se houver problemas */}
             {problems.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div className="vant-flex vant-items-center vant-gap-3" style={{ marginBottom: '1rem' }}>
-                  <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', width: '2.25rem', height: '2.25rem' }}>
-                    <AlertCircle size={16} color="white" />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fca5a5', marginBottom: '0.25rem' }}>Principais Bloqueios</div>
-                    <div className="vant-text-xs" style={{ color: '#cbd5e1', fontSize: '0.85rem' }}>Reduzem suas chances no filtro inicial</div>
-                  </div>
-                </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                   {problems.map((p: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 1rem', background: 'rgba(239,68,68,0.08)', borderRadius: '10px', border: '1px solid rgba(239,68,68,0.18)' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,0.15)', borderRadius: '99px', width: '1.4rem', height: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '0.05rem' }}>{i + 1}</span>
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.85rem 1rem', background: 'rgba(127, 29, 29, 0.25)', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.3)', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,0.15)', borderRadius: '99px', width: '1.4rem', height: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '0.1rem' }}>{i + 1}</span>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.9rem', color: '#fecaca', lineHeight: 1.5, fontWeight: 600, marginBottom: '0.25rem' }}>{p.titulo || `Problema ${i + 1}`}</div>
-                        {p.impacto && <div style={{ fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.5 }}>{p.impacto}</div>}
+                        <div style={{ fontSize: '0.9rem', color: '#fecaca', lineHeight: 1.5, fontWeight: 600 }}>{p.titulo || `Problema ${i + 1}`}</div>
                       </div>
                     </div>
                   ))}
