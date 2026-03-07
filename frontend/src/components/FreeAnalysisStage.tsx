@@ -72,6 +72,7 @@ const globalStyles = `
   .vant-font-medium { font-weight: 500; }
   .vant-text-slate-400 { color: #94a3b8; }
   .vant-text-slate-500 { color: #64748b; }
+  .vant-text-support { color: #cbd5e1; font-weight: 500; }
   .vant-text-white { color: white; }
   .vant-pulse-soft { animation: vantPulse 1.6s ease-in-out infinite; }
   @keyframes vantPulse {
@@ -539,9 +540,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             <div className="vant-flex vant-items-center vant-gap-6" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
               {/* Score Atual */}
               <div style={{ textAlign: 'center', minWidth: '160px' }}>
-                <div className="vant-text-sm vant-font-medium" style={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Score Atual</div>
+                <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Score Atual</div>
                 <div style={{ fontSize: '4.5rem', fontWeight: 700, color: currentScoreColors.primary, lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>{score}</div>
-                <div className="vant-text-xs" style={{ color: currentScoreColors.secondary, fontWeight: 500 }}>de 100 pontos</div>
+                <div className="vant-text-xs vant-text-support">de 100 pontos</div>
                 <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', background: currentScoreColors.primary + '22', border: '1px solid ' + currentScoreColors.primary + '44', borderRadius: '99px' }}>
                   <span style={{ fontSize: '0.72rem', fontWeight: 700, color: currentScoreColors.primary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{currentScoreColors.label}</span>
                 </div>
@@ -562,11 +563,11 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
               {/* Score Projetado */}
               <div style={{ textAlign: 'center', minWidth: '160px' }}>
-                <div className="vant-text-sm vant-font-medium" style={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Com PRO</div>
+                <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Com PRO</div>
                 <div style={{ fontSize: '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
                   {projected.score}
                 </div>
-                <div className="vant-text-xs" style={{ color: '#34d399', fontWeight: 500 }}>+{projected.improvement} pontos</div>
+                <div className="vant-text-xs vant-text-support">+{projected.improvement} pontos</div>
                 <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', borderRadius: '99px' }}>
                   <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Projetado</span>
                 </div>
@@ -577,12 +578,12 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                 <TrendingUp size={20} color="#34d399" />
-                <span style={{ color: '#34d399', fontSize: '1rem', fontWeight: 600 }}>Alcance o {projected.percentile} dos candidatos</span>
+                <span style={{ color: '#86efac', fontSize: '1rem', fontWeight: 600 }}>Alcance o {projected.percentile} dos candidatos</span>
               </div>
             </div>
 
             {/* Explicação */}
-            <p className="vant-text-sm vant-text-slate-400" style={{ marginTop: '1.5rem', lineHeight: 1.7, textAlign: 'center', maxWidth: '600px', margin: '1.5rem auto 0' }}>
+            <p className="vant-text-sm vant-text-support" style={{ marginTop: '1.5rem', lineHeight: 1.7, textAlign: 'center', maxWidth: '600px', margin: '1.5rem auto 0' }}>
               {score < 50 && "⚠️ Seu CV está sendo rejeitado automaticamente pela maioria dos sistemas ATS. Com a versão PRO, você recebe o CV otimizado pronto que pode aumentar suas chances em até 3x."}
               {score >= 50 && score < 70 && "📊 Seu CV passa em alguns filtros ATS, mas perde oportunidades. A versão PRO entrega o CV reformulado para alcançar o " + projected.percentile + "."}
               {score >= 70 && score < 80 && "⚡ Seu CV está no caminho certo! A versão PRO aplica ajustes estratégicos para alcançar o " + projected.percentile + " e se destacar da concorrência."}
@@ -629,7 +630,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 </div>
                 <div>
                   <span className="vant-text-sm vant-font-medium" style={{ color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gaps Encontrados</span>
-                  <div className="vant-text-xs" style={{ color: '#94a3b8' }}>Impedem sua seleção agora</div>
+                  <div className="vant-text-xs vant-text-support">Impedem sua seleção agora</div>
                 </div>
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -786,7 +787,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             <div className="vant-text-white vant-font-medium" style={{ marginBottom: '0.25rem' }}>
               Análise gratuita utilizada
             </div>
-            <div className="vant-text-slate-400 vant-text-sm">
+            <div className="vant-text-support vant-text-sm">
               Faça upgrade para continuar otimizando
             </div>
           </div>
@@ -826,7 +827,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             <div className="vant-text-white vant-font-medium">
               Desbloqueie análise completa
             </div>
-            <div className="vant-text-slate-400 vant-text-sm">
+            <div className="vant-text-support vant-text-sm">
               Apenas R$ 1,99 trial 7 dias
             </div>
           </div>

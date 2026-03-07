@@ -3820,8 +3820,9 @@ export default function AppPage() {
                                     marginBottom: "0.25rem"
                                 }}>🎉 Análise gratuita concluída!</div>
                                 <div style={{
-                                    color: "#94a3b8",
-                                    fontSize: "0.875rem"
+                                    color: "#cbd5e1",
+                                    fontSize: "0.875rem",
+                                    fontWeight: 500
                                 }}>Você tem 1 análise gratuita disponível</div>
                             </div>
                             <div style={{ display: "flex", gap: "1rem" }}>
@@ -3829,10 +3830,11 @@ export default function AppPage() {
                                     onClick={() => setStage("hero")}
                                     style={{
                                         background: "transparent",
-                                        color: "#94a3b8",
+                                        color: "#cbd5e1",
                                         border: "1px solid rgba(255,255,255,0.1)",
                                         padding: "0.75rem 1.5rem",
                                         borderRadius: "0.5rem",
+                                        fontWeight: 500,
                                         cursor: "pointer"
                                     }}
                                 >
