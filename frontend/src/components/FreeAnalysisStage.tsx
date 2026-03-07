@@ -363,6 +363,22 @@ const globalStyles = `
     padding: 1rem;
   }
 
+  .optimized-text {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #e2e8f0;
+  }
+
+  .optimized-highlight {
+    display: inline;
+    background: rgba(16, 185, 129, 0.12);
+    color: #dcfce7;
+    font-weight: 700;
+    padding: 0.08rem 0.3rem;
+    border-radius: 0.35rem;
+    box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.18);
+  }
+
   /* Chips de termos faltando */
   .term-chip {
     display: inline-flex;
@@ -453,6 +469,29 @@ interface FreeAnalysisStageProps {
   previewData: any;
   onUpgrade: () => void;
   onTryAnother?: () => void;
+}
+
+function renderOptimizedTextWithHighlights(text?: string) {
+  if (!text) {
+    return "Exemplo não disponível";
+  }
+
+  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+
+  return parts.map((part, index) => {
+    const isHighlighted = part.startsWith("**") && part.endsWith("**");
+    const content = isHighlighted ? part.slice(2, -2) : part;
+
+    if (isHighlighted) {
+      return (
+        <span key={`optimized-highlight-${index}`} className="optimized-highlight">
+          {content}
+        </span>
+      );
+    }
+
+    return <span key={`optimized-text-${index}`}>{content}</span>;
+  });
 }
 
 export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: FreeAnalysisStageProps) {
@@ -684,8 +723,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '1.1rem', height: '1.1rem', borderRadius: '99px', background: 'rgba(16,185,129,0.2)', flexShrink: 0 }}><Check size={9} color="#34d399" strokeWidth={3} /></span>
                         <h4 style={{ fontSize: '0.72rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Versão Otimizada</h4>
                       </div>
-                      <div className="vant-text-white" style={{ fontSize: '0.9rem', lineHeight: 1.6, color: '#e2e8f0' }}>
-                        {problem.exemplo_otimizado || "Exemplo não disponível"}
+                      <div className="optimized-text">
+                        {renderOptimizedTextWithHighlights(problem.exemplo_otimizado)}
                       </div>
                     </div>
                   </div>
