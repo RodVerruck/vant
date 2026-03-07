@@ -373,6 +373,34 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
     impacto
   );
 
+  // 🎨 Sistema de cores baseado no score
+  const getScoreColor = (scoreValue: number) => {
+    if (scoreValue < 50) {
+      return {
+        primary: '#ef4444',
+        secondary: '#fca5a5',
+        gradient: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
+        label: 'Crítico'
+      };
+    } else if (scoreValue < 80) {
+      return {
+        primary: '#f59e0b',
+        secondary: '#fbbf24',
+        gradient: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+        label: 'Atenção'
+      };
+    } else {
+      return {
+        primary: '#10b981',
+        secondary: '#34d399',
+        gradient: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+        label: 'Excelente'
+      };
+    }
+  };
+
+  const currentScoreColors = getScoreColor(score);
+
   return (
     <div className="vant-premium-wrapper">
       <div className="vant-container">
@@ -397,10 +425,10 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               {/* Score Atual */}
               <div style={{ textAlign: 'center', minWidth: '200px' }}>
                 <div className="vant-text-sm vant-font-medium" style={{ color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem' }}>Score Atual</div>
-                <div style={{ fontSize: '4rem', fontWeight: 300, color: '#ef4444', lineHeight: 1, marginBottom: '0.5rem' }}>{score}</div>
-                <div className="vant-text-sm" style={{ color: '#fca5a5', marginBottom: '1rem' }}>de 100 pontos</div>
+                <div style={{ fontSize: '4rem', fontWeight: 300, color: currentScoreColors.primary, lineHeight: 1, marginBottom: '0.5rem' }}>{score}</div>
+                <div className="vant-text-sm" style={{ color: currentScoreColors.secondary, marginBottom: '1rem' }}>de 100 pontos</div>
                 <div className="vant-score-bar-bg" style={{ maxWidth: '200px', margin: '0 auto' }}>
-                  <div className="vant-score-bar-fill" style={{ width: `${score}%`, background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)' }} />
+                  <div className="vant-score-bar-fill" style={{ width: `${score}%`, background: currentScoreColors.gradient }} />
                 </div>
               </div>
 
@@ -433,9 +461,10 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             {/* Explicação */}
             <p className="vant-text-sm vant-text-slate-400" style={{ marginTop: '1.5rem', lineHeight: 1.7, textAlign: 'center', maxWidth: '600px', margin: '1.5rem auto 0' }}>
               {score < 50 && "⚠️ Seu CV está sendo rejeitado automaticamente pela maioria dos sistemas ATS. Com otimização profissional, você pode aumentar suas chances em até 300%."}
-              {score >= 50 && score < 70 && "📊 Seu CV passa em alguns filtros ATS, mas perde oportunidades. Com otimização, você pode dobrar suas chances e alcançar o {projected.percentile}."}
-              {score >= 70 && score < 85 && "✅ Seu CV está competitivo, mas ainda há espaço para melhorias que podem te colocar no {projected.percentile} e aumentar suas chances significativamente."}
-              {score >= 85 && "🌟 Excelente! Seu CV está otimizado para ATS. Pequenos ajustes estratégicos podem te levar ao {projected.percentile} e maximizar suas oportunidades."}
+              {score >= 50 && score < 70 && "📊 Seu CV passa em alguns filtros ATS, mas perde oportunidades. Com otimização, você pode dobrar suas chances e alcançar o " + projected.percentile + "."}
+              {score >= 70 && score < 80 && "⚡ Seu CV está no caminho certo! Com ajustes estratégicos, você pode alcançar o " + projected.percentile + " e se destacar significativamente da concorrência."}
+              {score >= 80 && score < 90 && "✅ Seu CV está competitivo e passa na maioria dos filtros ATS. Pequenas otimizações podem te colocar no " + projected.percentile + " e maximizar suas oportunidades."}
+              {score >= 90 && "🌟 Excelente! Seu CV está otimizado para ATS. Ajustes finais podem te levar ao " + projected.percentile + " e garantir destaque máximo."}
             </p>
           </div>
         </div>
