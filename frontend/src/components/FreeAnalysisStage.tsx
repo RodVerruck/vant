@@ -471,26 +471,116 @@ interface FreeAnalysisStageProps {
   onTryAnother?: () => void;
 }
 
-function renderOptimizedTextWithHighlights(text?: string) {
-  if (!text) {
+function tokenizeForDiff(text: string) {
+  return text.match(/\w+|[^\w\s]+|\s+/g) ?? [];
+}
+
+function normalizeDiffToken(token: string) {
+  return token.trim().toLowerCase();
+}
+
+function renderOptimizedTextWithHighlights(currentText?: string, optimizedText?: string) {
+  if (!optimizedText) {
     return "Exemplo não disponível";
   }
 
-  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  const manualParts = optimizedText.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  const hasManualHighlights = manualParts.some((part) => part.startsWith("**") && part.endsWith("**"));
 
-  return parts.map((part, index) => {
-    const isHighlighted = part.startsWith("**") && part.endsWith("**");
-    const content = isHighlighted ? part.slice(2, -2) : part;
+  if (hasManualHighlights) {
+    return manualParts.map((part, index) => {
+      const isHighlighted = part.startsWith("**") && part.endsWith("**");
+      const content = isHighlighted ? part.slice(2, -2) : part;
 
-    if (isHighlighted) {
+      if (isHighlighted) {
+        return (
+          <span key={`optimized-highlight-${index}`} className="optimized-highlight">
+            {content}
+          </span>
+        );
+      }
+
+      return <span key={`optimized-text-${index}`}>{content}</span>;
+    });
+  }
+
+  const normalizedCurrent = (currentText ?? "").replace(/\*\*/g, "");
+  const normalizedOptimized = optimizedText.replace(/\*\*/g, "");
+
+  const currentTokens = tokenizeForDiff(normalizedCurrent);
+  const optimizedTokens = tokenizeForDiff(normalizedOptimized);
+  const currentNormalized = currentTokens.map(normalizeDiffToken);
+  const optimizedNormalized = optimizedTokens.map(normalizeDiffToken);
+
+  const lcsMatrix = Array.from({ length: currentTokens.length + 1 }, () =>
+    Array(optimizedTokens.length + 1).fill(0)
+  );
+
+  for (let i = currentTokens.length - 1; i >= 0; i -= 1) {
+    for (let j = optimizedTokens.length - 1; j >= 0; j -= 1) {
+      if (currentNormalized[i] && currentNormalized[i] === optimizedNormalized[j]) {
+        lcsMatrix[i][j] = lcsMatrix[i + 1][j + 1] + 1;
+      } else {
+        lcsMatrix[i][j] = Math.max(lcsMatrix[i + 1][j], lcsMatrix[i][j + 1]);
+      }
+    }
+  }
+
+  const segments: Array<{ text: string; highlighted: boolean }> = [];
+
+  let i = 0;
+  let j = 0;
+
+  while (j < optimizedTokens.length) {
+    const optimizedToken = optimizedTokens[j];
+    const normalizedOptimizedToken = optimizedNormalized[j];
+
+    const isWhitespace = normalizedOptimizedToken === "";
+    const isMatch = i < currentTokens.length && normalizedCurrent[i] && normalizedCurrent[i] === normalizedOptimizedToken;
+
+    if (isWhitespace || isMatch) {
+      if (isMatch) {
+        i += 1;
+      }
+
+      const previous = segments[segments.length - 1];
+      if (previous && previous.highlighted === false) {
+        previous.text += optimizedToken;
+      } else {
+        segments.push({ text: optimizedToken, highlighted: false });
+      }
+
+      j += 1;
+      continue;
+    }
+
+    const shouldSkipCurrent = i < currentTokens.length && lcsMatrix[i + 1][j] >= lcsMatrix[i][j + 1];
+
+    if (shouldSkipCurrent) {
+      i += 1;
+      continue;
+    }
+
+    const previous = segments[segments.length - 1];
+    if (previous && previous.highlighted === true) {
+      previous.text += optimizedToken;
+    } else {
+      segments.push({ text: optimizedToken, highlighted: true });
+    }
+
+    j += 1;
+  }
+
+  return segments.map((segment, index) => {
+    if (segment.highlighted) {
       return (
-        <span key={`optimized-highlight-${index}`} className="optimized-highlight">
-          {content}
+        <span key={`optimized-auto-highlight-${index}`} className="optimized-highlight">
+          {segment.text}
         </span>
       );
     }
 
-    return <span key={`optimized-text-${index}`}>{content}</span>;
+    return <span key={`optimized-auto-text-${index}`}>{segment.text}</span>;
   });
 }
 
@@ -724,7 +814,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                         <h4 style={{ fontSize: '0.72rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>Versão Otimizada</h4>
                       </div>
                       <div className="optimized-text">
-                        {renderOptimizedTextWithHighlights(problem.exemplo_otimizado)}
+                        {renderOptimizedTextWithHighlights(problem.exemplo_atual, problem.exemplo_otimizado)}
                       </div>
                     </div>
                   </div>
