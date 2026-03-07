@@ -105,6 +105,13 @@ const globalStyles = `
     padding: 2rem;
   }
 
+  .vant-diagnostic-wrapper {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.5rem;
+    padding: 2rem;
+  }
+
   /* Botões e Interativos */
   .vant-btn-tab {
     background: transparent;
@@ -737,56 +744,57 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         </div>
 
         {/* Grid de Diagnóstico e Problemas */}
-        <div className={`vant-grid-${problems.length > 0 ? '2' : '1'} vant-mb-12 vant-animate-fade`} style={{ animationDelay: '0.2s' }}>
+        <div className="vant-diagnostic-wrapper vant-mb-12 vant-animate-fade" style={{ animationDelay: '0.2s' }}>
+          <h3 className="vant-h3 vant-mb-6" style={{ fontSize: '1rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8' }}>Diagnóstico Detalhado</h3>
 
-          {/* Barras de Progresso dos Pilares */}
-          <div className="vant-glass-dark">
-            <h3 className="vant-h3 vant-mb-6" style={{ fontSize: '1rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8' }}>Diagnóstico Detalhado</h3>
+          <div className={`vant-grid-${problems.length > 0 ? '2' : '1'}`}>
+            {/* Barras de Progresso dos Pilares */}
+            <div>
 
-            {[{ label: 'Impacto', value: impacto }, { label: 'Palavras-chave', value: keywords }, { label: 'Formato ATS', value: formatoAts }].map(({ label, value }) => {
-              const barColor = value >= 70 ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : value >= 50 ? 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)';
-              const textColor = value >= 70 ? '#34d399' : value >= 50 ? '#fbbf24' : '#f87171';
-              const statusLabel = value >= 70 ? 'Bom' : value >= 50 ? 'Atenção' : 'Crítico';
-              return (
-                <div key={label} style={{ marginBottom: '1.25rem' }}>
-                  <div className="vant-flex vant-items-center vant-gap-3" style={{ marginBottom: '0.3rem' }}>
-                    <span className="vant-text-sm vant-font-medium" style={{ color: '#cbd5e1', minWidth: '110px' }}>{label}</span>
-                    <div style={{ flex: 1, height: '0.5rem', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${value}%`, background: barColor, borderRadius: '99px', transition: 'width 0.8s ease' }} />
+              {[{ label: 'Impacto', value: impacto }, { label: 'Palavras-chave', value: keywords }, { label: 'Formato ATS', value: formatoAts }].map(({ label, value }) => {
+                const barColor = value >= 70 ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : value >= 50 ? 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)';
+                const textColor = value >= 70 ? '#34d399' : value >= 50 ? '#fbbf24' : '#f87171';
+                const statusLabel = value >= 70 ? 'Bom' : value >= 50 ? 'Atenção' : 'Crítico';
+                return (
+                  <div key={label} style={{ marginBottom: '1.25rem' }}>
+                    <div className="vant-flex vant-items-center vant-gap-3" style={{ marginBottom: '0.3rem' }}>
+                      <span className="vant-text-sm vant-font-medium" style={{ color: '#cbd5e1', minWidth: '110px' }}>{label}</span>
+                      <div style={{ flex: 1, height: '0.5rem', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${value}%`, background: barColor, borderRadius: '99px', transition: 'width 0.8s ease' }} />
+                      </div>
+                      <span className="vant-text-sm vant-font-medium" style={{ minWidth: '38px', textAlign: 'right', color: textColor, fontWeight: 700 }}>{value}%</span>
                     </div>
-                    <span className="vant-text-sm vant-font-medium" style={{ minWidth: '38px', textAlign: 'right', color: textColor, fontWeight: 700 }}>{value}%</span>
+                    <div style={{ paddingLeft: '110px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span className="bar-status-label" style={{ color: textColor }}>{statusLabel}</span>
+                    </div>
                   </div>
-                  <div style={{ paddingLeft: '110px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <span className="bar-status-label" style={{ color: textColor }}>{statusLabel}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Card Problemas - Só mostrar se houver problemas */}
-          {problems.length > 0 && (
-            <div className="vant-glass-dark" style={{ borderColor: 'rgba(239, 68, 68, 0.25)', display: 'flex', flexDirection: 'column' }}>
-              <div className="vant-flex vant-items-center vant-gap-3" style={{ marginBottom: '1rem' }}>
-                <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', width: '2.25rem', height: '2.25rem' }}>
-                  <AlertCircle size={16} color="white" />
-                </div>
-                <div>
-                  <span className="vant-text-sm vant-font-medium" style={{ color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gaps Encontrados</span>
-                  <div className="vant-text-xs vant-text-support">Impedem sua seleção agora</div>
-                </div>
-              </div>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                {problems.map((p: any, i: number) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', padding: '0.65rem 0.75rem', background: 'rgba(239,68,68,0.07)', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.15)' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,0.15)', borderRadius: '99px', width: '1.4rem', height: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '0.05rem' }}>{i + 1}</span>
-                    <span style={{ fontSize: '0.85rem', color: '#fca5a5', lineHeight: 1.4, fontWeight: 500 }}>{p.titulo || `Problema ${i + 1}`}</span>
-                  </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
 
+            {/* Card Problemas - Só mostrar se houver problemas */}
+            {problems.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div className="vant-flex vant-items-center vant-gap-3" style={{ marginBottom: '1rem' }}>
+                  <div className="vant-icon-circle" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', width: '2.25rem', height: '2.25rem' }}>
+                    <AlertCircle size={16} color="white" />
+                  </div>
+                  <div>
+                    <span className="vant-text-sm vant-font-medium" style={{ color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gaps Encontrados</span>
+                    <div className="vant-text-xs vant-text-support">Impedem sua seleção agora</div>
+                  </div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {problems.map((p: any, i: number) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', padding: '0.65rem 0.75rem', background: 'rgba(239,68,68,0.07)', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.15)' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,0.15)', borderRadius: '99px', width: '1.4rem', height: '1.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '0.05rem' }}>{i + 1}</span>
+                      <span style={{ fontSize: '0.85rem', color: '#fca5a5', lineHeight: 1.4, fontWeight: 500 }}>{p.titulo || `Problema ${i + 1}`}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Análise Detalhada dos Problemas */}
@@ -1032,6 +1040,6 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         </div>
       </div>
 
-    </div>
+    </div >
   );
 }
