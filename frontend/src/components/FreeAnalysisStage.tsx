@@ -619,7 +619,33 @@ function renderOptimizedTextWithHighlights(currentText?: string, optimizedText?:
     j += 1;
   }
 
-  return segments.map((segment, index) => {
+  // Filter out highlights that are too small (less than 3 meaningful tokens)
+  const MIN_HIGHLIGHT_TOKENS = 3;
+  const filteredSegments = segments.map(segment => {
+    if (!segment.highlighted) return segment;
+
+    // Count meaningful tokens (non-whitespace, non-punctuation)
+    const meaningfulTokens = segment.text.match(/\w+/g) || [];
+
+    if (meaningfulTokens.length < MIN_HIGHLIGHT_TOKENS) {
+      return { text: segment.text, highlighted: false };
+    }
+
+    return segment;
+  });
+
+  // Merge consecutive non-highlighted segments
+  const mergedSegments: Array<{ text: string; highlighted: boolean }> = [];
+  for (const segment of filteredSegments) {
+    const last = mergedSegments[mergedSegments.length - 1];
+    if (last && last.highlighted === segment.highlighted) {
+      last.text += segment.text;
+    } else {
+      mergedSegments.push({ ...segment });
+    }
+  }
+
+  return mergedSegments.map((segment, index) => {
     if (segment.highlighted) {
       return (
         <span key={`optimized-auto-highlight-${index}`} className="optimized-highlight">
