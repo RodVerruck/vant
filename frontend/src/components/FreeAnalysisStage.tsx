@@ -390,12 +390,12 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
       <div className="vant-container">
 
         {/* Header Premium */}
-        <div className="vant-flex vant-justify-between vant-items-center vant-mb-12 vant-animate-fade">
-          <div>
+        <div className="vant-flex vant-justify-between vant-items-center vant-mb-12 vant-animate-fade" style={isMobile ? { flexWrap: 'wrap', gap: '0.75rem' } : undefined}>
+          <div style={isMobile ? { width: '100%', minWidth: 0 } : undefined}>
             <h1 className="vant-title-xl">Seu Diagnóstico</h1>
             <p className="vant-subtitle">Análise gratuita do seu currículo</p>
           </div>
-          <div className="vant-badge-credits">
+          <div className="vant-badge-credits" style={isMobile ? { width: '100%', display: 'flex', justifyContent: 'flex-start' } : undefined}>
             <div className="free-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <Zap size={13} color="#f8fafc" />
               ANÁLISE GRATUITA
@@ -408,10 +408,10 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           <div className={`vant-glass-dark ${isMobile ? 'vant-score-mobile-compact' : ''}`} style={{ padding: isMobile ? undefined : '2.5rem' }}>
             <h2 className="vant-h2 vant-mb-8" style={{ textAlign: 'center' }}>Evolução do Seu Score</h2>
 
-            <div className="vant-flex vant-items-center vant-gap-6" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div className="vant-flex vant-items-center vant-gap-6" style={isMobile ? { justifyContent: 'center', flexWrap: 'nowrap', flexDirection: 'column', gap: '1rem' } : { justifyContent: 'center', flexWrap: 'wrap' }}>
               {/* Score Atual */}
-              <div style={{ textAlign: 'center', minWidth: '160px' }}>
-                <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Score Atual</div>
+              <div style={{ textAlign: 'center', minWidth: isMobile ? 'auto' : '160px', width: isMobile ? '100%' : undefined }}>
+                <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: isMobile ? '0.4rem' : '0.75rem' }}>Score Atual</div>
                 <div className={isMobile ? 'vant-score-number-mobile' : ''} style={{ fontSize: isMobile ? '2.75rem' : '4.5rem', fontWeight: 700, color: currentScoreColors.primary, lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>{score}</div>
                 <div className="vant-text-xs vant-text-support">de 100 pontos</div>
                 <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', background: currentScoreColors.primary + '22', border: '1px solid ' + currentScoreColors.primary + '44', borderRadius: '99px' }}>
@@ -422,7 +422,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               {/* Seta SVG Animada - Só mostrar se houver melhoria E scores diferentes */}
               {projected.improvement > 0 && !hasNoImprovement && (
                 <div className="arrow-animated" style={{ display: 'flex', alignItems: 'center' }}>
-                  <svg width="48" height="24" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width={isMobile ? 28 : 48} height={isMobile ? 14 : 24} viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                       <linearGradient id="arrowGrad" x1="0" y1="0" x2="48" y2="0" gradientUnits="userSpaceOnUse">
                         <stop offset="0%" stopColor="#f59e0b" />
@@ -436,8 +436,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
               {/* Score Projetado - Só mostrar se houver melhoria E scores diferentes */}
               {projected.improvement > 0 && !hasNoImprovement && (
-                <div style={{ textAlign: 'center', minWidth: '160px' }}>
-                  <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Com PRO</div>
+                <div style={{ textAlign: 'center', minWidth: isMobile ? 'auto' : '160px', width: isMobile ? '100%' : undefined }}>
+                  <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: isMobile ? '0.4rem' : '0.75rem' }}>Com PRO</div>
                   <div style={{ fontSize: isMobile ? '2.75rem' : '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
                     {projected.score}
                   </div>
