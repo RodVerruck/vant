@@ -1,0 +1,38 @@
+Desenvolvedor Full Stack Sênior
+
+Sobre a vaga:
+Estamos buscando um Desenvolvedor Full Stack Sênior para integrar nosso time de tecnologia e liderar o desenvolvimento de nossa plataforma SaaS.
+
+Requisitos:
+• 5+ anos de experiência com desenvolvimento web
+• Experiência sólida com React e Node.js
+• Conhecimento avançado em TypeScript
+• Experiência com Next.js e FastAPI
+• Domínio de bancos de dados SQL e NoSQL
+• Experiência com AWS e Docker
+• Inglês avançado (leitura e escrita)
+
+Responsabilidades:
+• Desenvolver e manter aplicações web escaláveis
+• Arquitetar soluções técnicas robustas
+• Mentorar desenvolvedores júnior e pleno
+• Participar ativamente de code reviews
+• Implementar testes automatizados
+• Otimizar performance de aplicações
+• Colaborar com equipes de produto e design
+
+Diferenciais:
+• Experiência com Supabase
+• Conhecimento em IA/Machine Learning
+• Contribuições open source
+• Experiência com metodologias ágeis
+• Certificações em cloud (AWS, GCP, Azure)
+
+O que oferecemos:
+• Salário compatível com o mercado
+• Vale refeição e alimentação
+• Plano de saúde e odontológico
+• Home office flexível
+• Equipamentos de trabalho
+• Orçamento para cursos e eventos
+• Ambiente colaborativo e inovador

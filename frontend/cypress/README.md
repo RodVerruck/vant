@@ -25,6 +25,9 @@ npm run test:e2e:ui
 # Todos os testes
 npm run cypress:run
 
+# Apenas teste de upload completo (RECOMENDADO)
+npm run test:e2e -- --spec "cypress/e2e/upload-cv-completo.cy.ts"
+
 # Apenas screenshots para UX
 npm run test:e2e -- --spec "cypress/e2e/screenshots-ux.cy.ts"
 
@@ -65,7 +68,17 @@ cypress/
 
 ## 🎯 Testes Disponíveis
 
-### 1. Fluxo Principal (`fluxo-principal.cy.ts`)
+### 1. Upload CV Completo (`upload-cv-completo.cy.ts`) ⭐ NOVO
+- ✅ Fluxo completo de upload e análise
+- ✅ Modo "Tenho uma vaga" com descrição
+- ✅ Modo "Não tenho vaga" com seleção de área
+- ✅ Validação de campos obrigatórios
+- ✅ Configurações avançadas (comparativo)
+- ✅ Responsividade mobile (375x667)
+- ✅ Limite de caracteres (5000)
+- ✅ Alternância entre modos
+
+### 2. Fluxo Principal (`fluxo-principal.cy.ts`)
 - ✅ Carregamento da página inicial
 - ✅ Abertura de modal de autenticação
 - ✅ Preenchimento de formulários
@@ -74,7 +87,7 @@ cypress/
 - ✅ Responsividade
 - ✅ Acessibilidade básica
 
-### 2. Screenshots UX (`screenshots-ux.cy.ts`)
+### 3. Screenshots UX (`screenshots-ux.cy.ts`)
 - 📸 Múltiplas resoluções (Desktop, Tablet, Mobile)
 - 📸 Estados da aplicação (Loading, Error, Success)
 - 📸 Fluxo completo do usuário

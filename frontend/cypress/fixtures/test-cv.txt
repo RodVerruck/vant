@@ -1,0 +1,52 @@
+RODRIGO VERRUCK
+Desenvolvedor Full Stack Sênior
+
+CONTATO
+Email: rodrigo@example.com
+Telefone: (11) 98765-4321
+LinkedIn: linkedin.com/in/rodrigoverruck
+GitHub: github.com/rodrigoverruck
+
+RESUMO PROFISSIONAL
+Desenvolvedor Full Stack com 8+ anos de experiência em desenvolvimento de aplicações web escaláveis.
+Especialista em React, Node.js, TypeScript e arquitetura de sistemas.
+
+EXPERIÊNCIA PROFISSIONAL
+
+Desenvolvedor Full Stack Sênior | Tech Company | 2020 - Presente
+• Liderou desenvolvimento de plataforma SaaS com 50.000+ usuários ativos
+• Implementou arquitetura de microserviços reduzindo tempo de resposta em 40%
+• Mentorou equipe de 5 desenvolvedores júnior
+• Tecnologias: React, Next.js, Node.js, PostgreSQL, AWS
+
+Desenvolvedor Full Stack | Startup XYZ | 2018 - 2020
+• Desenvolveu MVP de aplicação mobile usando React Native
+• Implementou sistema de pagamentos integrado com Stripe
+• Reduziu custos de infraestrutura em 30% através de otimizações
+• Tecnologias: React, Express, MongoDB, Docker
+
+Desenvolvedor Frontend | Agência Digital | 2016 - 2018
+• Criou interfaces responsivas para 20+ clientes
+• Implementou testes automatizados aumentando cobertura para 85%
+• Melhorou performance de aplicações em 50% através de otimizações
+• Tecnologias: React, Vue.js, SASS, Webpack
+
+FORMAÇÃO
+Bacharelado em Ciência da Computação | Universidade Federal | 2012 - 2016
+
+HABILIDADES TÉCNICAS
+• Frontend: React, Next.js, TypeScript, TailwindCSS, Redux
+• Backend: Node.js, Express, FastAPI, Python
+• Banco de Dados: PostgreSQL, MongoDB, Redis
+• DevOps: Docker, AWS, CI/CD, GitHub Actions
+• Ferramentas: Git, Jest, Cypress, Figma
+
+IDIOMAS
+• Português: Nativo
+• Inglês: Avançado (C1)
+• Espanhol: Intermediário (B1)
+
+CERTIFICAÇÕES
+• AWS Certified Solutions Architect
+• Google Cloud Professional Developer
+• Scrum Master Certified (SMC)
