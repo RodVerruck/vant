@@ -1014,7 +1014,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               { icon: <FileCheck size={20} color="#38bdf8" />, bg: 'rgba(56,189,248,0.15)', title: 'CV otimizado pronto para usar', desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.' },
               { icon: <Mic size={20} color="#a78bfa" />, bg: 'rgba(167,139,250,0.15)', title: 'Simulador de entrevistas com IA', desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.' },
               { icon: <BookOpen size={20} color="#fb923c" />, bg: 'rgba(251,146,60,0.15)', title: 'Biblioteca personalizada', desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.' },
-              { icon: <Search size={20} color="#f87171" />, bg: 'rgba(248,113,113,0.15)', title: 'Diagnóstico completo', desc: 'Todos os problemas identificados com exemplos práticos de correção, não apenas os 2 primeiros.' },
+              { icon: <Search size={20} color="#f87171" />, bg: 'rgba(248,113,113,0.15)', title: 'Análise completa de todos os problemas', desc: 'Veja todos os gaps identificados com exemplos reais de como corrigir cada um.' },
               { icon: <RefreshCw size={20} color="#34d399" />, bg: 'rgba(52,211,153,0.15)', title: 'Múltiplas otimizações', desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.' }
             ] as Array<{ icon: React.ReactNode; bg: string; title: string; desc: string }>).map((benefit, idx) => (
               <div key={idx} className="benefit-card">
