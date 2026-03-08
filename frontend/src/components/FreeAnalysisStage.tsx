@@ -671,9 +671,21 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
   const impacto = typeof pilares.impacto === "number" ? pilares.impacto : Math.max(score - 20, 30);
 
   // Extração correta dos gaps (gap_1 e gap_2 como objetos)
-  const problems = [];
-  if (previewData?.gap_1) problems.push(previewData.gap_1);
-  if (previewData?.gap_2) problems.push(previewData.gap_2);
+  // FILTRO CRÍTICO: Só mostrar problemas com exemplos completos
+  const allProblems = [];
+  if (previewData?.gap_1) allProblems.push(previewData.gap_1);
+  if (previewData?.gap_2) allProblems.push(previewData.gap_2);
+
+  // Filtrar apenas problemas que tenham AMBOS os exemplos preenchidos
+  const problems = allProblems.filter((problem: any) => {
+    const hasCurrentExample = problem.exemplo_atual &&
+      typeof problem.exemplo_atual === 'string' &&
+      problem.exemplo_atual.trim().length > 0;
+    const hasOptimizedExample = problem.exemplo_otimizado &&
+      typeof problem.exemplo_otimizado === 'string' &&
+      problem.exemplo_otimizado.trim().length > 0;
+    return hasCurrentExample && hasOptimizedExample;
+  });
 
   const visibleProblems = showAllProblems ? problems : problems.slice(0, 2);
   const hiddenCount = problems.length - 2;
@@ -925,7 +937,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           <h2 className="vant-h2 vant-mb-6">Análise Detalhada dos Problemas</h2>
 
           <div className="vant-text-slate-400" style={{ marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.7 }}>
-            Nossa IA identificou <strong style={{ color: '#38bdf8' }}>{problems.length} {score >= 70 ? 'pontos de melhoria' : 'problemas críticos'}</strong> que, corrigidos, aumentam suas chances de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê os <strong style={{ color: '#38bdf8' }}>2 primeiros exemplos</strong> de como seu CV está agora e como ficaria após a otimização. Na versão PRO, você recebe a análise completa dos {problems.length} pontos com as correções prontas para aplicar.
+            Nossa IA identificou <strong style={{ color: '#38bdf8' }}>alguns pontos de melhoria</strong> que, corrigidos, aumentam suas chances de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê <strong style={{ color: '#38bdf8' }}>uma amostra</strong> de como seu CV está agora e como ficaria após a otimização. Na versão PRO, você recebe a análise completa com todas as correções prontas para aplicar.
           </div>
 
           {problems.length > 0 ? (
