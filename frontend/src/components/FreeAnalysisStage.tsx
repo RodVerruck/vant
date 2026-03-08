@@ -574,9 +574,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
           <div className="vant-text-slate-400" style={{ marginBottom: isMobile ? '1rem' : '1.5rem', fontSize: isMobile ? '0.82rem' : '0.95rem', lineHeight: 1.7 }}>
             {isMobile ? (
-              <>Nossa IA identificou <strong style={{ color: '#38bdf8' }}>pontos de melhoria</strong>. Veja uma amostra de como ficaria após a otimização. No PRO, você recebe tudo pronto.</>
+              <>Nossa IA identificou <strong style={{ color: '#38bdf8' }}>pontos de melhoria</strong>. Veja uma amostra de como seu CV pode ficar após a otimização. No PRO, você recebe a análise completa com sugestões prontas para aplicar.</>
             ) : (
-              <>Nossa IA identificou <strong style={{ color: '#38bdf8' }}>alguns pontos de melhoria</strong> que, corrigidos, aumentam suas chances de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê <strong style={{ color: '#38bdf8' }}>uma amostra</strong> de como seu CV está agora e como ficaria após a otimização. Na versão PRO, você recebe a análise completa com todas as correções prontas para aplicar.</>
+              <>Nossa IA identificou <strong style={{ color: '#38bdf8' }}>alguns pontos de melhoria</strong> que podem fortalecer seu CV para filtros ATS e para a leitura de recrutadores. Abaixo você vê <strong style={{ color: '#38bdf8' }}>uma amostra</strong> de como seu CV está agora e como ele pode ficar após a otimização. Na versão PRO, você recebe a análise completa com sugestões e ajustes prontos para aplicar.</>
             )}
           </div>
 
