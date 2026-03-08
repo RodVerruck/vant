@@ -34,13 +34,17 @@ export interface PreviewData {
         explicacao?: string;
         exemplo_atual?: string;
         exemplo_otimizado?: string;
+        termos_faltando?: string[] | { termo: string; frequencia: string }[];
+        impacto?: string;
         pontos?: number;
     };
     gap_2?: {
         titulo?: string;
         explicacao?: string;
-        termos_faltando?: string[];
+        exemplo_atual?: string;
         exemplo_otimizado?: string;
+        termos_faltando?: string[] | { termo: string; frequencia: string }[];
+        impacto?: string;
         pontos?: number;
     };
 }

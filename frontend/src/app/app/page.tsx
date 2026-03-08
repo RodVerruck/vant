@@ -3559,9 +3559,12 @@ export default function AppPage() {
                                                 fontSize: "0.95rem",
                                                 lineHeight: 1.6
                                             }}>
-                                                {previewData.gap_2.termos_faltando?.map((termo: string, idx: number) => (
-                                                    <div key={idx} style={{ marginBottom: "0.25rem" }}>• {termo}</div>
-                                                ))}
+                                                {previewData.gap_2.termos_faltando?.map((item: string | { termo: string; frequencia: string }, idx: number) => {
+                                                    const termo = typeof item === 'string' ? item : item.termo;
+                                                    return (
+                                                        <div key={idx} style={{ marginBottom: "0.25rem" }}>• {termo}</div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                         <div style={{
