@@ -1058,11 +1058,29 @@ VAGA ALVO:
 INSTRUÇÕES ESPECÍFICAS:
 1. Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV para a área de {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
 2. **CRÍTICO**: Para exemplo_atual, copie EXATAMENTE um trecho real do CV (não modifique)
-3. **CRÍTICO**: Para exemplo_otimizado, use o MESMO trecho real mas apenas:
-   - Adicione palavras-chave RELEVANTES PARA A ÁREA DE {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
-   - Melhore a linguagem profissional CONFORME A ÁREA
-   - **IMPORTANTE**: Se o gap for "Formatação inadequada", NÃO adicione termos técnicos de outras áreas. Foque APENAS em melhorar a estrutura e clareza.
-   - NÃO invente números, porcentagens ou métricas
+3. **CRÍTICO**: Para exemplo_otimizado, TRANSFORME o trecho seguindo TODAS estas regras OBRIGATÓRIAS:
+   
+   **REGRAS OBRIGATÓRIAS DE OTIMIZAÇÃO:**
+   a) **VERBO DE AÇÃO NO INÍCIO**: Comece SEMPRE com verbo de ação forte (desenvolvi, implementei, gerenciei, criei, otimizei, liderei, reduzi, aumentei, automatizei)
+   
+   b) **MÍNIMO 2 TERMOS TÉCNICOS**: Adicione pelo menos 2 termos técnicos/palavras-chave RELEVANTES para {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
+      - Exemplos TI: Python, React, API REST, Docker, Kubernetes, microserviços, CI/CD
+      - Exemplos RH: recrutamento, onboarding, gestão de pessoas, KPIs, treinamento
+      - Exemplos Marketing: SEO, Google Ads, funil de conversão, CRM, automação
+      - Exemplos Vendas: pipeline, CRM, prospecção, negociação, fechamento
+   
+   c) **SUBSTÂNCIA VISÍVEL**: A versão otimizada deve ter 30-50% MAIS conteúdo que a atual
+      - Adicione especificidades técnicas
+      - Inclua contexto profissional
+      - Detalhe ferramentas/metodologias usadas
+   
+   d) **MARQUE ADIÇÕES COM ASTERISCOS**: Coloque **termo novo** em torno de CADA palavra/frase que você ADICIONAR (não estava no original)
+      - Exemplo: "Gerenciei projetos" → "**Implementei** projetos utilizando **metodologia ágil** e **Scrum**"
+   
+   e) **NÃO invente números, porcentagens ou métricas** - foque em qualidade técnica e profissional
+   
+   f) **IMPORTANTE**: Se o gap for "Formatação inadequada", NÃO adicione termos técnicos. Foque em estrutura e clareza.
+
 4. **NÃO USE** "falta de métricas" ou "falta de números" como problema
 5. Foque APENAS nestes 4 tipos de problemas RELEVANTES PARA A ÁREA:
    - Formatação inadequada (parágrafos longos, sem bullets, estrutura confusa)
@@ -1072,6 +1090,8 @@ INSTRUÇÕES ESPECÍFICAS:
 6. Seja direto e objetivo
 7. **VERIFICAÇÃO OBRIGATÓRIA**: Não inclua "métricas", "números", "resultados quantitativos" em nenhum gap
 8. **VERIFICAÇÃO OBRIGATÓRIA**: Revise sua resposta antes de enviar para garantir que não há gaps sobre métricas
+9. **VERIFICAÇÃO OBRIGATÓRIA**: Confirme que exemplo_otimizado tem pelo menos 2 termos técnicos marcados com **termo**
+10. **VERIFICAÇÃO OBRIGATÓRIA**: Confirme que exemplo_otimizado começa com verbo de ação forte
 
 **CÁLCULO OBRIGATÓRIO DOS PILARES (analise_por_pilares):**
 9. **impacto (0-100)**: Avalie o uso de verbos de ação, resultados e especificidade. 
