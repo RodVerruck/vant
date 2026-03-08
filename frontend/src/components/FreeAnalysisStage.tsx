@@ -19,6 +19,22 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
   const [showAllProblems, setShowAllProblems] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(false);
 
+  // Edge Case 1: Skeleton loader se previewData null/undefined
+  if (!previewData) {
+    return (
+      <div className="vant-premium-wrapper">
+        <div className="vant-container">
+          <div className="vant-skeleton-loader">
+            <div className="vant-skeleton-header" />
+            <div className="vant-skeleton-card" />
+            <div className="vant-skeleton-card" />
+            <div className="vant-skeleton-card" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Hook para detectar scroll em 60% da página
   useEffect(() => {
     const handleScroll = () => {
@@ -75,6 +91,10 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
     impacto
   );
 
+
+  // Edge Cases 2 e 3: Flags de controle
+  const isPerfectScore = problems.length === 0 && score >= 85;
+  const hasNoImprovement = projected.score === score;
 
   // 🎨 Sistema de cores baseado no score
   const getScoreColor = (scoreValue: number) => {
@@ -178,8 +198,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 </div>
               </div>
 
-              {/* Seta SVG Animada - Só mostrar se houver melhoria */}
-              {projected.improvement > 0 && (
+              {/* Seta SVG Animada - Só mostrar se houver melhoria E scores diferentes */}
+              {projected.improvement > 0 && !hasNoImprovement && (
                 <div className="arrow-animated" style={{ display: 'flex', alignItems: 'center' }}>
                   <svg width="48" height="24" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -193,8 +213,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 </div>
               )}
 
-              {/* Score Projetado - Só mostrar se houver melhoria */}
-              {projected.improvement > 0 && (
+              {/* Score Projetado - Só mostrar se houver melhoria E scores diferentes */}
+              {projected.improvement > 0 && !hasNoImprovement && (
                 <div style={{ textAlign: 'center', minWidth: '160px' }}>
                   <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Com PRO</div>
                   <div style={{ fontSize: '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
@@ -208,8 +228,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               )}
             </div>
 
-            {/* Breakdown de Pontos - Só mostrar se houver melhoria */}
-            {projected.improvement > 0 && projected.breakdown && projected.breakdown.length > 0 && (
+            {/* Breakdown de Pontos - Só mostrar se houver melhoria E scores diferentes */}
+            {!hasNoImprovement && projected.improvement > 0 && projected.breakdown && projected.breakdown.length > 0 && (
               <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                 <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Como calculamos +{projected.improvement} pontos
@@ -517,53 +537,91 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         </div>
       </div>
 
-      {/* CTA Premium */}
-      <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s' }}>
-        <div style={{ textAlign: 'center' }}>
-          <h2 className="vant-h2" style={{ marginBottom: '0.4rem' }}>
-            Alcance o Score {projected.score}/100 e entre no {projected.percentile}
-          </h2>
-          <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.5rem' }}>Baseado nos problemas identificados no seu currículo</p>
-
-          {/* Preço */}
-          <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '12px', padding: '1.25rem 1.5rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>R$ 1,99</div>
-            <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600, marginTop: '0.2rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trial de 7 dias</div>
-            <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Depois, apenas <strong style={{ color: '#cbd5e1' }}>R$ 19,90/mês</strong> • Cancele quando quiser</div>
-          </div>
-
-          {/* Checklist left-aligned */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-            <div className="cta-checklist">
-              {[
-                'Análise completa de todos os problemas',
-                'CV otimizado para download (PDF + Word)',
-                'Simulador de entrevistas com IA',
-                'Biblioteca de recursos personalizados'
-              ].map((item) => (
-                <div key={item} className="cta-checklist-item">
-                  <span className="cta-check-icon">✓</span>
-                  <span>{item}</span>
-                </div>
-              ))}
+      {/* CTA Premium - Alternativo para score perfeito */}
+      {isPerfectScore ? (
+        <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ width: '4rem', height: '4rem', borderRadius: '99px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircle2 size={32} color="#34d399" />
+              </div>
             </div>
-          </div>
-
-          <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{ margin: '0 auto', display: 'flex', fontSize: '1rem', padding: '0.9rem 2.5rem' }}>
-            Começar teste por R$ 1,99
-          </button>
-
-          <div style={{ textAlign: 'center', marginTop: '0.6rem', fontSize: '0.82rem', color: '#475569' }}>
-            ou escolha o plano mensal/anual
-          </div>
-
-          {/* Garantia em destaque */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem', padding: '0.6rem 1.25rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '99px' }}>
-            <Shield size={15} color="#34d399" />
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#34d399' }}>Garantia de 7 dias — dinheiro de volta sem burocracia</span>
+            <h2 className="vant-h2" style={{ marginBottom: '0.75rem', color: '#34d399' }}>
+              Parabéns! Seu CV está excelente
+            </h2>
+            <p style={{ fontSize: '1rem', color: '#cbd5e1', marginBottom: '1.5rem', lineHeight: 1.7 }}>
+              Seu currículo já está otimizado e pronto para conquistar oportunidades. Com score {score}/100, você está no topo!
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1.5rem' }}>
+              Quer ir além? Com o PRO você desbloqueia:
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              <div className="cta-checklist">
+                {[
+                  'Simulador de entrevistas com IA',
+                  'Biblioteca de recursos personalizados',
+                  'Múltiplas otimizações para diferentes vagas'
+                ].map((item) => (
+                  <div key={item} className="cta-checklist-item">
+                    <span className="cta-check-icon">✓</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{ margin: '0 auto', display: 'flex', fontSize: '1rem', padding: '0.9rem 2.5rem' }}>
+              Explorar recursos PRO
+            </button>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s' }}>
+          <div style={{ textAlign: 'center' }}>
+            <h2 className="vant-h2" style={{ marginBottom: '0.4rem' }}>
+              Alcance o Score {projected.score}/100 e entre no {projected.percentile}
+            </h2>
+            <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.5rem' }}>Baseado nos problemas identificados no seu currículo</p>
+
+            {/* Preço */}
+            <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '12px', padding: '1.25rem 1.5rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>R$ 1,99</div>
+              <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600, marginTop: '0.2rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trial de 7 dias</div>
+              <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Depois, apenas <strong style={{ color: '#cbd5e1' }}>R$ 19,90/mês</strong> • Cancele quando quiser</div>
+            </div>
+
+            {/* Checklist left-aligned */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              <div className="cta-checklist">
+                {[
+                  'Análise completa de todos os problemas',
+                  'CV otimizado para download (PDF + Word)',
+                  'Simulador de entrevistas com IA',
+                  'Biblioteca de recursos personalizados'
+                ].map((item) => (
+                  <div key={item} className="cta-checklist-item">
+                    <span className="cta-check-icon">✓</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{ margin: '0 auto', display: 'flex', fontSize: '1rem', padding: '0.9rem 2.5rem' }}>
+              Começar teste por R$ 1,99
+            </button>
+
+            <div style={{ textAlign: 'center', marginTop: '0.6rem', fontSize: '0.82rem', color: '#475569' }}>
+              ou escolha o plano mensal/anual
+            </div>
+
+            {/* Garantia em destaque */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem', padding: '0.6rem 1.25rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '99px' }}>
+              <Shield size={15} color="#34d399" />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#34d399' }}>Garantia de 7 dias — dinheiro de volta sem burocracia</span>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div >
   );
