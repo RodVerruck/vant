@@ -1349,6 +1349,74 @@ IMPORTANTE:
 - **CRÍTICO**: NÃO use 0 como placeholder - calcule scores reais!
 - **termos_faltando**: Use estrutura de objetos com termo + frequencia, ordenados por relevância
 """
+
+    def _normalize_text_for_match(text):
+        if not text:
+            return ""
+        normalized = str(text).lower().strip()
+        normalized = re.sub(r'\s+', ' ', normalized)
+        return normalized
+
+    def _extract_real_cv_excerpt(cv_content, candidate_excerpt):
+        if not cv_content:
+            return candidate_excerpt
+
+        cv_lines = [line.strip() for line in str(cv_content).splitlines() if line and line.strip()]
+        if not cv_lines:
+            return candidate_excerpt
+
+        candidate_clean = (candidate_excerpt or '').strip()
+        candidate_norm = _normalize_text_for_match(candidate_clean)
+        cv_norm = _normalize_text_for_match(cv_content)
+
+        if candidate_norm and candidate_norm in cv_norm:
+            return candidate_clean
+
+        candidate_words = [word for word in re.findall(r'\w+', candidate_norm) if len(word) >= 4]
+
+        best_line = ""
+        best_score = 0
+
+        for line in cv_lines:
+            line_norm = _normalize_text_for_match(line)
+            if not line_norm:
+                continue
+
+            score = 0
+            if candidate_words:
+                score = sum(1 for word in candidate_words if word in line_norm)
+            elif candidate_norm and candidate_norm in line_norm:
+                score = len(candidate_norm)
+
+            if score > best_score:
+                best_score = score
+                best_line = line.strip()
+
+        if best_line and (best_score >= 2 or not candidate_clean):
+            return best_line
+
+        for line in cv_lines:
+            if len(line) >= 30:
+                return line.strip()
+
+        return cv_lines[0].strip()
+
+    def _ensure_gap_examples_are_grounded(gap_data, cv_content):
+        if not isinstance(gap_data, dict):
+            return gap_data
+
+        current_example = gap_data.get("exemplo_atual", "")
+        grounded_example = _extract_real_cv_excerpt(cv_content, current_example)
+
+        if grounded_example and grounded_example != current_example:
+            logger.warning(
+                "⚠️ exemplo_atual ajustado para trecho real do CV. Original do LLM: %s | Ajustado: %s",
+                current_example,
+                grounded_example,
+            )
+
+        gap_data["exemplo_atual"] = grounded_example
+        return gap_data
     
     try:
         # ESTRATÉGIA: Tenta Groq (gratuito e rápido) primeiro, fallback para Gemini
@@ -1420,6 +1488,9 @@ IMPORTANTE:
         pilares = data.get("analise_por_pilares", {})
         gap_1 = data.get("gap_1", {})
         gap_2 = data.get("gap_2", {})
+
+        gap_1 = _ensure_gap_examples_are_grounded(gap_1, cv_text)
+        gap_2 = _ensure_gap_examples_are_grounded(gap_2, cv_text)
         
         # DEBUG: Log dos dados extraídos
         logger.info(f"[DEBUG] nota_ats: {nota_ats}")
@@ -1629,6 +1700,9 @@ Regras:
                 pilares = data.get("analise_por_pilares", {})
                 gap_1 = data.get("gap_1", {})
                 gap_2 = data.get("gap_2", {})
+
+                gap_1 = _ensure_gap_examples_are_grounded(gap_1, cv_text)
+                gap_2 = _ensure_gap_examples_are_grounded(gap_2, cv_text)
                 
                 return {
                     "veredito": "ANÁLISE INICIAL CONCLUÍDA",
