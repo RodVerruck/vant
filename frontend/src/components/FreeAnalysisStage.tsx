@@ -393,14 +393,26 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         <div className="vant-flex vant-justify-between vant-items-center vant-mb-12 vant-animate-fade" style={isMobile ? { flexWrap: 'wrap', gap: '0.75rem' } : undefined}>
           <div style={isMobile ? { width: '100%', minWidth: 0 } : undefined}>
             <h1 className="vant-title-xl">Seu Diagnóstico</h1>
-            <p className="vant-subtitle">Análise gratuita do seu currículo</p>
-          </div>
-          <div className="vant-badge-credits" style={isMobile ? { width: '100%', display: 'flex', justifyContent: 'flex-start' } : undefined}>
-            <div className="free-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Zap size={13} color="#f8fafc" />
-              ANÁLISE GRATUITA
+            <div style={isMobile ? { display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' } : undefined}>
+              <p className="vant-subtitle" style={isMobile ? { margin: 0 } : undefined}>Análise gratuita do seu currículo</p>
+              {isMobile && (
+                <div className="vant-badge-credits">
+                  <div className="free-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Zap size={12} color="#d1fae5" />
+                    ANÁLISE GRATUITA
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+          {!isMobile && (
+            <div className="vant-badge-credits">
+              <div className="free-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Zap size={13} color="#f8fafc" />
+                ANÁLISE GRATUITA
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Cards de Evolução de Score - Lado a Lado com Seta */}
