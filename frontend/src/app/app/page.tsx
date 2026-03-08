@@ -2130,6 +2130,12 @@ export default function AppPage() {
             formData.append("file", file);
             formData.append("job_description", jobDescription);
 
+            // Enviar área de interesse se selecionada (vaga genérica)
+            if (useGenericJob && selectedArea) {
+                formData.append("area_of_interest", selectedArea);
+                console.log("[Analyzing] Área selecionada:", selectedArea);
+            }
+
             try {
                 const response = await fetch(`${getApiUrl()}/api/analyze-free`, {
                     method: "POST",

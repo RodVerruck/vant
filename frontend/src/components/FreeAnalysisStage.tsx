@@ -140,16 +140,42 @@ function generateLibraryPreview(gap1?: Gap, gap2?: Gap, setor?: string): Array<{
     });
   }
   // Livros para Marketing/Vendas
-  else if (setorLower.includes('marketing') || setorLower.includes('vendas') || setorLower.includes('comercial')) {
+  else if (setorLower.includes('marketing') || setorLower.includes('growth') || setorLower.includes('vendas') || setorLower.includes('comercial')) {
+    livros.push({
+      titulo: 'Hacking Growth',
+      autor: 'Sean Ellis',
+      motivo: 'Metodologia de crescimento usada por startups unicórnio'
+    });
     livros.push({
       titulo: 'Influence: The Psychology of Persuasion',
       autor: 'Robert Cialdini',
       motivo: 'Fundamentos de persuasão e influência'
     });
+  }
+  // Livros para Financeiro/Corporativo
+  else if (setorLower.includes('financeiro') || setorLower.includes('finance') || setorLower.includes('contab') || setorLower.includes('corp')) {
     livros.push({
-      titulo: 'Traction',
-      autor: 'Gabriel Weinberg & Justin Mares',
-      motivo: 'Estratégias práticas de crescimento'
+      titulo: 'Valuation',
+      autor: 'McKinsey & Company',
+      motivo: 'Referência mundial em avaliação de empresas'
+    });
+    livros.push({
+      titulo: 'Financial Intelligence',
+      autor: 'Karen Berman',
+      motivo: 'Essencial para entender demonstrativos financeiros'
+    });
+  }
+  // Livros para RH/Liderança
+  else if (setorLower.includes('rh') || setorLower.includes('recursos humanos') || setorLower.includes('liderança') || setorLower.includes('people')) {
+    livros.push({
+      titulo: 'Radical Candor',
+      autor: 'Kim Scott',
+      motivo: 'Feedback eficaz e gestão de pessoas'
+    });
+    livros.push({
+      titulo: 'The Five Dysfunctions of a Team',
+      autor: 'Patrick Lencioni',
+      motivo: 'Construção de equipes de alto desempenho'
     });
   }
   // Livros para Produto/UX
@@ -263,18 +289,16 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
   const isPerfectScore = problems.length === 0 && score >= 85;
   const hasNoImprovement = projected.score === score;
 
-  // Gerar preview de recursos da biblioteca
+  // Usar biblioteca do backend (vazia no preview gratuito, mas preparado para futuro)
+  // Por enquanto, gerar localmente mas isso será substituído por dados do backend
   const libraryPreview = generateLibraryPreview(
     previewData?.gap_1,
     previewData?.gap_2,
     previewData?.analise_por_pilares?.setor_detectado as string | undefined
   );
 
-  // Usar pergunta do backend (gerada com IA) ou fallback para função local
-  const interviewQuestion = previewData?.pergunta_preview || generateInterviewQuestionPreview(
-    previewData?.gap_1,
-    previewData?.analise_por_pilares?.setor_detectado as string | undefined
-  );
+  // Usar pergunta do backend (gerada com IA)
+  const interviewQuestion = previewData?.pergunta_preview;
 
   // 🎨 Sistema de cores baseado no score
   const getScoreColor = (scoreValue: number) => {

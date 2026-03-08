@@ -1044,10 +1044,14 @@ def analyze_preview_lite(cv_text, job_description, forced_area=None):
         logger.info(f"🔎 Área detectada: {area_detected.upper()}")
      
     # Prompt específico para análise gratuita (2 gaps reais)
+    area_foco = forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()
     prompt_preview = f"""
 Você é um especialista em ATS e otimização de currículos.
 
-MISSÃO: Analisar este CV e identificar os 2 PROBLEMAS MAIS CRÍTICOS que estão impedindo aprovação no ATS.
+{"⚠️ ÁREA ESPECÍFICA SELECIONADA PELO USUÁRIO: " + area_foco if forced_area else ""}
+{"🎯 CRÍTICO: Toda a análise DEVE ser focada EXCLUSIVAMENTE em " + area_foco + ". Ignore outras áreas." if forced_area else ""}
+
+MISSÃO: Analisar este CV e identificar os 2 PROBLEMAS MAIS CRÍTICOS que estão impedindo aprovação para vagas de {area_foco}.
 
 CV DO CANDIDATO:
 {cv_text[:3000]}
@@ -1056,18 +1060,41 @@ VAGA ALVO:
 {job_description[:1500]}
 
 INSTRUÇÕES ESPECÍFICAS:
-1. Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV para a área de {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
+1. **FOCO OBRIGATÓRIO**: Identifique os 2 problemas MAIS GRAVES e ESPECÍFICOS deste CV **EXCLUSIVAMENTE PARA A ÁREA DE {area_foco}**
+   - Se a área é MARKETING/GROWTH: foque em falta de termos como SEO, SEM, tráfego, conversão, funil, CRM, mídias sociais
+   - Se a área é VENDAS: foque em negociação, fechamento, prospecção, pipeline, metas
+   - Se a área é TI: foque em tecnologias, frameworks, linguagens, arquitetura
+   - **IGNORE problemas de outras áreas que não sejam {area_foco}**
 2. **CRÍTICO**: Para exemplo_atual, copie EXATAMENTE um trecho real do CV (não modifique)
 3. **CRÍTICO**: Para exemplo_otimizado, TRANSFORME o trecho seguindo TODAS estas regras OBRIGATÓRIAS:
    
    **REGRAS OBRIGATÓRIAS DE OTIMIZAÇÃO:**
    a) **VERBO DE AÇÃO NO INÍCIO**: Comece SEMPRE com verbo de ação forte (desenvolvi, implementei, gerenciei, criei, otimizei, liderei, reduzi, aumentei, automatizei)
    
-   b) **MÍNIMO 2 TERMOS TÉCNICOS COERENTES COM O CV**: 
-      **CRÍTICO**: Adicione termos técnicos que façam sentido com a EXPERIÊNCIA REAL do candidato no CV
-      - Se o CV é de suporte/vendas mas a vaga é RH: use termos de suporte/vendas (atendimento, CRM, negociação, SAC)
-      - Se o CV é de TI mas a vaga é Marketing: use termos de TI (sistemas, automação, APIs, integrações)
-      - **NUNCA force termos de uma área se o CV não tem experiência nela**
+   b) **TERMOS TÉCNICOS BASEADOS NO CV REAL**: 
+      **🚨 REGRA CRÍTICA - NUNCA INVENTE EXPERIÊNCIAS:**
+      - **PROIBIDO** adicionar ferramentas/tecnologias que NÃO estão no CV (ex: se não menciona CRM, NÃO adicione CRM)
+      - **PROIBIDO** inventar experiências que o candidato não teve
+      - **PERMITIDO** apenas melhorar a FORMA de apresentar o que JÁ EXISTE no CV
+      
+      **COMO OTIMIZAR SEM MENTIR:**
+      1. Leia o CV e identifique o que o candidato REALMENTE fez
+      2. Use verbos de ação fortes para descrever essas experiências REAIS
+      3. Adicione contexto e detalhes que PODEM ser inferidos da experiência real
+      4. Use termos técnicos da área {area_foco} APENAS se fizerem sentido com a experiência real
+      
+      **EXEMPLO CORRETO:**
+      - CV atual: "Atendi clientes"
+      - ✅ Otimizado: "**Gerenciei** atendimento ao cliente, **resolvendo solicitações** e **garantindo satisfação**"
+      - ❌ ERRADO: "Gerenciei atendimento utilizando **CRM**" (se não menciona CRM no CV)
+      
+      **TERMOS SUGERIDOS POR ÁREA (use APENAS se compatível com experiência real):**
+      - **MARKETING GROWTH**: estratégias digitais, campanhas, engajamento, análise de resultados
+      - **VENDAS/CS**: relacionamento com clientes, negociação, apresentação de soluções
+      - **TI/DEV**: desenvolvimento, implementação, resolução de problemas técnicos
+      - **FINANCEIRO**: análise financeira, controles, relatórios, processos
+      
+      **IMPORTANTE**: Prefira NÃO adicionar termos técnicos a INVENTAR experiências falsas.
       
       Exemplos por área REAL do CV (não da vaga):
       - Suporte: atendimento ao cliente, resolução de problemas, SAC, tickets, SLA, troubleshooting
@@ -1392,7 +1419,10 @@ IMPORTANTE:
             gap1_exemplo = gap_1.get("exemplo_atual", "") if gap_1 else ""
             
             prompt_pergunta = f"""
-Você é um recrutador experiente. Baseado neste CV e gap detectado, crie UMA pergunta de entrevista ULTRA-PERSONALIZADA.
+Você é um recrutador experiente de {setor_detectado}. Baseado neste CV e gap detectado, crie UMA pergunta de entrevista ULTRA-PERSONALIZADA.
+
+{"⚠️ ÁREA ESPECÍFICA: " + setor_detectado if forced_area else ""}
+{"🎯 CRÍTICO: A pergunta DEVE ser focada EXCLUSIVAMENTE em " + setor_detectado + "." if forced_area else ""}
 
 SETOR: {setor_detectado}
 TRECHO DO CV: {cv_snippet}
@@ -1400,21 +1430,25 @@ GAP DETECTADO: {gap_1.get('titulo', '') if gap_1 else ''}
 EXEMPLO DO CV: {gap1_exemplo[:200]}
 
 INSTRUÇÕES:
-1. A pergunta DEVE mencionar algo específico do CV (experiência, empresa, tecnologia, projeto)
-2. A pergunta DEVE fazer o candidato pensar "Nossa, eles realmente leram meu CV!"
-3. Use o gap detectado para direcionar a pergunta
-4. Seja direto e específico
-5. A dica deve ser prática e valiosa
+1. **EXTRAIA O NOME DE UMA EMPRESA** do CV se possível e mencione na pergunta
+2. A pergunta DEVE mencionar algo específico do CV (experiência na empresa X, tecnologia Y, projeto Z)
+3. A pergunta DEVE fazer o candidato pensar "Nossa, eles realmente leram meu CV!"
+4. Use o gap detectado para direcionar a pergunta
+5. **FOCO OBRIGATÓRIO**: A pergunta deve ser sobre {setor_detectado}
+6. A dica deve ser prática e valiosa para {setor_detectado}
 
-EXEMPLOS DE BOAS PERGUNTAS:
-- "Vi que você trabalhou com [tecnologia específica do CV]. Como você mediu o sucesso dessa implementação?"
-- "Notei sua experiência em [empresa/projeto do CV]. Qual foi o maior desafio técnico que você enfrentou lá?"
-- "Seu CV menciona [skill específica]. Conte sobre uma situação onde isso foi crítico para o resultado."
+EXEMPLOS DE BOAS PERGUNTAS POR ÁREA (com nome de empresa):
+- **MARKETING/GROWTH**: "Considerando sua experiência na [Empresa X], como você mediu o ROI das campanhas digitais? Quais métricas você priorizou?"
+- **VENDAS**: "Vi que você trabalhou na [Empresa Y]. Qual foi o deal mais desafiador que você fechou lá e qual foi sua estratégia?"
+- **TI**: "Na sua passagem pela [Empresa Z], como você garantiu a qualidade do código e a escalabilidade das soluções?"
+- **FINANCEIRO**: "Durante sua experiência na [Empresa W], como você estruturou os controles financeiros e quais KPIs você acompanhava?"
+
+**IMPORTANTE**: Se conseguir identificar nome de empresa no CV, USE na pergunta para aumentar personalização.
 
 OUTPUT JSON:
 {{
-  "pergunta": "Pergunta ultra-personalizada aqui",
-  "dica": "Dica prática de como responder bem"
+  "pergunta": "Pergunta ultra-personalizada focada em {setor_detectado} mencionando empresa se possível",
+  "dica": "Dica prática específica para {setor_detectado}"
 }}
 
 Retorne APENAS o JSON, sem markdown.
