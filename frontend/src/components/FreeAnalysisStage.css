@@ -521,7 +521,9 @@
 
 @media (max-width: 768px) {
   .vant-title-xl {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
   }
 
   .vant-subtitle {
@@ -668,6 +670,17 @@
   .unlock-banner .vant-btn-primary {
     padding: 0.75rem 1.25rem;
     font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .vant-title-xl {
+    font-size: 1.35rem;
+    line-height: 1.04;
+  }
+
+  .vant-subtitle {
+    font-size: 0.85rem;
   }
 }
 

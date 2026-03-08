@@ -392,7 +392,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         {/* Header Premium */}
         <div className="vant-flex vant-justify-between vant-items-center vant-mb-12 vant-animate-fade" style={isMobile ? { flexWrap: 'wrap', gap: '0.75rem' } : undefined}>
           <div style={isMobile ? { width: '100%', minWidth: 0 } : undefined}>
-            <h1 className="vant-title-xl">Seu Diagnóstico</h1>
+            <h1 className="vant-title-xl" style={isMobile ? { fontSize: '1.35rem', lineHeight: '1.04', letterSpacing: '-0.02em' } : undefined}>Seu Diagnóstico</h1>
             <div style={isMobile ? { display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' } : undefined}>
               <p className="vant-subtitle" style={isMobile ? { margin: 0 } : undefined}>Análise gratuita do seu currículo</p>
               {isMobile && (
