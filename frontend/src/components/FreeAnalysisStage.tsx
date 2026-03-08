@@ -211,6 +211,15 @@ function generateLibraryPreview(gap1?: Gap, gap2?: Gap, setor?: string): Array<{
 export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: FreeAnalysisStageProps) {
   const [showAllProblems, setShowAllProblems] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Edge Case 1: Skeleton loader se previewData null/undefined
   if (!previewData) {
@@ -388,14 +397,14 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
         {/* Cards de Evolução de Score - Lado a Lado com Seta */}
         <div className="vant-mb-12 vant-animate-fade" style={{ animationDelay: '0.1s' }}>
-          <div className="vant-glass-dark" style={{ padding: '2.5rem' }}>
+          <div className={`vant-glass-dark ${isMobile ? 'vant-score-mobile-compact' : ''}`} style={{ padding: isMobile ? undefined : '2.5rem' }}>
             <h2 className="vant-h2 vant-mb-8" style={{ textAlign: 'center' }}>Evolução do Seu Score</h2>
 
             <div className="vant-flex vant-items-center vant-gap-6" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
               {/* Score Atual */}
               <div style={{ textAlign: 'center', minWidth: '160px' }}>
                 <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Score Atual</div>
-                <div style={{ fontSize: '4.5rem', fontWeight: 700, color: currentScoreColors.primary, lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>{score}</div>
+                <div className={isMobile ? 'vant-score-number-mobile' : ''} style={{ fontSize: isMobile ? '2.75rem' : '4.5rem', fontWeight: 700, color: currentScoreColors.primary, lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>{score}</div>
                 <div className="vant-text-xs vant-text-support">de 100 pontos</div>
                 <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', background: currentScoreColors.primary + '22', border: '1px solid ' + currentScoreColors.primary + '44', borderRadius: '99px' }}>
                   <span style={{ fontSize: '0.72rem', fontWeight: 700, color: currentScoreColors.primary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{currentScoreColors.label}</span>
@@ -421,7 +430,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               {projected.improvement > 0 && !hasNoImprovement && (
                 <div style={{ textAlign: 'center', minWidth: '160px' }}>
                   <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Com PRO</div>
-                  <div style={{ fontSize: '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: isMobile ? '2.75rem' : '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
                     {projected.score}
                   </div>
                   <div className="vant-text-xs vant-text-support">+{projected.improvement} pontos</div>
@@ -432,8 +441,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               )}
             </div>
 
-            {/* Breakdown de Pontos - Só mostrar se houver melhoria E scores diferentes */}
-            {!hasNoImprovement && projected.improvement > 0 && projected.breakdown && projected.breakdown.length > 0 && (
+            {/* Breakdown de Pontos - Escondido no mobile para economizar espaço */}
+            {!isMobile && !hasNoImprovement && projected.improvement > 0 && projected.breakdown && projected.breakdown.length > 0 && (
               <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                 <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Como calculamos +{projected.improvement} pontos
@@ -464,15 +473,15 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             )}
 
             {/* Badge de Percentil */}
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                <TrendingUp size={20} color="#34d399" />
-                <span style={{ color: '#86efac', fontSize: '1rem', fontWeight: 600 }}>Alcance o {projected.percentile} dos candidatos</span>
+            <div style={{ textAlign: 'center', marginTop: isMobile ? '1rem' : '2rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: isMobile ? '0.5rem 1rem' : '0.75rem 1.5rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <TrendingUp size={isMobile ? 16 : 20} color="#34d399" />
+                <span style={{ color: '#86efac', fontSize: isMobile ? '0.8rem' : '1rem', fontWeight: 600 }}>Alcance o {projected.percentile} dos candidatos</span>
               </div>
             </div>
 
             {/* Explicação */}
-            <div style={{ margin: '1.5rem auto 0', maxWidth: '640px', textAlign: 'center' }}>
+            <div style={{ margin: isMobile ? '0.75rem auto 0' : '1.5rem auto 0', maxWidth: '640px', textAlign: 'center' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.45rem 0.8rem', borderRadius: '99px', background: explanationTone.background, border: explanationTone.border, marginBottom: '0.85rem' }}>
                 <span style={{ width: '0.45rem', height: '0.45rem', borderRadius: '99px', background: explanationTone.color, boxShadow: `0 0 0 4px ${explanationTone.background}` }} />
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: explanationTone.color }}>
@@ -489,9 +498,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
         {/* Grid de Diagnóstico e Problemas */}
         <div className="vant-diagnostic-wrapper vant-mb-12 vant-animate-fade" style={{ animationDelay: '0.2s' }}>
-          <div style={{ marginBottom: '1.75rem' }}>
-            <h3 className="vant-h3" style={{ fontSize: '1.35rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.5rem', letterSpacing: '-0.01em' }}>Diagnóstico Detalhado</h3>
-            <p style={{ fontSize: '0.95rem', color: '#cbd5e1', margin: 0, lineHeight: 1.6 }}>Veja onde seu currículo perde força hoje</p>
+          <div style={{ marginBottom: isMobile ? '1rem' : '1.75rem' }}>
+            <h3 className="vant-h3" style={{ fontSize: isMobile ? '1.1rem' : '1.35rem', fontWeight: 700, color: '#f8fafc', marginBottom: '0.5rem', letterSpacing: '-0.01em' }}>Diagnóstico Detalhado</h3>
+            <p style={{ fontSize: isMobile ? '0.8rem' : '0.95rem', color: '#cbd5e1', margin: 0, lineHeight: 1.6 }}>Veja onde seu currículo perde força hoje</p>
           </div>
 
           <div className={`vant-grid-${problems.length > 0 ? '2' : '1'}`}>
@@ -505,7 +514,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 return (
                   <div key={label} style={{ marginBottom: '1.1rem' }}>
                     <div className="vant-flex vant-items-center" style={{ alignItems: 'center', gap: '1rem' }}>
-                      <span className="vant-text-sm vant-font-medium" style={{ color: '#e2e8f0', fontSize: '0.9rem', minWidth: '135px' }}>{label}</span>
+                      <span className="vant-text-sm vant-font-medium" style={{ color: '#e2e8f0', fontSize: isMobile ? '0.8rem' : '0.9rem', minWidth: isMobile ? '90px' : '135px' }}>{label}</span>
                       <div style={{ flex: 1, height: '0.5rem', background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${value}%`, background: barColor, borderRadius: '99px', transition: 'width 0.8s ease' }} />
                       </div>
@@ -539,8 +548,12 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         <div className="vant-glass-darker vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.4s' }}>
           <h2 className="vant-h2 vant-mb-6">Análise Detalhada dos Problemas</h2>
 
-          <div className="vant-text-slate-400" style={{ marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.7 }}>
-            Nossa IA identificou <strong style={{ color: '#38bdf8' }}>alguns pontos de melhoria</strong> que, corrigidos, aumentam suas chances de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê <strong style={{ color: '#38bdf8' }}>uma amostra</strong> de como seu CV está agora e como ficaria após a otimização. Na versão PRO, você recebe a análise completa com todas as correções prontas para aplicar.
+          <div className="vant-text-slate-400" style={{ marginBottom: isMobile ? '1rem' : '1.5rem', fontSize: isMobile ? '0.82rem' : '0.95rem', lineHeight: 1.7 }}>
+            {isMobile ? (
+              <>Nossa IA identificou <strong style={{ color: '#38bdf8' }}>pontos de melhoria</strong>. Veja uma amostra de como ficaria após a otimização. No PRO, você recebe tudo pronto.</>
+            ) : (
+              <>Nossa IA identificou <strong style={{ color: '#38bdf8' }}>alguns pontos de melhoria</strong> que, corrigidos, aumentam suas chances de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê <strong style={{ color: '#38bdf8' }}>uma amostra</strong> de como seu CV está agora e como ficaria após a otimização. Na versão PRO, você recebe a análise completa com todas as correções prontas para aplicar.</>
+            )}
           </div>
 
           {problems.length > 0 ? (
@@ -627,28 +640,32 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
           <div className="benefits-grid">
             {([
-              { icon: <FileCheck size={20} color="#38bdf8" />, bg: 'rgba(56,189,248,0.15)', title: 'CV otimizado pronto para usar', desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.' },
-              { icon: <Mic size={20} color="#a78bfa" />, bg: 'rgba(167,139,250,0.15)', title: 'Simulador de entrevistas com IA', desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.' },
-              { icon: <BookOpen size={20} color="#fb923c" />, bg: 'rgba(251,146,60,0.15)', title: 'Biblioteca personalizada', desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.' },
-              { icon: <Search size={20} color="#f87171" />, bg: 'rgba(248,113,113,0.15)', title: 'Análise completa de todos os problemas', desc: 'Veja todos os gaps identificados com exemplos reais de como corrigir cada um.' },
-              { icon: <RefreshCw size={20} color="#34d399" />, bg: 'rgba(52,211,153,0.15)', title: 'Múltiplas otimizações', desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.' }
-            ] as Array<{ icon: React.ReactNode; bg: string; title: string; desc: string }>).map((benefit, idx) => (
-              <div key={idx} className="benefit-card">
-                <div className="vant-flex vant-gap-4" style={{ alignItems: 'flex-start' }}>
-                  <div className="benefit-icon-box" style={{ background: benefit.bg }}>
-                    {benefit.icon}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <h3 className="vant-text-white" style={{ marginBottom: '0.5rem', fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
-                      {benefit.title}
-                    </h3>
-                    <p className="vant-text-support" style={{ fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
-                      {benefit.desc}
-                    </p>
+              { icon: <FileCheck size={isMobile ? 16 : 20} color="#38bdf8" />, bg: 'rgba(56,189,248,0.15)', title: 'CV otimizado pronto para usar', desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.' },
+              { icon: <Mic size={isMobile ? 16 : 20} color="#a78bfa" />, bg: 'rgba(167,139,250,0.15)', title: 'Simulador de entrevistas com IA', desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.' },
+              { icon: <BookOpen size={isMobile ? 16 : 20} color="#fb923c" />, bg: 'rgba(251,146,60,0.15)', title: 'Biblioteca personalizada', desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.' },
+              { icon: <Search size={isMobile ? 16 : 20} color="#f87171" />, bg: 'rgba(248,113,113,0.15)', title: 'Análise completa de todos os problemas', desc: 'Veja todos os gaps identificados com exemplos reais de como corrigir cada um.' },
+              { icon: <RefreshCw size={isMobile ? 16 : 20} color="#34d399" />, bg: 'rgba(52,211,153,0.15)', title: 'Múltiplas otimizações', desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.' }
+            ] as Array<{ icon: React.ReactNode; bg: string; title: string; desc: string }>)
+              .slice(0, isMobile ? 3 : 5)
+              .map((benefit, idx) => (
+                <div key={idx} className="benefit-card">
+                  <div className="vant-flex vant-gap-4" style={{ alignItems: 'flex-start' }}>
+                    <div className="benefit-icon-box" style={{ background: benefit.bg }}>
+                      {benefit.icon}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h3 className="vant-text-white" style={{ marginBottom: isMobile ? '0.25rem' : '0.5rem', fontSize: isMobile ? '0.875rem' : '1rem', fontWeight: 600, lineHeight: 1.3 }}>
+                        {benefit.title}
+                      </h3>
+                      {!isMobile && (
+                        <p className="vant-text-support" style={{ fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
+                          {benefit.desc}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
 
@@ -759,7 +776,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s' }}>
           <div style={{ textAlign: 'center' }}>
             <h2 style={{
-              fontSize: '1.75rem',
+              fontSize: isMobile ? '1.25rem' : '1.75rem',
               fontWeight: 800,
               color: '#ffffff',
               marginBottom: '0.5rem',
@@ -768,17 +785,17 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             }}>
               Alcance o Score <span style={{ color: '#10b981' }}>{projected.score}/100</span> e entre no {projected.percentile}
             </h2>
-            <p style={{ fontSize: '0.95rem', color: '#94a3b8', marginBottom: '1.5rem', lineHeight: 1.6 }}>Baseado nos problemas identificados no seu currículo</p>
+            <p style={{ fontSize: isMobile ? '0.8rem' : '0.95rem', color: '#94a3b8', marginBottom: isMobile ? '1rem' : '1.5rem', lineHeight: 1.6 }}>Baseado nos problemas identificados no seu currículo</p>
 
             {/* Preview de Recursos da Biblioteca */}
             {libraryPreview.length > 0 && (
               <div style={{
                 maxWidth: '700px',
-                margin: '0 auto 3rem',
+                margin: isMobile ? '0 auto 1.5rem' : '0 auto 3rem',
                 background: 'rgba(30,41,59,0.4)',
                 border: '1px solid rgba(148,163,184,0.2)',
-                borderRadius: '16px',
-                padding: '1.5rem',
+                borderRadius: isMobile ? '12px' : '16px',
+                padding: isMobile ? '1rem' : '1.5rem',
                 backdropFilter: 'blur(10px)'
               }}>
                 <div style={{
@@ -798,14 +815,14 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                     <div key={idx} style={{
                       background: 'rgba(251,146,60,0.08)',
                       border: '1px solid rgba(251,146,60,0.2)',
-                      padding: '1rem',
-                      borderRadius: '12px',
+                      padding: isMobile ? '0.75rem' : '1rem',
+                      borderRadius: isMobile ? '8px' : '12px',
                       display: 'flex',
-                      gap: '1rem',
+                      gap: isMobile ? '0.75rem' : '1rem',
                       alignItems: 'start'
                     }}>
                       <div style={{
-                        display: 'flex',
+                        display: isMobile ? 'none' : 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         width: '48px',
@@ -867,11 +884,11 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             {interviewQuestion && (
               <div style={{
                 maxWidth: '700px',
-                margin: '0 auto 3rem',
+                margin: isMobile ? '0 auto 1.5rem' : '0 auto 3rem',
                 background: 'rgba(30,41,59,0.4)',
                 border: '1px solid rgba(148,163,184,0.2)',
-                borderRadius: '16px',
-                padding: '1.5rem',
+                borderRadius: isMobile ? '12px' : '16px',
+                padding: isMobile ? '1rem' : '1.5rem',
                 backdropFilter: 'blur(10px)'
               }}>
                 <div style={{
@@ -890,18 +907,18 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 <div style={{
                   background: 'rgba(167,139,250,0.08)',
                   border: '1px solid rgba(167,139,250,0.2)',
-                  padding: '1.25rem',
-                  borderRadius: '12px',
-                  marginBottom: '1rem'
+                  padding: isMobile ? '0.875rem' : '1.25rem',
+                  borderRadius: isMobile ? '8px' : '12px',
+                  marginBottom: isMobile ? '0.5rem' : '1rem'
                 }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'start',
-                    gap: '1rem',
+                    gap: isMobile ? '0.75rem' : '1rem',
                     marginBottom: '0.75rem'
                   }}>
                     <div style={{
-                      display: 'flex',
+                      display: isMobile ? 'none' : 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       width: '48px',
@@ -982,16 +999,16 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             )}
 
             {/* Opções de Planos */}
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '2rem', flexDirection: 'row', flexWrap: 'wrap', maxWidth: '900px', margin: '0 auto 2rem' }}>
+            <div style={{ display: 'flex', gap: isMobile ? '0.75rem' : '1rem', justifyContent: 'center', marginBottom: '2rem', flexDirection: 'row', flexWrap: 'wrap', maxWidth: '900px', margin: isMobile ? '0 auto 1rem' : '0 auto 2rem' }}>
 
               {/* Crédito Avulso */}
               <div style={{
                 background: 'rgba(30,41,59,0.6)',
                 border: '1px solid rgba(148,163,184,0.3)',
-                borderRadius: '16px',
-                padding: '2rem',
+                borderRadius: isMobile ? '12px' : '16px',
+                padding: isMobile ? '1.25rem' : '2rem',
                 flex: '1 1 280px',
-                minWidth: '280px',
+                minWidth: isMobile ? '100%' : '280px',
                 maxWidth: '420px',
                 backdropFilter: 'blur(10px)',
                 transition: 'all 0.3s ease',
@@ -1009,9 +1026,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                   e.currentTarget.style.borderColor = 'rgba(148,163,184,0.3)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}>
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Crédito Avulso</div>
-                  <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1, marginBottom: '0.25rem' }}>R$ 12,90</div>
+                <div style={{ textAlign: 'center', marginBottom: isMobile ? '0.75rem' : '1.5rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>Crédito Avulso</div>
+                  <div style={{ fontSize: isMobile ? '1.75rem' : '2.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1, marginBottom: '0.25rem' }}>R$ 12,90</div>
                   <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Pagamento único</div>
                 </div>
                 <div style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: 'auto', textAlign: 'center', lineHeight: 1.6 }}>
@@ -1019,13 +1036,13 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 </div>
                 <button className="vant-btn-primary" onClick={onUpgrade} style={{
                   width: '100%',
-                  fontSize: '0.95rem',
-                  padding: '0.875rem 1.5rem',
+                  fontSize: isMobile ? '0.85rem' : '0.95rem',
+                  padding: isMobile ? '0.7rem 1rem' : '0.875rem 1.5rem',
                   background: 'rgba(148,163,184,0.15)',
                   border: '1px solid rgba(148,163,184,0.5)',
                   fontWeight: 600,
                   transition: 'all 0.2s',
-                  marginTop: '1.5rem'
+                  marginTop: isMobile ? '0.75rem' : '1.5rem'
                 }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'rgba(148,163,184,0.25)';
@@ -1043,10 +1060,10 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               <div style={{
                 background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%)',
                 border: '2px solid rgba(16,185,129,0.4)',
-                borderRadius: '16px',
-                padding: '2rem',
+                borderRadius: isMobile ? '12px' : '16px',
+                padding: isMobile ? '1.25rem' : '2rem',
                 flex: '1 1 280px',
-                minWidth: '280px',
+                minWidth: isMobile ? '100%' : '280px',
                 maxWidth: '420px',
                 position: 'relative',
                 backdropFilter: 'blur(10px)',
@@ -1083,9 +1100,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 }}>
                   ⭐ Recomendado
                 </div>
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem', marginTop: '0.5rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Trial de 7 dias</div>
-                  <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1, marginBottom: '0.25rem' }}>R$ 1,99</div>
+                <div style={{ textAlign: 'center', marginBottom: isMobile ? '0.75rem' : '1.5rem', marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.35rem' }}>Trial de 7 dias</div>
+                  <div style={{ fontSize: isMobile ? '1.75rem' : '2.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1, marginBottom: '0.25rem' }}>R$ 1,99</div>
                   <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Depois, <strong style={{ color: '#cbd5e1' }}>R$ 19,90/mês</strong></div>
                 </div>
                 <div style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: 'auto', textAlign: 'center', lineHeight: 1.6 }}>
@@ -1093,14 +1110,14 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 </div>
                 <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{
                   width: '100%',
-                  fontSize: '0.95rem',
-                  padding: '0.875rem 1.5rem',
+                  fontSize: isMobile ? '0.85rem' : '0.95rem',
+                  padding: isMobile ? '0.7rem 1rem' : '0.875rem 1.5rem',
                   fontWeight: 600,
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   border: 'none',
                   boxShadow: '0 4px 16px rgba(16,185,129,0.3)',
                   transition: 'all 0.2s',
-                  marginTop: '1.5rem'
+                  marginTop: isMobile ? '0.75rem' : '1.5rem'
                 }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1134,9 +1151,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             </div>
 
             {/* Garantia em destaque */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '1.25rem', padding: '0.6rem 1.25rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '99px' }}>
-              <Shield size={15} color="#34d399" />
-              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#34d399' }}>Garantia de 7 dias — dinheiro de volta sem burocracia</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: isMobile ? '0.75rem' : '1.25rem', padding: isMobile ? '0.5rem 0.875rem' : '0.6rem 1.25rem', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '99px' }}>
+              <Shield size={isMobile ? 13 : 15} color="#34d399" />
+              <span style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: 600, color: '#34d399' }}>{isMobile ? 'Garantia de 7 dias' : 'Garantia de 7 dias — dinheiro de volta sem burocracia'}</span>
             </div>
           </div>
         </div>

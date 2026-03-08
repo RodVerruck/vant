@@ -520,11 +520,124 @@
 
 @media (max-width: 768px) {
   .vant-title-xl {
-    font-size: 2rem;
+    font-size: 1.5rem;
+  }
+
+  .vant-subtitle {
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
   }
 
   .vant-grid-3 {
     grid-template-columns: 1fr;
+  }
+
+  /* === MOBILE COMPACT: Wrapper & Container === */
+  .vant-premium-wrapper {
+    padding: 1rem 0.75rem;
+  }
+
+  /* === MOBILE COMPACT: Section Margins === */
+  .vant-mb-12 {
+    margin-bottom: 1.25rem;
+  }
+
+  .vant-mb-8 {
+    margin-bottom: 1rem;
+  }
+
+  .vant-mb-6 {
+    margin-bottom: 0.75rem;
+  }
+
+  /* === MOBILE COMPACT: Glass Cards === */
+  .vant-glass-dark {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .vant-glass-darker {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .vant-diagnostic-wrapper {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  /* === MOBILE COMPACT: Typography === */
+  .vant-h2 {
+    font-size: 1.15rem;
+  }
+
+  .vant-h3 {
+    font-size: 1rem;
+  }
+
+  /* === MOBILE COMPACT: Score Section === */
+  .vant-score-mobile-compact {
+    padding: 1.25rem !important;
+  }
+
+  .vant-score-number-mobile {
+    font-size: 2.75rem !important;
+  }
+
+  .vant-score-label-mobile {
+    font-size: 0.7rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  /* === MOBILE COMPACT: Hide verbose elements === */
+  .vant-mobile-hide {
+    display: none !important;
+  }
+
+  .bar-status-label {
+    display: none;
+  }
+
+  /* === MOBILE COMPACT: Benefits === */
+  .benefits-grid {
+    gap: 0.75rem;
+  }
+
+  .benefit-card {
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+
+  .benefit-icon-box {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+  }
+
+  /* === MOBILE COMPACT: Problem Analysis === */
+  .problem-analysis {
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+
+  .version-card-bad,
+  .version-card-good {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+  }
+
+  /* === MOBILE COMPACT: CTA Checklist === */
+  .cta-checklist-item {
+    font-size: 0.8rem;
+  }
+
+  .cta-checklist {
+    gap: 0.4rem;
+  }
+
+  /* === MOBILE COMPACT: Sticky CTA === */
+  .vant-sticky-cta {
+    padding: 0.75rem !important;
   }
 }
 
