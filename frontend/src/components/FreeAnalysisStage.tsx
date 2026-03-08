@@ -249,12 +249,16 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
   // Hook para detectar scroll em 60% da página
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + window.innerHeight;
+      const scrollY = window.scrollY;
+      const scrollPosition = scrollY + window.innerHeight;
       const pageHeight = document.documentElement.scrollHeight;
       const scrollPercentage = (scrollPosition / pageHeight) * 100;
 
-      // Mostrar sticky entre 30% e 80% da página (esconder quando chega nos planos)
-      setScrollTrigger(scrollPercentage >= 30 && scrollPercentage < 80);
+      // Mostrar sticky quando rolar mais de 400px E antes de chegar nos últimos 20% da página
+      const hasScrolledEnough = scrollY > 400;
+      const notAtBottom = scrollPercentage < 80;
+
+      setScrollTrigger(hasScrolledEnough && notAtBottom);
     };
 
     window.addEventListener('scroll', handleScroll);
