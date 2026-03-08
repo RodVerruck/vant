@@ -417,17 +417,17 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
         {/* Cards de Evolução de Score - Lado a Lado com Seta */}
         <div className="vant-mb-12 vant-animate-fade" style={{ animationDelay: '0.1s' }}>
-          <div className={`vant-glass-dark ${isMobile ? 'vant-score-mobile-compact' : ''}`} style={{ padding: isMobile ? undefined : '2.5rem' }}>
-            <h2 className="vant-h2 vant-mb-8" style={{ textAlign: 'center' }}>Evolução do Seu Score</h2>
+          <div className={`vant-glass-dark ${isMobile ? 'vant-score-mobile-compact' : ''}`} style={{ padding: isMobile ? '1.25rem' : '2.5rem' }}>
+            <h2 className="vant-h2 vant-mb-8" style={{ textAlign: 'center', fontSize: isMobile ? '1.15rem' : undefined, marginBottom: isMobile ? '1rem' : undefined }}>Evolução do Seu Score</h2>
 
             <div className="vant-flex vant-items-center vant-gap-6" style={isMobile ? { justifyContent: 'center', flexWrap: 'nowrap', flexDirection: 'column', gap: '1rem' } : { justifyContent: 'center', flexWrap: 'wrap' }}>
               {/* Score Atual */}
               <div style={{ textAlign: 'center', minWidth: isMobile ? 'auto' : '160px', width: isMobile ? '100%' : undefined }}>
-                <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: isMobile ? '0.4rem' : '0.75rem' }}>Score Atual</div>
-                <div className={isMobile ? 'vant-score-number-mobile' : ''} style={{ fontSize: isMobile ? '2.75rem' : '4.5rem', fontWeight: 700, color: currentScoreColors.primary, lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>{score}</div>
-                <div className="vant-text-xs vant-text-support">de 100 pontos</div>
-                <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', background: currentScoreColors.primary + '22', border: '1px solid ' + currentScoreColors.primary + '44', borderRadius: '99px' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: currentScoreColors.primary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{currentScoreColors.label}</span>
+                <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: isMobile ? '0.3rem' : '0.75rem', fontSize: isMobile ? '0.7rem' : undefined }}>Score Atual</div>
+                <div className={isMobile ? 'vant-score-number-mobile' : ''} style={{ fontSize: isMobile ? '2.25rem' : '4.5rem', fontWeight: 700, color: currentScoreColors.primary, lineHeight: 1, marginBottom: isMobile ? '0.25rem' : '0.4rem', letterSpacing: '-0.02em' }}>{score}</div>
+                <div className="vant-text-xs vant-text-support" style={{ fontSize: isMobile ? '0.7rem' : undefined }}>de 100 pontos</div>
+                <div style={{ marginTop: isMobile ? '0.4rem' : '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: isMobile ? '0.2rem 0.5rem' : '0.25rem 0.6rem', background: currentScoreColors.primary + '22', border: '1px solid ' + currentScoreColors.primary + '44', borderRadius: '99px' }}>
+                  <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', fontWeight: 700, color: currentScoreColors.primary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{currentScoreColors.label}</span>
                 </div>
               </div>
 
@@ -449,13 +449,13 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               {/* Score Projetado - Só mostrar se houver melhoria E scores diferentes */}
               {projected.improvement > 0 && !hasNoImprovement && (
                 <div style={{ textAlign: 'center', minWidth: isMobile ? 'auto' : '160px', width: isMobile ? '100%' : undefined }}>
-                  <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: isMobile ? '0.4rem' : '0.75rem' }}>Com PRO</div>
-                  <div style={{ fontSize: isMobile ? '2.75rem' : '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
+                  <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: isMobile ? '0.3rem' : '0.75rem', fontSize: isMobile ? '0.7rem' : undefined }}>Com PRO</div>
+                  <div style={{ fontSize: isMobile ? '2.25rem' : '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: isMobile ? '0.25rem' : '0.4rem', letterSpacing: '-0.02em' }}>
                     {projected.score}
                   </div>
-                  <div className="vant-text-xs vant-text-support">+{projected.improvement} pontos</div>
-                  <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', borderRadius: '99px' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Projetado</span>
+                  <div className="vant-text-xs vant-text-support" style={{ fontSize: isMobile ? '0.7rem' : undefined }}>+{projected.improvement} pontos</div>
+                  <div style={{ marginTop: isMobile ? '0.4rem' : '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: isMobile ? '0.2rem 0.5rem' : '0.25rem 0.6rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', borderRadius: '99px' }}>
+                    <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Projetado</span>
                   </div>
                 </div>
               )}
@@ -493,23 +493,23 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             )}
 
             {/* Badge de Percentil */}
-            <div style={{ textAlign: 'center', marginTop: isMobile ? '1rem' : '2rem' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: isMobile ? '0.5rem 1rem' : '0.75rem 1.5rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                <TrendingUp size={isMobile ? 16 : 20} color="#34d399" />
-                <span style={{ color: '#86efac', fontSize: isMobile ? '0.8rem' : '1rem', fontWeight: 600 }}>Alcance o {projected.percentile} dos candidatos</span>
+            <div style={{ textAlign: 'center', marginTop: isMobile ? '0.75rem' : '2rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? '0.3rem' : '0.4rem', padding: isMobile ? '0.4rem 0.75rem' : '0.75rem 1.5rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <TrendingUp size={isMobile ? 14 : 20} color="#34d399" />
+                <span style={{ color: '#86efac', fontSize: isMobile ? '0.75rem' : '1rem', fontWeight: 600 }}>Alcance o {projected.percentile} dos candidatos</span>
               </div>
             </div>
 
             {/* Explicação */}
-            <div style={{ margin: isMobile ? '0.75rem auto 0' : '1.5rem auto 0', maxWidth: '640px', textAlign: 'center' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.45rem 0.8rem', borderRadius: '99px', background: explanationTone.background, border: explanationTone.border, marginBottom: '0.85rem' }}>
-                <span style={{ width: '0.45rem', height: '0.45rem', borderRadius: '99px', background: explanationTone.color, boxShadow: `0 0 0 4px ${explanationTone.background}` }} />
-                <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: explanationTone.color }}>
+            <div style={{ margin: isMobile ? '0.6rem auto 0' : '1.5rem auto 0', maxWidth: '640px', textAlign: 'center' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? '0.3rem' : '0.45rem', padding: isMobile ? '0.35rem 0.65rem' : '0.45rem 0.8rem', borderRadius: '99px', background: explanationTone.background, border: explanationTone.border, marginBottom: isMobile ? '0.5rem' : '0.85rem' }}>
+                <span style={{ width: isMobile ? '0.35rem' : '0.45rem', height: isMobile ? '0.35rem' : '0.45rem', borderRadius: '99px', background: explanationTone.color, boxShadow: `0 0 0 4px ${explanationTone.background}` }} />
+                <span style={{ fontSize: isMobile ? '0.65rem' : '0.72rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: explanationTone.color }}>
                   {explanationTone.label}
                 </span>
               </div>
 
-              <p className="vant-text-sm vant-text-support" style={{ lineHeight: 1.7, margin: 0 }}>
+              <p className="vant-text-sm vant-text-support" style={{ lineHeight: isMobile ? 1.5 : 1.7, margin: 0, fontSize: isMobile ? '0.8rem' : undefined }}>
                 {explanationTone.text}
               </p>
             </div>
