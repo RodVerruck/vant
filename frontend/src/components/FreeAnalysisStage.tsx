@@ -583,25 +583,134 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.5rem' }}>Baseado nos problemas identificados no seu currículo</p>
 
             {/* Opções de Planos */}
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '2rem', flexDirection: 'row', flexWrap: 'wrap', maxWidth: '900px', margin: '0 auto 2rem' }}>
 
               {/* Crédito Avulso */}
-              <div style={{ background: 'rgba(100,116,139,0.08)', border: '1px solid rgba(148,163,184,0.25)', borderRadius: '12px', padding: '1.25rem 1.5rem', flex: '1 1 280px', maxWidth: '320px' }}>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>R$ 12,90</div>
-                <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, marginTop: '0.2rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Crédito Avulso</div>
-                <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '1rem' }}>Pagamento único • 1 otimização completa</div>
-                <button className="vant-btn-primary" onClick={onUpgrade} style={{ width: '100%', fontSize: '0.9rem', padding: '0.75rem 1.5rem', background: 'rgba(148,163,184,0.2)', border: '1px solid rgba(148,163,184,0.4)' }}>
+              <div style={{
+                background: 'rgba(30,41,59,0.6)',
+                border: '1px solid rgba(148,163,184,0.3)',
+                borderRadius: '16px',
+                padding: '2rem',
+                flex: '1 1 280px',
+                minWidth: '280px',
+                maxWidth: '420px',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.borderColor = 'rgba(148,163,184,0.5)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'rgba(148,163,184,0.3)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}>
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Crédito Avulso</div>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1, marginBottom: '0.25rem' }}>R$ 12,90</div>
+                  <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Pagamento único</div>
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: 'auto', textAlign: 'center', lineHeight: 1.6 }}>
+                  1 otimização completa do seu CV
+                </div>
+                <button className="vant-btn-primary" onClick={onUpgrade} style={{
+                  width: '100%',
+                  fontSize: '0.95rem',
+                  padding: '0.875rem 1.5rem',
+                  background: 'rgba(148,163,184,0.15)',
+                  border: '1px solid rgba(148,163,184,0.5)',
+                  fontWeight: 600,
+                  transition: 'all 0.2s',
+                  marginTop: '1.5rem'
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(148,163,184,0.25)';
+                    e.currentTarget.style.borderColor = 'rgba(203,213,225,0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(148,163,184,0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(148,163,184,0.5)';
+                  }}>
                   Comprar Crédito
                 </button>
               </div>
 
               {/* Trial PRO */}
-              <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '12px', padding: '1.25rem 1.5rem', flex: '1 1 280px', maxWidth: '320px', position: 'relative' }}>
-                <div style={{ position: 'absolute', top: '-10px', right: '10px', background: 'rgba(16,185,129,0.2)', color: '#10b981', padding: '4px 12px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, border: '1px solid rgba(16,185,129,0.4)' }}>RECOMENDADO</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>R$ 1,99</div>
-                <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600, marginTop: '0.2rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trial de 7 dias</div>
-                <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '1rem' }}>Depois, apenas <strong style={{ color: '#cbd5e1' }}>R$ 19,90/mês</strong> • Cancele quando quiser</div>
-                <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{ width: '100%', fontSize: '0.9rem', padding: '0.75rem 1.5rem' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%)',
+                border: '2px solid rgba(16,185,129,0.4)',
+                borderRadius: '16px',
+                padding: '2rem',
+                flex: '1 1 280px',
+                minWidth: '280px',
+                maxWidth: '420px',
+                position: 'relative',
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 0 30px rgba(16,185,129,0.15)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.borderColor = 'rgba(16,185,129,0.6)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(16,185,129,0.25)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(16,185,129,0.15)';
+                }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: '#fff',
+                  padding: '6px 16px',
+                  borderRadius: '20px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  boxShadow: '0 4px 12px rgba(16,185,129,0.4)',
+                  textTransform: 'uppercase'
+                }}>
+                  ⭐ Recomendado
+                </div>
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem', marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>Trial de 7 dias</div>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', lineHeight: 1, marginBottom: '0.25rem' }}>R$ 1,99</div>
+                  <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Depois, <strong style={{ color: '#cbd5e1' }}>R$ 19,90/mês</strong></div>
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#cbd5e1', marginBottom: 'auto', textAlign: 'center', lineHeight: 1.6 }}>
+                  <strong style={{ color: '#10b981' }}>30 otimizações/mês</strong> • Cancele quando quiser
+                </div>
+                <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{
+                  width: '100%',
+                  fontSize: '0.95rem',
+                  padding: '0.875rem 1.5rem',
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  border: 'none',
+                  boxShadow: '0 4px 16px rgba(16,185,129,0.3)',
+                  transition: 'all 0.2s',
+                  marginTop: '1.5rem'
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(16,185,129,0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(16,185,129,0.3)';
+                  }}>
                   Começar Trial
                 </button>
               </div>
