@@ -8,8 +8,6 @@ import { PaidStage } from "@/components/PaidStage";
 import { FreeAnalysisStage } from "@/components/FreeAnalysisStage";
 import { AuthModal } from "@/components/AuthModal";
 import { HistoryStage } from "@/components/HistoryStage";
-import { PricingSimplified } from "@/components/PricingSimplified";
-import { NeonOffer } from "@/components/NeonOffer";
 import { NewOptimizationModal } from "@/components/NewOptimizationModal";
 import { HeroHeader } from "@/components/sections/HeroHeader";
 import { ValueProp } from "@/components/sections/ValueProp";
@@ -2646,44 +2644,6 @@ export default function AppPage() {
                     onSelectHistory={handleSelectHistory}
                     onBack={handleBackFromHistory}
                 />
-            )}
-
-            {stage === "pricing" && (
-                <div className="hero-container">
-                    <div className="action-island-container">
-                        <NeonOffer
-                            onSelectPlan={(planId) => setSelectedPlan(planId)}
-                            onCheckout={(planId) => {
-                                setSelectedPlan(planId);
-                                setStage("checkout");
-                            }}
-                            authUserId={authUserId}
-                            creditsRemaining={creditsRemaining}
-                            timeRemaining={timeRemaining}
-                            showHeader={true}
-                        />
-                    </div>
-                    <div style={{ textAlign: "center", marginTop: 16 }}>
-                        <button
-                            type="button"
-                            onClick={() => setStage("hero")}
-                            style={{
-                                background: "none",
-                                border: "none",
-                                color: "#475569",
-                                fontSize: "0.85rem",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: 6,
-                                padding: "10px"
-                            }}
-                        >
-                            ← Voltar
-                        </button>
-                    </div>
-                </div>
             )}
 
             {stage === "analyzing" && (

@@ -318,9 +318,10 @@ export function DashboardClient() {
             localStorage.setItem("vant_auth_return_plan", "credit_1");
             console.log("[Dashboard] Usuário Pro sem créditos, indo direto ao checkout de crédito avulso");
         } else {
-            // Usuário Free: mostrar todas as opções de planos
-            localStorage.setItem("vant_auth_return_stage", "pricing");
-            console.log("[Dashboard] Usuário Free, mostrando opções de planos");
+            // Usuário Free: ir direto ao checkout com o plano padrão atual
+            localStorage.setItem("vant_auth_return_stage", "checkout");
+            localStorage.setItem("vant_auth_return_plan", "credit_1");
+            console.log("[Dashboard] Usuário Free, indo direto ao checkout de crédito avulso");
         }
         router.push("/app");
     };
