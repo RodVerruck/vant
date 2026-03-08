@@ -582,11 +582,30 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             </h2>
             <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.5rem' }}>Baseado nos problemas identificados no seu currículo</p>
 
-            {/* Preço */}
-            <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '12px', padding: '1.25rem 1.5rem', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>R$ 1,99</div>
-              <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600, marginTop: '0.2rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trial de 7 dias</div>
-              <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Depois, apenas <strong style={{ color: '#cbd5e1' }}>R$ 19,90/mês</strong> • Cancele quando quiser</div>
+            {/* Opções de Planos */}
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+
+              {/* Crédito Avulso */}
+              <div style={{ background: 'rgba(100,116,139,0.08)', border: '1px solid rgba(148,163,184,0.25)', borderRadius: '12px', padding: '1.25rem 1.5rem', flex: '1 1 280px', maxWidth: '320px' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>R$ 12,90</div>
+                <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, marginTop: '0.2rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Crédito Avulso</div>
+                <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '1rem' }}>Pagamento único • 1 otimização completa</div>
+                <button className="vant-btn-primary" onClick={onUpgrade} style={{ width: '100%', fontSize: '0.9rem', padding: '0.75rem 1.5rem', background: 'rgba(148,163,184,0.2)', border: '1px solid rgba(148,163,184,0.4)' }}>
+                  Comprar Crédito
+                </button>
+              </div>
+
+              {/* Trial PRO */}
+              <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '12px', padding: '1.25rem 1.5rem', flex: '1 1 280px', maxWidth: '320px', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: '-10px', right: '10px', background: 'rgba(16,185,129,0.2)', color: '#10b981', padding: '4px 12px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, border: '1px solid rgba(16,185,129,0.4)' }}>RECOMENDADO</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', lineHeight: 1 }}>R$ 1,99</div>
+                <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600, marginTop: '0.2rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trial de 7 dias</div>
+                <div style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '1rem' }}>Depois, apenas <strong style={{ color: '#cbd5e1' }}>R$ 19,90/mês</strong> • Cancele quando quiser</div>
+                <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{ width: '100%', fontSize: '0.9rem', padding: '0.75rem 1.5rem' }}>
+                  Começar Trial
+                </button>
+              </div>
+
             </div>
 
             {/* Checklist left-aligned */}
@@ -604,14 +623,6 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                   </div>
                 ))}
               </div>
-            </div>
-
-            <button className="vant-btn-primary vant-cta-button" onClick={onUpgrade} style={{ margin: '0 auto', display: 'flex', fontSize: '1rem', padding: '0.9rem 2.5rem' }}>
-              Começar teste por R$ 1,99
-            </button>
-
-            <div style={{ textAlign: 'center', marginTop: '0.6rem', fontSize: '0.82rem', color: '#475569' }}>
-              ou escolha o plano mensal/anual
             </div>
 
             {/* Garantia em destaque */}
