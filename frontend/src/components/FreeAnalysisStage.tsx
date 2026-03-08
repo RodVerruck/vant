@@ -758,7 +758,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             {libraryPreview.length > 0 && (
               <div style={{
                 maxWidth: '700px',
-                margin: '0 auto 2rem',
+                margin: '0 auto 3rem',
                 background: 'rgba(30,41,59,0.4)',
                 border: '1px solid rgba(148,163,184,0.2)',
                 borderRadius: '16px',
@@ -842,7 +842,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                   gap: '0.5rem'
                 }}>
                   <LockOpen size={14} color="#fb923c" />
-                  <span>Acesse biblioteca completa com 50+ recursos no PRO</span>
+                  <span>Acesse biblioteca completa com o PRO</span>
                 </div>
               </div>
             )}
