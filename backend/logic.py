@@ -1118,11 +1118,31 @@ INSTRUÇÕES ESPECÍFICAS:
    g) **COERÊNCIA OBRIGATÓRIA**: Analise o CV REAL antes de adicionar termos. Se não houver experiência na área da vaga, otimize com base na experiência que o candidato TEM, não na que ele não tem.
 
 4. **NÃO USE** "falta de métricas" ou "falta de números" como problema
-5. Foque APENAS nestes 4 tipos de problemas RELEVANTES PARA A ÁREA:
+5. Identifique os 2 problemas MAIS CRÍTICOS dentre estas categorias RELEVANTES PARA A ÁREA:
+   
+   **PROBLEMAS DE ESTRUTURA:**
    - Formatação inadequada (parágrafos longos, sem bullets, estrutura confusa)
+   - Falta de seções claras (experiência, educação, habilidades mal organizadas)
+   - Informações importantes enterradas no meio do texto
+   
+   **PROBLEMAS DE LINGUAGEM:**
    - Linguagem passiva (ex: "fui responsável por", "participei de" → "gerenciei", "implementei")
+   - Verbos fracos ou genéricos (ex: "trabalhei com", "ajudei em" → "desenvolvi", "liderei")
+   - Falta de verbos de ação no início das descrições
+   
+   **PROBLEMAS DE CONTEÚDO:**
    - Falta de palavras-chave ESPECÍFICAS DA ÁREA DE {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
    - Descrições genéricas sem especificidade ou detalhes relevantes PARA A ÁREA
+   - Ausência de contexto profissional (tamanho de equipe, escopo do projeto, responsabilidades)
+   - Falta de tecnologias/ferramentas específicas da área
+   
+   **PROBLEMAS DE IMPACTO:**
+   - Foco em tarefas em vez de resultados/impacto
+   - Descrições que não mostram valor agregado
+   - Ausência de indicadores de complexidade ou escala do trabalho
+   
+   **IMPORTANTE**: Varie os tipos de gaps detectados. NÃO use sempre "falta de palavras-chave". Analise o CV real e identifique os 2 problemas MAIS GRAVES que realmente prejudicam a aprovação no ATS.
+   
 6. Seja direto e objetivo
 7. **VERIFICAÇÃO OBRIGATÓRIA**: Não inclua "métricas", "números", "resultados quantitativos" em nenhum gap
 8. **VERIFICAÇÃO OBRIGATÓRIA**: Revise sua resposta antes de enviar para garantir que não há gaps sobre métricas
