@@ -655,7 +655,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         </div>
 
         {/* Benefícios Detalhados - Focado em Resultados */}
-        <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.6s' }}>
+        <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.6s', marginBottom: isMobile ? '0' : undefined }}>
           <h2 className="vant-h2" style={{ marginBottom: isMobile ? '0.75rem' : '0.4rem' }}>O que você desbloqueia com o PRO</h2>
           {!isMobile && <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1.5rem' }}>Um sistema completo do CV à entrevista.</p>}
 
@@ -817,7 +817,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           </div>
         </div>
       ) : (
-        <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s' }}>
+        <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s', paddingTop: isMobile ? '0rem' : undefined }}>
           <div style={{ textAlign: 'center' }}>
             <h2 style={{
               fontSize: isMobile ? '1.25rem' : '1.75rem',
