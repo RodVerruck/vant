@@ -817,6 +817,37 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               </div>
             </div>
 
+            {/* Breakdown de Pontos - Como chegamos no score projetado */}
+            {projected.breakdown && projected.breakdown.length > 0 && (
+              <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Como calculamos +{projected.improvement} pontos
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', maxWidth: '700px', margin: '0 auto' }}>
+                  {projected.breakdown.map((item, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                        borderRadius: '8px',
+                        fontSize: '0.875rem',
+                        color: '#cbd5e1'
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, color: '#34d399', fontSize: '1rem' }}>+{item.points}</span>
+                      <span style={{ color: '#e2e8f0' }}>{item.label}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '0.25rem' }}>({item.description})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Badge de Percentil */}
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
@@ -894,7 +925,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           <h2 className="vant-h2 vant-mb-6">Análise Detalhada dos Problemas</h2>
 
           <div className="vant-text-slate-400" style={{ marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.7 }}>
-            Nossa IA identificou <strong style={{ color: '#38bdf8' }}>{problems.length} problemas críticos</strong> que estão impedindo seu CV de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê os <strong style={{ color: '#38bdf8' }}>2 primeiros exemplos</strong> de como seu CV está atualmente e como ficaria após a otimização. Na versão PRO, você recebe a análise completa de todos os {problems.length} problemas com as correções prontas para aplicar.
+            Nossa IA identificou <strong style={{ color: '#38bdf8' }}>{problems.length} {score >= 70 ? 'pontos de melhoria' : 'problemas críticos'}</strong> que, corrigidos, aumentam suas chances de passar pelos filtros ATS e chamar a atenção de recrutadores. Abaixo você vê os <strong style={{ color: '#38bdf8' }}>2 primeiros exemplos</strong> de como seu CV está agora e como ficaria após a otimização. Na versão PRO, você recebe a análise completa dos {problems.length} pontos com as correções prontas para aplicar.
           </div>
 
           {problems.length > 0 ? (
@@ -964,7 +995,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         {/* Benefícios Detalhados - Focado em Resultados */}
         <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.6s' }}>
           <h2 className="vant-h2" style={{ marginBottom: '0.4rem' }}>O que você desbloqueia com o PRO</h2>
-          <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.5rem' }}>Um sistema completo do CV à entrevista.</p>
+          <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1.5rem' }}>Um sistema completo do CV à entrevista.</p>
 
           <div className="benefits-grid">
             {([
@@ -1043,12 +1074,6 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               style={{ background: 'rgba(255,255,255,0.1)' }}
             >
               Voltar para edição
-            </button>
-            <button
-              className="vant-btn-primary"
-              onClick={onUpgrade}
-            >
-              Ver Planos PRO
             </button>
           </div>
         </div>
