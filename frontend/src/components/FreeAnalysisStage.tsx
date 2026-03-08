@@ -976,14 +976,27 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                     </div>
                   </div>
 
-                  {/* Termos faltando como chips */}
+                  {/* Termos faltando como chips com fonte */}
                   {problem.termos_faltando && Array.isArray(problem.termos_faltando) && problem.termos_faltando.length > 0 && (
                     <div style={{ marginBottom: '1.5rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Termos ausentes</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                        {problem.termos_faltando.map((termo: string, termIdx: number) => (
-                          <span key={termIdx} className="term-chip">{termo}</span>
-                        ))}
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Termos ausentes no seu CV</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {problem.termos_faltando.map((item: any, termIdx: number) => {
+                          // Suporta tanto formato antigo (string) quanto novo (objeto)
+                          const termo = typeof item === 'string' ? item : item.termo;
+                          const frequencia = typeof item === 'object' && item.frequencia ? item.frequencia : null;
+
+                          return (
+                            <div key={termIdx} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                              <span className="term-chip" style={{ alignSelf: 'flex-start' }}>{termo}</span>
+                              {frequencia && (
+                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic', paddingLeft: '0.5rem' }}>
+                                  {frequencia}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

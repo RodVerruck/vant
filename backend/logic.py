@@ -1261,9 +1261,36 @@ OUTPUT JSON (OBRIGATÓRIO - COPIE EXATAMENTE):
   "gap_2": {{
     "titulo": "Nome do problema",
     "explicacao": "Por que isso é crítico",
-    "termos_faltando": ["termo1", "termo2", "termo3", "termo4", "termo5"]
+    "termos_faltando": [
+      {{"termo": "termo1", "frequencia": "presente em X% das vagas de [cargo específico]"}},
+      {{"termo": "termo2", "frequencia": "presente em X% das vagas de [cargo específico]"}},
+      {{"termo": "termo3", "frequencia": "presente em X% das vagas de [cargo específico]"}}
+    ]
   }}
 }}
+
+**REGRAS PARA termos_faltando (SE APLICÁVEL):**
+1. **EXTRAÇÃO BASEADA EM MERCADO**: Identifique termos que:
+   - Aparecem frequentemente na descrição da vaga fornecida
+   - São comuns em vagas similares da área detectada
+   - Estão AUSENTES no CV do candidato
+   
+2. **ATRIBUIÇÃO DE FONTE OBRIGATÓRIA**: Para cada termo, calcule frequência estimada:
+   - Analise a vaga fornecida e identifique o cargo/nível (ex: "Analista de Suporte Sênior", "Desenvolvedor Full Stack Pleno")
+   - Estime frequência baseada em conhecimento do mercado: 70-90% (muito comum), 50-70% (comum), 30-50% (moderado)
+   - Formato: "presente em X% das vagas de [cargo específico da vaga]"
+   
+3. **ORDENAÇÃO POR RELEVÂNCIA**: Liste do mais ao menos importante:
+   - Prioridade 1: Termos que aparecem na vaga E são críticos para a área (80-90%)
+   - Prioridade 2: Termos comuns na área mas não na vaga específica (60-80%)
+   - Prioridade 3: Termos complementares relevantes (40-60%)
+   
+4. **MÁXIMO 5 TERMOS**: Liste apenas os 5 termos mais críticos e rastreáveis
+   
+5. **VALIDAÇÃO**: Só inclua termos que:
+   - Você consegue justificar a frequência com base na vaga/área
+   - Fazem sentido para o cargo específico identificado
+   - NÃO são genéricos demais (evite: "comunicação", "trabalho em equipe")
 
 IMPORTANTE: 
 - Retorne APENAS o JSON válido, sem texto adicional
@@ -1273,6 +1300,7 @@ IMPORTANTE:
 - NÃO ADICIONE setores fora do lugar
 - **PROIBIDO IDENTIFICAR "FALTA DE MÉTRICAS" OU "FALTA DE NÚMEROS" COMO PROBLEMA**
 - **CRÍTICO**: NÃO use 0 como placeholder - calcule scores reais!
+- **termos_faltando**: Use estrutura de objetos com termo + frequencia, ordenados por relevância
 """
     
     try:
