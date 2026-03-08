@@ -751,42 +751,6 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         )}
       </div>
 
-      {/* Barra Sticky CTA Mobile - Apenas para mobile */}
-      <div
-        className={`vant-sticky-cta ${scrollTrigger ? 'vant-sticky-cta-visible' : ''}`}
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: 'rgba(15, 23, 42, 0.95)',
-          backdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-          padding: '1rem',
-          zIndex: 50
-        }}
-      >
-        <div className="vant-flex vant-justify-between vant-items-center">
-          <div>
-            <div className="vant-text-white vant-font-medium">
-              Desbloqueie análise completa
-            </div>
-            <div className="vant-text-support vant-text-sm">
-              Apenas R$ 1,99 trial 7 dias
-            </div>
-          </div>
-          <button
-            className="vant-btn-primary"
-            onClick={() => {
-              pricingSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-            style={{ padding: '0.75rem 1.5rem' }}
-          >
-            COMEÇAR AGORA
-          </button>
-        </div>
-      </div>
-
       {/* CTA Premium - Alternativo para score perfeito */}
       {isPerfectScore ? (
         <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s' }}>
@@ -1207,6 +1171,30 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               <Shield size={isMobile ? 13 : 15} color="#34d399" />
               <span style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: 600, color: '#34d399' }}>{isMobile ? 'Garantia de 7 dias' : 'Garantia de 7 dias — dinheiro de volta sem burocracia'}</span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isMobile && scrollTrigger && (
+        <div className="vant-sticky-cta vant-sticky-cta-visible">
+          <div className="vant-flex vant-justify-between vant-items-center">
+            <div>
+              <div className="vant-text-white vant-font-medium">
+                Desbloqueie análise completa
+              </div>
+              <div className="vant-text-support vant-text-sm">
+                Apenas R$ 1,99 trial 7 dias
+              </div>
+            </div>
+            <button
+              className="vant-btn-primary"
+              onClick={() => {
+                pricingSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              style={{ padding: '0.75rem 1.5rem' }}
+            >
+              COMEÇAR AGORA
+            </button>
           </div>
         </div>
       )}

@@ -467,22 +467,43 @@
 /* Sticky CTA Mobile - Controle de Visibilidade */
 .vant-sticky-cta {
   display: none;
-  transform: translateY(100%);
-  transition: transform 0.3s ease-in-out;
 }
 
 /* Mobile: mostrar apenas quando scroll trigger ativo */
 @media (max-width: 768px) {
   .vant-sticky-cta {
-    display: block;
+    display: none !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    box-sizing: border-box !important;
+    z-index: 9999 !important;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+    padding: 0.75rem 0.75rem calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  .vant-sticky-cta-visible {
-    transform: translateY(0);
+  .vant-sticky-cta.vant-sticky-cta-visible {
+    display: block !important;
+  }
+
+  .vant-sticky-cta .vant-flex {
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .vant-sticky-cta .vant-btn-primary {
+    flex-shrink: 0;
   }
 
   .vant-container {
-    padding-bottom: 80px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -581,11 +602,6 @@
 
   .vant-h3 {
     font-size: 1rem;
-  }
-
-  /* === MOBILE COMPACT: Sticky CTA === */
-  .vant-sticky-cta {
-    padding: 0.75rem !important;
   }
 
   /* === MOBILE: Badge "ANÁLISE GRATUITA" menor e alinhado === */
