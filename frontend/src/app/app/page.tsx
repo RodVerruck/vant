@@ -3107,7 +3107,8 @@ export default function AppPage() {
                 <FreeAnalysisStage
                     previewData={previewData}
                     onUpgrade={() => {
-                        setStage("pricing");
+                        setSelectedPlan("credit_1");
+                        setStage("checkout");
                     }}
                     onTryAnother={() => setStage("hero")}
                 />
