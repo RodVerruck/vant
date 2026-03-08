@@ -15,6 +15,90 @@ interface FreeAnalysisStageProps {
   onTryAnother?: () => void;
 }
 
+// Função helper para gerar preview de livros da biblioteca baseado nos gaps e setor
+function generateLibraryPreview(gap1?: Gap, gap2?: Gap, setor?: string): Array<{ titulo: string; autor: string; motivo: string }> {
+  const livros: Array<{ titulo: string; autor: string; motivo: string }> = [];
+
+  // Determinar setor para escolher livros relevantes
+  const setorLower = (setor || '').toLowerCase();
+
+  // Livros para Tecnologia/TI/Dev
+  if (setorLower.includes('tecnologia') || setorLower.includes('ti') || setorLower.includes('dev') || setorLower.includes('software')) {
+    livros.push({
+      titulo: 'Clean Code',
+      autor: 'Robert C. Martin',
+      motivo: 'Essencial para qualidade de código e boas práticas'
+    });
+    if (gap1?.titulo && gap1.titulo.toLowerCase().includes('arquitetura')) {
+      livros.push({
+        titulo: 'Design Patterns',
+        autor: 'Gang of Four',
+        motivo: `Baseado no gap: ${gap1.titulo}`
+      });
+    } else {
+      livros.push({
+        titulo: 'The Pragmatic Programmer',
+        autor: 'Andrew Hunt & David Thomas',
+        motivo: 'Fundamentos para desenvolvedores profissionais'
+      });
+    }
+  }
+  // Livros para Dados/Analytics
+  else if (setorLower.includes('dados') || setorLower.includes('data') || setorLower.includes('analytics')) {
+    livros.push({
+      titulo: 'Storytelling com Dados',
+      autor: 'Cole Nussbaumer Knaflic',
+      motivo: 'Comunicação eficaz de insights e análises'
+    });
+    livros.push({
+      titulo: 'Python for Data Analysis',
+      autor: 'Wes McKinney',
+      motivo: 'Ferramentas essenciais para análise de dados'
+    });
+  }
+  // Livros para Marketing/Vendas
+  else if (setorLower.includes('marketing') || setorLower.includes('vendas') || setorLower.includes('comercial')) {
+    livros.push({
+      titulo: 'Influence: The Psychology of Persuasion',
+      autor: 'Robert Cialdini',
+      motivo: 'Fundamentos de persuasão e influência'
+    });
+    livros.push({
+      titulo: 'Traction',
+      autor: 'Gabriel Weinberg & Justin Mares',
+      motivo: 'Estratégias práticas de crescimento'
+    });
+  }
+  // Livros para Produto/UX
+  else if (setorLower.includes('produto') || setorLower.includes('ux') || setorLower.includes('design')) {
+    livros.push({
+      titulo: 'The Lean Startup',
+      autor: 'Eric Ries',
+      motivo: 'Metodologia essencial para desenvolvimento de produtos'
+    });
+    livros.push({
+      titulo: "Don't Make Me Think",
+      autor: 'Steve Krug',
+      motivo: 'Princípios fundamentais de usabilidade'
+    });
+  }
+  // Livros genéricos/profissionais (fallback)
+  else {
+    livros.push({
+      titulo: 'Deep Work',
+      autor: 'Cal Newport',
+      motivo: 'Produtividade e foco em trabalho de alto valor'
+    });
+    livros.push({
+      titulo: 'Atomic Habits',
+      autor: 'James Clear',
+      motivo: 'Construção de hábitos profissionais eficazes'
+    });
+  }
+
+  return livros.slice(0, 2); // Máximo 2 livros
+}
+
 export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: FreeAnalysisStageProps) {
   const [showAllProblems, setShowAllProblems] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(false);
@@ -95,6 +179,13 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
   // Edge Cases 2 e 3: Flags de controle
   const isPerfectScore = problems.length === 0 && score >= 85;
   const hasNoImprovement = projected.score === score;
+
+  // Gerar preview de recursos da biblioteca
+  const libraryPreview = generateLibraryPreview(
+    previewData?.gap_1,
+    previewData?.gap_2,
+    previewData?.analise_por_pilares?.setor_detectado as string | undefined
+  );
 
   // 🎨 Sistema de cores baseado no score
   const getScoreColor = (scoreValue: number) => {
@@ -659,6 +750,99 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 }}>
                   <LockOpen size={14} color="#10b981" />
                   <span>Desbloqueie todas as otimizações do seu CV com PRO</span>
+                </div>
+              </div>
+            )}
+
+            {/* Preview de Recursos da Biblioteca */}
+            {libraryPreview.length > 0 && (
+              <div style={{
+                maxWidth: '700px',
+                margin: '0 auto 2rem',
+                background: 'rgba(30,41,59,0.4)',
+                border: '1px solid rgba(148,163,184,0.2)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{
+                  fontSize: '0.9rem',
+                  color: '#fb923c',
+                  fontWeight: 600,
+                  marginBottom: '1rem',
+                  textAlign: 'center',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Preview: Recursos personalizados para você
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  {libraryPreview.map((livro, idx) => (
+                    <div key={idx} style={{
+                      background: 'rgba(251,146,60,0.08)',
+                      border: '1px solid rgba(251,146,60,0.2)',
+                      padding: '1rem',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      gap: '1rem',
+                      alignItems: 'start'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '10px',
+                        background: 'rgba(251,146,60,0.15)',
+                        flexShrink: 0,
+                        alignSelf: 'center'
+                      }}>
+                        <BookOpen size={24} color="#fb923c" />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          color: '#e2e8f0',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          marginBottom: '0.25rem'
+                        }}>
+                          {livro.titulo}
+                        </div>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: '#fb923c',
+                          fontWeight: 500,
+                          marginBottom: '0.5rem'
+                        }}>
+                          {livro.autor}
+                        </div>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: '#94a3b8',
+                          fontStyle: 'italic'
+                        }}>
+                          {livro.motivo}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                <div style={{
+                  fontSize: '0.75rem',
+                  color: '#64748b',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <LockOpen size={14} color="#fb923c" />
+                  <span>Acesse biblioteca completa com 50+ recursos no PRO</span>
                 </div>
               </div>
             )}
