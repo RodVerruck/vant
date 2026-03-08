@@ -45,7 +45,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
   });
 
   const visibleProblems = showAllProblems ? problems : problems.slice(0, 2);
-  const hiddenCount = problems.length - 2;
+  const hiddenCount = Math.max(0, problems.length - 2);
 
   // Cálculo do score projetado usando dados reais
   const gapsCount = problems.length;
@@ -58,16 +58,6 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
     impacto
   );
 
-  // Debug: Log breakdown data
-  console.log('🔍 Score Breakdown Debug:', {
-    score,
-    gapsCount,
-    formatoAts,
-    keywords,
-    impacto,
-    projected,
-    breakdownLength: projected.breakdown?.length || 0
-  });
 
   // 🎨 Sistema de cores baseado no score
   const getScoreColor = (scoreValue: number) => {
@@ -171,34 +161,38 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 </div>
               </div>
 
-              {/* Seta SVG Animada */}
-              <div className="arrow-animated" style={{ display: 'flex', alignItems: 'center' }}>
-                <svg width="48" height="24" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <linearGradient id="arrowGrad" x1="0" y1="0" x2="48" y2="0" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stopColor="#f59e0b" />
-                      <stop offset="100%" stopColor="#10b981" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M0 12 H38 M30 4 L38 12 L30 20" stroke="url(#arrowGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+              {/* Seta SVG Animada - Só mostrar se houver melhoria */}
+              {projected.improvement > 0 && (
+                <div className="arrow-animated" style={{ display: 'flex', alignItems: 'center' }}>
+                  <svg width="48" height="24" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="arrowGrad" x1="0" y1="0" x2="48" y2="0" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#f59e0b" />
+                        <stop offset="100%" stopColor="#10b981" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0 12 H38 M30 4 L38 12 L30 20" stroke="url(#arrowGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              )}
 
-              {/* Score Projetado */}
-              <div style={{ textAlign: 'center', minWidth: '160px' }}>
-                <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Com PRO</div>
-                <div style={{ fontSize: '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
-                  {projected.score}
+              {/* Score Projetado - Só mostrar se houver melhoria */}
+              {projected.improvement > 0 && (
+                <div style={{ textAlign: 'center', minWidth: '160px' }}>
+                  <div className="vant-text-sm vant-text-support" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem' }}>Com PRO</div>
+                  <div style={{ fontSize: '4.5rem', fontWeight: 700, background: 'linear-gradient(to right, #34d399, #2dd4bf)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
+                    {projected.score}
+                  </div>
+                  <div className="vant-text-xs vant-text-support">+{projected.improvement} pontos</div>
+                  <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', borderRadius: '99px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Projetado</span>
+                  </div>
                 </div>
-                <div className="vant-text-xs vant-text-support">+{projected.improvement} pontos</div>
-                <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.6rem', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)', borderRadius: '99px' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Projetado</span>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Breakdown de Pontos - Como chegamos no score projetado */}
-            {projected.breakdown && projected.breakdown.length > 0 && (
+            {/* Breakdown de Pontos - Só mostrar se houver melhoria */}
+            {projected.improvement > 0 && projected.breakdown && projected.breakdown.length > 0 && (
               <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                 <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Como calculamos +{projected.improvement} pontos
