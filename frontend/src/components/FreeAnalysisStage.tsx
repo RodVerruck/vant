@@ -357,7 +357,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
       color: '#f87171',
       background: 'rgba(239,68,68,0.12)',
       border: '1px solid rgba(239,68,68,0.22)',
-      text: 'Seu CV está sendo rejeitado automaticamente pela maioria dos sistemas ATS. Com a versão PRO, você recebe o CV otimizado pronto que pode aumentar suas chances em até 3x.'
+      text: 'Seu CV mostra sinais de baixa compatibilidade com filtros ATS. Com a versão PRO, você recebe um CV otimizado e mais alinhado às boas práticas de triagem.'
     }
     : score < 70
       ? {
@@ -365,7 +365,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         color: '#60a5fa',
         background: 'rgba(96,165,250,0.12)',
         border: '1px solid rgba(96,165,250,0.22)',
-        text: `Seu CV passa em alguns filtros ATS, mas perde oportunidades. A versão PRO entrega o CV reformulado para alcançar o ${projected.percentile}.`
+        text: `Seu CV pode passar em parte dos filtros ATS, mas ainda perde força em pontos importantes. A versão PRO entrega o CV reformulado para buscar um posicionamento mais competitivo, com base no score projetado.`
       }
       : score < 80
         ? {
@@ -373,7 +373,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           color: '#fbbf24',
           background: 'rgba(251,191,36,0.12)',
           border: '1px solid rgba(251,191,36,0.22)',
-          text: `Seu CV está no caminho certo. A versão PRO aplica ajustes estratégicos para alcançar o ${projected.percentile} e se destacar da concorrência.`
+          text: 'Seu CV está no caminho certo. A versão PRO aplica ajustes estratégicos para reforçar clareza, aderência ao ATS e potencial competitivo.'
         }
         : score < 90
           ? {
@@ -381,14 +381,14 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             color: '#34d399',
             background: 'rgba(52,211,153,0.12)',
             border: '1px solid rgba(52,211,153,0.22)',
-            text: `Seu CV está competitivo. A versão PRO faz pequenas otimizações que te colocam no ${projected.percentile} e maximizam suas oportunidades.`
+            text: 'Seu CV já está competitivo. A versão PRO faz otimizações finas para melhorar consistência, leitura e alinhamento com a vaga.'
           }
           : {
             label: 'Destaque',
             color: '#c4b5fd',
             background: 'rgba(196,181,253,0.12)',
             border: '1px solid rgba(196,181,253,0.22)',
-            text: `Excelente. A versão PRO aplica ajustes finais para te levar ao ${projected.percentile} e garantir destaque máximo.`
+            text: 'Excelente. A versão PRO aplica ajustes finais para refinar ainda mais o posicionamento e a apresentação do seu CV.'
           };
 
   return (
@@ -500,7 +500,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             <div style={{ textAlign: 'center', marginTop: isMobile ? '0.75rem' : '2rem' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: isMobile ? '0.3rem' : '0.4rem', padding: isMobile ? '0.4rem 0.75rem' : '0.75rem 1.5rem', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '99px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                 <TrendingUp size={isMobile ? 14 : 20} color="#34d399" />
-                <span style={{ color: '#86efac', fontSize: isMobile ? '0.75rem' : '1rem', fontWeight: 600 }}>Alcance o {projected.percentile} dos candidatos</span>
+                <span style={{ color: '#86efac', fontSize: isMobile ? '0.75rem' : '1rem', fontWeight: 600 }}>Potencial para chegar ao {projected.percentile}, com base no score projetado</span>
               </div>
             </div>
 
@@ -764,7 +764,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               Parabéns! Seu CV está excelente
             </h2>
             <p style={{ fontSize: '1rem', color: '#cbd5e1', marginBottom: '1.5rem', lineHeight: 1.7 }}>
-              Seu currículo já está otimizado e pronto para conquistar oportunidades. Com score {score}/100, você está no topo!
+              Seu currículo já está muito bem estruturado. Com score {score}/100, ele demonstra um nível forte de qualidade para seguir evoluindo.
             </p>
             <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1.5rem' }}>
               Quer ir além? Com o PRO você desbloqueia:
@@ -799,9 +799,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
               textShadow: '0 2px 4px rgba(0,0,0,0.3)',
               lineHeight: 1.2
             }}>
-              Alcance o Score <span style={{ color: '#10b981' }}>{projected.score}/100</span> e entre no {projected.percentile}
+              Veja o potencial de chegar a <span style={{ color: '#10b981' }}>{projected.score}/100</span> com a versão otimizada
             </h2>
-            <p style={{ fontSize: isMobile ? '0.8rem' : '0.95rem', color: '#94a3b8', marginBottom: isMobile ? '1rem' : '1.5rem', lineHeight: 1.6 }}>Baseado nos problemas identificados no seu currículo</p>
+            <p style={{ fontSize: isMobile ? '0.8rem' : '0.95rem', color: '#94a3b8', marginBottom: isMobile ? '1rem' : '1.5rem', lineHeight: 1.6 }}>Estimativa baseada nos problemas identificados e nos pilares analisados no seu currículo</p>
 
             {/* Preview de Recursos da Biblioteca */}
             {libraryPreview.length > 0 && (
