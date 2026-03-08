@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertCircle, TrendingUp, FileCheck, Mic, BookOpen, Search, RefreshCw, Zap, X, Check, Shield, LockOpen, CheckCircle2 } from 'lucide-react';
 import { calculateProjectedScore } from '@/lib/helpers';
 import { renderOptimizedTextWithHighlights } from '@/lib/diffHighlight';
@@ -17,6 +17,23 @@ interface FreeAnalysisStageProps {
 
 export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: FreeAnalysisStageProps) {
   const [showAllProblems, setShowAllProblems] = useState(false);
+  const [scrollTrigger, setScrollTrigger] = useState(false);
+
+  // Hook para detectar scroll em 60% da página
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + window.innerHeight;
+      const pageHeight = document.documentElement.scrollHeight;
+      const scrollPercentage = (scrollPosition / pageHeight) * 100;
+
+      setScrollTrigger(scrollPercentage >= 60);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Verificar posição inicial
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // 🎯 Calcular score projetado de forma inteligente
   const score = previewData?.nota_ats || 0;
@@ -467,18 +484,20 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
       </div>
 
       {/* Barra Sticky CTA Mobile */}
-      <div className="vant-sticky-cta" style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: 'rgba(15, 23, 42, 0.95)',
-        backdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: '1rem',
-        display: 'none',
-        zIndex: 50
-      }}>
+      <div
+        className={`vant-sticky-cta ${scrollTrigger ? 'vant-sticky-cta-visible' : ''}`}
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'rgba(15, 23, 42, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          padding: '1rem',
+          zIndex: 50
+        }}
+      >
         <div className="vant-flex vant-justify-between vant-items-center">
           <div>
             <div className="vant-text-white vant-font-medium">

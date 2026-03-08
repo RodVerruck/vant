@@ -303,14 +303,32 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
-/* Mobile Responsive */
+/* Sticky CTA Mobile - Controle de Visibilidade */
+.vant-sticky-cta {
+  display: none;
+  transform: translateY(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Mobile: mostrar apenas quando scroll trigger ativo */
 @media (max-width: 768px) {
   .vant-sticky-cta {
-    display: block !important;
+    display: block;
+  }
+  
+  .vant-sticky-cta-visible {
+    transform: translateY(0);
   }
   
   .vant-container {
     padding-bottom: 80px;
+  }
+}
+
+/* Desktop: sempre esconder */
+@media (min-width: 769px) {
+  .vant-sticky-cta {
+    display: none !important;
   }
 }
 
