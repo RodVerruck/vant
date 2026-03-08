@@ -1151,18 +1151,28 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
             {/* Checklist left-aligned */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-              <div className="cta-checklist">
-                {[
-                  'Análise completa de todos os problemas',
-                  'CV otimizado para download (PDF + Word)',
-                  'Simulador de entrevistas com IA',
-                  'Biblioteca de recursos personalizados'
-                ].map((item) => (
-                  <div key={item} className="cta-checklist-item">
-                    <span className="cta-check-icon">✓</span>
-                    <span>{item}</span>
-                  </div>
-                ))}
+              <div style={{ width: '100%', maxWidth: '720px', textAlign: 'center' }}>
+                <div style={{
+                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  fontWeight: 700,
+                  color: '#f8fafc',
+                  marginBottom: '0.9rem'
+                }}>
+                  O que você garante em qualquer plano:
+                </div>
+                <div className="cta-checklist">
+                  {[
+                    'Análise completa de todos os problemas',
+                    'CV otimizado para download (PDF + Word)',
+                    'Simulador de entrevistas com IA',
+                    'Biblioteca de recursos personalizados'
+                  ].map((item) => (
+                    <div key={item} className="cta-checklist-item">
+                      <span className="cta-check-icon">✓</span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
