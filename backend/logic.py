@@ -1382,6 +1382,100 @@ IMPORTANTE:
         # Usar setor detectado pela IA, não a função antiga
         setor_detectado = pilares.get("setor_detectado", "TECNOLOGIA")
         
+        # Gerar pergunta personalizada do simulador de entrevista
+        pergunta_preview = None
+        try:
+            logger.info("🎤 Gerando pergunta personalizada do simulador...")
+            
+            # Extrair trecho relevante do CV para contextualizar
+            cv_snippet = cv_text[:500] if len(cv_text) > 500 else cv_text
+            gap1_exemplo = gap_1.get("exemplo_atual", "") if gap_1 else ""
+            
+            prompt_pergunta = f"""
+Você é um recrutador experiente. Baseado neste CV e gap detectado, crie UMA pergunta de entrevista ULTRA-PERSONALIZADA.
+
+SETOR: {setor_detectado}
+TRECHO DO CV: {cv_snippet}
+GAP DETECTADO: {gap_1.get('titulo', '') if gap_1 else ''}
+EXEMPLO DO CV: {gap1_exemplo[:200]}
+
+INSTRUÇÕES:
+1. A pergunta DEVE mencionar algo específico do CV (experiência, empresa, tecnologia, projeto)
+2. A pergunta DEVE fazer o candidato pensar "Nossa, eles realmente leram meu CV!"
+3. Use o gap detectado para direcionar a pergunta
+4. Seja direto e específico
+5. A dica deve ser prática e valiosa
+
+EXEMPLOS DE BOAS PERGUNTAS:
+- "Vi que você trabalhou com [tecnologia específica do CV]. Como você mediu o sucesso dessa implementação?"
+- "Notei sua experiência em [empresa/projeto do CV]. Qual foi o maior desafio técnico que você enfrentou lá?"
+- "Seu CV menciona [skill específica]. Conte sobre uma situação onde isso foi crítico para o resultado."
+
+OUTPUT JSON:
+{{
+  "pergunta": "Pergunta ultra-personalizada aqui",
+  "dica": "Dica prática de como responder bem"
+}}
+
+Retorne APENAS o JSON, sem markdown.
+"""
+            
+            # Tentar gerar com Groq primeiro
+            try:
+                from groq import Groq
+                GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+                
+                if GROQ_API_KEY:
+                    groq_client = Groq(api_key=GROQ_API_KEY)
+                    response_pergunta = groq_client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=[{"role": "user", "content": prompt_pergunta}],
+                        temperature=0.7,
+                        max_tokens=300,
+                    )
+                    pergunta_response = response_pergunta.choices[0].message.content.strip()
+                    
+                    # Limpar markdown se houver
+                    if pergunta_response.startswith("```"):
+                        pergunta_response = pergunta_response.split("```")[1]
+                        if pergunta_response.startswith("json"):
+                            pergunta_response = pergunta_response[4:]
+                    
+                    pergunta_preview = json.loads(pergunta_response)
+                    logger.info(f"✅ Pergunta personalizada gerada: {pergunta_preview.get('pergunta', '')[:50]}...")
+            except Exception as groq_err:
+                logger.warning(f"⚠️ Groq falhou para pergunta, tentando Gemini: {groq_err}")
+                
+                # Fallback para Gemini
+                from google import genai
+                from google.genai import types
+                
+                GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+                if GOOGLE_API_KEY:
+                    client = genai.Client(api_key=GOOGLE_API_KEY)
+                    response_pergunta = client.models.generate_content(
+                        model="gemini-1.5-flash",
+                        contents=prompt_pergunta,
+                        config=types.GenerateContentConfig(temperature=0.7, max_output_tokens=300)
+                    )
+                    pergunta_response = response_pergunta.text.strip()
+                    
+                    # Limpar markdown
+                    if pergunta_response.startswith("```"):
+                        pergunta_response = pergunta_response.split("```")[1]
+                        if pergunta_response.startswith("json"):
+                            pergunta_response = pergunta_response[4:]
+                    
+                    pergunta_preview = json.loads(pergunta_response)
+                    logger.info(f"✅ Pergunta gerada com Gemini: {pergunta_preview.get('pergunta', '')[:50]}...")
+        except Exception as pergunta_err:
+            logger.error(f"❌ Erro ao gerar pergunta personalizada: {pergunta_err}")
+            # Fallback para pergunta genérica
+            pergunta_preview = {
+                "pergunta": f"Baseado na sua experiência em {setor_detectado}, conte sobre um desafio significativo que você enfrentou. Como você resolveu?",
+                "dica": "Use o método STAR: Situação → Tarefa → Ação → Resultado. Seja específico e mostre seu raciocínio."
+            }
+        
         return {
             "veredito": "ANÁLISE INICIAL CONCLUÍDA",
             "nota_ats": nota_ats,
@@ -1393,6 +1487,7 @@ IMPORTANTE:
             },
             "gap_1": gap_1,
             "gap_2": gap_2,
+            "pergunta_preview": pergunta_preview,
             "linkedin_headline": "🔒 [CONTEÚDO PREMIUM BLOQUEADO]",
             "resumo_otimizado": "🔒 [DISPONÍVEL APENAS NA VERSÃO PAGA]",
             "cv_otimizado_completo": "🔒",

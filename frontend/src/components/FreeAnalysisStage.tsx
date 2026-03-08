@@ -15,6 +15,89 @@ interface FreeAnalysisStageProps {
   onTryAnother?: () => void;
 }
 
+// Função helper para gerar preview de pergunta do simulador baseado no setor e gaps
+function generateInterviewQuestionPreview(gap1?: Gap, setor?: string): { pergunta: string; dica: string } | null {
+  const setorLower = (setor || '').toLowerCase();
+  const gap1Titulo = (gap1?.titulo || '').toLowerCase();
+  const gap1Exemplo = (gap1?.exemplo_atual || '').toLowerCase();
+
+  // Extrair contexto específico do gap para personalizar pergunta
+  let contextoEspecifico = '';
+
+  // Perguntas para Tecnologia/TI/Dev
+  if (setorLower.includes('tecnologia') || setorLower.includes('ti') || setorLower.includes('dev') || setorLower.includes('software')) {
+    // Se gap menciona falta de métricas/quantificação
+    if (gap1Titulo.includes('métrica') || gap1Titulo.includes('quantif') || gap1Titulo.includes('resultado')) {
+      return {
+        pergunta: `Vejo que você trabalhou com ${gap1Exemplo.includes('desenvolvimento') ? 'desenvolvimento de software' : gap1Exemplo.includes('suporte') ? 'suporte técnico' : 'projetos de tecnologia'}. Como você mede o sucesso das suas entregas? Pode dar um exemplo específico com números?`,
+        dica: 'Sua resposta deve incluir métricas concretas (ex: "reduzi tempo de resposta em 40%" ou "aumentei cobertura de testes para 85%"). Recrutadores querem ver impacto quantificável.'
+      };
+    }
+    // Se gap menciona falta de tecnologias/ferramentas
+    if (gap1Titulo.includes('tecnologia') || gap1Titulo.includes('ferramenta') || gap1Titulo.includes('stack')) {
+      return {
+        pergunta: `Notei que sua experiência menciona ${gap1Exemplo.substring(0, 50)}... Quais tecnologias você domina e como as aplicou para resolver problemas reais? Dê um exemplo técnico específico.`,
+        dica: 'Seja específico sobre tecnologias e mostre profundidade. Não liste apenas ferramentas - explique COMO e POR QUE as usou em situações reais.'
+      };
+    }
+    // Pergunta técnica genérica mas contextualizada
+    return {
+      pergunta: `Baseado na sua experiência em ${setor}, conte sobre um bug crítico ou problema técnico complexo que você resolveu. Qual foi sua abordagem e o resultado?`,
+      dica: 'Estruture usando: Contexto → Desafio técnico → Sua solução → Impacto. Recrutadores técnicos avaliam seu raciocínio, não só o resultado.'
+    };
+  }
+
+  // Perguntas para Dados/Analytics
+  if (setorLower.includes('dados') || setorLower.includes('data') || setorLower.includes('analytics')) {
+    if (gap1Titulo.includes('métrica') || gap1Titulo.includes('resultado')) {
+      return {
+        pergunta: `Vi que você trabalha com análise de dados. Conte sobre uma vez que seus insights levaram a uma decisão de negócio importante. Qual foi o impacto mensurável?`,
+        dica: 'Recrutadores querem ver: Problema de negócio → Sua análise → Recomendação → Resultado (com números). Mostre que você traduz dados em valor.'
+      };
+    }
+    return {
+      pergunta: `Na sua experiência com ${setor}, como você lida quando seus dados contradizem a intuição dos stakeholders? Dê um exemplo real.`,
+      dica: 'Demonstre habilidade de comunicação e influência baseada em dados. Mostre que você sabe navegar política organizacional com evidências.'
+    };
+  }
+
+  // Perguntas para Marketing/Vendas
+  if (setorLower.includes('marketing') || setorLower.includes('vendas') || setorLower.includes('comercial')) {
+    if (gap1Titulo.includes('métrica') || gap1Titulo.includes('resultado') || gap1Titulo.includes('número')) {
+      return {
+        pergunta: `Vejo sua experiência em ${setor}. Qual foi sua melhor campanha/estratégia? Quais foram os números antes e depois da sua atuação?`,
+        dica: 'Seja específico: "Aumentei conversão de X% para Y%, gerando R$ Z em receita". Recrutadores querem ver ROI claro, não apenas atividades.'
+      };
+    }
+    return {
+      pergunta: `Na sua trajetória em ${setor}, conte sobre uma meta agressiva que você bateu (ou não bateu). O que você fez diferente?`,
+      dica: 'Honestidade sobre desafios + aprendizados impressiona mais que histórias perfeitas. Mostre resiliência e adaptação.'
+    };
+  }
+
+  // Perguntas para Produto/UX
+  if (setorLower.includes('produto') || setorLower.includes('ux') || setorLower.includes('design')) {
+    return {
+      pergunta: `Baseado na sua experiência, conte sobre uma feature que você priorizou contra a opinião de stakeholders importantes. Como você decidiu e qual foi o resultado?`,
+      dica: 'Mostre que você toma decisões baseadas em dados e usuários, não em opinião. Recrutadores querem ver liderança e pensamento estratégico.'
+    };
+  }
+
+  // Pergunta contextualizada (fallback) - usa o gap detectado
+  if (gap1Titulo) {
+    return {
+      pergunta: `Notei que seu CV menciona ${gap1Exemplo.substring(0, 60)}... Como você lidou com o desafio mais difícil nessa experiência? Qual foi o resultado concreto?`,
+      dica: 'Use o método STAR: Situação específica → Tarefa/desafio → Ações que VOCÊ tomou → Resultados mensuráveis. Seja específico e honesto.'
+    };
+  }
+
+  // Fallback final
+  return {
+    pergunta: `Baseado na sua experiência em ${setor || 'sua área'}, conte sobre uma situação onde você teve que tomar uma decisão difícil com informações incompletas. Como você abordou?`,
+    dica: 'Recrutadores avaliam seu processo de tomada de decisão e capacidade de lidar com ambiguidade. Mostre raciocínio estruturado.'
+  };
+}
+
 // Função helper para gerar preview de livros da biblioteca baseado nos gaps e setor
 function generateLibraryPreview(gap1?: Gap, gap2?: Gap, setor?: string): Array<{ titulo: string; autor: string; motivo: string }> {
   const livros: Array<{ titulo: string; autor: string; motivo: string }> = [];
@@ -184,6 +267,12 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
   const libraryPreview = generateLibraryPreview(
     previewData?.gap_1,
     previewData?.gap_2,
+    previewData?.analise_por_pilares?.setor_detectado as string | undefined
+  );
+
+  // Usar pergunta do backend (gerada com IA) ou fallback para função local
+  const interviewQuestion = previewData?.pergunta_preview || generateInterviewQuestionPreview(
+    previewData?.gap_1,
     previewData?.analise_por_pilares?.setor_detectado as string | undefined
   );
 
@@ -747,6 +836,124 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                 }}>
                   <LockOpen size={14} color="#fb923c" />
                   <span>Acesse biblioteca completa com o PRO</span>
+                </div>
+              </div>
+            )}
+
+            {/* Preview de Pergunta do Simulador */}
+            {interviewQuestion && (
+              <div style={{
+                maxWidth: '700px',
+                margin: '0 auto 3rem',
+                background: 'rgba(30,41,59,0.4)',
+                border: '1px solid rgba(148,163,184,0.2)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{
+                  fontSize: '0.9rem',
+                  color: '#a78bfa',
+                  fontWeight: 600,
+                  marginBottom: '1rem',
+                  textAlign: 'center',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Preview: Simulador de Entrevista
+                </div>
+
+                {/* Pergunta */}
+                <div style={{
+                  background: 'rgba(167,139,250,0.08)',
+                  border: '1px solid rgba(167,139,250,0.2)',
+                  padding: '1.25rem',
+                  borderRadius: '12px',
+                  marginBottom: '1rem'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'start',
+                    gap: '1rem',
+                    marginBottom: '0.75rem'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '10px',
+                      background: 'rgba(167,139,250,0.15)',
+                      flexShrink: 0,
+                      alignSelf: 'center'
+                    }}>
+                      <Mic size={24} color="#a78bfa" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#a78bfa',
+                        fontWeight: 600,
+                        marginBottom: '0.5rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                      }}>
+                        Pergunta personalizada:
+                      </div>
+                      <div style={{
+                        color: '#e2e8f0',
+                        fontSize: '0.95rem',
+                        lineHeight: 1.6,
+                        fontWeight: 500
+                      }}>
+                        "{interviewQuestion.pergunta}"
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dica */}
+                  <div style={{
+                    background: 'rgba(167,139,250,0.05)',
+                    border: '1px solid rgba(167,139,250,0.15)',
+                    padding: '0.875rem',
+                    borderRadius: '8px',
+                    marginTop: '0.75rem'
+                  }}>
+                    <div style={{
+                      fontSize: '0.7rem',
+                      color: '#c4b5fd',
+                      fontWeight: 600,
+                      marginBottom: '0.35rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em'
+                    }}>
+                      💡 Dica do recrutador:
+                    </div>
+                    <div style={{
+                      fontSize: '0.8rem',
+                      color: '#cbd5e1',
+                      lineHeight: 1.5,
+                      fontStyle: 'italic'
+                    }}>
+                      {interviewQuestion.dica}
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <div style={{
+                  fontSize: '0.75rem',
+                  color: '#64748b',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <LockOpen size={14} color="#a78bfa" />
+                  <span>Pratique com perguntas personalizadas no PRO</span>
                 </div>
               </div>
             )}

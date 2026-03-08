@@ -29,6 +29,10 @@ export interface PreviewData {
     analise_por_pilares: PilaresData;
     projected_score?: number;
     percentile?: string;
+    pergunta_preview?: {
+        pergunta: string;
+        dica: string;
+    };
     gap_1?: {
         titulo?: string;
         explicacao?: string;
