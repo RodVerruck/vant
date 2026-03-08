@@ -237,6 +237,14 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
     );
   }
 
+  const benefits = [
+    { icon: <FileCheck size={isMobile ? 18 : 20} color="#38bdf8" />, bg: 'rgba(56,189,248,0.15)', title: 'CV otimizado pronto para usar', desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.' },
+    { icon: <Mic size={isMobile ? 18 : 20} color="#a78bfa" />, bg: 'rgba(167,139,250,0.15)', title: 'Simulador de entrevistas com IA', desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.' },
+    { icon: <BookOpen size={isMobile ? 18 : 20} color="#fb923c" />, bg: 'rgba(251,146,60,0.15)', title: 'Biblioteca personalizada', desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.' },
+    { icon: <Search size={isMobile ? 18 : 20} color="#f87171" />, bg: 'rgba(248,113,113,0.15)', title: 'Análise completa de todos os problemas', desc: 'Veja todos os gaps identificados com exemplos reais de como corrigir cada um.' },
+    { icon: <RefreshCw size={isMobile ? 18 : 20} color="#34d399" />, bg: 'rgba(52,211,153,0.15)', title: 'Múltiplas otimizações', desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.' }
+  ];
+
   // Hook para detectar scroll em 60% da página
   useEffect(() => {
     const handleScroll = () => {
@@ -592,21 +600,24 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
                     </div>
                   </div>
 
-                  {/* Termos faltando como chips com fonte */}
+                  {/* Termos faltando como chips - Layout otimizado para mobile */}
                   {problem.termos_faltando && Array.isArray(problem.termos_faltando) && problem.termos_faltando.length > 0 && (
-                    <div style={{ marginBottom: '1.5rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Termos ausentes no seu CV</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ marginBottom: isMobile ? '1rem' : '1.5rem' }}>
+                      <div style={{ fontSize: isMobile ? '0.7rem' : '0.75rem', fontWeight: 600, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Termos ausentes no seu CV</div>
+                      <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: isMobile ? '0.4rem' : '0.75rem' }}>
                         {problem.termos_faltando.map((item: string | { termo: string; frequencia: string }, termIdx: number) => {
                           // Suporta tanto formato antigo (string) quanto novo (objeto)
                           const termo = typeof item === 'string' ? item : item.termo;
                           const frequencia = typeof item === 'object' && item.frequencia ? item.frequencia : null;
 
                           return (
-                            <div key={termIdx} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                              <span className="term-chip" style={{ alignSelf: 'flex-start' }}>{termo}</span>
-                              {frequencia && (
-                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic', paddingLeft: '0.5rem' }}>
+                            <div key={termIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <span className="term-chip" style={{ fontSize: isMobile ? '0.7rem' : '0.78rem' }}>
+                                {termo}
+                                {frequencia && isMobile && <span style={{ opacity: 0.7, marginLeft: '0.25rem' }}>({frequencia})</span>}
+                              </span>
+                              {frequencia && !isMobile && (
+                                <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic' }}>
                                   {frequencia}
                                 </span>
                               )}
@@ -635,38 +646,61 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
 
         {/* Benefícios Detalhados - Focado em Resultados */}
         <div className="vant-glass-dark vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.6s' }}>
-          <h2 className="vant-h2" style={{ marginBottom: '0.4rem' }}>O que você desbloqueia com o PRO</h2>
-          <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1.5rem' }}>Um sistema completo do CV à entrevista.</p>
+          <h2 className="vant-h2" style={{ marginBottom: isMobile ? '0.75rem' : '0.4rem' }}>O que você desbloqueia com o PRO</h2>
+          {!isMobile && <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1.5rem' }}>Um sistema completo do CV à entrevista.</p>}
 
-          <div className="benefits-grid">
-            {([
-              { icon: <FileCheck size={isMobile ? 16 : 20} color="#38bdf8" />, bg: 'rgba(56,189,248,0.15)', title: 'CV otimizado pronto para usar', desc: 'Currículo reescrito com palavras-chave, estrutura ATS e linguagem de impacto. Download em PDF e Word.' },
-              { icon: <Mic size={isMobile ? 16 : 20} color="#a78bfa" />, bg: 'rgba(167,139,250,0.15)', title: 'Simulador de entrevistas com IA', desc: 'Pratica perguntas comportamentais e técnicas. Recebe feedback detalhado e chegue preparado.' },
-              { icon: <BookOpen size={isMobile ? 16 : 20} color="#fb923c" />, bg: 'rgba(251,146,60,0.15)', title: 'Biblioteca personalizada', desc: 'Cursos, livros e recursos recomendados especificamente para sua área e nível.' },
-              { icon: <Search size={isMobile ? 16 : 20} color="#f87171" />, bg: 'rgba(248,113,113,0.15)', title: 'Análise completa de todos os problemas', desc: 'Veja todos os gaps identificados com exemplos reais de como corrigir cada um.' },
-              { icon: <RefreshCw size={isMobile ? 16 : 20} color="#34d399" />, bg: 'rgba(52,211,153,0.15)', title: 'Múltiplas otimizações', desc: 'Adapte seu CV para diferentes vagas e acompanhe a evolução do score ao longo do tempo.' }
-            ] as Array<{ icon: React.ReactNode; bg: string; title: string; desc: string }>)
-              .slice(0, isMobile ? 3 : 5)
-              .map((benefit, idx) => (
+          {isMobile ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.6rem' }}>
+              {benefits.map((benefit, idx) => (
+                <div key={idx} className="cta-checklist-item" style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  padding: '0.6rem 0.875rem',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  width: '100%',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}>
+                  <div className="cta-check-icon" style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    border: 'none',
+                    color: '#fff',
+                    width: '1.4rem',
+                    height: '1.4rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {benefit.icon}
+                  </div>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#f1f5f9' }}>{benefit.title}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="benefits-grid">
+              {benefits.map((benefit, idx) => (
                 <div key={idx} className="benefit-card">
                   <div className="vant-flex vant-gap-4" style={{ alignItems: 'flex-start' }}>
                     <div className="benefit-icon-box" style={{ background: benefit.bg }}>
                       {benefit.icon}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <h3 className="vant-text-white" style={{ marginBottom: isMobile ? '0.25rem' : '0.5rem', fontSize: isMobile ? '0.875rem' : '1rem', fontWeight: 600, lineHeight: 1.3 }}>
+                      <h3 className="vant-text-white" style={{ marginBottom: '0.5rem', fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
                         {benefit.title}
                       </h3>
-                      {!isMobile && (
-                        <p className="vant-text-support" style={{ fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
-                          {benefit.desc}
-                        </p>
-                      )}
+                      <p className="vant-text-support" style={{ fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
+                        {benefit.desc}
+                      </p>
                     </div>
                   </div>
                 </div>
               ))}
-          </div>
+            </div>
+          )}
         </div>
 
         {hiddenCount > 0 && (
