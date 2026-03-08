@@ -480,30 +480,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
         )}
       </div>
 
-      {/* Rodapé Condicional */}
-      <div className="vant-glass-darker vant-mb-8 vant-animate-fade" style={{ animationDelay: '0.7s' }}>
-        <div className="vant-flex vant-justify-between vant-items-center">
-          <div>
-            <div className="vant-text-white vant-font-medium" style={{ marginBottom: '0.25rem' }}>
-              Análise gratuita utilizada
-            </div>
-            <div className="vant-text-support vant-text-sm">
-              Faça upgrade para continuar otimizando
-            </div>
-          </div>
-          <div className="vant-flex vant-gap-3">
-            <button
-              className="vant-btn-tab"
-              onClick={onTryAnother}
-              style={{ background: 'rgba(255,255,255,0.1)' }}
-            >
-              Voltar para edição
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Barra Sticky CTA Mobile */}
+      {/* Barra Sticky CTA Mobile - Apenas para mobile */}
       <div
         className={`vant-sticky-cta ${scrollTrigger ? 'vant-sticky-cta-visible' : ''}`}
         style={{
@@ -515,7 +492,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           backdropFilter: 'blur(20px)',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           padding: '1rem',
-          zIndex: 50
+          zIndex: 50,
+          display: 'none' // Oculto por padrão, só aparece via CSS media query
         }}
       >
         <div className="vant-flex vant-justify-between vant-items-center">
