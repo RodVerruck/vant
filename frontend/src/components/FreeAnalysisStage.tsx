@@ -252,7 +252,8 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
       const pageHeight = document.documentElement.scrollHeight;
       const scrollPercentage = (scrollPosition / pageHeight) * 100;
 
-      setScrollTrigger(scrollPercentage >= 30);
+      // Mostrar sticky entre 30% e 80% da página (esconder quando chega nos planos)
+      setScrollTrigger(scrollPercentage >= 30 && scrollPercentage < 80);
     };
 
     window.addEventListener('scroll', handleScroll);
