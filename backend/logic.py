@@ -1063,23 +1063,32 @@ INSTRUÇÕES ESPECÍFICAS:
    **REGRAS OBRIGATÓRIAS DE OTIMIZAÇÃO:**
    a) **VERBO DE AÇÃO NO INÍCIO**: Comece SEMPRE com verbo de ação forte (desenvolvi, implementei, gerenciei, criei, otimizei, liderei, reduzi, aumentei, automatizei)
    
-   b) **MÍNIMO 2 TERMOS TÉCNICOS**: Adicione pelo menos 2 termos técnicos/palavras-chave RELEVANTES para {forced_area.replace('_', ' ').upper() if forced_area else area_detected.upper()}
-      - Exemplos TI: Python, React, API REST, Docker, Kubernetes, microserviços, CI/CD
-      - Exemplos RH: recrutamento, onboarding, gestão de pessoas, KPIs, treinamento
-      - Exemplos Marketing: SEO, Google Ads, funil de conversão, CRM, automação
-      - Exemplos Vendas: pipeline, CRM, prospecção, negociação, fechamento
+   b) **MÍNIMO 2 TERMOS TÉCNICOS COERENTES COM O CV**: 
+      **CRÍTICO**: Adicione termos técnicos que façam sentido com a EXPERIÊNCIA REAL do candidato no CV
+      - Se o CV é de suporte/vendas mas a vaga é RH: use termos de suporte/vendas (atendimento, CRM, negociação, SAC)
+      - Se o CV é de TI mas a vaga é Marketing: use termos de TI (sistemas, automação, APIs, integrações)
+      - **NUNCA force termos de uma área se o CV não tem experiência nela**
+      
+      Exemplos por área REAL do CV (não da vaga):
+      - Suporte: atendimento ao cliente, resolução de problemas, SAC, tickets, SLA, troubleshooting
+      - Vendas: prospecção, negociação, fechamento, pipeline, CRM, metas, conversão
+      - TI: Python, React, API REST, Docker, Kubernetes, microserviços, CI/CD
+      - RH: recrutamento, onboarding, gestão de pessoas, KPIs, treinamento
+      - Marketing: SEO, Google Ads, funil de conversão, CRM, automação
    
    c) **SUBSTÂNCIA VISÍVEL**: A versão otimizada deve ter 30-50% MAIS conteúdo que a atual
-      - Adicione especificidades técnicas
-      - Inclua contexto profissional
-      - Detalhe ferramentas/metodologias usadas
+      - Adicione especificidades técnicas BASEADAS NA EXPERIÊNCIA REAL
+      - Inclua contexto profissional COERENTE com o histórico
+      - Detalhe ferramentas/metodologias que o candidato REALMENTE poderia ter usado
    
    d) **MARQUE ADIÇÕES COM ASTERISCOS**: Coloque **termo novo** em torno de CADA palavra/frase que você ADICIONAR (não estava no original)
-      - Exemplo: "Gerenciei projetos" → "**Implementei** projetos utilizando **metodologia ágil** e **Scrum**"
+      - Exemplo: "Atendi clientes" → "**Gerenciei** atendimento ao cliente utilizando **CRM** e **metodologia de resolução ágil**"
    
    e) **NÃO invente números, porcentagens ou métricas** - foque em qualidade técnica e profissional
    
    f) **IMPORTANTE**: Se o gap for "Formatação inadequada", NÃO adicione termos técnicos. Foque em estrutura e clareza.
+   
+   g) **COERÊNCIA OBRIGATÓRIA**: Analise o CV REAL antes de adicionar termos. Se não houver experiência na área da vaga, otimize com base na experiência que o candidato TEM, não na que ele não tem.
 
 4. **NÃO USE** "falta de métricas" ou "falta de números" como problema
 5. Foque APENAS nestes 4 tipos de problemas RELEVANTES PARA A ÁREA:
@@ -1094,23 +1103,87 @@ INSTRUÇÕES ESPECÍFICAS:
 10. **VERIFICAÇÃO OBRIGATÓRIA**: Confirme que exemplo_otimizado começa com verbo de ação forte
 
 **CÁLCULO OBRIGATÓRIO DOS PILARES (analise_por_pilares):**
-9. **impacto (0-100)**: Avalie o uso de verbos de ação, resultados e especificidade. 
-   - 90-100: Excelente uso de verbos de ação e resultados específicos
-   - 70-89: Bom, mas pode melhorar em especificidade
-   - 50-69: Médio, linguagem passiva ou genérica
-   - 0-49: Fraco, sem verbos de ação ou resultados
-10. **keywords (0-100)**: Avalie cobertura de palavras-chave relevantes PARA A ÁREA.
-    - 90-100: Excelente cobertura de termos técnicos da área
-    - 70-89: Boa cobertura, mas faltam alguns termos importantes
-    - 50-69: Média, termos genéricos ou básicos
-    - 0-49: Fraca, poucos ou nenhum termo relevante da área
-11. **ats (0-100)**: Avalie formatação, estrutura e compatibilidade com sistemas ATS.
-    - 90-100: Formatação impecável, bullets claros, estrutura otimizada
-    - 70-89: Boa formatação, mas pode melhorar organização
-    - 50-69: Média, parágrafos longos ou estrutura confusa
-    - 0-49: Fraca, formatação inadequada para ATS
+9. **impacto (0-100)**: Avalie o uso de verbos de ação, resultados e especificidade.
+   **CRITÉRIOS OBJETIVOS OBRIGATÓRIOS** (some os pontos):
+   
+   a) **Verbos de ação (0-35 pontos)**:
+      - 35 pts: 80%+ das descrições começam com verbos fortes (implementei, gerenciei, desenvolvi, otimizei)
+      - 25 pts: 50-80% com verbos de ação
+      - 15 pts: 20-50% com verbos de ação
+      - 5 pts: Menos de 20%, predomina linguagem passiva ("responsável por", "participei de")
+      - 0 pts: Sem verbos de ação identificáveis
+   
+   b) **Especificidade técnica (0-35 pontos)**:
+      - 35 pts: Descrições detalhadas com ferramentas/metodologias específicas
+      - 25 pts: Algumas descrições específicas, outras genéricas
+      - 15 pts: Maioria genérica, poucas especificidades
+      - 5 pts: Descrições muito vagas ("trabalhei com tecnologia")
+      - 0 pts: Apenas títulos de cargo sem descrições
+   
+   c) **Contexto profissional (0-30 pontos)**:
+      - 30 pts: Cada experiência tem contexto claro (projeto, equipe, objetivo)
+      - 20 pts: Maioria tem contexto, algumas sem
+      - 10 pts: Pouco contexto, descrições isoladas
+      - 0 pts: Sem contexto, apenas listas de tarefas
+   
+   **IMPORTANTE**: Some os pontos das 3 categorias para obter o score final (0-100).
+   **CONSISTÊNCIA**: Use estes critérios EXATOS toda vez para garantir scores consistentes.
 
-12. **OBRIGATÓRIO**: Calcule os scores dos pilares BASEADO NO CV REAL, não use placeholders.
+10. **keywords (0-100)**: Avalie cobertura de palavras-chave relevantes PARA A ÁREA.
+    **CRITÉRIOS OBJETIVOS OBRIGATÓRIOS** (some os pontos):
+    
+    a) **Termos técnicos da área (0-40 pontos)**:
+       - 40 pts: 8+ termos técnicos relevantes identificados no CV
+       - 30 pts: 5-7 termos técnicos relevantes
+       - 20 pts: 3-4 termos técnicos relevantes
+       - 10 pts: 1-2 termos técnicos relevantes
+       - 0 pts: Nenhum termo técnico da área
+    
+    b) **Ferramentas/tecnologias (0-30 pontos)**:
+       - 30 pts: Lista clara de ferramentas/tecnologias usadas (5+)
+       - 20 pts: Algumas ferramentas mencionadas (3-4)
+       - 10 pts: Poucas ferramentas (1-2)
+       - 0 pts: Sem menção a ferramentas específicas
+    
+    c) **Alinhamento com vaga (0-30 pontos)**:
+       - 30 pts: 80%+ dos termos da vaga aparecem no CV
+       - 20 pts: 50-80% dos termos da vaga no CV
+       - 10 pts: 20-50% dos termos da vaga no CV
+       - 0 pts: Menos de 20% de match com termos da vaga
+    
+    **IMPORTANTE**: Some os pontos das 3 categorias para obter o score final (0-100).
+    **CONSISTÊNCIA**: Conte os termos técnicos REAIS do CV para garantir scores consistentes.
+11. **ats (0-100)**: Avalie formatação, estrutura e compatibilidade com sistemas ATS.
+    **CRITÉRIOS OBJETIVOS OBRIGATÓRIOS** (some os pontos):
+    
+    a) **Estrutura de seções (0-25 pontos)**:
+       - 25 pts: Seções claras (Experiência, Educação, Habilidades) com títulos destacados
+       - 15 pts: Seções presentes mas títulos pouco claros
+       - 5 pts: Seções misturadas ou sem organização
+       - 0 pts: Sem estrutura identificável
+    
+    b) **Uso de bullets (0-25 pontos)**:
+       - 25 pts: Maioria das descrições em bullets (80%+)
+       - 15 pts: Alguns bullets mas também parágrafos longos (40-80%)
+       - 5 pts: Poucos bullets, predominam parágrafos (10-40%)
+       - 0 pts: Sem bullets, apenas parágrafos corridos
+    
+    c) **Formatação limpa (0-25 pontos)**:
+       - 25 pts: Texto simples, sem tabelas/colunas/gráficos complexos
+       - 15 pts: Formatação simples com pequenas inconsistências
+       - 5 pts: Uso de tabelas ou formatação que pode confundir ATS
+       - 0 pts: Formatação complexa (colunas, gráficos, texto em imagens)
+    
+    d) **Consistência (0-25 pontos)**:
+       - 25 pts: Datas, cargos e empresas em formato consistente
+       - 15 pts: Maioria consistente, algumas variações
+       - 5 pts: Formatos misturados (ex: "2020-2021" e "Jan 2020 - Dez 2021")
+       - 0 pts: Sem padrão identificável
+    
+    **IMPORTANTE**: Some os pontos das 4 categorias para obter o score final (0-100).
+    **CONSISTÊNCIA**: Analise o CV com estes critérios EXATOS toda vez para garantir scores consistentes.
+
+12. **OBRIGATÓRIO**: Calcule os scores dos pilares BASEADO NO CV REAL usando os critérios objetivos acima, não use placeholders.
 
 13. **PRIORIDADE DA ÁREA**: Se {forced_area or area_detected} == "rh_lideranca", foque em gaps como:
    - Falta de termos de RH: "recrutamento", "seleção", "treinamento", "desenvolvimento", "gestão de pessoas"
