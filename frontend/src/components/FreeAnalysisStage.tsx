@@ -577,10 +577,17 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
       ) : (
         <div className="vant-glass-dark vant-animate-fade" style={{ animationDelay: '0.3s' }}>
           <div style={{ textAlign: 'center' }}>
-            <h2 className="vant-h2" style={{ marginBottom: '0.4rem' }}>
-              Alcance o Score {projected.score}/100 e entre no {projected.percentile}
+            <h2 style={{
+              fontSize: '1.75rem',
+              fontWeight: 800,
+              color: '#ffffff',
+              marginBottom: '0.5rem',
+              textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+              lineHeight: 1.2
+            }}>
+              Alcance o Score <span style={{ color: '#10b981' }}>{projected.score}/100</span> e entre no {projected.percentile}
             </h2>
-            <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.5rem' }}>Baseado nos problemas identificados no seu currículo</p>
+            <p style={{ fontSize: '0.95rem', color: '#94a3b8', marginBottom: '1.5rem', lineHeight: 1.6 }}>Baseado nos problemas identificados no seu currículo</p>
 
             {/* Opções de Planos */}
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '2rem', flexDirection: 'row', flexWrap: 'wrap', maxWidth: '900px', margin: '0 auto 2rem' }}>
