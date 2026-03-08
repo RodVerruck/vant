@@ -701,6 +701,17 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
     impacto
   );
 
+  // Debug: Log breakdown data
+  console.log('🔍 Score Breakdown Debug:', {
+    score,
+    gapsCount,
+    formatoAts,
+    keywords,
+    impacto,
+    projected,
+    breakdownLength: projected.breakdown?.length || 0
+  });
+
   // 🎨 Sistema de cores baseado no score
   const getScoreColor = (scoreValue: number) => {
     if (scoreValue < 50) {
