@@ -235,7 +235,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
       const pageHeight = document.documentElement.scrollHeight;
       const scrollPercentage = (scrollPosition / pageHeight) * 100;
 
-      setScrollTrigger(scrollPercentage >= 60);
+      setScrollTrigger(scrollPercentage >= 30);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -696,8 +696,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           backdropFilter: 'blur(20px)',
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           padding: '1rem',
-          zIndex: 50,
-          display: 'none' // Oculto por padrão, só aparece via CSS media query
+          zIndex: 50
         }}
       >
         <div className="vant-flex vant-justify-between vant-items-center">
