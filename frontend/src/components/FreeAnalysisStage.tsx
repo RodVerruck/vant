@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AlertCircle, TrendingUp, FileCheck, Mic, BookOpen, Search, RefreshCw, Zap, X, Check, Shield, LockOpen, CheckCircle2 } from 'lucide-react';
 import { calculateProjectedScore } from '@/lib/helpers';
 import { renderOptimizedTextWithHighlights } from '@/lib/diffHighlight';
@@ -212,6 +212,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
   const [showAllProblems, setShowAllProblems] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const pricingSectionRef = useRef<HTMLDivElement>(null);
 
   // Detectar mobile
   useEffect(() => {
@@ -772,7 +773,9 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
           </div>
           <button
             className="vant-btn-primary"
-            onClick={onUpgrade}
+            onClick={() => {
+              pricingSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
             style={{ padding: '0.75rem 1.5rem' }}
           >
             COMEÇAR AGORA
@@ -1044,7 +1047,7 @@ export function FreeAnalysisStage({ previewData, onUpgrade, onTryAnother }: Free
             )}
 
             {/* Opções de Planos */}
-            <div style={{ display: 'flex', gap: isMobile ? '0.75rem' : '1rem', justifyContent: 'center', marginBottom: '2rem', flexDirection: 'row', flexWrap: 'wrap', maxWidth: '900px', margin: isMobile ? '0 auto 1rem' : '0 auto 2rem' }}>
+            <div ref={pricingSectionRef} style={{ display: 'flex', gap: isMobile ? '0.75rem' : '1rem', justifyContent: 'center', marginBottom: '2rem', flexDirection: 'row', flexWrap: 'wrap', maxWidth: '900px', margin: isMobile ? '0 auto 1rem' : '0 auto 2rem' }}>
 
               {/* Crédito Avulso */}
               <div style={{
