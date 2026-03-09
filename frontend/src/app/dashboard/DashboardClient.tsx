@@ -271,8 +271,10 @@ export function DashboardClient() {
 
     // Continuar análise com CV/vaga salvos
     const handleContinueAnalysis = () => {
-        // Sinalizar para /app que deve iniciar processamento premium automaticamente
-        localStorage.setItem('vant_auto_process', 'true');
+        // Reutilizar o fluxo já existente de auto-start com skip do preview
+        localStorage.setItem('vant_auto_start', 'true');
+        localStorage.setItem('vant_skip_preview', 'true');
+        localStorage.removeItem('vant_auto_process');
         setShowContinueModal(false);
         router.push("/app");
     };

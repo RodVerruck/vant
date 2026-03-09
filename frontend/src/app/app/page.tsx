@@ -715,6 +715,15 @@ export default function AppPage() {
                 localStorage.removeItem("vant_area_of_interest");
             }
 
+            const legacyAutoProcess = localStorage.getItem("vant_auto_process");
+            if (legacyAutoProcess === "true") {
+                pendingAutoStart.current = true;
+                pendingSkipPreview.current = true;
+                localStorage.removeItem("vant_auto_process");
+                localStorage.removeItem("vant_use_generic_job");
+                localStorage.removeItem("vant_area_of_interest");
+            }
+
             // Só restaurar se for a primeira montagem (estado ainda vazio)
             if (savedJob && jobDescription === "") {
                 setJobDescription(savedJob);
@@ -741,7 +750,7 @@ export default function AppPage() {
 
     // Auto-start: dispara onStart() quando dados estão prontos (vindo do Dashboard modal)
     useEffect(() => {
-        if (pendingAutoStart.current && jobDescription.trim() && file && stage === "hero") {
+        if (pendingAutoStart.current && jobDescription.trim() && file && (stage === "hero" || stage === "analyzing")) {
             pendingAutoStart.current = false;
 
             // Verificar se deve pular preview (vindo do modal do Dashboard)
@@ -1011,7 +1020,6 @@ export default function AppPage() {
 
         // Retorno do Stripe após pagamento
         if (payment === "success" && sessionId) {
-            setStage("checkout");
             setCheckoutError("");
 
             (async () => {
@@ -2148,6 +2156,16 @@ export default function AppPage() {
                 const data = await response.json();
                 console.log("[Analyzing] Análise concluída:", data);
 
+                const finishAnalysis = () => {
+                    setPreviewData(data);
+                    if (pendingSkipPreview.current) {
+                        pendingSkipPreview.current = false;
+                        setStage("processing_premium");
+                        return;
+                    }
+                    setStage("preview");
+                };
+
                 // Aguardar animação chegar a 100% se ainda não chegou
                 const elapsed = Date.now() - startTime;
                 if (elapsed < 8000) {
@@ -2157,8 +2175,7 @@ export default function AppPage() {
                         setProgress(100);
                         setStatusText("Análise concluída!");
                         setTimeout(() => {
-                            setPreviewData(data);
-                            setStage("preview");
+                            finishAnalysis();
                         }, 500);
                     }, 8000 - elapsed);
                 } else {
@@ -2167,8 +2184,7 @@ export default function AppPage() {
                     setProgress(100);
                     setStatusText("Análise concluída!");
                     setTimeout(() => {
-                        setPreviewData(data);
-                        setStage("preview");
+                        finishAnalysis();
                     }, 500);
                 }
             } catch (error: any) {
