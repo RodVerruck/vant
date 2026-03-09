@@ -1098,7 +1098,20 @@ export default function AppPage() {
             const returnStage = localStorage.getItem("vant_auth_return_stage");
             let returnPlan = localStorage.getItem("vant_auth_return_plan");
             const previewSnapshot = parsePreviewSnapshot();
-            const isEligibleSmartRedirectStage = stage === "hero" || stage === "checkout" || showAuthModal;
+            const isPaymentSuccessFlow = searchParams.get("payment") === "success" && !!searchParams.get("session_id");
+            const isEligibleSmartRedirectStage = (stage === "hero" || stage === "checkout" || showAuthModal) && !isPaymentSuccessFlow && !needsActivation;
+
+            if (returnStage === "processing_premium") {
+                console.log("[Auth] Retornando direto para processing_premium");
+                setShowAuthModal(false);
+                setApiError("");
+                setPremiumError("");
+                setCheckoutError("");
+                setStage("processing_premium");
+                localStorage.removeItem("vant_auth_return_stage");
+                localStorage.removeItem("vant_auth_return_plan");
+                return;
+            }
 
             // Smart Redirect: intenção de análise pendente após login
             // Só ativar se não houver fluxo ativo (sem jobDescription e file)
@@ -1801,6 +1814,13 @@ export default function AppPage() {
 
                 // Verificação rápida: se não há usuário, liberar renderização imediatamente
                 if (!authUserId) {
+                    const pendingReturnStage = typeof window !== "undefined"
+                        ? localStorage.getItem("vant_auth_return_stage")
+                        : null;
+                    if (pendingReturnStage === "processing_premium") {
+                        console.log("[initialAuthCheck] Aguardando auth para retornar a processing_premium");
+                        return;
+                    }
                     console.log("[initialAuthCheck] Sem authUserId, liberando renderização do hero");
                     setIsCheckingAuth(false);
                     return;
@@ -1810,6 +1830,7 @@ export default function AppPage() {
                 // 1. Ler a URL diretamente (Mais rápido que router ou state)
                 const urlParams = new URLSearchParams(window.location.search);
                 const urlHistoryId = urlParams.get('historyId');
+                const isPaymentSuccessFlow = urlParams.get("payment") === "success" && !!urlParams.get("session_id");
 
                 // 2. Verificar LocalStorage
                 const localHistoryId = localStorage.getItem("vant_dashboard_open_history_id");
@@ -1817,7 +1838,8 @@ export default function AppPage() {
                 // 3. Definir se existe um fluxo ativo (AGORA COM A URL)
                 const hasHistoryItem = !!urlHistoryId || !!localHistoryId || hasActiveHistoryFlow;
 
-                const hasReturnStage = !!localStorage.getItem("vant_auth_return_stage");
+                const returnStageValue = localStorage.getItem("vant_auth_return_stage");
+                const hasReturnStage = !!returnStageValue;
                 const checkoutPending = localStorage.getItem("checkout_pending");
                 const hasCheckoutPending = !!checkoutPending;
                 const hasAutoProcess = !!localStorage.getItem("vant_auto_process");
@@ -1826,8 +1848,11 @@ export default function AppPage() {
                 const hasSavedDraft = !!localStorage.getItem("vant_jobDescription") && (
                     !!localStorage.getItem("vant_file_b64") || !!localStorage.getItem("vant_cv_text_preextracted")
                 );
+                const hasPendingIdbFile = !!localStorage.getItem("vant_jobDescription") && !!localStorage.getItem("vant_file_name");
                 // Se stage não é hero, usuário está em fluxo ativo (preview, checkout, analyzing, etc.)
                 const hasNonHeroStage = stage !== "hero";
+                const hasDirectPremiumReturn = returnStageValue === "processing_premium";
+                const isActivationFlowActive = needsActivation || stage === "activating_payment" || isPaymentSuccessFlow;
                 const hasActiveFlow =
                     hasReturnStage ||
                     hasHistoryItem ||
@@ -1837,7 +1862,10 @@ export default function AppPage() {
                     hasAutoProcess ||
                     hasAutoStartFlag ||
                     hasSkipPreviewFlag ||
-                    hasSavedDraft;
+                    hasDirectPremiumReturn ||
+                    isActivationFlowActive ||
+                    hasSavedDraft ||
+                    hasPendingIdbFile;
 
                 console.log("[initialAuthCheck] Verificando fluxo:", {
                     urlHistoryId,
@@ -2011,49 +2039,129 @@ export default function AppPage() {
             setStage("checkout");
             return;
         }
-        if (!jobDescription.trim() || !file) {
-            // Tentar restaurar do localStorage (caso de remontagem)
-            if (typeof window !== "undefined") {
-                const savedJob = localStorage.getItem("vant_jobDescription");
-                const savedFileB64 = localStorage.getItem("vant_file_b64");
-                const savedFileName = localStorage.getItem("vant_file_name");
-                const savedFileType = localStorage.getItem("vant_file_type");
-                if (savedJob && savedFileB64 && savedFileName && savedFileType) {
-                    console.log("[processing_premium] Restaurando do localStorage...");
-                    setIsRestoringData(true);
-                    setJobDescription(savedJob);
-                    fetch(savedFileB64)
-                        .then(res => res.blob())
-                        .then(blob => {
+
+        const restoreAndRun = async () => {
+            if (!jobDescription.trim() || !file) {
+                if (typeof window !== "undefined") {
+                    const savedJob = localStorage.getItem("vant_jobDescription");
+                    const savedFileB64 = localStorage.getItem("vant_file_b64");
+                    const savedFileName = localStorage.getItem("vant_file_name");
+                    const savedFileType = localStorage.getItem("vant_file_type");
+                    const savedCvText = localStorage.getItem("vant_cv_text_preextracted");
+
+                    if (savedJob && savedFileB64 && savedFileName && savedFileType) {
+                        console.log("[processing_premium] Restaurando do localStorage...");
+                        setIsRestoringData(true);
+                        setJobDescription(savedJob);
+                        try {
+                            const blob = await fetch(savedFileB64).then((res) => res.blob());
                             const restoredFile = new File([blob], savedFileName, { type: savedFileType });
                             setFile(restoredFile);
-                            setIsRestoringData(false);
                             console.log("[processing_premium] Dados restaurados!");
-                        })
-                        .catch(err => {
+                        } catch (err) {
                             console.error("[processing_premium] Erro:", err);
+                        } finally {
                             setIsRestoringData(false);
-                        });
-                    return;
+                        }
+                        return;
+                    }
+
+                    if (savedJob && savedCvText && savedFileName) {
+                        console.log("[processing_premium] Restaurando CV pré-extraído do localStorage...");
+                        setIsRestoringData(true);
+                        setJobDescription(savedJob);
+                        setFile(new File(["placeholder"], savedFileName, { type: "text/plain" }));
+                        setIsRestoringData(false);
+                        return;
+                    }
+
+                    try {
+                        const idbFile = await getFileFromIDB();
+                        if (savedJob && idbFile) {
+                            console.log("[processing_premium] Restaurando arquivo do IndexedDB...");
+                            setIsRestoringData(true);
+                            setJobDescription(savedJob);
+                            setFile(idbFile);
+                            localStorage.setItem("vant_file_name", idbFile.name);
+                            localStorage.setItem("vant_file_type", idbFile.type);
+                            setIsRestoringData(false);
+                            return;
+                        }
+                    } catch (error) {
+                        console.warn("[processing_premium] Falha ao restaurar arquivo do IndexedDB:", error);
+                    }
                 }
+
+                console.log("[processing_premium] Dados ainda não disponíveis para processamento premium. Aguardando restauração...");
+                return;
             }
-            console.log("[processing_premium] Usuário comprou créditos, redirecionando para hero para usar créditos...");
-            // setPremiumError("Para usar seus créditos, envie seu CV primeiro."); // Removido para não assustar usuário
-            setStage("hero");
-            return;
-        }
 
-        if (isRestoringData) {
-            console.log("[processing_premium] Aguardando restauração...");
-            return;
-        }
+            if (isRestoringData) {
+                console.log("[processing_premium] Aguardando restauração...");
+                return;
+            }
 
-        // Persistir dados essenciais em localStorage para evitar perda em recarregamentos
-        if (typeof window !== "undefined") {
-            if (jobDescription) localStorage.setItem("vant_jobDescription", jobDescription);
-            // Não armazenamos o File em localStorage (muito grande), mas podemos avisar se ele foi perdido
-        }
-    }, [stage, authUserId, jobDescription, file, isRestoringData]);
+            if (typeof window !== "undefined" && jobDescription) {
+                localStorage.setItem("vant_jobDescription", jobDescription);
+            }
+
+            try {
+                setPremiumError("");
+                setStatusText("Iniciando análise...");
+
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("job_description", jobDescription);
+                formData.append("user_id", authUserId);
+
+                if (useGenericJob && selectedArea) {
+                    formData.append("area_of_interest", selectedArea);
+                }
+
+                const response = await fetch(`${getApiUrl()}/api/analyze-premium-paid`, {
+                    method: "POST",
+                    body: formData,
+                    signal: getSafeSignal(30000),
+                });
+
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload.error || `HTTP ${response.status}`);
+                }
+
+                if (!payload.session_id) {
+                    throw new Error("Session ID não retornado pelo backend");
+                }
+
+                console.log("[Progressive Loading] Recebido session_id:", payload.session_id);
+                setSessionId(payload.session_id as string);
+
+                const controller = new AbortController();
+                abortControllerRef.current = controller;
+                isPollingActive.current = true;
+
+                await pollAnalysisProgress(
+                    payload.session_id as string,
+                    async (text: string, percent: number) => {
+                        setStatusText(text);
+                        setProgress(percent);
+                    },
+                    setReportData as any,
+                    setStage,
+                    setCreditsRemaining,
+                    controller.signal
+                );
+            } catch (error) {
+                console.error("[processing_premium] Erro no processamento premium:", error);
+                setPremiumError(error instanceof Error ? error.message : "Erro ao processar análise premium");
+                isPollingActive.current = false;
+                abortControllerRef.current = null;
+                setStage("hero");
+            }
+        };
+
+        void restoreAndRun();
+    }, [stage, authUserId, jobDescription, file, isRestoringData, useGenericJob, selectedArea]);
 
     // Derivar previewPillarItems dos dados reais de previewData
     const previewPillarSource = !Array.isArray(previewData?.pilares) && previewData?.pilares

@@ -271,10 +271,11 @@ export function DashboardClient() {
 
     // Continuar análise com CV/vaga salvos
     const handleContinueAnalysis = () => {
-        // Reutilizar o fluxo já existente de auto-start com skip do preview
-        localStorage.setItem('vant_auto_start', 'true');
-        localStorage.setItem('vant_skip_preview', 'true');
+        // Ir direto para processamento premium sem passar pelo fluxo lite/hero
+        localStorage.setItem('vant_auth_return_stage', 'processing_premium');
         localStorage.removeItem('vant_auto_process');
+        localStorage.removeItem('vant_auto_start');
+        localStorage.removeItem('vant_skip_preview');
         setShowContinueModal(false);
         router.push("/app");
     };
