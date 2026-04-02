@@ -12,6 +12,7 @@ from dependencies import (
     validate_user_id,
     _entitlements_status,
     _consume_one_credit,
+    ErrorResponse,
 )
 
 router = APIRouter(prefix="/api", tags=["user"])

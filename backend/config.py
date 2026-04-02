@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = Field(default=15, description="Tamanho máximo de arquivo em MB")
     
     # Debug
-    DEBUG_API_SECRET: str = Field(default="vant_debug_2026_secure_key", description="Secret para endpoints de debug")
+    DEBUG_API_SECRET: str = Field(default="", description="Secret para endpoints de debug — obrigatório em produção")
 
     # Admin
     ADMIN_CLEANUP_TOKEN: str = Field(default="", description="Token para limpeza de arquivos temporários")

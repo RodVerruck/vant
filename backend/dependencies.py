@@ -65,7 +65,7 @@ else:
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
     SUPABASE_URL = os.getenv("SUPABASE_URL")
     SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-    DEBUG_API_SECRET = os.getenv("DEBUG_API_SECRET", "vant_debug_2026_secure_key")
+    DEBUG_API_SECRET = os.getenv("DEBUG_API_SECRET", "")
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     FRONTEND_CHECKOUT_RETURN_URL = os.getenv("FRONTEND_CHECKOUT_RETURN_URL") or "http://localhost:3000/app"
@@ -289,11 +289,11 @@ def _upload_to_bytes_io(upload: UploadFile) -> io.BytesIO:
 
 def _entitlements_status(user_id: str) -> dict[str, Any]:
     """Verifica status de entitlements do usuário (assinatura + avulsos combinados)."""
-    print(f'[DEBUG] Buscando subs para user {user_id}')
-    
+    logger.debug(f'[entitlements] Buscando subs para user {user_id}')
+
     subscription_credits = 0
     has_subscription = False
-    
+
     subs = (
         supabase_admin.table("subscriptions")
         .select("subscription_plan,subscription_status,current_period_start,current_period_end")
@@ -303,16 +303,16 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
         .execute()
     )
     sub = (subs.data or [])[0] if subs.data else None
-    
-    print(f"[DEBUG] _entitlements_status: user_id={user_id}, subscription={sub}")
+
+    logger.debug(f"[entitlements] user_id={user_id}, subscription={sub}")
 
     # Verificar se tem assinatura ativa (qualquer plano)
     if sub and sub.get("subscription_status") in ["active", "trialing"]:
         plan_name = sub.get("subscription_plan")
         period_start = sub.get("current_period_start")
-        
-        print(f"[DEBUG] Assinatura ativa encontrada: plan={plan_name}, status={sub.get('subscription_status')}")
-        
+
+        logger.debug(f"[entitlements] Assinatura ativa: plan={plan_name}, status={sub.get('subscription_status')}")
+
         # Todos os planos de assinatura (PRO, Trial, pro_monthly_early_bird) usam sistema de usage com limite mensal
         if plan_name in ["pro_monthly", "pro_annual", "trial", "pro_monthly_early_bird"]:
             has_subscription = True
@@ -328,7 +328,7 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
             used = int(row.get('used', 0) if row else 0)
             limit_val = int(row.get('usage_limit', 30) if row else 30)
             subscription_credits = max(0, limit_val - used)
-            print(f"[DEBUG] Créditos da assinatura: {subscription_credits} (used={used}, limit={limit_val})")
+            logger.debug(f"[entitlements] Créditos da assinatura: {subscription_credits} (used={used}, limit={limit_val})")
 
     # Verificar créditos avulsos (sempre, mesmo com assinatura)
     avulso_credits = 0
@@ -336,16 +336,16 @@ def _entitlements_status(user_id: str) -> dict[str, Any]:
         supabase_admin.table("user_credits").select("balance").eq("user_id", user_id).limit(1).execute()
     )
     row = (credits.data or [])[0] if credits.data else None
-    
+
     if row is not None:
         avulso_credits = max(0, int(row.get("balance", 0)))
-    
-    print(f"[DEBUG] Créditos avulsos: {avulso_credits}")
-    
+
+    logger.debug(f"[entitlements] Créditos avulsos: {avulso_credits}")
+
     # Total = assinatura + avulsos
     total_credits = subscription_credits + avulso_credits
-    
-    print(f"[DEBUG] Total de créditos: {total_credits} (assinatura={subscription_credits} + avulsos={avulso_credits})")
+
+    logger.debug(f"[entitlements] Total de créditos: {total_credits} (assinatura={subscription_credits} + avulsos={avulso_credits})")
     
     return {
         "payment_verified": total_credits > 0,
@@ -420,13 +420,13 @@ def _consume_one_credit(user_id: str) -> None:
 
 def _create_fallback_subscription(payload: ActivateEntitlementsRequest, plan_id: str, plan: dict) -> JSONResponse:
     """Função fallback forçada para garantir que usuário receba créditos."""
-    print(f"[FALLBACK] Criando assinatura manual forçada para user {payload.user_id}")
-    
+    logger.warning(f"[FALLBACK] Criando assinatura manual forçada para user {payload.user_id}")
+
     try:
         now = datetime.now()
         period_start_iso = now.isoformat()
         period_end_iso = (now + timedelta(days=30)).isoformat()
-        
+
         # Criar assinatura manual forçada
         subscription_data = {
             "user_id": payload.user_id,
@@ -437,11 +437,11 @@ def _create_fallback_subscription(payload: ActivateEntitlementsRequest, plan_id:
             "current_period_start": period_start_iso,
             "current_period_end": period_end_iso,
         }
-        
+
         # Forçar inserção da assinatura
         result = supabase_admin.table("subscriptions").insert(subscription_data).execute()
-        print(f"[FALLBACK] Assinatura forçada criada: {result}")
-        
+        logger.info(f"[FALLBACK] Assinatura forçada criada: {result}")
+
         # Forçar criação do usage
         usage_data = {
             "user_id": payload.user_id,
@@ -449,14 +449,14 @@ def _create_fallback_subscription(payload: ActivateEntitlementsRequest, plan_id:
             "used": 0,
             "usage_limit": int(plan.get("credits", 30))
         }
-        
+
         usage_result = supabase_admin.table("usage").insert(usage_data).execute()
-        print(f"[FALLBACK] Usage forçado criado: {usage_result}")
-        
+        logger.info(f"[FALLBACK] Usage forçado criado: {usage_result}")
+
         credits_remaining = int(plan.get("credits", 30))
-        
-        print(f"[FALLBACK] SUCESSO: Usuário {payload.user_id} recebeu {credits_remaining} créditos forçados")
-        
+
+        logger.info(f"[FALLBACK] SUCESSO: Usuário {payload.user_id} recebeu {credits_remaining} créditos forçados")
+
         return JSONResponse(content={
             "ok": True,
             "message": "Assinatura forçada criada (fallback)",
@@ -464,20 +464,10 @@ def _create_fallback_subscription(payload: ActivateEntitlementsRequest, plan_id:
             "plan": plan_id,
             "fallback": True
         })
-        
+
     except Exception as e:
-        logger.error(f"[ERRO CRÍTICO] Falha total no fallback: {e}")
-        print(f"[ERRO CRÍTICO] Falha total no fallback: {e}")
-        
-        # ÚLTIMO RECURSO: Retornar sucesso mesmo sem salvar no banco
-        print(f"[ÚLTIMO RECURSO] Retornando sucesso sem salvar no banco...")
-        return JSONResponse(content={
-            "ok": True,
-            "message": "Créditos liberados (último recurso)",
-            "credits": int(plan.get("credits", 30)),
-            "plan": plan_id,
-            "emergency": True
-        })
+        logger.error(f"[FALLBACK] Falha total no fallback para user {payload.user_id}: {e}")
+        raise
 
 
 # ============================================================
@@ -577,6 +567,13 @@ def _process_analysis_background(
 # ============================================================
 # PYDANTIC MODELS (shared across routers)
 # ============================================================
+
+class ErrorResponse(BaseModel):
+    """Modelo padronizado de resposta de erro usado em todos os routers."""
+    error: str
+    code: str | None = None
+    details: str | None = None
+
 
 class ActivateEntitlementsRequest(BaseModel):
     session_id: str

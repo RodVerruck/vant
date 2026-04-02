@@ -7,6 +7,7 @@ import os
 import time
 from datetime import datetime, timedelta
 from typing import Any, List
+from urllib.parse import urlparse
 
 import sentry_sdk
 from fastapi import FastAPI, File, Form, UploadFile, Request, Body, HTTPException
@@ -21,8 +22,10 @@ from dependencies import (
     supabase_admin,
     STRIPE_SECRET_KEY,
     DEV_MODE,
+    FRONTEND_CHECKOUT_RETURN_URL,
     settings,
     IS_DEV,
+    IS_PROD,
 )
 
 # Routers
@@ -75,12 +78,23 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS
+# CORS — deriva a origem do FRONTEND_CHECKOUT_RETURN_URL configurado
+_parsed_frontend = urlparse(FRONTEND_CHECKOUT_RETURN_URL or "http://localhost:3000")
+_frontend_origin = f"{_parsed_frontend.scheme}://{_parsed_frontend.netloc}"
+CORS_ORIGINS = [_frontend_origin]
+if not IS_PROD:
+    # Permite localhost nas portas mais comuns em desenvolvimento
+    CORS_ORIGINS.extend([
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -106,7 +120,8 @@ else:
 # ============================================================
 
 app.include_router(interview_router)
-app.include_router(debug_router)
+if not IS_PROD:
+    app.include_router(debug_router)
 app.include_router(admin_router)
 app.include_router(documents_router)
 app.include_router(user_router)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { logger } from "@/lib/logger";
 
 interface CopyableSectionProps {
     title: string;
@@ -17,7 +18,7 @@ export function CopyableSection({ title, content, isHeadline = false }: Copyable
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
-            console.error("Failed to copy:", err);
+            logger.error("Failed to copy:", err);
         }
     };
 
@@ -36,7 +37,7 @@ export function CopyableSection({ title, content, isHeadline = false }: Copyable
             }
         } catch (e) {
             // Se falhar, manter o texto original
-            console.warn('Erro ao corrigir encoding:', e);
+            logger.warn('Erro ao corrigir encoding:', e);
         }
 
         let html = text

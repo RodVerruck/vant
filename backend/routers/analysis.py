@@ -23,6 +23,7 @@ from dependencies import (
     _consume_one_credit,
     settings,
     IS_DEV,
+    ErrorResponse,
 )
 from logic import analyze_preview_lite, extrair_texto_pdf, gerar_pdf_candidato, gerar_word_candidato
 from mock_data import MOCK_PREVIEW_DATA, MOCK_PREMIUM_DATA
@@ -45,7 +46,7 @@ def get_analysis_status(session_id: str) -> JSONResponse:
     if not supabase_admin:
         return JSONResponse(
             status_code=500,
-            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
+            content=ErrorResponse(error="Supabase não configurado.", code="SUPABASE_NOT_CONFIGURED").model_dump(),
         )
     
     try:
@@ -91,8 +92,12 @@ def get_analysis_status(session_id: str) -> JSONResponse:
 def analyze_lite(request: Request, file: UploadFile = File(...), job_description: str = Form(...), area_of_interest: str = Form("")) -> JSONResponse:
     try:
         sentry_sdk.set_tag("endpoint", "analyze_lite")
-        
-        file_bytes = file.file.read()
+
+        max_size = (settings.MAX_PDF_SIZE_MB if settings else 5) * 1024 * 1024
+        file_bytes = file.file.read(max_size + 1)
+        if len(file_bytes) > max_size:
+            return JSONResponse(status_code=413, content=ErrorResponse(error=f"Arquivo muito grande. Limite: {settings.MAX_PDF_SIZE_MB if settings else 5}MB.", code="FILE_TOO_LARGE").model_dump())
+
         from storage_manager import storage_manager
         storage_manager.save_temp_files(file_bytes, job_description)
         
@@ -134,14 +139,17 @@ def analyze_free(
     if user_id and not validate_user_id(user_id):
         return JSONResponse(
             status_code=400, 
-            content={"error": "user_id inválido. Deve ser um UUID válido."}
+            content=ErrorResponse(error="user_id inválido. Deve ser um UUID válido.", code="INVALID_USER_ID").model_dump()
         )
     
     try:
-        file_bytes = file.file.read()
+        max_size = (settings.MAX_PDF_SIZE_MB if settings else 5) * 1024 * 1024
+        file_bytes = file.file.read(max_size + 1)
+        if len(file_bytes) > max_size:
+            return JSONResponse(status_code=413, content=ErrorResponse(error=f"Arquivo muito grande. Limite: {settings.MAX_PDF_SIZE_MB if settings else 5}MB.", code="FILE_TOO_LARGE").model_dump())
         from storage_manager import storage_manager
         storage_manager.save_temp_files(file_bytes, job_description, user_id)
-        
+
         # Verifica se usuário já usou análise gratuita (se tiver user_id)
         if user_id and supabase_admin:
             try:
@@ -149,10 +157,10 @@ def analyze_free(
                 if usage.data:
                     return JSONResponse(
                         status_code=403, 
-                        content={"error": "Você já usou sua análise gratuita. Faça upgrade para continuar."}
+                        content=ErrorResponse(error="Você já usou sua análise gratuita. Faça upgrade para continuar.", code="FREE_ANALYSIS_USED").model_dump()
                     )
             except Exception as e:
-                print(f"⚠️ Erro ao verificar uso gratuito: {e}")
+                logger.warning(f"Erro ao verificar uso gratuito: {e}")
         
         if DEV_MODE:
             print("🔧 [DEV MODE] Retornando mock de análise gratuita (sem processar IA)")
@@ -193,7 +201,7 @@ def analyze_free(
                     "used_at": datetime.now().isoformat()
                 }).execute()
             except Exception as e:
-                print(f"⚠️ Erro ao registrar uso gratuito: {e}")
+                logger.warning(f"Erro ao registrar uso gratuito: {e}")
         
         return JSONResponse(content=data)
     except Exception as e:
@@ -312,20 +320,23 @@ def analyze_premium_paid(
     if not supabase_admin:
         return JSONResponse(
             status_code=500,
-            content={"error": "Supabase não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY."},
+            content=ErrorResponse(error="Supabase não configurado.", code="SUPABASE_NOT_CONFIGURED").model_dump(),
         )
     
     if user_id and not validate_user_id(user_id):
         return JSONResponse(
             status_code=400, 
-            content={"error": "user_id inválido. Deve ser um UUID válido."}
+            content=ErrorResponse(error="user_id inválido. Deve ser um UUID válido.", code="INVALID_USER_ID").model_dump()
         )
     
     try:
         # Se cv_text foi fornecido (reutilização de CV), não precisa de file
         file_bytes = None
         if file and file.filename:
-            file_bytes = file.file.read()
+            max_size = (settings.MAX_PDF_SIZE_MB if settings else 5) * 1024 * 1024
+            file_bytes = file.file.read(max_size + 1)
+            if len(file_bytes) > max_size:
+                return JSONResponse(status_code=413, content=ErrorResponse(error=f"Arquivo muito grande. Limite: {settings.MAX_PDF_SIZE_MB if settings else 5}MB.", code="FILE_TOO_LARGE").model_dump())
             from storage_manager import storage_manager
             storage_manager.save_temp_files(file_bytes, job_description, user_id)
         elif not cv_text:
@@ -334,7 +345,7 @@ def analyze_premium_paid(
         # Verificar créditos (tanto em DEV quanto em produção)
         status = _entitlements_status(user_id)
         if not status.get("payment_verified") or int(status.get("credits_remaining") or 0) <= 0:
-            return JSONResponse(status_code=400, content={"error": "Você não tem créditos disponíveis."})
+            return JSONResponse(status_code=400, content=ErrorResponse(error="Você não tem créditos disponíveis.", code="INSUFFICIENT_CREDITS").model_dump())
 
         # Consumir crédito
         _consume_one_credit(user_id)

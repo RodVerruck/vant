@@ -1,14 +1,11 @@
 import type { GapFatal } from "@/types";
+import { safeFormatMarkdown } from "@/lib/formatText";
 
 interface GapCardProps {
     gap: GapFatal;
 }
 
 export function GapCard({ gap }: GapCardProps) {
-    const formatDiagnostic = (text: string) => {
-        if (!text) return "";
-        return text.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#38BDF8!important">$1</strong>');
-    };
 
     return (
         <div
@@ -51,7 +48,7 @@ export function GapCard({ gap }: GapCardProps) {
                     marginBottom: "10px",
                     marginTop: "10px"
                 }}
-                dangerouslySetInnerHTML={{ __html: `Evidência: "${formatDiagnostic(gap.evidencia)}"` }}
+                dangerouslySetInnerHTML={{ __html: `Evidência: "${safeFormatMarkdown(gap.evidencia)}"` }}
             />
 
             <div
@@ -64,7 +61,7 @@ export function GapCard({ gap }: GapCardProps) {
                     color: "#34d399",
                     fontWeight: 600
                 }}
-                dangerouslySetInnerHTML={{ __html: `💡 ${formatDiagnostic(gap.correcao_sugerida)}` }}
+                dangerouslySetInnerHTML={{ __html: `💡 ${safeFormatMarkdown(gap.correcao_sugerida)}` }}
             />
         </div>
     );

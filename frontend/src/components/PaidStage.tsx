@@ -5,6 +5,7 @@ import type { ReportData } from "@/types";
 import { BookCard } from "./BookCard";
 import { InterviewSimulator } from "./InterviewSimulator";
 import { calculateProjectedScore } from "@/lib/helpers";
+import { safeFormatMarkdown } from "@/lib/formatText";
 import {
     Zap, TrendingUp, AlertCircle, FileText, BookOpen, MessageSquare,
     Loader, ChevronDown, ChevronUp, Linkedin, User, Search, Copy,
@@ -1000,7 +1001,7 @@ export function PaidStage({
                                                             <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
                                                                 <div className="vant-text-xs" style={{ color: '#34d399', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase' }}>Solução sugerida pela IA</div>
                                                                 <div className="vant-text-sm" style={{ color: '#cbd5f5', marginBottom: '0.75rem', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: getSolutionLead(gap.titulo) }} />
-                                                                <div className="vant-text-sm vant-rich-text" style={{ color: '#f1f5f9' }} dangerouslySetInnerHTML={{ __html: gap.exemploOtimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                                                <div className="vant-text-sm vant-rich-text" style={{ color: '#f1f5f9' }} dangerouslySetInnerHTML={{ __html: safeFormatMarkdown(gap.exemploOtimizado, "#f1f5f9") }} />
                                                                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                                                                     <button
                                                                         onClick={() => setActiveTab("cv")}

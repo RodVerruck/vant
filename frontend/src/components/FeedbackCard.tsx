@@ -1,6 +1,7 @@
 "use client";
 
 import type { FeedbackEntrevista } from "@/types";
+import { safeFormatMarkdownWithBreaks } from "@/lib/formatText";
 
 interface FeedbackCardProps {
     feedback: FeedbackEntrevista;
@@ -180,7 +181,7 @@ export function FeedbackCard({ feedback, question, onRetry, onNext, isLastQuesti
                         lineHeight: 1.6,
                         color: "#CBD5E1"
                     }}>
-                        <div dangerouslySetInnerHTML={{ __html: feedback.exemplo_resposta_star }} />
+                        <div dangerouslySetInnerHTML={{ __html: safeFormatMarkdownWithBreaks(feedback.exemplo_resposta_star) }} />
                     </div>
                 </details>
             )}

@@ -11,6 +11,8 @@ import { PricingSimplified } from "@/components/PricingSimplified";
 import { NeonOffer } from "@/components/NeonOffer";
 import { NewOptimizationModal } from "@/components/NewOptimizationModal";
 import { calcPotencial, calculateProjectedScore } from "@/lib/helpers";
+import { safeFormatMarkdown } from "@/lib/formatText";
+import { logger } from "@/lib/logger";
 import { getSupabaseClient } from "@/lib/supabaseClient";
 
 type JsonObject = Record<string, unknown>;
@@ -127,12 +129,12 @@ function getApiUrl(): string {
     if (typeof window !== "undefined") {
         const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
         if (isLocalhost) {
-            console.log("[getApiUrl] Ambiente LOCAL detectado, usando http://127.0.0.1:8000");
+            logger.log("[getApiUrl] Ambiente LOCAL detectado, usando http://127.0.0.1:8000");
             return "http://127.0.0.1:8000";
         }
     }
     const url = process.env.NEXT_PUBLIC_API_URL || "https://vant-vlgn.onrender.com";
-    console.log("[getApiUrl] Ambiente PRODUÇÃO, usando", url);
+    logger.log("[getApiUrl] Ambiente PRODUÇÃO, usando", url);
     return url;
 }
 
@@ -337,7 +339,7 @@ async function pollAnalysisProgress(
 
             const { status, current_step, result_data } = data;
 
-            console.log(`[Polling] Status: ${status}, Step: ${current_step}`);
+            logger.log(`[Polling] Status: ${status}, Step: ${current_step}`);
 
             // Atualizar UI baseado no step
             switch (current_step) {
@@ -351,7 +353,7 @@ async function pollAnalysisProgress(
                     await updateStatus("🔍 DIAGNÓSTICO CONCLUÍDO!", 25);
                     // Mostrar diagnóstico parcial e mudar para paid
                     if (result_data && typeof result_data === 'object') {
-                        console.log("[Polling] Atualizando com diagnóstico parcial:", result_data);
+                        logger.log("[Polling] Atualizando com diagnóstico parcial:", result_data);
                         setReportData(result_data);
                         setStage("paid"); // Mudar para paid para mostrar resultados
                     }
@@ -360,7 +362,7 @@ async function pollAnalysisProgress(
                     await updateStatus("✍️ CV OTIMIZADO PRONTO!", 50);
                     // Adicionar CV otimizado aos dados existentes
                     if (result_data && typeof result_data === 'object') {
-                        console.log("[Polling] Atualizando com CV parcial:", result_data);
+                        logger.log("[Polling] Atualizando com CV parcial:", result_data);
                         setReportData((prev: any) => ({ ...prev, ...result_data }));
                     }
                     break;
@@ -368,7 +370,7 @@ async function pollAnalysisProgress(
                     await updateStatus("📚 BIBLIOTECA PRONTA!", 75);
                     // Adicionar biblioteca aos dados existentes
                     if (result_data && typeof result_data === 'object') {
-                        console.log("[Polling] Atualizando com biblioteca parcial:", result_data);
+                        logger.log("[Polling] Atualizando com biblioteca parcial:", result_data);
                         setReportData((prev: any) => ({ ...prev, ...result_data }));
                     }
                     break;
@@ -376,7 +378,7 @@ async function pollAnalysisProgress(
                     await updateStatus("🎯 ESTRATÉGIAS PRONTAS!", 85);
                     // Adicionar tactical aos dados existentes
                     if (result_data && typeof result_data === 'object') {
-                        console.log("[Polling] Atualizando com tactical parcial:", result_data);
+                        logger.log("[Polling] Atualizando com tactical parcial:", result_data);
                         setReportData((prev: any) => ({ ...prev, ...result_data }));
                     }
                     break;
@@ -386,7 +388,7 @@ async function pollAnalysisProgress(
                     if (result_data && typeof result_data === 'object') {
                         // Atualizar estado com resultado completo
                         const report = result_data as any;
-                        console.log("[Polling] Análise concluída com sucesso:", report);
+                        logger.log("[Polling] Análise concluída com sucesso:", report);
 
                         // Atualizar estado do frontend com os dados completos
                         setReportData(report);
@@ -407,7 +409,7 @@ async function pollAnalysisProgress(
             attempts++;
 
         } catch (error) {
-            console.error("[Polling] Erro:", error);
+            logger.error("[Polling] Erro:", error);
             throw error;
         }
     }
@@ -557,7 +559,7 @@ export default function AppPage() {
             const parsed = JSON.parse(raw) as PreviewSnapshot;
             return parsed && typeof parsed === "object" ? parsed : null;
         } catch (error) {
-            console.warn("[Smart Redirect] Snapshot inválido, ignorando:", error);
+            logger.warn("[Smart Redirect] Snapshot inválido, ignorando:", error);
             return null;
         }
     };
@@ -570,7 +572,7 @@ export default function AppPage() {
 
         const finalJob = (snapshot.jobDescription || storageJob || "").trim();
         if (!finalJob) {
-            console.warn("[Smart Redirect] Snapshot sem job_description válido.");
+            logger.warn("[Smart Redirect] Snapshot sem job_description válido.");
             return false;
         }
 
@@ -611,7 +613,7 @@ export default function AppPage() {
         const finalFileB64 = snapshot.fileB64 || storageFileB64;
 
         if (!finalFileName || !finalFileB64) {
-            console.warn("[Smart Redirect] Snapshot sem arquivo restaurável.");
+            logger.warn("[Smart Redirect] Snapshot sem arquivo restaurável.");
             return false;
         }
 
@@ -624,7 +626,7 @@ export default function AppPage() {
             localStorage.setItem("vant_file_b64", finalFileB64);
             return true;
         } catch (error) {
-            console.error("[Smart Redirect] Falha ao restaurar arquivo do snapshot:", error);
+            logger.error("[Smart Redirect] Falha ao restaurar arquivo do snapshot:", error);
             return false;
         }
     };
@@ -648,10 +650,10 @@ export default function AppPage() {
         const payment = searchParams.get("payment");
         const sessionId = searchParams.get("session_id");
 
-        console.log("[DEBUG URL - useSearchParams] Params encontrados:", { payment, sessionId: sessionId?.slice(0, 20) });
+        logger.log("[DEBUG URL - useSearchParams] Params encontrados:", { payment, sessionId: sessionId?.slice(0, 20) });
 
         if (payment === "success" && sessionId) {
-            console.log("[DEBUG URL] Pagamento detectado! Setando estado...");
+            logger.log("[DEBUG URL] Pagamento detectado! Setando estado...");
             setStripeSessionId(sessionId);
             setNeedsActivation(true);
             setStage("activating_payment");
@@ -663,7 +665,7 @@ export default function AppPage() {
     function getErrorMessage(e: unknown, fallback: string): string {
         // Ignorar AbortError (cancelamento intencional)
         if (e instanceof Error && e.name === 'AbortError') {
-            console.log('Requisição cancelada pelo usuário');
+            logger.log('Requisição cancelada pelo usuário');
             return '';
         }
 
@@ -679,7 +681,7 @@ export default function AppPage() {
     // Função para abrir o Stripe Customer Portal
     const openCustomerPortal = async () => {
         if (!authUserId) {
-            console.error('Usuário não autenticado');
+            logger.error('Usuário não autenticado');
             return;
         }
 
@@ -694,7 +696,7 @@ export default function AppPage() {
 
             if (!response.ok) {
                 const error = await response.json();
-                console.error('Erro ao criar portal session:', error);
+                logger.error('Erro ao criar portal session:', error);
                 alert('Não foi possível abrir o portal de gerenciamento. Tente novamente ou entre em contato com o suporte.');
                 return;
             }
@@ -704,7 +706,7 @@ export default function AppPage() {
             // Redirecionar para o portal do Stripe
             window.location.href = data.portal_url;
         } catch (error) {
-            console.error('Erro ao abrir portal:', error);
+            logger.error('Erro ao abrir portal:', error);
             alert('Erro ao abrir o portal de gerenciamento. Tente novamente.');
         }
     };
@@ -792,7 +794,7 @@ export default function AppPage() {
                 candidateName
             };
         } catch (error) {
-            console.error("Erro ao extrair metadados do PDF:", error);
+            logger.error("Erro ao extrair metadados do PDF:", error);
             return {};
         }
     }
@@ -861,9 +863,9 @@ export default function AppPage() {
             if (shouldSkip) {
                 localStorage.removeItem("vant_skip_preview");
                 pendingSkipPreview.current = true;
-                console.log("[AutoStart] skipPreview=true, vai pular preview após lite...");
+                logger.log("[AutoStart] skipPreview=true, vai pular preview após lite...");
             } else {
-                console.log("[AutoStart] Fluxo normal (com preview)...");
+                logger.log("[AutoStart] Fluxo normal (com preview)...");
             }
             const timer = setTimeout(() => onStart(), 300);
             return () => clearTimeout(timer);
@@ -999,7 +1001,7 @@ export default function AppPage() {
     }, []);
 
     useEffect(() => {
-        console.log("[useEffect URL params] Rodou.");
+        logger.log("[useEffect URL params] Rodou.");
         if (typeof window === "undefined") {
             return;
         }
@@ -1032,7 +1034,7 @@ export default function AppPage() {
 
             const { data: { subscription } } = client.auth.onAuthStateChange(
                 (event, session) => {
-                    console.log("[AuthStateChange] Event:", event, "User:", session?.user?.email);
+                    logger.log("[AuthStateChange] Event:", event, "User:", session?.user?.email);
 
                     if (event === 'SIGNED_IN' && session?.user) {
                         setAuthUserId(session.user.id);
@@ -1045,10 +1047,10 @@ export default function AppPage() {
                         if (cachedCredits) {
                             const credits = parseInt(cachedCredits);
                             setCreditsRemaining(credits);
-                            console.log("[AuthStateChange] Usando cache de créditos:", credits);
+                            logger.log("[AuthStateChange] Usando cache de créditos:", credits);
                         } else {
                             setCreditsLoading(true);
-                            console.log("[AuthStateChange] Sem cache, carregando créditos...");
+                            logger.log("[AuthStateChange] Sem cache, carregando créditos...");
                         }
                     } else if (event === 'SIGNED_OUT') {
                         setAuthUserId(null);
@@ -1085,7 +1087,7 @@ export default function AppPage() {
                     const { data, error } = await client.auth.exchangeCodeForSession(code);
                     if (error) {
                         // Ignora erro se for "code already used" em dev, pois o usuário pode já estar logado
-                        console.warn("Erro na troca de código (possível duplicidade em dev):", error.message);
+                        logger.warn("Erro na troca de código (possível duplicidade em dev):", error.message);
                         // throw new Error(error.message); // <-- Comente ou remova o throw para não travar a UI
                     }
 
@@ -1185,14 +1187,14 @@ export default function AppPage() {
         if (!authUserId || typeof window === "undefined") return;
         if (userStatusFetched.current) return; // Evitar chamadas duplicadas
 
-        console.log("[UserStatus] Iniciando busca de status para usuário:", authUserId);
-        console.log("[UserStatus] userStatusFetched.current:", userStatusFetched.current);
+        logger.log("[UserStatus] Iniciando busca de status para usuário:", authUserId);
+        logger.log("[UserStatus] userStatusFetched.current:", userStatusFetched.current);
 
         // Abortar Smart Redirect se estivermos processando um cancelamento de pagamento
         // Isso evita que o usuário seja jogado de volta para o checkout
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get("payment") === "cancel") {
-            console.log("[Smart Redirect] Pagamento cancelado detectado, abortando redirecionamento automático.");
+            logger.log("[Smart Redirect] Pagamento cancelado detectado, abortando redirecionamento automático.");
             return;
         }
 
@@ -1210,7 +1212,7 @@ export default function AppPage() {
 
                 const restored = await restorePendingAnalysisFromSnapshot(previewSnapshot);
                 if (!restored) {
-                    console.warn("[Smart Redirect] Snapshot encontrado, mas dados incompletos. Mantendo fluxo padrão.");
+                    logger.warn("[Smart Redirect] Snapshot encontrado, mas dados incompletos. Mantendo fluxo padrão.");
                 } else {
                     // Buscar créditos com cache primeiro, mas sempre confirmar plano ativo via API
                     let credits = 0;
@@ -1235,10 +1237,10 @@ export default function AppPage() {
                                 localStorage.removeItem('vant_cached_plan');
                             }
                         } else {
-                            console.warn("[Smart Redirect] API respondeu com status:", resp.status);
+                            logger.warn("[Smart Redirect] API respondeu com status:", resp.status);
                         }
                     } catch (error) {
-                        console.warn("[Smart Redirect] Falha ao buscar créditos/plano via API:", error);
+                        logger.warn("[Smart Redirect] Falha ao buscar créditos/plano via API:", error);
                         hasPlan = !!localStorage.getItem('vant_cached_plan');
                     }
 
@@ -1252,12 +1254,12 @@ export default function AppPage() {
                     if (credits > 0 || hasPlan) {
                         if (credits > 0) {
                             setSelectedPlan("pro_monthly_early_bird");
-                            console.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Solicitando confirmação para usar crédito.");
+                            logger.log("[Smart Redirect] Usuário Pro detectado com análise pendente. Solicitando confirmação para usar crédito.");
                             setShowUseCreditPrompt(true);
                             setStage("checkout");
                         } else {
                             setSelectedPlan("credit_1");
-                            console.log("[Smart Redirect] Usuário com assinatura ativa mas sem créditos disponíveis no período. Indo para checkout de crédito avulso.");
+                            logger.log("[Smart Redirect] Usuário com assinatura ativa mas sem créditos disponíveis no período. Indo para checkout de crédito avulso.");
                             setCheckoutError("Você já é usuário Pro! Como não há créditos disponíveis no período, mudamos para a compra de Crédito Avulso para você usar agora.");
                             setShowProCreditNotice(true);
                             setStage("checkout");
@@ -1272,7 +1274,7 @@ export default function AppPage() {
                                     : raw;
                             setSelectedPlan(normalizedPlan as PlanType);
                         }
-                        console.log("[Smart Redirect] Usuário Free detectado com análise pendente. Enviando para checkout...");
+                        logger.log("[Smart Redirect] Usuário Free detectado com análise pendente. Enviando para checkout...");
                         setStage("checkout");
                     }
                     return;
@@ -1283,7 +1285,7 @@ export default function AppPage() {
             // (o usuário estava no hero, não num fluxo de checkout real)
             if (!returnStage || returnStage === "hero") {
                 if (returnPlan) {
-                    console.log("[Auth] Limpando returnPlan stale (stage era hero):", returnPlan);
+                    logger.log("[Auth] Limpando returnPlan stale (stage era hero):", returnPlan);
                     localStorage.removeItem("vant_auth_return_plan");
                     returnPlan = null;
                 }
@@ -1325,7 +1327,7 @@ export default function AppPage() {
                 hasSavedDraft ||
                 hasPendingPayment;
 
-            console.log("[Auth] Verificando fluxo:", {
+            logger.log("[Auth] Verificando fluxo:", {
                 returnPlan: !!returnPlan,
                 hasReturnStage,
                 hasCheckoutPending,
@@ -1341,14 +1343,14 @@ export default function AppPage() {
             });
 
             if (!hasActiveFlow) {
-                console.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
+                logger.log("[Auth] Sem fluxo ativo, redirecionando para /dashboard");
                 window.location.href = "/dashboard";
                 return;
             }
 
             // Processar fluxo ativo normalmente (pagamento, history, etc.)
             if (returnPlan) {
-                console.log("[Restoration] Restaurando plano e indo para checkout...");
+                logger.log("[Restoration] Restaurando plano e indo para checkout...");
                 setSelectedPlan(returnPlan as PlanType);
                 localStorage.removeItem("vant_auth_return_plan");
                 setStage("checkout");
@@ -1357,23 +1359,23 @@ export default function AppPage() {
                 localStorage.removeItem("vant_auth_return_stage");
                 if (returnStage === "checkout") {
                     // Se returnStage é checkout, ir direto para checkout sem processar
-                    console.log("[Restoration] Usuário sem créditos, indo direto para checkout de crédito avulso...");
+                    logger.log("[Restoration] Usuário sem créditos, indo direto para checkout de crédito avulso...");
                     setSelectedPlan("credit_1");
                     setCheckoutError("Você precisa de créditos para processar esta análise. Compre crédito avulso para continuar.");
                     setStage("checkout");
                 } else if (returnStage !== "hero") {
-                    console.log("[Restoration] Restaurando stage:", returnStage);
+                    logger.log("[Restoration] Restaurando stage:", returnStage);
                     setStage(returnStage as AppStage);
                 }
             } else if (hasCheckoutPending) {
                 try {
                     const data = JSON.parse(checkoutPending!);
                     localStorage.removeItem("checkout_pending");
-                    console.log("[Auth] Processando checkout_pending:", data);
+                    logger.log("[Auth] Processando checkout_pending:", data);
                     setSelectedPlan(data.plan);
                     setStage("checkout");
                 } catch (error) {
-                    console.error("[Auth] Erro ao processar checkout_pending:", error);
+                    logger.error("[Auth] Erro ao processar checkout_pending:", error);
                     localStorage.removeItem("checkout_pending");
                 }
             } else if (hasAutoProcess) {
@@ -1388,15 +1390,15 @@ export default function AppPage() {
                 // Restaurar arquivo do IndexedDB (async)
                 (async () => {
                     const restoredFile = await getFileFromIDB();
-                    console.log("[Auth] Auto-process: dados encontrados:", { hasJob: !!savedJob, hasFile: !!restoredFile });
+                    logger.log("[Auth] Auto-process: dados encontrados:", { hasJob: !!savedJob, hasFile: !!restoredFile });
 
                     if (savedJob && restoredFile) {
                         setFile(restoredFile);
                         await clearFileFromIDB();
-                        console.log("[Auth] Auto-process: arquivo restaurado do IndexedDB, iniciando processing_premium");
+                        logger.log("[Auth] Auto-process: arquivo restaurado do IndexedDB, iniciando processing_premium");
                         setStage("processing_premium");
                     } else {
-                        console.log("[Auth] Auto-process: dados incompletos, indo para hero com vaga preenchida");
+                        logger.log("[Auth] Auto-process: dados incompletos, indo para hero com vaga preenchida");
                         setStage("hero");
                     }
                 })();
@@ -1416,13 +1418,13 @@ export default function AppPage() {
                                 setCreditsRemaining(data.credits_remaining);
                                 localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
                                 setSelectedPlan("pro_monthly_early_bird");
-                                console.log("[Auth] Créditos sincronizados:", data.credits_remaining);
+                                logger.log("[Auth] Créditos sincronizados:", data.credits_remaining);
                             }
                         } else {
-                            console.warn("[Auth] API respondeu com status:", resp.status);
+                            logger.warn("[Auth] API respondeu com status:", resp.status);
                         }
                     } catch (e) {
-                        console.error("[Auth] Erro ao sincronizar créditos:", e);
+                        logger.error("[Auth] Erro ao sincronizar créditos:", e);
                     }
                 })();
             }
@@ -1449,7 +1451,7 @@ export default function AppPage() {
         setHasActiveHistoryFlow(true);
         setLoadingHistoryItem(true);
 
-        console.log("[Dashboard→App] Abrindo item do histórico:", historyId, "(via URL:", !!urlHistoryId, ")");
+        logger.log("[Dashboard→App] Abrindo item do histórico:", historyId, "(via URL:", !!urlHistoryId, ")");
 
         (async () => {
             try {
@@ -1477,7 +1479,7 @@ export default function AppPage() {
                     }
                 }
             } catch (err) {
-                console.error("[Dashboard→App] Erro ao carregar histórico:", err);
+                logger.error("[Dashboard→App] Erro ao carregar histórico:", err);
             } finally {
                 setLoadingHistoryItem(false);
                 setHasActiveHistoryFlow(false); // Finalizar fluxo de histórico
@@ -1489,14 +1491,14 @@ export default function AppPage() {
     // DEBUG: Restauração do Contexto de Reset de Senha
     // -------------------------------------------------------------------------
     useEffect(() => {
-        console.log("🔍 [RESTORE DEBUG] useEffect de restauração foi chamado!");
+        logger.log("🔍 [RESTORE DEBUG] useEffect de restauração foi chamado!");
 
         // Leitura "crua" do LocalStorage para debug
         const storedStage = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_to") : null;
         const storedPlan = typeof window !== 'undefined' ? localStorage.getItem("vant_reset_return_plan") : null;
 
-        console.log("🕵️ [RESTORE DEBUG] Rodou o efeito de restauração.");
-        console.log("🕵️ [RESTORE DEBUG] LocalStorage cru:", {
+        logger.log("🕵️ [RESTORE DEBUG] Rodou o efeito de restauração.");
+        logger.log("🕵️ [RESTORE DEBUG] LocalStorage cru:", {
             vant_reset_return_to: storedStage,
             vant_reset_return_plan: storedPlan,
             authUserId: authUserId,
@@ -1504,23 +1506,23 @@ export default function AppPage() {
         });
 
         if (storedStage === "checkout") {
-            console.log("✅ [RESTORE DEBUG] Contexto de checkout encontrado!");
+            logger.log("✅ [RESTORE DEBUG] Contexto de checkout encontrado!");
 
             if (storedPlan) {
-                console.log(`🔄 [RESTORE DEBUG] Restaurando plano: ${storedPlan}`);
+                logger.log(`🔄 [RESTORE DEBUG] Restaurando plano: ${storedPlan}`);
                 setSelectedPlan(storedPlan as PlanType);
             }
 
-            console.log("🚀 [RESTORE DEBUG] Forçando stage para 'checkout'");
+            logger.log("🚀 [RESTORE DEBUG] Forçando stage para 'checkout'");
             setStage("checkout");
 
             if (authUserId) {
-                console.log("🧹 [RESTORE DEBUG] Usuário autenticado, limpando flags de reset.");
+                logger.log("🧹 [RESTORE DEBUG] Usuário autenticado, limpando flags de reset.");
                 localStorage.removeItem("vant_reset_return_to");
                 localStorage.removeItem("vant_reset_return_plan");
             }
         } else {
-            console.log("ℹ️ [RESTORE DEBUG] Nenhum contexto de retorno encontrado.");
+            logger.log("ℹ️ [RESTORE DEBUG] Nenhum contexto de retorno encontrado.");
         }
     }, [authUserId]); // Re-rodar quando authUserId mudar
 
@@ -1529,7 +1531,7 @@ export default function AppPage() {
     useEffect(() => {
         if (authUserId && stage === "checkout" && isAuthenticating === false && checkoutAuthPending.current) {
             checkoutAuthPending.current = false;
-            console.log("[CheckoutAuth] Auth completa no checkout, chamando startCheckout...");
+            logger.log("[CheckoutAuth] Auth completa no checkout, chamando startCheckout...");
             startCheckout();
             setHasActiveHistoryFlow(false); // Finalizar fluxo de histórico
         }
@@ -1547,7 +1549,7 @@ export default function AppPage() {
     };
 
     useEffect(() => {
-        console.log("[useEffect needsActivation] Rodou.");
+        logger.log("[useEffect needsActivation] Rodou.");
         if (!needsActivation || !authUserId || !stripeSessionId || isActivating) {
             return;
         }
@@ -1561,7 +1563,7 @@ export default function AppPage() {
             setNeedsActivation(false);
 
             try {
-                console.log("[needsActivation] Chamando /api/entitlements/activate...");
+                logger.log("[needsActivation] Chamando /api/entitlements/activate...");
                 const resp = await fetch(`${getApiUrl()}/api/entitlements/activate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1575,7 +1577,7 @@ export default function AppPage() {
                 try {
                     data = await resp.json();
                 } catch (e) {
-                    console.warn('Resposta da ativação não é JSON válido, mas status é', resp.status);
+                    logger.warn('Resposta da ativação não é JSON válido, mas status é', resp.status);
                 }
 
                 if (!resp.ok) {
@@ -1584,7 +1586,7 @@ export default function AppPage() {
                 }
 
                 // Sucesso!
-                console.log("[needsActivation] Ativação bem-sucedida! Status:", resp.status, "Data:", data);
+                logger.log("[needsActivation] Ativação bem-sucedida! Status:", resp.status, "Data:", data);
 
                 // Limpar sessão pendente após ativação bem-sucedida
                 window.localStorage.removeItem("vant_pending_stripe_session_id");
@@ -1594,7 +1596,7 @@ export default function AppPage() {
                 if (typeof data.credits_remaining === "number") {
                     setCreditsRemaining(data.credits_remaining as number);
                     localStorage.setItem('vant_cached_credits', String(data.credits_remaining));
-                    console.log("[needsActivation] Créditos cacheados:", data.credits_remaining);
+                    logger.log("[needsActivation] Créditos cacheados:", data.credits_remaining);
                 }
 
                 // Sincronizar entitlements para garantir (não bloquear redirect em caso de falha)
@@ -1602,7 +1604,7 @@ export default function AppPage() {
                     try {
                         await syncEntitlements(authUserId);
                     } catch (error) {
-                        console.warn("[needsActivation] Falha ao sincronizar entitlements, seguindo fluxo:", error);
+                        logger.warn("[needsActivation] Falha ao sincronizar entitlements, seguindo fluxo:", error);
                     }
                 }
 
@@ -1610,11 +1612,11 @@ export default function AppPage() {
                 localStorage.setItem('vant_just_paid', 'true');
 
                 // Redirecionar para dashboard — créditos já estão no cache
-                console.log("[needsActivation] Redirecionando para /dashboard...");
+                logger.log("[needsActivation] Redirecionando para /dashboard...");
 
                 // Usar setTimeout para garantir que o redirecionamento aconteça
                 setTimeout(() => {
-                    console.log("[needsActivation] Executando redirecionamento agora...");
+                    logger.log("[needsActivation] Executando redirecionamento agora...");
                     window.location.href = "/dashboard";
                 }, 500);
             } catch (e: unknown) {
@@ -1711,10 +1713,10 @@ export default function AppPage() {
                         return;
                     }
                 } else {
-                    console.warn("[startCheckout] API respondeu com status:", statusResp.status);
+                    logger.warn("[startCheckout] API respondeu com status:", statusResp.status);
                 }
             } catch (error) {
-                console.warn("[startCheckout] Falha ao verificar status do usuário:", error);
+                logger.warn("[startCheckout] Falha ao verificar status do usuário:", error);
             }
         }
 
@@ -1758,7 +1760,7 @@ export default function AppPage() {
 
             // Salvar dados antes de redirecionar para o pagamento
             if (typeof window !== "undefined" && jobDescription && file) {
-                console.log("[startCheckout] Salvando dados antes do pagamento...");
+                logger.log("[startCheckout] Salvando dados antes do pagamento...");
                 localStorage.setItem("vant_jobDescription", jobDescription);
                 localStorage.setItem("vant_file_name", file.name);
                 localStorage.setItem("vant_file_type", file.type);
@@ -1766,9 +1768,9 @@ export default function AppPage() {
                 // Salvar arquivo no IndexedDB (sem limite de tamanho)
                 try {
                     await saveFileToIDB(file);
-                    console.log("[startCheckout] Arquivo salvo no IndexedDB. Redirecionando...");
+                    logger.log("[startCheckout] Arquivo salvo no IndexedDB. Redirecionando...");
                 } catch (err) {
-                    console.warn("[startCheckout] Falha ao salvar arquivo no IndexedDB:", err);
+                    logger.warn("[startCheckout] Falha ao salvar arquivo no IndexedDB:", err);
                 }
                 window.location.href = checkoutUrl;
             } else {
@@ -1826,7 +1828,7 @@ export default function AppPage() {
 
         try {
             // 1. Tentar criar conta primeiro (caso seja usuário novo)
-            console.log("[CheckoutAuth] Tentando criar conta para:", authEmail);
+            logger.log("[CheckoutAuth] Tentando criar conta para:", authEmail);
             const { data: signupData, error: signupError } = await client.auth.signUp({
                 email: authEmail.trim().toLowerCase(), // Normalizar email
                 password: authPassword,
@@ -1837,12 +1839,12 @@ export default function AppPage() {
                 setAuthUserId(signupData.user.id);
                 setAuthEmail(signupData.user.email || authEmail);
                 setAuthPassword("");
-                console.log("[CheckoutAuth] ✅ Conta criada com sucesso, ID:", signupData.user.id);
+                logger.log("[CheckoutAuth] ✅ Conta criada com sucesso, ID:", signupData.user.id);
                 return;
             }
 
             // 2. Signup falhou ou usuário já existe — tentar login
-            console.log("[CheckoutAuth] Usuário já existe, tentando login...");
+            logger.log("[CheckoutAuth] Usuário já existe, tentando login...");
             const { data: loginData, error: loginError } = await client.auth.signInWithPassword({
                 email: authEmail.trim().toLowerCase(),
                 password: authPassword,
@@ -1853,7 +1855,7 @@ export default function AppPage() {
                 setAuthUserId(loginData.user.id);
                 setAuthEmail(loginData.user.email || authEmail);
                 setAuthPassword("");
-                console.log("[CheckoutAuth] ✅ Login realizado com sucesso, ID:", loginData.user.id);
+                logger.log("[CheckoutAuth] ✅ Login realizado com sucesso, ID:", loginData.user.id);
                 return;
             }
 
@@ -1882,12 +1884,12 @@ export default function AppPage() {
                     setCheckoutError("Senha muito fraca. Use letras, números e pelo menos 6 caracteres.");
                 } else {
                     // Erro genérico mas mais amigável
-                    console.error("[CheckoutAuth] Erro não tratado:", e);
+                    logger.error("[CheckoutAuth] Erro não tratado:", e);
                     setCheckoutError("Ocorreu um erro na autenticação. Tente novamente em alguns instantes.");
                 }
             } else {
                 // Erro que não é instância de Error
-                console.error("[CheckoutAuth] Erro desconhecido:", e);
+                logger.error("[CheckoutAuth] Erro desconhecido:", e);
                 setCheckoutError("Erro inesperado. Tente novamente ou entre em contato com o suporte.");
             }
         } finally {
@@ -1925,7 +1927,7 @@ export default function AppPage() {
                 }
             }
 
-            console.log("🚀 [ForgotPassword] URL Gerada para Redirect:", redirectUrl.toString());
+            logger.log("🚀 [ForgotPassword] URL Gerada para Redirect:", redirectUrl.toString());
 
             const client = supabase as SupabaseClient;
             const { error } = await client.auth.resetPasswordForEmail(authEmail.trim().toLowerCase(), {
@@ -1950,10 +1952,10 @@ export default function AppPage() {
                 });
             }, 1000);
 
-            console.log("✅ [ForgotPassword] Email de recuperação enviado para:", authEmail);
+            logger.log("✅ [ForgotPassword] Email de recuperação enviado para:", authEmail);
 
         } catch (e: unknown) {
-            console.error("[ForgotPassword] Erro ao enviar email:", e);
+            logger.error("[ForgotPassword] Erro ao enviar email:", e);
 
             // Tratamento de erros mais específico
             if (e instanceof Error) {
@@ -2058,7 +2060,7 @@ export default function AppPage() {
                 if (selectedPlan && stage !== "hero") {
                     localStorage.setItem("vant_auth_return_plan", selectedPlan);
                 }
-                console.log("[DEBUG] handleGoogleLogin page.tsx - Salvando stage:", stage, "plano:", selectedPlan, "salvouPlano:", stage !== "hero");
+                logger.log("[DEBUG] handleGoogleLogin page.tsx - Salvando stage:", stage, "plano:", selectedPlan, "salvouPlano:", stage !== "hero");
             }
 
             // Verificação de tipo explícita para evitar never
@@ -2106,14 +2108,14 @@ export default function AppPage() {
             setCreditsRemaining(payload.credits_remaining);
             // Salvar no cache para próximos logins
             localStorage.setItem('vant_cached_credits', payload.credits_remaining.toString());
-            console.log("[syncEntitlements] Créditos atualizados e cacheados:", payload.credits_remaining);
+            logger.log("[syncEntitlements] Créditos atualizados e cacheados:", payload.credits_remaining);
         }
         setCreditsLoading(false);
     }
 
     // useEffect dedicado para verificação inicial de autenticação e redirecionamento
     useEffect(() => {
-        console.log("[useEffect initialAuthCheck] Iniciando verificação inicial...");
+        logger.log("[useEffect initialAuthCheck] Iniciando verificação inicial...");
 
         // Função assíncrona para verificação
         const performInitialCheck = async () => {
@@ -2122,13 +2124,13 @@ export default function AppPage() {
                 const urlPayment = searchParams.get("payment");
                 const urlSessionId = searchParams.get("session_id");
                 if (urlPayment === "success" && urlSessionId) {
-                    console.log("[initialAuthCheck] Pagamento pendente detectado, ignorando verificação");
+                    logger.log("[initialAuthCheck] Pagamento pendente detectado, ignorando verificação");
                     return;
                 }
 
                 // Verificação rápida: se não há usuário, liberar renderização imediatamente
                 if (!authUserId) {
-                    console.log("[initialAuthCheck] Sem authUserId, liberando renderização do hero");
+                    logger.log("[initialAuthCheck] Sem authUserId, liberando renderização do hero");
                     setIsCheckingAuth(false);
                     return;
                 }
@@ -2166,7 +2168,7 @@ export default function AppPage() {
                     hasSkipPreviewFlag ||
                     hasSavedDraft;
 
-                console.log("[initialAuthCheck] Verificando fluxo:", {
+                logger.log("[initialAuthCheck] Verificando fluxo:", {
                     urlHistoryId,
                     localHistoryId,
                     hasHistoryItem: !!hasHistoryItem,
@@ -2182,9 +2184,9 @@ export default function AppPage() {
                 });
 
                 // Se não há fluxo ativo, verificar créditos e decidir redirecionamento
-                console.log("[initialAuthCheck] hasActiveFlow final:", hasActiveFlow);
+                logger.log("[initialAuthCheck] hasActiveFlow final:", hasActiveFlow);
                 if (!hasActiveFlow) {
-                    console.log("[initialAuthCheck] Sem fluxo ativo, verificando créditos...");
+                    logger.log("[initialAuthCheck] Sem fluxo ativo, verificando créditos...");
 
                     // Verificar créditos rapidamente (usar cache primeiro)
                     const cachedCredits = localStorage.getItem('vant_cached_credits');
@@ -2192,7 +2194,7 @@ export default function AppPage() {
 
                     if (cachedCredits) {
                         credits = parseInt(cachedCredits, 10);
-                        console.log("[initialAuthCheck] Usando créditos cacheados:", credits);
+                        logger.log("[initialAuthCheck] Usando créditos cacheados:", credits);
                     } else {
                         // Se não tem cache, buscar da API (mas com timeout curto)
                         try {
@@ -2209,33 +2211,33 @@ export default function AppPage() {
                                 credits = data.credits_remaining || 0;
                                 setCreditsRemaining(credits);
                                 localStorage.setItem('vant_cached_credits', credits.toString());
-                                console.log("[initialAuthCheck] Créditos buscados da API:", credits);
+                                logger.log("[initialAuthCheck] Créditos buscados da API:", credits);
                             }
                         } catch (error) {
-                            console.log("[initialAuthCheck] Erro ao buscar créditos, assumindo 0:", error);
+                            logger.log("[initialAuthCheck] Erro ao buscar créditos, assumindo 0:", error);
                             credits = 0;
                         }
                     }
 
                     // Se tem créditos, redirecionar para dashboard mantendo loading
-                    console.log("[initialAuthCheck] Verificando redirecionamento:", {
+                    logger.log("[initialAuthCheck] Verificando redirecionamento:", {
                         credits,
                         pathname: window.location.pathname,
                         condition: credits > 0 && window.location.pathname !== "/dashboard"
                     });
                     if (credits > 0 && window.location.pathname !== "/dashboard") {
-                        console.log("[initialAuthCheck] Usuário tem créditos, redirecionando para dashboard...");
+                        logger.log("[initialAuthCheck] Usuário tem créditos, redirecionando para dashboard...");
                         window.location.href = "/dashboard";
                         return; // Manter isCheckingAuth como true durante redirect
                     }
                 }
 
                 // Se chegou aqui, pode liberar renderização
-                console.log("[initialAuthCheck] Verificação concluída, liberando renderização");
+                logger.log("[initialAuthCheck] Verificação concluída, liberando renderização");
                 setIsCheckingAuth(false);
 
             } catch (error) {
-                console.error("[initialAuthCheck] Erro na verificação inicial:", error);
+                logger.error("[initialAuthCheck] Erro na verificação inicial:", error);
                 // Em caso de erro, liberar renderização para não bloquear indefinidamente
                 setIsCheckingAuth(false);
             }
@@ -2247,7 +2249,7 @@ export default function AppPage() {
         // Timeout de segurança: se demorar mais de 5s, liberar renderização
         const safetyTimeout = setTimeout(() => {
             if (isCheckingAuth) {
-                console.log("[initialAuthCheck] Timeout de segurança, liberando renderização");
+                logger.log("[initialAuthCheck] Timeout de segurança, liberando renderização");
                 setIsCheckingAuth(false);
             }
         }, 5000);
@@ -2256,7 +2258,7 @@ export default function AppPage() {
     }, [authUserId, stage, hasActiveHistoryFlow]); // Re-executar quando hasActiveHistoryFlow mudar
 
     useEffect(() => {
-        console.log("[useEffect syncEntitlements] Rodou.");
+        logger.log("[useEffect syncEntitlements] Rodou.");
         if (!authUserId) {
             return;
         }
@@ -2267,13 +2269,13 @@ export default function AppPage() {
                 // Se usuário tem créditos e está na página de planos (preview), NÃO mover para hero automaticamente
                 // Usuário pode querer ver planos mesmo tendo créditos
                 if (creditsRemaining > 0 && stage === "preview") {
-                    console.log("[syncEntitlements] Usuário tem créditos mas está em preview - mantendo em preview para ver planos");
+                    logger.log("[syncEntitlements] Usuário tem créditos mas está em preview - mantendo em preview para ver planos");
                     // Não mover para hero - deixar usuário decidir
                 }
 
                 // Se usuário tem créditos e está no hero (tela inicial), mostrar mensagem
                 if (creditsRemaining > 0 && stage === "hero") {
-                    console.log("[syncEntitlements] Usuário com créditos detectado no hero");
+                    logger.log("[syncEntitlements] Usuário com créditos detectado no hero");
                     // O botão "Começar Agora" já vai chamar onStart() que vai usar os créditos
                 }
             } catch {
@@ -2312,7 +2314,7 @@ export default function AppPage() {
             setReportData(fullResult.data);
             setStage("paid");
         } catch (err) {
-            console.error("Erro ao carregar detalhe do histórico:", err);
+            logger.error("Erro ao carregar detalhe do histórico:", err);
             setApiError(err instanceof Error ? err.message : "Erro ao carregar análise");
         }
     };
@@ -2324,13 +2326,13 @@ export default function AppPage() {
 
     useEffect(() => {
         if (stage === "paid") {
-            console.log("[useEffect processing_premium] Já estamos em paid, abortando processamento premium.");
+            logger.log("[useEffect processing_premium] Já estamos em paid, abortando processamento premium.");
             return;
         }
 
-        console.log("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
+        logger.log("[useEffect processing_premium] Entrou. Estado atual:", { stage, jobDescription: !!jobDescription, file: !!file, authUserId });
         if (stage !== "processing_premium") {
-            console.log("[useEffect processing_premium] Stage não é processing_premium, saindo.");
+            logger.log("[useEffect processing_premium] Stage não é processing_premium, saindo.");
             return;
         }
         if (!authUserId) {
@@ -2346,7 +2348,7 @@ export default function AppPage() {
                 const savedFileName = localStorage.getItem("vant_file_name");
                 const savedFileType = localStorage.getItem("vant_file_type");
                 if (savedJob && savedFileB64 && savedFileName && savedFileType) {
-                    console.log("[processing_premium] Restaurando do localStorage...");
+                    logger.log("[processing_premium] Restaurando do localStorage...");
                     setIsRestoringData(true);
                     setJobDescription(savedJob);
                     fetch(savedFileB64)
@@ -2355,23 +2357,23 @@ export default function AppPage() {
                             const restoredFile = new File([blob], savedFileName, { type: savedFileType });
                             setFile(restoredFile);
                             setIsRestoringData(false);
-                            console.log("[processing_premium] Dados restaurados!");
+                            logger.log("[processing_premium] Dados restaurados!");
                         })
                         .catch(err => {
-                            console.error("[processing_premium] Erro:", err);
+                            logger.error("[processing_premium] Erro:", err);
                             setIsRestoringData(false);
                         });
                     return;
                 }
             }
-            console.log("[processing_premium] Usuário comprou créditos, redirecionando para hero para usar créditos...");
+            logger.log("[processing_premium] Usuário comprou créditos, redirecionando para hero para usar créditos...");
             // setPremiumError("Para usar seus créditos, envie seu CV primeiro."); // Removido para não assustar usuário
             setStage("hero");
             return;
         }
 
         if (isRestoringData) {
-            console.log("[processing_premium] Aguardando restauração...");
+            logger.log("[processing_premium] Aguardando restauração...");
             return;
         }
 
@@ -2414,7 +2416,7 @@ export default function AppPage() {
                 if (cvTextPreextracted) {
                     form.append("cv_text", cvTextPreextracted);
                     localStorage.removeItem("vant_cv_text_preextracted");
-                    console.log("[LastCV] Enviando cv_text pré-extraído ao invés de arquivo PDF");
+                    logger.log("[LastCV] Enviando cv_text pré-extraído ao invés de arquivo PDF");
                 } else {
                     form.append("file", file);
                 }
@@ -2443,7 +2445,7 @@ export default function AppPage() {
 
                 // Verificar se é resposta de progressive loading
                 if (payload.session_id && payload.status === "processing") {
-                    console.log("[Progressive Loading] Recebido session_id:", payload.session_id);
+                    logger.log("[Progressive Loading] Recebido session_id:", payload.session_id);
 
                     // Salvar session_id no estado
                     setSessionId(payload.session_id as string);
@@ -2479,7 +2481,7 @@ export default function AppPage() {
             } catch (e: unknown) {
                 // Ignorar AbortError (navegação entre abas)
                 if (e instanceof Error && e.name === 'AbortError') {
-                    console.log('Processamento premium cancelado ao navegar');
+                    logger.log('Processamento premium cancelado ao navegar');
                     return;
                 }
                 setPremiumError(getErrorMessage(e, "Erro na geração premium"));
@@ -2492,17 +2494,17 @@ export default function AppPage() {
     const pendingSkipPreview = useRef(false);
 
     async function onStart() {
-        console.log("[onStart] Chamado.");
+        logger.log("[onStart] Chamado.");
 
         if (!jobDescription.trim() || !file) {
-            console.warn("[onStart] Retorno antecipado: jobDescription ou file vazios.");
+            logger.warn("[onStart] Retorno antecipado: jobDescription ou file vazios.");
             return;
         }
 
         // Se skipPreview ativo (modal Dashboard), pular lite inteiro e ir direto para premium
         if (pendingSkipPreview.current) {
             pendingSkipPreview.current = false;
-            console.log("[onStart] skipPreview ativo, pulando analyze-lite e indo direto para processing_premium...");
+            logger.log("[onStart] skipPreview ativo, pulando analyze-lite e indo direto para processing_premium...");
             setApiError("");
             setReportData(null);
             setPremiumError("");
@@ -2512,7 +2514,7 @@ export default function AppPage() {
             return;
         }
 
-        console.log("[onStart] Iniciando análise (diagnóstico) para todos os usuários...");
+        logger.log("[onStart] Iniciando análise (diagnóstico) para todos os usuários...");
 
         // 1. Resetar estados visuais
         setApiError("");
@@ -2600,7 +2602,7 @@ export default function AppPage() {
         } catch (e: unknown) {
             // Ignorar AbortError (navegação entre abas)
             if (e instanceof Error && e.name === 'AbortError') {
-                console.log('Processamento lite cancelado ao navegar');
+                logger.log('Processamento lite cancelado ao navegar');
                 return;
             }
 
@@ -2618,21 +2620,21 @@ export default function AppPage() {
     }
 
     function onUseCreditFromPreview() {
-        console.log("[onUseCreditFromPreview] Usuário clicou em usar crédito a partir do diagnóstico.");
+        logger.log("[onUseCreditFromPreview] Usuário clicou em usar crédito a partir do diagnóstico.");
 
         if (!authUserId || creditsRemaining <= 0) {
-            console.error("[onUseCreditFromPreview] Sem créditos ou não autenticado.");
+            logger.error("[onUseCreditFromPreview] Sem créditos ou não autenticado.");
             return;
         }
 
         if (!jobDescription.trim() || !file) {
-            console.error("[onUseCreditFromPreview] Dados incompletos para processamento premium");
+            logger.error("[onUseCreditFromPreview] Dados incompletos para processamento premium");
             setPremiumError("Preencha a vaga e envie seu CV antes de continuar.");
             setStage("hero");
             return;
         }
 
-        console.log("[onUseCreditFromPreview] Dados OK, iniciando processamento premium...");
+        logger.log("[onUseCreditFromPreview] Dados OK, iniciando processamento premium...");
         setApiError("");
         setReportData(null);
         setPremiumError("");
@@ -3434,17 +3436,17 @@ export default function AppPage() {
                         // Buscar último CV antes de abrir o modal
                         if (authUserId) {
                             try {
-                                console.log("[LastCV] Buscando último CV para usuário:", authUserId);
+                                logger.log("[LastCV] Buscando último CV para usuário:", authUserId);
                                 const resp = await fetch(`${getApiUrl()}/api/user/last-cv/${authUserId}`);
                                 if (resp.ok) {
                                     const data = await resp.json();
-                                    console.log("[LastCV] Dados recebidos:", data);
+                                    logger.log("[LastCV] Dados recebidos:", data);
                                     setLastCVData(data);
                                 } else {
-                                    console.error("[LastCV] Erro na resposta:", resp.status);
+                                    logger.error("[LastCV] Erro na resposta:", resp.status);
                                 }
                             } catch (error) {
-                                console.error("[LastCV] Erro ao buscar último CV:", error);
+                                logger.error("[LastCV] Erro ao buscar último CV:", error);
                             }
                         }
                         setShowNewOptimizationModal(true);
@@ -4141,7 +4143,7 @@ export default function AppPage() {
                                                             </div>
                                                         </div>
                                                         <div style={{ color: "#FFFFFF", fontSize: "0.9rem", fontWeight: 500, lineHeight: 1.6 }}
-                                                            dangerouslySetInnerHTML={{ __html: data.gap_1.exemplo_otimizado.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                                            dangerouslySetInnerHTML={{ __html: safeFormatMarkdown(data.gap_1.exemplo_otimizado, "#FFFFFF") }} />
                                                     </div>
                                                 )}
 

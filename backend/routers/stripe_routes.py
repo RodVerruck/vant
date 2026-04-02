@@ -14,6 +14,8 @@ import sentry_sdk
 import stripe
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from dependencies import (
     supabase_admin,
@@ -27,21 +29,24 @@ from dependencies import (
     ActivateEntitlementsRequest,
     StripeCreateCheckoutSessionRequest,
     StripeVerifyCheckoutSessionRequest,
+    ErrorResponse,
 )
 
 logger = logging.getLogger(__name__)
 
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/api", tags=["stripe"])
 
 
 @router.post("/stripe/create-checkout-session")
-def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) -> JSONResponse:
+@limiter.limit("10/minute")
+def stripe_create_checkout_session(request: Request, payload: StripeCreateCheckoutSessionRequest) -> JSONResponse:
     sentry_sdk.set_tag("endpoint", "stripe_create_checkout_session")
     if payload.client_reference_id:
         sentry_sdk.set_context("user", {"id": payload.client_reference_id})
     
     if not STRIPE_SECRET_KEY:
-        return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
+        return JSONResponse(status_code=500, content=ErrorResponse(error="Stripe não configurado.", code="STRIPE_NOT_CONFIGURED").model_dump())
 
     plan_id = (payload.plan_id or "trial").strip()
     if plan_id not in PRICING:
@@ -166,11 +171,12 @@ def stripe_create_checkout_session(payload: StripeCreateCheckoutSessionRequest) 
 
 
 @router.post("/stripe/verify-checkout-session")
-def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) -> JSONResponse:
+@limiter.limit("20/minute")
+def stripe_verify_checkout_session(request: Request, payload: StripeVerifyCheckoutSessionRequest) -> JSONResponse:
     sentry_sdk.set_tag("endpoint", "stripe_verify_checkout_session")
     
     if not STRIPE_SECRET_KEY:
-        return JSONResponse(status_code=500, content={"error": "Stripe não configurado (STRIPE_SECRET_KEY ausente)."})
+        return JSONResponse(status_code=500, content=ErrorResponse(error="Stripe não configurado.", code="STRIPE_NOT_CONFIGURED").model_dump())
 
     try:
         session = stripe.checkout.Session.retrieve(payload.session_id)
@@ -202,7 +208,8 @@ def stripe_verify_checkout_session(payload: StripeVerifyCheckoutSessionRequest) 
 
 
 @router.post("/entitlements/activate")
-def activate_entitlements(payload: ActivateEntitlementsRequest) -> JSONResponse:
+@limiter.limit("10/minute")
+def activate_entitlements(request: Request, payload: ActivateEntitlementsRequest) -> JSONResponse:
     sentry_sdk.set_tag("endpoint", "entitlements_activate")
     sentry_sdk.set_context("user", {"id": payload.user_id})
     
